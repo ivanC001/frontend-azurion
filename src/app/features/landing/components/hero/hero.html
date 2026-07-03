@@ -1,0 +1,154 @@
+<section class="hero" id="inicio">
+  <div class="hero__circuit hero__circuit--left" aria-hidden="true"></div>
+  <div class="hero__circuit hero__circuit--right" aria-hidden="true"></div>
+
+  <div class="section-shell hero__grid">
+    <div class="hero__content">
+      <p class="hero__eyebrow">
+        <span></span>
+        Plataforma todo-en-uno
+      </p>
+
+      <h1>Gestiona tu empresa. <span>Toma el control.</span></h1>
+
+      <p class="hero__subtitle">
+        Azurion centraliza ventas, inventario, compras, caja, clientes, reportes y facturacion
+        electronica SUNAT en una plataforma intuitiva, segura y 100% en la nube.
+      </p>
+
+      <div class="hero__benefits">
+        @for (benefit of benefits; track benefit.title) {
+          <article>
+            <i class="pi {{ benefit.icon }}"></i>
+            <strong>{{ benefit.title }}</strong>
+            <span>{{ benefit.description }}</span>
+          </article>
+        }
+      </div>
+
+      <div class="hero__actions">
+        <a pButton class="az-primary hero-button hero-button--primary" routerLink="/inicio" fragment="contacto">
+          <span>Comienza gratis</span>
+          <i class="pi pi-arrow-right"></i>
+        </a>
+        <a pButton class="az-secondary hero-button hero-button--ghost" routerLink="/inicio" fragment="funciones">
+          <span>Ver funcionalidades</span>
+          <i class="pi pi-play"></i>
+        </a>
+      </div>
+
+      <div class="hero__trust" aria-label="Confianza empresarial">
+        <div class="hero__avatars" aria-hidden="true">
+          <span>IC</span>
+          <span>AN</span>
+          <span>MR</span>
+          <span>LP</span>
+          <strong>+500</strong>
+        </div>
+        <div>
+          <span class="hero__stars">*****</span>
+          <p>Mas de 500 empresas ya confian en Azurion</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-preview" aria-label="Vista previa del panel Azurion">
+      <div class="dashboard-preview__glow" aria-hidden="true"></div>
+      <aside class="dashboard-preview__sidebar">
+        <div class="dashboard-preview__brand">
+          <img src="assets/azurion-mark.png" alt="Azurion" />
+          <strong>AZURION</strong>
+        </div>
+        <nav aria-label="Modulos de muestra">
+          @for (item of menuItems; track item; let first = $first) {
+            <span [class.active]="first">
+              <i class="pi" [class.pi-home]="first" [class.pi-circle]="!first"></i>
+              {{ item }}
+            </span>
+          }
+        </nav>
+      </aside>
+
+      <main class="dashboard-preview__panel">
+        <header>
+          <div>
+            <h2>Hola, Juan Carlos</h2>
+            <p>Aqui tienes el resumen de tu empresa.</p>
+          </div>
+          <div class="dashboard-preview__tools">
+            <button type="button">15/06/2025 <i class="pi pi-angle-down"></i></button>
+            <button type="button"><i class="pi pi-plus"></i> Nuevo</button>
+          </div>
+        </header>
+
+        <section class="dashboard-preview__metrics" aria-label="Indicadores">
+          @for (metric of metrics; track metric.label) {
+            <article>
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+              <small [class.negative]="!metric.positive">
+                <i class="pi" [class.pi-arrow-up]="metric.positive" [class.pi-arrow-down]="!metric.positive"></i>
+                {{ metric.trend }}
+              </small>
+            </article>
+          }
+        </section>
+
+        <section class="dashboard-preview__main">
+          <article class="chart-card">
+            <header>Ventas ultimos 7 dias</header>
+            <div class="chart-card__grid">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="chart-card__line">
+              <i style="height: 18%"></i>
+              <i style="height: 31%"></i>
+              <i style="height: 26%"></i>
+              <i style="height: 58%"></i>
+              <i style="height: 43%"></i>
+              <i style="height: 67%"></i>
+              <i style="height: 84%"></i>
+            </div>
+            <div class="chart-card__days">
+              <span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span><span>Hoy</span>
+            </div>
+          </article>
+
+          <article class="category-card">
+            <header>Ventas por categoria</header>
+            <div class="category-card__body">
+              <span class="donut" aria-hidden="true"></span>
+              <ul>
+                <li><i></i> Productos <strong>62%</strong></li>
+                <li><i></i> Servicios <strong>24%</strong></li>
+                <li><i></i> Suscripciones <strong>14%</strong></li>
+              </ul>
+            </div>
+          </article>
+        </section>
+
+        <section class="dashboard-preview__bottom">
+          <article>
+            <header>Tareas pendientes</header>
+            <label><input type="checkbox" /> Revisar ordenes de compra <strong>5</strong></label>
+            <label><input type="checkbox" /> Confirmar pagos de clientes <strong>3</strong></label>
+            <label><input type="checkbox" /> Actualizar inventario <strong>2</strong></label>
+          </article>
+          <article>
+            <header>Actividades recientes</header>
+            @for (activity of activities; track activity.title) {
+              <div class="activity-row">
+                <i class="pi {{ activity.icon }}"></i>
+                <span>
+                  <b>{{ activity.title }}</b>
+                  <small>{{ activity.code }}</small>
+                </span>
+                <strong>{{ activity.amount }}</strong>
+              </div>
+            }
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+</section>

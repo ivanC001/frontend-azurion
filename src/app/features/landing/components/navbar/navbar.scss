@@ -1,0 +1,243 @@
+:host {
+  display: block;
+}
+
+.navbar {
+  background: rgba(2, 6, 23, 0.78);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.14);
+  left: 0;
+  padding: 0.92rem 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transition: background 180ms ease, border-color 180ms ease, padding 180ms ease;
+  z-index: 1000;
+}
+
+.navbar--scrolled {
+  background: rgba(2, 6, 23, 0.94);
+  border-color: rgba(56, 189, 248, 0.24);
+  box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, 0.28);
+  padding: 0.68rem 0;
+  backdrop-filter: blur(18px);
+}
+
+.navbar__inner {
+  align-items: center;
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 0 1.25rem;
+}
+
+.brand {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.brand__mark {
+  align-items: center;
+  display: inline-flex;
+  height: 4.35rem;
+  justify-content: center;
+  width: 4.35rem;
+}
+
+.brand__mark img {
+  display: block;
+  height: 4.35rem;
+  object-fit: contain;
+  width: 4.35rem;
+}
+
+.brand__copy {
+  display: grid;
+  line-height: 1;
+}
+
+.brand__copy strong {
+  color: #ffffff;
+  font-size: 1.9rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.brand__copy small {
+  color: #22d3ee;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  margin-top: 0.42rem;
+  text-transform: uppercase;
+}
+
+.navbar__panel {
+  align-items: center;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.nav-links {
+  align-items: center;
+  display: flex;
+  gap: 1.55rem;
+  justify-content: center;
+  min-width: 0;
+}
+
+.nav-links a {
+  align-items: center;
+  color: #e2e8f0;
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 760;
+  gap: 0.24rem;
+  padding: 0.55rem 0;
+  position: relative;
+  transition: color 160ms ease;
+  white-space: nowrap;
+}
+
+.nav-links a::after {
+  background: #0ea5e9;
+  border-radius: 999px;
+  bottom: 0.26rem;
+  content: "";
+  height: 2px;
+  left: 0;
+  position: absolute;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 160ms ease;
+  width: 100%;
+}
+
+.nav-links a:hover,
+.nav-links a:first-child {
+  color: #38bdf8;
+}
+
+.nav-links a:hover::after,
+.nav-links a:first-child::after {
+  transform: scaleX(1);
+}
+
+.navbar__actions {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.nav-login,
+:host ::ng-deep .nav-demo {
+  align-items: center;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 850;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 2.72rem;
+  padding: 0.68rem 1rem;
+  white-space: nowrap;
+}
+
+.nav-login {
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(226, 232, 240, 0.28);
+  color: #ffffff;
+}
+
+.nav-login:hover {
+  border-color: rgba(56, 189, 248, 0.52);
+  color: #7dd3fc;
+}
+
+:host ::ng-deep .nav-demo {
+  background: linear-gradient(135deg, #0b72ff, #0ea5e9);
+  border: 0;
+  box-shadow: 0 0.9rem 1.8rem rgba(14, 165, 233, 0.24);
+  color: #ffffff;
+}
+
+.menu-toggle {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.26);
+  border-radius: 0.5rem;
+  color: #ffffff;
+  display: none;
+  height: 2.55rem;
+  justify-content: center;
+  width: 2.55rem;
+}
+
+@media (max-width: 1120px) {
+  .navbar__inner {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .navbar__panel {
+    background: rgba(2, 6, 23, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 0.5rem;
+    box-shadow: 0 1.6rem 3rem rgba(0, 0, 0, 0.32);
+    display: none;
+    left: 1rem;
+    padding: 1rem;
+    position: absolute;
+    right: 1rem;
+    top: calc(100% + 0.35rem);
+  }
+
+  .navbar__panel--open {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .nav-links a {
+    padding: 0.62rem 0.2rem;
+  }
+
+  .navbar__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .navbar {
+    padding: 0.62rem 0;
+  }
+
+  .brand__mark,
+  .brand__mark img {
+    height: 3.2rem;
+    width: 3.2rem;
+  }
+
+  .brand__copy strong {
+    font-size: 1.35rem;
+  }
+
+  .brand__copy small {
+    font-size: 0.56rem;
+  }
+}

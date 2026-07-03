@@ -1,0 +1,35 @@
+<section class="pricing" id="planes">
+  <div class="section-shell">
+    <div class="section-head">
+      <p class="section-kicker">Planes</p>
+      <h2 class="section-title">Elige una base lista para escalar</h2>
+      <p class="section-copy">
+        Planes flexibles para empresas que necesitan control operativo, facturacion electronica
+        y crecimiento ordenado.
+      </p>
+    </div>
+
+    <div class="pricing__grid">
+      @for (plan of plans; track plan.name) {
+        <p-card [styleClass]="plan.highlighted ? 'plan-card plan-card--featured' : 'plan-card'">
+          @if (plan.highlighted) {
+            <span class="plan-card__badge">Recomendado</span>
+          }
+          <h3>{{ plan.name }}</h3>
+          <strong>{{ plan.price }}</strong>
+          <p>{{ plan.description }}</p>
+          <ul>
+            @for (feature of plan.features; track feature) {
+              <li><i class="pi pi-check"></i>{{ feature }}</li>
+            }
+          </ul>
+          @if (plan.highlighted) {
+            <a pButton class="az-primary plan-button" href="#contacto">Solicitar Demo</a>
+          } @else {
+            <a pButton class="az-secondary plan-button" href="#contacto">Solicitar Demo</a>
+          }
+        </p-card>
+      }
+    </div>
+  </div>
+</section>

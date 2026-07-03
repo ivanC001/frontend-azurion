@@ -1,0 +1,69 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Administracion tributaria</p>
+      <h1>Configuracion tributaria</h1>
+      <p>Define las reglas por defecto. El punto de venta las aplica automaticamente sin pedir datos al cajero.</p>
+    </div>
+    <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" [loading]="loading()" (onClick)="load()" />
+  </header>
+
+  <section class="tax-layout">
+    <form class="tax-panel">
+      <div class="tax-panel__head">
+        <span><i class="pi pi-shield"></i></span>
+        <div>
+          <h2>Regla predeterminada de empresa</h2>
+          <p>Las sucursales y productos heredan esta configuracion mientras no tengan una excepcion.</p>
+        </div>
+      </div>
+
+      <div class="tax-grid">
+        <label>
+          Tipo de operacion
+          <p-select name="tipoOperacion" [options]="operationOptions" [(ngModel)]="form.tipoOperacionDefaultId" />
+        </label>
+        <label>
+          Tipo de afectacion
+          <p-select name="tipoAfectacion" [options]="afectacionOptions" [(ngModel)]="form.tipoAfectacionDefaultId" (ngModelChange)="onAfectacionChange($event)" />
+        </label>
+        <label>
+          Tributo
+          <p-select name="tributo" [options]="tributoOptions" [(ngModel)]="form.tributoDefaultId" />
+        </label>
+        <label>
+          Porcentaje IGV
+          <input pInputText type="number" min="0" max="100" step="0.01" name="porcentaje" [(ngModel)]="form.porcentajeIgvDefault" />
+        </label>
+        <label>
+          Moneda predeterminada
+          <p-select name="moneda" [options]="monedaOptions" [(ngModel)]="form.monedaDefault" />
+        </label>
+      </div>
+
+      <div class="tax-summary">
+        <span>Operacion <strong>{{ form.tipoOperacionDefaultId }}</strong></span>
+        <span>Afectacion <strong>{{ form.tipoAfectacionDefaultId }}</strong></span>
+        <span>Tributo <strong>{{ form.tributoDefaultId }}</strong></span>
+        <span>Impuesto <strong>{{ form.porcentajeIgvDefault }}%</strong></span>
+      </div>
+
+      <div class="tax-actions">
+        <p-button label="Guardar configuracion" icon="pi pi-save" styleClass="az-primary" [loading]="saving()" (onClick)="save()" />
+      </div>
+    </form>
+
+    <aside class="priority-panel">
+      <h2>Prioridad automatica</h2>
+      <ol>
+        <li><strong>Producto</strong><span>Solo cuando usa una regla propia.</span></li>
+        <li><strong>Sucursal</strong><span>Solo cuando sobrescribe la empresa.</span></li>
+        <li><strong>Empresa</strong><span>Regla general y obligatoria.</span></li>
+      </ol>
+      <div class="pos-note">
+        <i class="pi pi-bolt"></i>
+        <div><strong>POS rapido</strong><span>El cajero escanea, cobra e imprime. La tributacion se resuelve en el servidor.</span></div>
+      </div>
+    </aside>
+  </section>
+</section>

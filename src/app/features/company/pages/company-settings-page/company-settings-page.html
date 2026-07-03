@@ -1,0 +1,198 @@
+<section class="company-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Configuracion empresarial</p>
+      <h1>Empresa y Facturacion SUNAT</h1>
+      <p>Separa el logo del panel administrativo del logo fiscal que viaja al facturador.</p>
+    </div>
+    <p-button
+      label="Recargar"
+      icon="pi pi-refresh"
+      styleClass="az-secondary"
+      [loading]="loading()"
+      (onClick)="loadCurrentConfig()"
+    />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert--success">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <div class="settings-grid">
+    <article class="panel panel--identity">
+      <header class="panel__header">
+        <h2><i class="pi pi-id-card"></i> Identidad visual</h2>
+      </header>
+
+      <div class="identity-body">
+        <section class="logo-card">
+          <div class="logo-card__header">
+            <strong>Tenant de la empresa</strong>
+            <small>Este logo aparece arriba a la izquierda en el panel. Si no subes uno, se muestra Azurion por defecto.</small>
+          </div>
+
+          <div class="identity-logo">
+            @if (panelLogoPreviewUrl()) {
+              <img [src]="panelLogoPreviewUrl()!" alt="Logo panel administrativo" />
+            } @else {
+              <img src="assets/logosinfondo.png" alt="Logo base Azurion" />
+            }
+          </div>
+
+          <label>
+            Subir logo del tenant
+            <input
+              type="file"
+              name="panel_logo_file"
+              accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+              (change)="onPanelLogoFileSelected($event)"
+            />
+            <small>PNG, JPG, JPEG, WEBP o SVG (max. 2MB)</small>
+            @if (form.panel_logo_file) {
+              <small>Archivo: {{ form.panel_logo_file.name }}</small>
+            }
+          </label>
+        </section>
+
+        <div class="form-grid form-grid--identity">
+          <label>
+            RUC
+            <input pInputText maxlength="11" [(ngModel)]="form.ruc" name="ruc" [readonly]="true" />
+          </label>
+          <label>
+            Razon social
+            <input pInputText [(ngModel)]="form.business_name" name="business_name" />
+          </label>
+          <label>
+            Direccion fiscal
+            <input pInputText [(ngModel)]="form.direccion_fiscal" name="direccion_fiscal" placeholder="Av. Principal 123" />
+          </label>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel panel--sunat">
+      <header class="panel__header">
+        <h2><i class="pi pi-file-edit"></i> SUNAT / Facturacion</h2>
+      </header>
+
+      <div class="mode-row">
+        <span>MODO ENTORNO</span>
+        <label class="mode-switch">
+          <input
+            type="checkbox"
+            [checked]="isProductionMode()"
+            (change)="onSunatModeToggle($any($event.target).checked)"
+          />
+          <span class="mode-pill" [class.mode-pill--production]="isProductionMode()">
+            {{ isProductionMode() ? 'EN PRODUCCION' : 'EN BETA' }}
+          </span>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <div class="identity-logo identity-logo--invoice">
+          @if (invoiceLogoPreviewUrl()) {
+            <img [src]="invoiceLogoPreviewUrl()!" alt="Logo facturacion" />
+          } @else {
+            <div class="logo-placeholder">PDF</div>
+          }
+        </div>
+        <label class="full">
+          Subir logo para facturacion
+          <input
+            type="file"
+            name="invoice_logo_file"
+            accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+            (change)="onInvoiceLogoFileSelected($event)"
+          />
+          <small>Este logo se imprime en facturas, boletas, notas y PDFs.</small>
+          <small>PNG, JPG, JPEG, WEBP o SVG (max. 2MB)</small>
+          @if (form.invoice_logo_file) {
+            <small>Archivo: {{ form.invoice_logo_file.name }}</small>
+          }
+        </label>
+        <label>
+          Usuario SOL
+          <input pInputText [(ngModel)]="form.usuario_sol" name="usuario_sol" />
+        </label>
+        <label>
+          RUC SOL
+          <input pInputText maxlength="11" [(ngModel)]="form.ruc_sol" name="ruc_sol" />
+        </label>
+        <label>
+          Clave SOL
+          <p-password [(ngModel)]="form.clave_sol" name="clave_sol" [feedback]="false" [toggleMask]="true" />
+        </label>
+        <label>
+          Clave certificado
+          <p-password
+            [(ngModel)]="form.certificado_password"
+            name="certificado_password"
+            [feedback]="false"
+            [toggleMask]="true"
+          />
+        </label>
+        <label class="full">
+          Archivo firma digital
+          <input
+            type="file"
+            name="certificado_file"
+            accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
+            (change)="onCertificateFileSelected($event)"
+          />
+          <small>PEM, PFX o P12 (max. 5MB)</small>
+          @if (form.certificado_file) {
+            <small>Archivo: {{ form.certificado_file.name }}</small>
+          }
+          @if (!form.certificado_file && (form.certificado_url || existingConfig()?.certificado_url)) {
+            <small>Certificado actual: Activo</small>
+          }
+          @if (isProductionMode() && !form.certificado_file && !form.certificado_url && !existingConfig()?.certificado_url) {
+            <small class="warn">En produccion este archivo es obligatorio.</small>
+          }
+        </label>
+        <label class="full">
+          URL certificado
+          <input pInputText [(ngModel)]="form.certificado_url" name="certificado_url" placeholder="tenants/ruc/cert.pem" />
+        </label>
+      </div>
+
+      <div class="section-title">
+        <h3>Parametros de integracion</h3>
+      </div>
+
+      <div class="form-grid form-grid--compact">
+        <label>
+          Cliente API
+          <input pInputText [(ngModel)]="form.api_client_name" name="api_client_name" />
+        </label>
+      </div>
+
+      <div class="info-banner info-banner--neutral">
+        <i class="pi pi-info-circle"></i>
+        <span>El logo fiscal se mantiene separado del panel para no mezclar branding operativo con branding tributario.</span>
+      </div>
+    </article>
+  </div>
+
+  <footer class="actions-bar">
+    <p-button
+      label="Guardar configuracion"
+      icon="pi pi-save"
+      styleClass="az-primary save-btn"
+      [loading]="saving()"
+      (onClick)="save()"
+    />
+  </footer>
+</section>

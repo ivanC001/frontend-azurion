@@ -1,0 +1,94 @@
+.warehouse-content-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.table-head p {
+  color: var(--az-text-soft);
+  line-height: 1.35;
+  margin: 0.2rem 0 0;
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--az-text-soft);
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--az-text);
+}
+
+.dialog-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dialog-copy {
+  color: var(--az-text-soft);
+  line-height: 1.4;
+  margin: 0 0 1rem;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+:host ::ng-deep .warehouse-table .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}
+
+:host ::ng-deep .warehouse-table .p-datatable-tbody > tr > td {
+  vertical-align: middle;
+}
+
+:host ::ng-deep .warehouse-table .p-datatable-tbody > tr > td:nth-child(1) {
+  width: 12rem;
+}
+
+:host ::ng-deep .warehouse-table .p-datatable-tbody > tr > td:nth-child(3),
+:host ::ng-deep .warehouse-table .p-datatable-tbody > tr > td:nth-child(4) {
+  min-width: 16rem;
+}
+
+:host ::ng-deep .p-select {
+  width: 100%;
+}
+
+:host ::ng-deep .warehouse-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(44rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .warehouse-dialog .dialog-form {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .dialog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions p-button {
+    width: 100%;
+  }
+}

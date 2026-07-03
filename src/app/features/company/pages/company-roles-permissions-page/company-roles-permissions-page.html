@@ -1,0 +1,529 @@
+<section class="company-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">{{ platformMode ? 'Administracion general' : 'Administracion empresa' }}</p>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageDescription }}</p>
+    </div>
+    <div class="header-actions">
+      <span class="summary-chip">Roles: {{ roles().length }}</span>
+      <span class="summary-chip summary-chip--soft">Permisos: {{ permisos().length }}</span>
+      @if (canWriteRoles()) {
+        <p-button label="Nuevo rol" icon="pi pi-plus" (onClick)="openRoleDialog()" />
+      }
+      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+    </div>
+  </header>
+
+  <nav class="scope-navigation" aria-label="Contexto de seguridad">
+    @if (platformMode) {
+      <a routerLink="/admin/control-empresas"><i class="pi pi-building"></i> Control de empresas</a>
+      <a routerLink="/admin/usuarios"><i class="pi pi-users"></i> Usuarios tenant</a>
+      <a class="scope-navigation__active" routerLink="/admin/seguridad-plataforma"><i class="pi pi-shield"></i> Seguridad plataforma</a>
+    } @else {
+      <a routerLink="/admin/usuarios"><i class="pi pi-users"></i> Usuarios de empresa</a>
+      <a class="scope-navigation__active" routerLink="/admin/seguridad-empresa"><i class="pi pi-shield"></i> Roles y permisos</a>
+    }
+  </nav>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  @if (platformMode) {
+    <section class="tenant-toolbar">
+      <div>
+        <h2>Empresa de trabajo</h2>
+        @if (selectedEmpresa(); as empresa) {
+          <p>{{ empresa.razonSocial }} | RUC {{ empresa.ruc }} | {{ empresa.tenantId }}</p>
+        } @else {
+          <p>Selecciona una empresa para cargar el catalogo tenant de roles y permisos.</p>
+        }
+      </div>
+
+      <label class="toolbar-field">
+        <span>Empresa / Tenant</span>
+        <p-select
+          [options]="tenantOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedTenantId()"
+          (ngModelChange)="onTenantChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Selecciona empresa / tenant"
+          [loading]="loadingEmpresas()"
+          [showClear]="true"
+        />
+      </label>
+    </section>
+  }
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span>Roles del sistema</span>
+      <strong>{{ systemRolesCount() }}</strong>
+      <small>No se eliminan y mantienen la base operativa.</small>
+    </article>
+    <article class="stat-card">
+      <span>Roles personalizados</span>
+      <strong>{{ customRolesCount() }}</strong>
+      <small>Listos para ajustarse por empresa y proceso.</small>
+    </article>
+    <article class="stat-card">
+      <span>Permisos personalizados</span>
+      <strong>{{ customPermissionsCount() }}</strong>
+      <small>Los administradores heredan los nuevos permisos automaticamente.</small>
+    </article>
+  </section>
+
+  <div class="content-grid" [class.content-grid--readonly]="!canWriteRoles()">
+    @if (canWriteRoles()) {
+    <section class="stack-column">
+      <form class="panel form-panel role-inline-form">
+        <div class="panel-head">
+          <div>
+            <h2>Nuevo rol</h2>
+            <p>Crea un perfil y deja los accesos listos desde el inicio.</p>
+          </div>
+          <p-tag value="Personalizado" severity="info" />
+        </div>
+
+        <label>
+          Plantilla sugerida
+          <p-select
+            [options]="templateOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="rolForm.templateCode"
+            (ngModelChange)="applyTemplate($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Selecciona una plantilla"
+            [showClear]="true"
+          />
+        </label>
+
+        <label>
+          Codigo
+          <input
+            pInputText
+            name="rol_codigo"
+            [(ngModel)]="rolForm.codigo"
+            placeholder="Se genera automaticamente"
+            (input)="sanitizeRoleCode($event)"
+          />
+        </label>
+        <label>
+          Nombre
+          <input
+            pInputText
+            name="rol_nombre"
+            [(ngModel)]="rolForm.nombre"
+            placeholder="Supervisor operativo"
+            (blur)="suggestRoleCodeFromName()"
+          />
+        </label>
+        <label>
+          Descripcion
+          <input pInputText name="rol_descripcion" [(ngModel)]="rolForm.descripcion" placeholder="Describe el alcance del rol" />
+        </label>
+
+        <div class="permission-editor">
+          <div class="editor-head">
+            <strong>Permisos iniciales</strong>
+            <small>{{ createRolePermissionIds().length }} seleccionados</small>
+          </div>
+
+          <div class="permission-groups">
+            @for (group of createPermissionGroups(); track group.modulo) {
+              <section class="permission-group">
+                <h3>{{ group.modulo }}</h3>
+                <div class="permission-list">
+                  @for (permiso of group.permisos; track permiso.id) {
+                    <label class="permission-option">
+                      <input
+                        type="checkbox"
+                        [checked]="hasCreatePermission(permiso.id)"
+                        (change)="toggleCreatePermission(permiso.id)"
+                      />
+                      <div>
+                        <span>{{ permiso.nombre }}</span>
+                        <small>{{ permiso.codigo }}</small>
+                      </div>
+                    </label>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        </div>
+
+        <p-button label="Crear rol" icon="pi pi-shield" styleClass="az-primary" [loading]="saving()" (onClick)="createRol()" />
+      </form>
+
+      @if (platformMode) {
+      <form class="panel form-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Nuevo permiso</h2>
+            <p>Solo para procesos que no cubran los permisos base.</p>
+          </div>
+          <p-tag value="Extensible" severity="success" />
+        </div>
+
+        <label>
+          Codigo
+          <input pInputText name="permiso_codigo" [(ngModel)]="permisoForm.codigo" placeholder="REPORTES_EXPORTAR" (input)="sanitizePermissionCode($event)" />
+        </label>
+        <label>
+          Nombre
+          <input pInputText name="permiso_nombre" [(ngModel)]="permisoForm.nombre" placeholder="Exportar reportes" />
+        </label>
+        <label>
+          Modulo
+          <input pInputText name="permiso_modulo" [(ngModel)]="permisoForm.modulo" placeholder="REPORTES" (input)="sanitizePermissionModule($event)" />
+        </label>
+        <label>
+          Descripcion
+          <input pInputText name="permiso_descripcion" [(ngModel)]="permisoForm.descripcion" placeholder="Describe donde aplica el permiso" />
+        </label>
+
+        <p-button label="Crear permiso" icon="pi pi-key" styleClass="az-secondary" [loading]="saving()" (onClick)="createPermiso()" />
+      </form>
+      }
+
+      <section class="panel form-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Limpieza controlada</h2>
+            <p>Solo aparecen elementos personalizados que realmente pueden salir.</p>
+          </div>
+        </div>
+
+        <label>
+          Eliminar rol
+          <p-select
+            [options]="deleteRoleOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="deleteRolId()"
+            (ngModelChange)="deleteRolId.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Selecciona rol"
+            [showClear]="true"
+          />
+        </label>
+        <p-button label="Eliminar rol" icon="pi pi-trash" severity="danger" [loading]="saving()" (onClick)="deleteRol()" />
+
+        @if (platformMode) {
+          <label>
+            Eliminar permiso
+            <p-select
+              [options]="deletePermissionOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="deletePermisoId()"
+              (ngModelChange)="deletePermisoId.set($event)"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Selecciona permiso"
+              [showClear]="true"
+            />
+          </label>
+          <p-button label="Eliminar permiso" icon="pi pi-trash" severity="danger" [loading]="saving()" (onClick)="deletePermiso()" />
+        } @else {
+          <div class="inline-note">
+            Los permisos disponibles son definidos por la plataforma. Aqui puedes combinarlos en roles para tu equipo.
+          </div>
+        }
+      </section>
+    </section>
+    }
+
+    <section class="stack-column stack-column--wide">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Permisos por rol</h2>
+            <p>Selecciona un rol y ajusta sus accesos sin tocar la base administrativa.</p>
+          </div>
+          @if (selectedRol(); as rol) {
+            <p-tag [value]="rol.sistema ? 'Rol base' : 'Rol editable'" [severity]="roleSeverity(rol)" />
+          }
+        </div>
+
+        <div class="editor-toolbar">
+          <label class="toolbar-field">
+            <span>Rol</span>
+            <p-select
+              [options]="roleOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="selectedRolId()"
+              (ngModelChange)="onRolSelectionChange($event)"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Selecciona rol"
+            />
+          </label>
+
+          <p-button
+            label="Guardar permisos"
+            icon="pi pi-check"
+            [loading]="saving()"
+            [disabled]="!canWriteRoles() || !selectedRol() || !selectedRol()?.gestionaPermisos"
+            (onClick)="saveSelectedRolePermissions()"
+          />
+        </div>
+
+        @if (selectedRol(); as rol) {
+          <div class="role-summary">
+            <div>
+              <strong>{{ rol.codigo }} · {{ rol.nombre }}</strong>
+              <span>{{ rol.descripcion || 'Sin descripcion registrada.' }}</span>
+            </div>
+            <div class="summary-tags">
+              <p-tag [value]="rol.activo ? 'Activo' : 'Inactivo'" [severity]="rol.activo ? 'success' : 'danger'" />
+              <p-tag [value]="rol.gestionaPermisos ? 'Editable' : 'Automatico'" [severity]="rol.gestionaPermisos ? 'info' : 'contrast'" />
+            </div>
+          </div>
+
+          @if (!rol.gestionaPermisos) {
+            <div class="inline-note">
+              {{ rol.codigo }} mantiene permisos automaticos porque es un rol administrativo base.
+            </div>
+          }
+
+          <div class="permission-filter">
+            <label>
+              Buscar permiso
+              <input
+                pInputText
+                [ngModel]="permissionSearch()"
+                (ngModelChange)="permissionSearch.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Ventas, caja, inventario..."
+              />
+            </label>
+            @if (canWriteRoles() && rol.gestionaPermisos) {
+              <div class="permission-filter__actions">
+                <p-button label="Seleccionar todos" icon="pi pi-check-square" severity="secondary" (onClick)="setAllSelectedRolePermissions(true)" />
+                <p-button label="Limpiar" icon="pi pi-times" severity="secondary" (onClick)="setAllSelectedRolePermissions(false)" />
+              </div>
+            }
+          </div>
+
+          <div class="permission-matrix-shell">
+            <table class="permission-matrix">
+              <thead>
+                <tr>
+                  <th class="permission-matrix__module">Modulo</th>
+                  <th>Ver</th>
+                  <th>Crear / emitir</th>
+                  <th>Operar / actualizar</th>
+                  <th>Eliminar / anular</th>
+                  <th>Especiales</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of permissionMatrix(); track row.modulo; let index = $index) {
+                  <tr>
+                    <td class="permission-matrix__module">
+                      <span class="module-index">{{ index + 1 }}</span>
+                      <div>
+                        <strong>{{ row.label }}</strong>
+                        <small>{{ row.modulo }}</small>
+                      </div>
+                    </td>
+                    @for (action of matrixActions; track action) {
+                      <td>
+                        @if (permissionCellState(row, action) !== 'empty') {
+                          <button
+                            type="button"
+                            class="permission-switch"
+                            [class.permission-switch--checked]="permissionCellState(row, action) === 'checked'"
+                            [class.permission-switch--partial]="permissionCellState(row, action) === 'partial'"
+                            [disabled]="!canWriteRoles() || !rol.gestionaPermisos"
+                            [title]="permissionCellTitle(row, action)"
+                            (click)="togglePermissionCell(row, action)"
+                          >
+                            <span></span>
+                          </button>
+                          <small class="permission-count">{{ permissionCellCount(row, action) }}</small>
+                        } @else {
+                          <span class="permission-empty">-</span>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+                @empty {
+                  <tr>
+                    <td colspan="6"><div class="empty-state">No hay permisos que coincidan con la busqueda.</div></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="matrix-legend">
+            <span><i class="legend-dot legend-dot--on"></i> Todos asignados</span>
+            <span><i class="legend-dot legend-dot--partial"></i> Asignacion parcial</span>
+            <span><i class="legend-dot"></i> Sin asignar</span>
+            <small>Pasa el cursor sobre un interruptor para ver los permisos incluidos.</small>
+          </div>
+        } @else {
+          <div class="empty-state">No hay roles disponibles en este tenant.</div>
+        }
+      </section>
+
+      <section class="tables-grid">
+        <section class="panel table-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Catalogo de roles</h2>
+              <p>Visibilidad rapida de base y personalizaciones.</p>
+            </div>
+          </div>
+
+          <p-table [value]="sortedRoles()" [loading]="loading()" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Rol</th>
+                <th>Tipo</th>
+                <th>Permisos</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rol>
+              <tr>
+                <td>
+                  <div class="table-main">
+                    <strong>{{ rol.codigo }}</strong>
+                    <small>{{ rol.nombre }}</small>
+                  </div>
+                </td>
+                <td>
+                  <p-tag [value]="rol.sistema ? 'Sistema' : 'Personalizado'" [severity]="roleSeverity(rol)" />
+                </td>
+                <td>{{ rol.permisos.length }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Catalogo de permisos</h2>
+              <p>Ordenados por modulo y con distincion entre base y extensiones.</p>
+            </div>
+          </div>
+
+          <p-table [value]="sortedPermisos()" [loading]="loading()" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Permiso</th>
+                <th>Modulo</th>
+                <th>Tipo</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-permiso>
+              <tr>
+                <td>
+                  <div class="table-main">
+                    <strong>{{ permiso.codigo }}</strong>
+                    <small>{{ permiso.nombre }}</small>
+                  </div>
+                </td>
+                <td>{{ permiso.modulo || 'GENERAL' }}</td>
+                <td>
+                  <p-tag [value]="permiso.sistema ? 'Sistema' : 'Personalizado'" [severity]="permissionSeverity(permiso)" />
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </section>
+      </section>
+    </section>
+  </div>
+
+  <p-dialog
+    header="Nuevo rol"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="roleDialogVisible()"
+    (visibleChange)="roleDialogVisible.set($event)"
+    styleClass="role-create-dialog"
+  >
+    <form class="dialog-role-form">
+      <div class="dialog-intro">
+        <i class="pi pi-shield"></i>
+        <div>
+          <strong>Crear perfil de acceso</strong>
+          <span>Define el rol y selecciona sus permisos iniciales.</span>
+        </div>
+      </div>
+
+      <label>
+        Plantilla sugerida
+        <p-select
+          [options]="templateOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="rolForm.templateCode"
+          (ngModelChange)="applyTemplate($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Selecciona una plantilla"
+          [showClear]="true"
+        />
+      </label>
+
+      <div class="dialog-fields">
+        <label>
+          Nombre
+          <input pInputText name="dialog_rol_nombre" [(ngModel)]="rolForm.nombre" placeholder="Supervisor de tienda" (blur)="suggestRoleCodeFromName()" />
+        </label>
+        <label>
+          Codigo
+          <input pInputText name="dialog_rol_codigo" [(ngModel)]="rolForm.codigo" placeholder="SUPERVISOR_TIENDA" (input)="sanitizeRoleCode($event)" />
+        </label>
+      </div>
+
+      <label>
+        Descripcion
+        <input pInputText name="dialog_rol_descripcion" [(ngModel)]="rolForm.descripcion" placeholder="Describe las responsabilidades del rol" />
+      </label>
+
+      <div class="permission-editor permission-editor--dialog">
+        <div class="editor-head">
+          <strong>Permisos iniciales</strong>
+          <small>{{ createRolePermissionIds().length }} seleccionados</small>
+        </div>
+        <div class="permission-groups permission-groups--dialog">
+          @for (group of createPermissionGroups(); track group.modulo) {
+            <section class="permission-group">
+              <h3>{{ group.modulo }}</h3>
+              <div class="permission-list">
+                @for (permiso of group.permisos; track permiso.id) {
+                  <label class="permission-option">
+                    <input type="checkbox" [checked]="hasCreatePermission(permiso.id)" (change)="toggleCreatePermission(permiso.id)" />
+                    <div>
+                      <span>{{ permiso.nombre }}</span>
+                      <small>{{ permiso.codigo }}</small>
+                    </div>
+                  </label>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="roleDialogVisible.set(false)" />
+      <p-button label="Crear rol" icon="pi pi-save" [loading]="saving()" (onClick)="createRol()" />
+    </ng-template>
+  </p-dialog>
+</section>

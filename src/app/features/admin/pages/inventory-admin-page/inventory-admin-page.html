@@ -1,0 +1,453 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Stock y kardex</p>
+      <h1>Inventario operativo</h1>
+      <p>Registra entradas, salidas, traslados, lotes y precios con una vista rapida del stock actual.</p>
+    </div>
+    <div class="header-actions">
+      <p-button label="Excel inventario" icon="pi pi-file-excel" styleClass="p-button-success" [disabled]="!stock().length && !kardex().length" (onClick)="exportInventarioExcel()" />
+      <p-button label="Registrar compra" icon="pi pi-shopping-bag" styleClass="az-primary" (onClick)="openCompraDialog()" />
+      <p-button label="Ajuste / traslado" icon="pi pi-arrow-right-arrow-left" styleClass="az-secondary" (onClick)="openMovimientoDialog()" />
+      <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadData()" />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="metrics-grid">
+    <article>
+      <span>Lineas stock</span>
+      <strong>{{ inventoryMetrics().stockLines }}</strong>
+    </article>
+    <article>
+      <span>Stock bajo</span>
+      <strong>{{ inventoryMetrics().lowStock }}</strong>
+    </article>
+    <article>
+      <span>Sin stock</span>
+      <strong>{{ inventoryMetrics().noStock }}</strong>
+    </article>
+    <article>
+      <span>Por vencer</span>
+      <strong>{{ inventoryMetrics().expiring }}</strong>
+    </article>
+    <article>
+      <span>Vencidos</span>
+      <strong>{{ inventoryMetrics().expired }}</strong>
+    </article>
+    <article>
+      <span>Kardex</span>
+      <strong>{{ inventoryMetrics().recentMovements }}</strong>
+    </article>
+    <article>
+      <span>Compras registradas</span>
+      <strong>{{ inventoryMetrics().purchases }}</strong>
+    </article>
+    <article>
+      <span>Inversion acumulada</span>
+      <strong>S/ {{ inventoryMetrics().invested | number: '1.2-2' }}</strong>
+    </article>
+    <article>
+      <span>Ganancia proyectada</span>
+      <strong>S/ {{ inventoryMetrics().projectedProfit | number: '1.2-2' }}</strong>
+    </article>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <div>
+        <h2>Compras e ingresos por comprobante</h2>
+        <p>Consulta cuanto se invirtio y la rentabilidad proyectada de cada compra.</p>
+      </div>
+    </div>
+    <p-table [value]="compras()" [loading]="loading()" [paginator]="compras().length > 8" [rows]="8" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Comprobante</th>
+          <th>Proveedor</th>
+          <th>Almacen</th>
+          <th>Productos</th>
+          <th>Inversion</th>
+          <th>Venta proyectada</th>
+          <th>Ganancia proyectada</th>
+          <th>Margen</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
+          <td><strong>{{ item.tipoComprobante }} {{ item.numeroComprobante }}</strong></td>
+          <td>{{ item.proveedorDocumento || '' }} {{ item.proveedorNombre || 'Sin proveedor' }}</td>
+          <td>{{ item.almacenCodigo }}</td>
+          <td>{{ item.detalles.length }}</td>
+          <td>S/ {{ item.total | number: '1.2-2' }}</td>
+          <td>S/ {{ item.ventaProyectada | number: '1.2-2' }}</td>
+          <td><strong [class.profit-negative]="item.gananciaProyectada < 0">S/ {{ item.gananciaProyectada | number: '1.2-2' }}</strong></td>
+          <td>{{ item.margenPorcentaje | number: '1.2-2' }}%</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="9">Todavia no hay compras registradas por comprobante.</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <div>
+        <h2>Control de lotes y vencimientos</h2>
+        <p>Se alerta desde 30 dias antes. Los productos sin caducidad pueden operar sin fecha.</p>
+      </div>
+    </div>
+    <p-table [value]="activeStockLotes()" [loading]="loading()" [paginator]="activeStockLotes().length > 10" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Producto</th>
+          <th>Lote</th>
+          <th>Almacen</th>
+          <th>Stock</th>
+          <th>Vencimiento</th>
+          <th>Alerta</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr [class]="expiryRowClass(item)">
+          <td>{{ item.productoSku }} - {{ item.productoNombre }}</td>
+          <td>{{ item.codigoLote }}</td>
+          <td>{{ item.almacenCodigo }} - {{ item.almacenNombre }}</td>
+          <td>{{ item.stockActual }}</td>
+          <td>{{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : 'No aplica' }}</td>
+          <td>
+            <p-tag [value]="expiryDetail(item)" [severity]="expirySeverity(item)" />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">No hay lotes registrados con los filtros actuales.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head table-head--filters">
+      <h2>Stock por almacen</h2>
+      <div class="stock-filter">
+        <p-select
+          [options]="productoOptions()"
+          [ngModel]="stockProductoFilter()"
+          (ngModelChange)="stockProductoFilter.set($event)"
+          placeholder="Filtrar por producto"
+          [showClear]="true"
+        />
+        <p-select
+          [options]="almacenOptions()"
+          [ngModel]="stockAlmacenFilter()"
+          (ngModelChange)="stockAlmacenFilter.set($event)"
+          placeholder="Filtrar por almacen"
+          [showClear]="true"
+        />
+        <p-button label="Aplicar" styleClass="az-secondary" (onClick)="applyFilters()" />
+        <p-button label="Limpiar" styleClass="az-secondary p-button-outlined" (onClick)="clearFilters()" />
+        <p-button label="Stock Excel" icon="pi pi-file-excel" styleClass="p-button-success p-button-outlined" [disabled]="!stock().length" (onClick)="exportStockExcel()" />
+      </div>
+    </div>
+    <p-table [value]="stock()" [loading]="loading()" [paginator]="stock().length > 10" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Producto</th>
+          <th>SKU</th>
+          <th>Almacen</th>
+          <th>Cantidad</th>
+          <th>Minimo</th>
+          <th>Estado</th>
+          <th>Accion</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr [class]="stockRowClass(item)">
+          <td>{{ item.productoNombre }}</td>
+          <td>{{ item.productoSku }}</td>
+          <td>{{ item.almacenCodigo }} - {{ item.almacenNombre }}</td>
+          <td>{{ item.cantidad }}</td>
+          <td>{{ item.stockMinimo }}</td>
+          <td>
+            <p-tag [value]="stockStatus(item)" [severity]="stockStatusSeverity(item)" />
+          </td>
+          <td>
+            <button
+              type="button"
+              pButton
+              class="p-button-text p-button-info p-button-rounded"
+              icon="pi pi-arrow-right-arrow-left"
+              pTooltip="Registrar movimiento"
+              tooltipPosition="top"
+              (click)="openMovimientoDialog(item.productoId, item.almacenId)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>Kardex reciente</h2>
+      <p-button label="Kardex Excel" icon="pi pi-file-excel" styleClass="p-button-success p-button-outlined" [disabled]="!kardex().length" (onClick)="exportKardexExcel()" />
+    </div>
+    <p-table [value]="kardex()" [loading]="loading()" [paginator]="kardex().length > 10" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Almacen</th>
+          <th>Tipo</th>
+          <th>Motivo</th>
+          <th>Cantidad</th>
+          <th>Saldo</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.fechaMovimiento | date: 'yyyy-MM-dd HH:mm' }}</td>
+          <td>{{ item.productoSku }} - {{ item.productoNombre }}</td>
+          <td>{{ item.almacenCodigo }}</td>
+          <td>{{ item.tipoMovimiento }}</td>
+          <td>{{ item.motivo }}</td>
+          <td>{{ item.cantidad }}</td>
+          <td>{{ item.saldoResultante }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Registrar compra e ingreso"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="compraDialogVisible()"
+  (visibleChange)="compraDialogVisible.set($event)"
+  styleClass="purchase-dialog"
+>
+  <form class="purchase-form">
+    <section class="purchase-section">
+      <div class="purchase-section__head">
+        <div>
+          <strong>Comprobante y proveedor</strong>
+          <span>La compra quedara vinculada al stock, kardex y reportes.</span>
+        </div>
+      </div>
+      <div class="purchase-grid">
+        <label>
+          Tipo comprobante
+          <p-select name="tipoComprobanteCompra" [options]="comprobanteCompraOptions" [(ngModel)]="compraForm.tipoComprobante" />
+        </label>
+        <label>
+          Numero comprobante
+          <input pInputText name="numeroComprobanteCompra" [(ngModel)]="compraForm.numeroComprobante" placeholder="F001-000123" />
+        </label>
+        <label>
+          Fecha emision
+          <input pInputText type="date" name="fechaEmisionCompra" [(ngModel)]="compraForm.fechaEmision" />
+        </label>
+        <label>
+          Almacen destino
+          <p-select name="almacenCompra" [options]="almacenOptions()" [(ngModel)]="compraForm.almacenId" placeholder="Selecciona almacen" />
+        </label>
+        <label>
+          Documento proveedor
+          <input pInputText name="proveedorDocumentoCompra" [(ngModel)]="compraForm.proveedorDocumento" placeholder="RUC o DNI" />
+        </label>
+        <label>
+          Proveedor
+          <input pInputText name="proveedorNombreCompra" [(ngModel)]="compraForm.proveedorNombre" placeholder="Razon social o nombre" />
+        </label>
+      </div>
+    </section>
+
+    <section class="purchase-section">
+      <div class="purchase-section__head">
+        <div>
+          <strong>Productos comprados</strong>
+          <span>Registra costo y precio esperado para calcular rentabilidad.</span>
+        </div>
+        <button type="button" pButton class="az-secondary p-button-outlined" icon="pi pi-plus" label="Agregar producto" (click)="addCompraDetalle()"></button>
+      </div>
+
+      <div class="purchase-lines">
+        @for (detalle of compraForm.detalles; track $index) {
+          <article class="purchase-line">
+            <div class="purchase-line__main">
+              <label class="purchase-product">
+                Producto
+                <p-select
+                  [name]="'compraProducto-' + $index"
+                  [options]="productoOptions()"
+                  [(ngModel)]="detalle.productoId"
+                  (ngModelChange)="onCompraProductoChange($index, $event)"
+                  placeholder="Selecciona producto"
+                  [filter]="true"
+                />
+              </label>
+              <label>
+                Cantidad
+                <input pInputText type="number" min="0.01" [name]="'compraCantidad-' + $index" [(ngModel)]="detalle.cantidad" />
+              </label>
+              <label>
+                Costo unitario
+                <input pInputText type="number" min="0.01" [name]="'compraCosto-' + $index" [(ngModel)]="detalle.costoUnitario" />
+              </label>
+              <label>
+                Precio venta
+                <input pInputText type="number" min="0.01" [name]="'compraVenta-' + $index" [(ngModel)]="detalle.precioVenta" />
+              </label>
+              <button type="button" class="purchase-remove" title="Quitar producto" (click)="removeCompraDetalle($index)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+            <div class="purchase-line__result">
+              <span>Gasto <strong>S/ {{ (detalle.cantidad * detalle.costoUnitario) | number: '1.2-2' }}</strong></span>
+              <span>Venta proyectada <strong>S/ {{ (detalle.cantidad * detalle.precioVenta) | number: '1.2-2' }}</strong></span>
+              <span>Ganancia <strong>S/ {{ (detalle.cantidad * (detalle.precioVenta - detalle.costoUnitario)) | number: '1.2-2' }}</strong></span>
+            </div>
+            @if (compraDetalleControlsExpiry(detalle)) {
+              <div class="purchase-lot-grid">
+                <label>Codigo lote <input pInputText [name]="'compraLote-' + $index" [(ngModel)]="detalle.codigoLote" /></label>
+                <label>Fabricacion <input pInputText type="date" [name]="'compraFabricacion-' + $index" [(ngModel)]="detalle.fechaFabricacion" /></label>
+                <label>Vencimiento <input pInputText type="date" [name]="'compraVencimiento-' + $index" [(ngModel)]="detalle.fechaVencimiento" /></label>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </section>
+
+    <section class="purchase-totals">
+      <span>Inversion <strong>S/ {{ compraTotals().gasto | number: '1.2-2' }}</strong></span>
+      <span>Venta proyectada <strong>S/ {{ compraTotals().venta | number: '1.2-2' }}</strong></span>
+      <span>Ganancia proyectada <strong>S/ {{ compraTotals().ganancia | number: '1.2-2' }}</strong></span>
+      <span>Margen <strong>{{ compraTotals().margen | number: '1.2-2' }}%</strong></span>
+    </section>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="compraDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveCompra()">Registrar compra</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [header]="movementDialogTitle()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="movimientoDialogVisible()"
+  (visibleChange)="movimientoDialogVisible.set($event)"
+  styleClass="movement-dialog"
+>
+  <form class="dialog-form">
+    <div class="movement-summary">
+      {{ movementSummary() }}
+    </div>
+    <label>
+      Producto
+      <p-select
+        name="productoId"
+        [options]="productoOptions()"
+        [(ngModel)]="movimientoForm.productoId"
+        (ngModelChange)="onProductoChange($event)"
+        placeholder="Selecciona producto"
+      />
+    </label>
+    <label>
+      Almacen origen
+      <p-select
+        name="almacenId"
+        [options]="almacenOptions()"
+        [(ngModel)]="movimientoForm.almacenId"
+        placeholder="Selecciona almacen"
+      />
+    </label>
+    <label>
+      Tipo
+      <p-select
+        name="tipoMovimiento"
+        [options]="movimientoTypeOptions()"
+        [(ngModel)]="movimientoForm.tipoMovimiento"
+        (ngModelChange)="onTipoMovimientoChange($event)"
+        placeholder="Tipo de movimiento"
+      />
+    </label>
+    @if (movimientoForm.tipoMovimiento === 'TRASLADO') {
+      <label>
+        Almacen destino
+        <p-select
+          name="almacenDestinoId"
+          [options]="almacenOptions()"
+          [(ngModel)]="movimientoForm.almacenDestinoId"
+          placeholder="Selecciona almacen destino"
+        />
+      </label>
+    }
+    <label>
+      Cantidad
+      <input pInputText type="number" name="cantidad" [(ngModel)]="movimientoForm.cantidad" placeholder="0.00" />
+    </label>
+    @if (movimientoForm.tipoMovimiento === 'ENTRADA') {
+      <label>
+        Precio compra
+        <input pInputText type="number" name="precioCompra" [(ngModel)]="movimientoForm.precioCompra" placeholder="0.00" />
+      </label>
+      <label>
+        Precio venta
+        <input pInputText type="number" name="precioVenta" [(ngModel)]="movimientoForm.precioVenta" placeholder="0.00" />
+      </label>
+      <label>
+        Codigo lote
+        <input pInputText name="codigoLote" [(ngModel)]="movimientoForm.codigoLote" placeholder="Lote o serie de ingreso" />
+      </label>
+      @if (selectedProductControlsExpiry()) {
+        <div class="expiry-entry-note">
+          <i class="pi pi-clock"></i>
+          Este producto controla caducidad. Registra la fecha del lote para activar las alertas.
+        </div>
+        <label>
+          Fecha fabricacion
+          <input pInputText type="date" name="fechaFabricacion" [(ngModel)]="movimientoForm.fechaFabricacion" />
+        </label>
+        <label>
+          Fecha vencimiento
+          <input pInputText type="date" name="fechaVencimiento" [(ngModel)]="movimientoForm.fechaVencimiento" />
+        </label>
+      } @else {
+        <div class="expiry-entry-note expiry-entry-note--optional">
+          <i class="pi pi-check-circle"></i>
+          Este producto no controla caducidad. No necesita fecha de vencimiento.
+        </div>
+      }
+    }
+    <label>
+      Motivo
+      <input pInputText name="motivo" [(ngModel)]="movimientoForm.motivo" placeholder="VENTA, COMPRA, TRASLADO_INTERNO..." />
+    </label>
+    <label>
+      Referencia
+      <input pInputText name="referencia" [(ngModel)]="movimientoForm.referencia" placeholder="Nro comprobante, guia, etc." />
+    </label>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="movimientoDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveMovimiento()">{{ movementDialogTitle() }}</button>
+  </ng-template>
+</p-dialog>

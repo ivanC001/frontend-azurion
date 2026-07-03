@@ -1,0 +1,454 @@
+<section class="ventas-shell">
+  <header class="ventas-hero">
+    <div class="hero-copy">
+      <div class="hero-icon">
+        <i class="pi pi-shop"></i>
+      </div>
+      <div>
+        <p class="kicker">Operacion comercial</p>
+        <h1>Panel de Ventas</h1>
+        <p class="hero-text">
+          Registra ventas rápidas con ticket interno. Solo las boletas y facturas se envían al Facturador en segundo plano.
+        </p>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="loadData()">Actualizar</button>
+      <button pButton type="button" class="p-button-success" icon="pi pi-plus-circle" (click)="openNuevaFactura()">Nueva venta</button>
+    </div>
+  </header>
+
+  <section class="metrics-band">
+    <article>
+      <span>Total ventas</span>
+      <strong>{{ metrics().totalVentas }}</strong>
+    </article>
+    <article>
+      <span>Ventas hoy</span>
+      <strong>{{ metrics().ventasHoy }}</strong>
+    </article>
+    <article>
+      <span>Tickets internos</span>
+      <strong>{{ metrics().ticketsInternos }}</strong>
+    </article>
+    <article>
+      <span>Monto acumulado</span>
+      <strong>S/ {{ metrics().totalMonto | number: '1.2-2' }}</strong>
+    </article>
+  </section>
+
+  @if (errorMessage()) {
+    <div class="banner banner--error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+  @if (infoMessage()) {
+    <div class="banner banner--info">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ infoMessage() }}</span>
+    </div>
+  }
+
+  <section class="toolbar-band">
+    <label class="search-wrap">
+      <i class="pi pi-search"></i>
+      <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearch($event)" placeholder="Buscar por cliente, comprobante, documento o estado..." />
+    </label>
+    <div class="toolbar-actions">
+      <button pButton type="button" class="p-button-secondary p-button-text" icon="pi pi-filter-slash" (click)="onSearch('')">Limpiar</button>
+      <button pButton type="button" class="p-button-secondary p-button-text" icon="pi pi-sync" (click)="refreshVentas()">Recargar ventas</button>
+      <button pButton type="button" class="p-button-help p-button-text" icon="pi pi-file-import" (click)="openLatestTrace()">Ultima traza</button>
+    </div>
+  </section>
+
+  <section class="table-band">
+    <p-table
+      [value]="filteredVentas()"
+      [loading]="loading() && filteredVentas().length === 0"
+      [paginator]="filteredVentas().length > 12"
+      [rows]="12"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Comprobante</th>
+          <th>Cliente</th>
+          <th>Documento</th>
+          <th>Fecha</th>
+          <th>Importe</th>
+          <th>Facturacion</th>
+          <th>Proceso</th>
+          <th>Opciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-venta let-rowIndex="rowIndex">
+        <tr>
+          <td>{{ displayRowNumber(rowIndex) }}</td>
+          <td>
+            <div class="doc-cell">
+              <div>
+                <small>{{ documentTypeLabel(venta) }}</small>
+                <strong>{{ venta.externalId }}</strong>
+              </div>
+              <button type="button" pButton class="p-button-text p-button-rounded p-button-sm" icon="pi pi-copy" (click)="copyComprobante(venta)"></button>
+            </div>
+          </td>
+          <td>{{ venta.clienteNombre }}</td>
+          <td>{{ venta.clienteDocumento }}</td>
+          <td>{{ venta.fechaVenta | date: 'd/M/yyyy, h:mm:ss a' }}</td>
+          <td class="amount-cell">{{ venta.moneda }} {{ venta.total | number: '1.2-2' }}</td>
+          <td>
+            <p-tag [value]="rowEstadoLabel(venta)" [severity]="rowEstadoSeverity(venta)" />
+          </td>
+          <td>
+            <p-tag [value]="rowFacturadorLabel(venta)" [severity]="rowFacturadorSeverity(venta)" />
+          </td>
+          <td>
+            <div class="table-actions">
+              <button pButton type="button" class="p-button-rounded p-button-sm p-button-info p-button-text" icon="pi pi-eye" (click)="openVentaDetalle(venta)"></button>
+              @if (!isInternalTicket(venta)) {
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-help p-button-text"
+                icon="pi pi-code"
+                [disabled]="!hasTrace(venta)"
+                (click)="openTraceForVenta(venta)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-danger p-button-text"
+                icon="pi pi-file-pdf"
+                [disabled]="!canDownloadAsset(venta, 'pdf')"
+                (click)="openAsset(venta, 'pdf')"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-secondary p-button-text"
+                icon="pi pi-file"
+                [disabled]="!canDownloadAsset(venta, 'xml')"
+                (click)="openAsset(venta, 'xml')"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-contrast p-button-text"
+                icon="pi pi-download"
+                [disabled]="!canDownloadAsset(venta, 'cdr')"
+                (click)="openAsset(venta, 'cdr')"
+              ></button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">No hay ventas registradas para este tenant.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Nueva Venta"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="facturaDialogVisible()"
+  (visibleChange)="facturaDialogVisible.set($event)"
+  styleClass="venta-dialog"
+>
+  <section class="venta-form">
+    <div class="fact-alert" [class.fact-alert--local]="isTicketForm()">
+      @if (isTicketForm()) {
+        <strong>Venta rápida:</strong> genera ticket interno y termina sin esperar SUNAT.
+      } @else {
+        <strong>Facturación electrónica:</strong> la venta termina primero y el comprobante se procesa en segundo plano.
+      }
+    </div>
+
+    <div class="rule-box">{{ reglaComprobante() }}</div>
+
+    <div class="caja-live">
+      <div>
+        <span>Caja actual</span>
+        <strong>{{ currentCajaLabel() }}</strong>
+      </div>
+      <div>
+        <span>Fecha</span>
+        <strong>{{ facturaForm.fechaEmision | date: 'd/M/yyyy' }}</strong>
+      </div>
+      <div>
+        <span>Apertura</span>
+        <strong>
+          @if (currentCajaApertura() !== null) {
+            S/ {{ currentCajaApertura() | number: '1.2-2' }}
+          } @else {
+            -
+          }
+        </strong>
+      </div>
+      <div>
+        <span>Hora apertura</span>
+        <strong>
+          @if (cajaAperturadaEn()) {
+            {{ cajaAperturadaEn() | date: 'h:mm a' }}
+          } @else {
+            -
+          }
+        </strong>
+      </div>
+    </div>
+
+    <div class="form-grid top">
+      <label>
+        Tipo comprobante
+        <p-select
+          name="tipoComprobante"
+          [options]="comprobanteOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="facturaForm.tipoComprobante"
+          (ngModelChange)="onTipoComprobanteChange()"
+        />
+      </label>
+      <label>
+        Fecha emision
+        <input pInputText type="datetime-local" name="fechaEmision" [(ngModel)]="facturaForm.fechaEmision" />
+      </label>
+      <label>
+        Moneda
+        <p-select name="moneda" [options]="monedaOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.moneda" />
+      </label>
+      <label>
+        Tipo cambio
+        <input pInputText type="number" name="tipoCambio" [(ngModel)]="facturaForm.tipoCambio" />
+      </label>
+      <label>
+        Forma pago
+        <p-select name="formaPago" [options]="formaPagoOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.formaPago" />
+      </label>
+      <label>
+        Caja activa
+        <p-select name="cajaId" [options]="cajaOptions()" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.cajaId" />
+      </label>
+    </div>
+
+    @if (facturaForm.formaPago === 'CREDITO') {
+      <div class="form-grid top">
+        <label>
+          Monto cuota
+          <input pInputText type="number" name="cuotaMonto" [(ngModel)]="facturaForm.cuotaMonto" />
+        </label>
+        <label>
+          Fecha cuota
+          <input pInputText type="date" name="cuotaFechaPago" [(ngModel)]="facturaForm.cuotaFechaPago" />
+        </label>
+      </div>
+    }
+
+    @if (!isTicketForm()) {
+    <h3 class="section-title">Cliente y datos fiscales</h3>
+
+    <div class="form-grid client">
+      <label class="wide">
+        Cliente registrado
+        <p-select
+          name="clienteId"
+          [options]="clienteOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="facturaForm.clienteId"
+          (ngModelChange)="onClienteCatalogChange($event)"
+          placeholder="Selecciona cliente existente (opcional)"
+          [filter]="true"
+          [showClear]="true"
+        />
+      </label>
+      <label>
+        Tipo doc
+        <p-select
+          name="clienteTipoDoc"
+          [options]="clienteTipoDocOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="facturaForm.clienteTipoDoc"
+          [disabled]="facturaForm.tipoComprobante === 'FACTURA' || facturaForm.tipoComprobante === 'BOLETA_SIN_NOMBRE' || facturaForm.tipoComprobante === 'TICKET_VENTA'"
+          (ngModelChange)="onClienteTipoDocChange($event)"
+        />
+      </label>
+      <label>
+        Numero doc
+        <input
+          pInputText
+          name="clienteNumeroDoc"
+          [ngModel]="facturaForm.clienteNumeroDoc"
+          (ngModelChange)="onClienteNumeroDocChange($event)"
+          [placeholder]="clienteDocPlaceholder()"
+          [readonly]="clienteDocMaxLength() === 0"
+          [attr.maxlength]="clienteDocMaxLength()"
+        />
+      </label>
+      <label class="wide">
+        Nombre / Razon social
+        <input
+          pInputText
+          name="clienteNombre"
+          [(ngModel)]="facturaForm.clienteNombre"
+          placeholder="Cliente o empresa"
+          [readonly]="facturaForm.tipoComprobante === 'BOLETA_SIN_NOMBRE' || facturaForm.tipoComprobante === 'TICKET_VENTA'"
+        />
+      </label>
+      <label>
+        Direccion
+        <input pInputText name="clienteDireccion" [(ngModel)]="facturaForm.clienteDireccion" />
+      </label>
+      <label>
+        Email
+        <input pInputText name="clienteEmail" [(ngModel)]="facturaForm.clienteEmail" />
+      </label>
+      <label>
+        Telefono
+        <input pInputText name="clienteTelefono" [(ngModel)]="facturaForm.clienteTelefono" />
+      </label>
+    </div>
+    }
+
+    <h3 class="section-title section-title-row">
+      <span>Items</span>
+      <button type="button" pButton class="p-button-success p-button-rounded" icon="pi pi-plus" (click)="addItem()"></button>
+    </h3>
+
+    @for (item of facturaForm.items; track $index) {
+      <div class="item-row">
+        <label>
+          Producto
+          <p-select
+            [name]="'producto-' + $index"
+            [options]="productoOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="item.productoId"
+            (ngModelChange)="onProductoChange($index)"
+            placeholder="Selecciona producto"
+            [filter]="true"
+          />
+        </label>
+        <label>
+          Cantidad
+          <input pInputText type="number" [name]="'cantidad-' + $index" [(ngModel)]="item.cantidad" />
+        </label>
+        <label>
+          Descuento
+          <input pInputText type="number" [name]="'descuento-' + $index" [(ngModel)]="item.descuento" />
+        </label>
+        <label>
+          Precio
+          <input pInputText type="number" [name]="'precio-' + $index" [(ngModel)]="item.precioUnitario" />
+        </label>
+        <label>
+          Descripcion
+          <input pInputText [name]="'descripcion-' + $index" [(ngModel)]="item.descripcion" />
+        </label>
+        <label>
+          Stock
+          <p-tag [value]="stockDisponible(item) + ' und'" [severity]="stockSeverity(item)" />
+        </label>
+        <div class="item-total">
+          <span>Subtotal</span>
+          <strong>{{ item.moneda }} {{ subtotalItem(item) | number: '1.2-2' }}</strong>
+        </div>
+        <button
+          type="button"
+          pButton
+          class="p-button-rounded p-button-danger p-button-text remove-btn"
+          icon="pi pi-trash"
+          (click)="removeItem($index)"
+          [disabled]="facturaForm.items.length <= 1"
+        ></button>
+      </div>
+    }
+
+    <div class="total-row">
+      <span>Total venta</span>
+      <strong>{{ facturaForm.moneda }} {{ totalFactura() | number: '1.2-2' }}</strong>
+    </div>
+  </section>
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="p-button-secondary p-button-outlined" (click)="facturaDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="p-button-success" [loading]="saving()" (click)="submitFactura()" [disabled]="!hasCajasAbiertas()">
+      {{ submitButtonLabel() }}
+    </button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  header="Detalle de venta"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="detalleDialogVisible()"
+  (visibleChange)="detalleDialogVisible.set($event)"
+  [style]="{ width: '720px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (selectedVenta()) {
+    <div class="detalle-grid">
+      <div><span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong></div>
+      <div><span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong></div>
+      <div><span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong></div>
+      <div><span>Fecha</span><strong>{{ selectedVenta()!.fechaVenta | date: 'd/M/yyyy h:mm:ss a' }}</strong></div>
+      <div><span>Moneda</span><strong>{{ selectedVenta()!.moneda }}</strong></div>
+      <div><span>Total</span><strong>{{ selectedVenta()!.total | number: '1.2-2' }}</strong></div>
+      <div><span>Tipo</span><strong>{{ documentTypeLabel(selectedVenta()!) }}</strong></div>
+      <div><span>Facturacion</span><strong>{{ rowEstadoLabel(selectedVenta()!) }}</strong></div>
+      <div><span>Proceso</span><strong>{{ rowFacturadorLabel(selectedVenta()!) }}</strong></div>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog
+  header="Traza Facturador"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="traceDialogVisible()"
+  (visibleChange)="traceDialogVisible.set($event)"
+  [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (activeTrace()) {
+    <div class="trace-grid">
+      <div><span>Comprobante</span><strong>{{ activeTrace()!.externalId }}</strong></div>
+      <div><span>Tipo</span><strong>{{ activeTrace()!.tipoComprobante }}</strong></div>
+      <div><span>Estado SUNAT</span><strong>{{ activeTrace()!.sunatEstado || 'Sin estado' }}</strong></div>
+      <div><span>Documento ID</span><strong>{{ activeTrace()!.documentoId || '-' }}</strong></div>
+      <div><span>Status HTTP</span><strong>{{ activeTrace()!.statusCode }}</strong></div>
+      <div><span>Endpoint</span><strong>{{ activeTrace()!.endpoint }}</strong></div>
+      <div><span>Mensaje</span><strong>{{ activeTrace()!.message }}</strong></div>
+      <div><span>Ticket</span><strong>{{ activeTrace()!.ticketSunat || '-' }}</strong></div>
+    </div>
+
+    <div class="trace-actions">
+      <button pButton type="button" class="p-button-danger p-button-outlined" icon="pi pi-file-pdf" [disabled]="!activeTrace()!.pdfUrl" (click)="openActiveTraceAsset('pdf')">
+        PDF
+      </button>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-file" [disabled]="!activeTrace()!.xmlUrl" (click)="openActiveTraceAsset('xml')">
+        XML
+      </button>
+      <button pButton type="button" class="p-button-contrast p-button-outlined" icon="pi pi-download" [disabled]="!activeTrace()!.cdrUrl" (click)="openActiveTraceAsset('cdr')">
+        CDR
+      </button>
+    </div>
+
+    <pre class="trace-json">{{ tracePrettyJson() }}</pre>
+  }
+</p-dialog>

@@ -1,0 +1,234 @@
+<div
+  class="admin-shell"
+  [class.sidebar-expanded]="sidebarExpanded()"
+  [class.sidebar-collapsed]="isDesktop() && !sidebarExpanded()"
+  [class.sidebar-mobile-open]="!isDesktop() && mobileSidebarOpen()"
+>
+  @if (!isDesktop() && mobileSidebarOpen()) {
+    <button class="sidebar-backdrop" type="button" aria-label="Cerrar menu lateral" (click)="closeMobileSidebar()"></button>
+  }
+
+  <aside
+    class="admin-sidebar"
+    (mouseenter)="setSidebarHover(true)"
+    (mouseleave)="setSidebarHover(false)"
+  >
+    <div class="sidebar-brand">
+      <a class="brand-link" routerLink="/admin/dashboard" (click)="handleNavSelection('/admin/dashboard')">
+        <span class="brand-mark">
+          <img [src]="profile().logoPanelUrl || 'assets/logosinfondo.png'" alt="AZURION" class="brand-mark-image" />
+        </span>
+        <span class="brand-copy">
+          <strong>{{ profile().empresaNombre || 'AZURION' }}</strong>
+          <small>{{ profile().empresaNombre ? profile().panelTitle : 'Panel General' }}</small>
+        </span>
+      </a>
+    </div>
+
+    <div class="sidebar-meta">
+      <strong>{{ profile().tenantLabel }}</strong>
+      <small>{{ profile().tenantId }}</small>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (section of navSections(); track section.label) {
+        <section class="nav-section">
+          <p class="nav-section-title">{{ section.label }}</p>
+          <div class="nav-section-items">
+            @for (item of section.items; track item.label) {
+              @if (item.children?.length) {
+                <div class="nav-group" [class.nav-group-open]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)">
+                  <button type="button" class="nav-link nav-group-trigger" (click)="toggleGroup(item.groupId || '')">
+                    <span class="nav-link-main">
+                      @if (item.icon) {
+                        <span class="nav-icon-wrap">
+                          <i [class]="'pi ' + item.icon + ' nav-item-icon'"></i>
+                        </span>
+                      }
+                      <span class="nav-link-text">{{ item.label }}</span>
+                    </span>
+                    <i
+                      class="pi nav-chevron"
+                      [class.pi-angle-down]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
+                      [class.pi-angle-right]="!(isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))"
+                    ></i>
+                  </button>
+
+                  @if (sidebarExpanded() && (isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))) {
+                    <div class="nav-sub-links">
+                      @for (child of item.children; track child.route) {
+                        <a
+                          class="nav-sub-link"
+                          [routerLink]="child.route"
+                          routerLinkActive="active-link"
+                          (click)="handleNavSelection(child.route)"
+                        >
+                          @if (child.icon) {
+                            <i [class]="'pi ' + child.icon + ' sub-link-icon'"></i>
+                          }
+                          <span>{{ child.label }}</span>
+                        </a>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <a
+                  class="nav-link"
+                  [routerLink]="item.route"
+                  routerLinkActive="active-link"
+                  (click)="handleNavSelection(item.route)"
+                >
+                  @if (item.icon) {
+                    <span class="nav-icon-wrap">
+                      <i [class]="'pi ' + item.icon + ' nav-item-icon'"></i>
+                    </span>
+                  }
+                  <span class="nav-link-text">{{ item.label }}</span>
+                </a>
+              }
+            }
+          </div>
+        </section>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <small>{{ profile().role }}</small>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-header">
+      <div class="header-left">
+        <button class="header-toggle" type="button" aria-label="Mostrar u ocultar menu lateral" (click)="toggleSidebar()">
+          <i class="pi" [class.pi-bars]="!mobileSidebarOpen()" [class.pi-times]="mobileSidebarOpen() && !isDesktop()"></i>
+        </button>
+
+        <label class="header-search" aria-label="Busqueda rapida">
+          <i class="pi pi-search"></i>
+          <input
+            type="text"
+            [value]="searchQuery()"
+            placeholder="Buscar modulos o abrir una vista..."
+            #searchInput
+            (input)="updateSearchQuery(searchInput.value)"
+            (keydown.enter)="runQuickSearch()"
+          />
+          <button type="button" class="header-search-action" (click)="runQuickSearch()">Ir</button>
+        </label>
+      </div>
+
+      <div class="header-right">
+        <div class="header-actions-shell">
+          <div class="header-quick-actions" aria-label="Acciones rapidas">
+            <button
+              class="header-mini-button"
+              type="button"
+              [attr.aria-label]="themeButtonLabel()"
+              [attr.title]="themeButtonLabel()"
+              (click)="toggleThemeMode()"
+            >
+              <i [class]="'pi ' + themeButtonIcon()"></i>
+            </button>
+
+            <button
+              class="header-mini-button"
+              type="button"
+              aria-label="Preferencias visuales"
+              title="Preferencias visuales"
+              (click)="showAppearanceHint()"
+            >
+              <i class="pi pi-palette"></i>
+            </button>
+
+            <button
+              class="header-mini-button"
+              type="button"
+              aria-label="Notificaciones"
+              (click)="showNotificationsHint()"
+            >
+              <i class="pi pi-bell"></i>
+              @if (notificationItems().length) {
+                <span class="header-mini-badge">{{ notificationItems().length }}</span>
+              }
+            </button>
+          </div>
+
+          <button class="header-user" type="button" aria-label="Perfil de usuario" (click)="toggleAccountPanel()">
+            <span class="header-user-copy">
+              <strong>{{ profile().displayName }}</strong>
+              <small>{{ profile().branchLabel }}</small>
+            </span>
+            <span class="header-user-avatar">{{ profile().initials }}</span>
+          </button>
+
+          @if (notificationsPanelOpen()) {
+            <div class="header-popover header-popover-notifications" (click)="$event.stopPropagation()">
+              <div class="header-popover-head">
+                <div>
+                  <strong>Notificaciones</strong>
+                  <small>{{ notificationItems().length }} activas</small>
+                </div>
+                <button type="button" class="header-popover-action" (click)="markAllNotificationsRead()">Marcar leidas</button>
+              </div>
+
+              <div class="header-popover-list">
+                @for (item of notificationItems(); track item.title) {
+                  <button type="button" class="header-popover-item" (click)="openHeaderItem(item)">
+                    <span
+                      class="header-popover-icon"
+                      [class.tone-info]="item.tone === 'info'"
+                      [class.tone-success]="item.tone === 'success'"
+                      [class.tone-warn]="item.tone === 'warn'"
+                      [class.tone-danger]="item.tone === 'danger'"
+                    >
+                      <i [class]="'pi ' + item.icon"></i>
+                    </span>
+                    <span class="header-popover-copy">
+                      <strong>{{ item.title }}</strong>
+                      <small>{{ item.detail }}</small>
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (accountPanelOpen()) {
+            <div class="header-popover header-popover-account" (click)="$event.stopPropagation()">
+              <div class="header-account-card">
+                <div class="header-account-copy">
+                  <strong>{{ profile().username }}</strong>
+                  <small>{{ profile().email || profile().tenantLabel }}</small>
+                </div>
+              </div>
+
+              <div class="header-popover-list">
+                @for (item of accountMenuItems(); track item.action) {
+                  <button
+                    type="button"
+                    class="header-popover-item"
+                    [class.header-popover-item-danger]="item.action === 'logout'"
+                    (click)="openAccountItem(item)"
+                  >
+                    <span class="header-popover-icon">
+                      <i [class]="'pi ' + item.icon"></i>
+                    </span>
+                    <span class="header-popover-copy">{{ item.label }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <div class="content-shell">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+</div>

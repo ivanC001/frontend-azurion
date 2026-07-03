@@ -1,0 +1,181 @@
+<section class="ops-board">
+  <header class="board-top">
+    <div class="board-title">
+      <p class="board-eyebrow">{{ isGeneralAdmin() ? 'VISION EJECUTIVA' : 'OPERACION COMERCIAL' }}</p>
+      <h1>{{ dashboardTitle() }}</h1>
+      <p>
+        @if (isGeneralAdmin()) {
+          Resumen de empresas, planes y suscripciones con avance mensual.
+        } @else {
+          Resumen de ventas, caja, productos y clientes conectado al flujo real del tenant.
+        }
+      </p>
+    </div>
+
+    <div class="board-actions">
+      <label class="board-search">
+        <i class="pi pi-search"></i>
+        <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearch($event)" placeholder="Buscar datos del dashboard..." />
+      </label>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="load()" [loading]="loading()">
+        Actualizar
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <section class="kpi-grid">
+    @for (card of kpis(); track card.label) {
+      <article class="kpi-card" [class.tone-success]="card.tone === 'success'" [class.tone-warn]="card.tone === 'warn'">
+        <span class="kpi-icon">
+          <i [class]="card.icon"></i>
+        </span>
+        <div class="kpi-copy">
+          <small>{{ card.label }}</small>
+          <strong>{{ card.value }}</strong>
+          <p>{{ card.hint }}</p>
+        </div>
+        <span class="kpi-trend">{{ card.trend }}</span>
+      </article>
+    }
+  </section>
+
+  <section class="analytics-grid">
+    <article class="panel chart-panel">
+      <header class="panel-head">
+        <h2>Comportamiento mensual</h2>
+        <div class="legend">
+          <span><i class="dot dot-primary"></i>{{ chartModel().primaryName }}</span>
+          <span><i class="dot dot-secondary"></i>{{ chartModel().secondaryName }}</span>
+        </div>
+      </header>
+
+      <div class="chart-wrap">
+        <div class="chart-axis">
+          @for (guide of chartGuides; track guide) {
+            <span>{{ guide }}%</span>
+          }
+        </div>
+
+        <div class="chart-stage">
+          <svg viewBox="0 0 620 220" aria-hidden="true">
+            @for (guide of chartGuides; track guide) {
+              <line class="grid-line" x1="0" [attr.y1]="220 - ((guide / 100) * 220)" x2="620" [attr.y2]="220 - ((guide / 100) * 220)"></line>
+            }
+            <polyline class="line-secondary" [attr.points]="chartSvg().secondaryPoints"></polyline>
+            <polyline class="line-primary" [attr.points]="chartSvg().primaryPoints"></polyline>
+          </svg>
+
+          <div class="chart-labels">
+            @for (label of chartModel().labels; track label) {
+              <span>{{ label }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel bars-panel">
+      <header class="panel-head">
+        <h2>{{ isGeneralAdmin() ? 'Estado de suscripciones' : 'Ventas esta semana' }}</h2>
+      </header>
+
+      <div class="bars-wrap">
+        @for (bar of barSeries(); track bar.label) {
+          <div class="bar-item">
+            <div class="bar-rail">
+              <span class="bar-fill" [style.height]="barHeight(bar)"></span>
+            </div>
+            <strong>{{ bar.label }}</strong>
+            <small>{{ bar.detail }}</small>
+          </div>
+        }
+      </div>
+    </article>
+  </section>
+
+  <section class="bottom-grid">
+    <article class="panel table-panel">
+      <header class="panel-head">
+        <h2>{{ isGeneralAdmin() ? 'Empresas registradas' : 'Ultimas ventas' }}</h2>
+      </header>
+
+      <div class="table-wrap">
+        @if (isGeneralAdmin()) {
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>RUC</th>
+                <th>Tenant</th>
+                <th>Plan</th>
+                <th>Suscripcion</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of generalRows(); track row.tenantId) {
+                <tr>
+                  <td>{{ row.empresa }}</td>
+                  <td>{{ row.ruc }}</td>
+                  <td>{{ row.tenantId }}</td>
+                  <td>{{ row.plan }}</td>
+                  <td><p-tag [value]="row.estado" [severity]="statusSeverity(row.estado)" /></td>
+                  <td><p-tag [value]="row.activa ? 'Activa' : 'Inactiva'" [severity]="empresaBadgeTone(row.activa)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>Comprobante</th>
+                <th>Cliente</th>
+                <th>Documento</th>
+                <th>Fecha</th>
+                <th>Importe</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of tenantRows(); track row.externalId) {
+                <tr>
+                  <td>{{ row.externalId }}</td>
+                  <td>{{ row.clienteNombre }}</td>
+                  <td>{{ row.clienteDocumento }}</td>
+                  <td>{{ row.fechaVenta | date: 'd/M/yyyy, h:mm a' }}</td>
+                  <td>{{ row.moneda }} {{ row.total | number: '1.2-2' }}</td>
+                  <td><p-tag [value]="row.facturacionEstado || 'PENDIENTE'" [severity]="statusSeverity(row.facturacionEstado)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </article>
+
+    <article class="panel quick-panel">
+      <header class="panel-head">
+        <h2>Acciones rapidas</h2>
+      </header>
+
+      <div class="quick-links">
+        @for (link of quickLinks(); track link.route) {
+          <a [routerLink]="link.route" class="quick-link">
+            <span><i [class]="link.icon"></i></span>
+            <strong>{{ link.label }}</strong>
+            <i class="pi pi-angle-right"></i>
+          </a>
+        }
+      </div>
+    </article>
+  </section>
+</section>
+

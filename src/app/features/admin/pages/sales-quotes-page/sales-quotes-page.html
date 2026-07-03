@@ -1,0 +1,174 @@
+<section class="quotes-shell">
+  <header class="quotes-header">
+    <div>
+      <p class="quotes-eyebrow">Ventas</p>
+      <h1>Cotizaciones</h1>
+      <p>Crea propuestas comerciales sin descontar stock. Solo al convertir se registra la venta.</p>
+    </div>
+    <div class="header-actions">
+      <p-select
+        [options]="cajaOptions()"
+        [ngModel]="selectedCajaId()"
+        (ngModelChange)="selectedCajaId.set($event)"
+        placeholder="Caja abierta"
+        [showClear]="true"
+      />
+      <p-select
+        [options]="documentOptions"
+        [ngModel]="convertDocumentType()"
+        (ngModelChange)="convertDocumentType.set($event)"
+      />
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" label="Recargar" [loading]="loading()" (click)="load()"></button>
+      <button pButton type="button" class="az-primary" icon="pi pi-plus" label="Nueva cotizacion" (click)="openDialog()"></button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="metrics-grid">
+    <article>
+      <span>Total</span>
+      <strong>{{ metrics().total }}</strong>
+    </article>
+    <article>
+      <span>Abiertas</span>
+      <strong>{{ metrics().abiertas }}</strong>
+    </article>
+    <article>
+      <span>Convertidas</span>
+      <strong>{{ metrics().convertidas }}</strong>
+    </article>
+    <article>
+      <span>Monto cotizado</span>
+      <strong>S/ {{ metrics().monto | number: '1.2-2' }}</strong>
+    </article>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>Listado de cotizaciones</h2>
+      <span>{{ cotizaciones().length }} registro(s)</span>
+    </div>
+    <p-table [value]="cotizaciones()" [loading]="loading()" [paginator]="cotizaciones().length > 12" [rows]="12" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Sucursal</th>
+          <th>Fecha</th>
+          <th>Vence</th>
+          <th class="cell-right">Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>
+            <strong>{{ item.clienteNombre || 'Cliente no especificado' }}</strong>
+            <span>{{ item.clienteDocumento || '-' }}</span>
+          </td>
+          <td>{{ item.sucursalNombre }}</td>
+          <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : '-' }}</td>
+          <td class="cell-right">S/ {{ item.total | number: '1.2-2' }}</td>
+          <td><p-tag [value]="item.estado" [severity]="statusSeverity(item.estado)"></p-tag></td>
+          <td>
+            <div class="row-actions">
+              @if (item.estado === 'BORRADOR') {
+                <button pButton type="button" class="p-button-text" icon="pi pi-send" title="Marcar enviada" (click)="updateEstado(item, 'ENVIADA')"></button>
+              }
+              @if (item.estado === 'BORRADOR' || item.estado === 'ENVIADA') {
+                <button pButton type="button" class="p-button-text success" icon="pi pi-check" title="Aceptar" (click)="updateEstado(item, 'ACEPTADA')"></button>
+                <button pButton type="button" class="p-button-text danger" icon="pi pi-times" title="Rechazar" (click)="updateEstado(item, 'RECHAZADA')"></button>
+              }
+              <button pButton type="button" class="p-button-text" icon="pi pi-file-pdf" title="PDF" [loading]="pdfId() === item.id" (click)="downloadPdf(item)"></button>
+              @if (item.estado === 'ACEPTADA') {
+                <button pButton type="button" class="p-button-text success" icon="pi pi-shopping-cart" title="Convertir en venta" [loading]="convertingId() === item.id" (click)="convertToSale(item)"></button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">Todavia no hay cotizaciones registradas.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Nueva cotizacion"
+  [modal]="true"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [style]="{ width: 'min(72rem, 96vw)' }"
+>
+  <form class="quote-form" (ngSubmit)="save()">
+    <div class="form-grid">
+      <label>
+        Cliente
+        <p-select [options]="clienteOptions()" [(ngModel)]="form.clienteId" name="clienteId" placeholder="Cliente opcional" [showClear]="true" [filter]="true" />
+      </label>
+      <label>
+        Sucursal
+        <p-select [options]="sucursalOptions()" [(ngModel)]="form.sucursalId" name="sucursalId" placeholder="Sucursal" [filter]="true" />
+      </label>
+      <label>
+        Vencimiento
+        <input pInputText type="date" [(ngModel)]="form.fechaVencimiento" name="fechaVencimiento" />
+      </label>
+      <label>
+        Moneda
+        <input pInputText [(ngModel)]="form.moneda" name="moneda" />
+      </label>
+    </div>
+
+    <div class="details-panel">
+      <div class="details-head">
+        <strong>Productos y servicios</strong>
+        <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-plus" label="Agregar item" (click)="addLine()"></button>
+      </div>
+      @for (line of form.detalles; track $index) {
+        <div class="detail-row">
+          <p-select
+            [options]="productoOptions()"
+            [(ngModel)]="line.productoId"
+            [name]="'producto-' + $index"
+            placeholder="Producto"
+            [filter]="true"
+            (ngModelChange)="onProductChange(line)"
+          />
+          <input pInputText [(ngModel)]="line.descripcion" [name]="'descripcion-' + $index" placeholder="Descripcion" />
+          <input pInputText type="number" [(ngModel)]="line.cantidad" [name]="'cantidad-' + $index" placeholder="Cant." />
+          <input pInputText type="number" [(ngModel)]="line.precioUnitario" [name]="'precio-' + $index" placeholder="Precio" />
+          <input pInputText type="number" [(ngModel)]="line.descuento" [name]="'descuento-' + $index" placeholder="Desc." />
+          <strong>S/ {{ lineTotal(line) | number: '1.2-2' }}</strong>
+          <button pButton type="button" class="p-button-text danger" icon="pi pi-trash" (click)="removeLine($index)"></button>
+        </div>
+      }
+    </div>
+
+    <label class="full">
+      Observacion
+      <textarea [(ngModel)]="form.observacion" name="observacion" rows="3" placeholder="Condiciones, entrega o nota interna"></textarea>
+    </label>
+
+    <footer class="dialog-footer">
+      <div>
+        <span>Total cotizado</span>
+        <strong>S/ {{ formTotal() | number: '1.2-2' }}</strong>
+      </div>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" label="Cancelar" (click)="dialogVisible.set(false)"></button>
+      <button pButton type="submit" class="az-primary" icon="pi pi-save" label="Guardar" [loading]="saving()"></button>
+    </footer>
+  </form>
+</p-dialog>

@@ -1,0 +1,105 @@
+.platform-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 1.2rem;
+
+  h1 {
+    margin: 0;
+  }
+
+  p {
+    color: #64748b;
+    margin: 0.4rem 0 0;
+  }
+}
+
+.page-eyebrow {
+  color: #136f98 !important;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0 !important;
+  text-transform: uppercase;
+}
+
+.header-side {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.alert {
+  border-radius: 0.75rem;
+  padding: 0.8rem;
+}
+
+.alert--error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.alert--success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.content-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 340px) 1fr;
+}
+
+.form-panel,
+.table-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+}
+
+.form-panel {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+
+  h2 {
+    margin: 0 0 0.2rem;
+  }
+
+  label {
+    color: #334155;
+    display: grid;
+    font-size: 0.9rem;
+    font-weight: 700;
+    gap: 0.4rem;
+  }
+}
+
+:host ::ng-deep .save-btn {
+  width: 100%;
+}
+
+.table-panel {
+  overflow: hidden;
+  padding: 0.75rem;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.45rem;
+}
+
+@media (max-width: 900px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

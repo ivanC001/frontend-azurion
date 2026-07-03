@@ -1,0 +1,20 @@
+.tax-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) 20rem; }
+.tax-panel, .priority-panel { background: var(--az-surface); border: 1px solid var(--az-border); border-radius: .8rem; padding: 1.2rem; }
+.tax-panel__head { align-items: center; display: flex; gap: .8rem; margin-bottom: 1.2rem; }
+.tax-panel__head > span { align-items: center; background: #e0f2fe; border-radius: .65rem; color: #0284c7; display: flex; height: 2.8rem; justify-content: center; width: 2.8rem; }
+.tax-panel h2, .priority-panel h2 { color: var(--az-text); font-size: 1.05rem; margin: 0; }
+.tax-panel p { color: var(--az-text-soft); margin: .2rem 0 0; }
+.tax-grid { display: grid; gap: .9rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tax-grid label { color: var(--az-text); display: grid; font-weight: 750; gap: .35rem; }
+.tax-summary { background: color-mix(in srgb, #0ea5e9 7%, var(--az-surface)); border: 1px solid color-mix(in srgb, #0ea5e9 25%, var(--az-border)); display: grid; gap: .65rem; grid-template-columns: repeat(4, 1fr); margin-top: 1rem; padding: .8rem; }
+.tax-summary span { color: var(--az-text-soft); display: grid; font-size: .78rem; gap: .15rem; }
+.tax-summary strong { color: var(--az-text); font-size: .95rem; }
+.tax-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.priority-panel ol { display: grid; gap: .7rem; list-style: none; padding: 0; }
+.priority-panel li { border-bottom: 1px solid var(--az-border); display: grid; gap: .15rem; padding: .65rem 0; }
+.priority-panel li span, .pos-note span { color: var(--az-text-soft); font-size: .8rem; }
+.pos-note { align-items: start; background: color-mix(in srgb, #10b981 9%, var(--az-surface)); border: 1px solid color-mix(in srgb, #10b981 30%, var(--az-border)); display: grid; gap: .6rem; grid-template-columns: auto 1fr; padding: .8rem; }
+.pos-note i { color: #059669; }
+.pos-note div { display: grid; gap: .2rem; }
+:host ::ng-deep .p-select { width: 100%; }
+@media (max-width: 980px) { .tax-layout, .tax-grid, .tax-summary { grid-template-columns: 1fr; } }

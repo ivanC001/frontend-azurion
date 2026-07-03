@@ -1,0 +1,138 @@
+<section class="platform-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Panel General</p>
+      <h1>Control de empresas y cumplimiento</h1>
+      <p>Gestion de pagos, bloqueo por mora y administradores por tenant.</p>
+    </div>
+    <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="selector-panel">
+    <label>
+      Empresa objetivo
+      <p-select
+        [options]="empresaOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="selectedEmpresaId"
+        (ngModelChange)="onEmpresaChange()"
+        placeholder="Selecciona empresa"
+      />
+    </label>
+    @if (selectedEmpresa(); as empresa) {
+      <div class="empresa-summary">
+        <strong>{{ empresa.razonSocial }}</strong>
+        <span>RUC {{ empresa.ruc }} · Tenant {{ empresa.tenantId }}</span>
+      </div>
+    }
+  </section>
+
+  <div class="content-grid">
+    <section class="control-panel">
+      <h2>Suscripcion y pagos</h2>
+      <div class="actions-row">
+        <p-button label="Habilitar empresa" size="small" severity="secondary" [disabled]="saving()" (onClick)="empresaActivationNotice('habilitar')" />
+        <p-button label="Deshabilitar empresa" size="small" severity="secondary" [disabled]="saving()" (onClick)="empresaActivationNotice('deshabilitar')" />
+      </div>
+      @if (selectedSubscription(); as suscripcion) {
+        <p>Estado actual: <p-tag [value]="suscripcion.estado" [severity]="statusSeverity(suscripcion.estado)" /></p>
+        <div class="actions-row">
+          <p-button label="Activar" size="small" [disabled]="saving()" (onClick)="updateSubscriptionStatus('ACTIVA')" />
+          <p-button label="Suspender" size="small" severity="warn" [disabled]="saving()" (onClick)="updateSubscriptionStatus('SUSPENDIDA')" />
+          <p-button label="Cancelar" size="small" severity="danger" [disabled]="saving()" (onClick)="updateSubscriptionStatus('CANCELADA')" />
+        </div>
+      } @else {
+        <p class="muted">La empresa no tiene suscripcion registrada.</p>
+      }
+    </section>
+
+    <section class="table-panel">
+      <h2>Administradores y usuarios del tenant</h2>
+      <p-table [value]="usuariosTenant()" [loading]="loading()" [paginator]="usuariosTenant().length > 6" [rows]="6" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Usuario</th>
+            <th>Nombres</th>
+            <th>Estado</th>
+            <th>Roles</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-user>
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.nombres }}</td>
+            <td><p-tag [value]="user.activo ? 'Activo' : 'Bloqueado'" [severity]="userSeverity(user.activo)" /></td>
+            <td>
+              <input
+                pInputText
+                [ngModel]="rolesInputByUser()[user.id]"
+                (ngModelChange)="setRolesInput(user.id, $event)"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </td>
+            <td class="actions-cell">
+              <p-button
+                [label]="user.activo ? 'Bloquear' : 'Habilitar'"
+                size="small"
+                [severity]="user.activo ? 'warn' : undefined"
+                [disabled]="saving()"
+                (onClick)="toggleUser(user)"
+              />
+              <p-button label="Guardar roles" size="small" severity="secondary" [disabled]="saving()" (onClick)="updateUserRoles(user)" />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+
+  <section class="modules-panel">
+    <div class="modules-panel__head">
+      <div>
+        <h2>Modulos contratados por empresa</h2>
+        <p>
+          Como administrador general puedes decidir que empresa usa CRM, Facturacion, Inventario,
+          Caja y los demas modulos. Al guardar, AZURION ejecuta solo las migraciones pendientes
+          necesarias para los modulos activos.
+        </p>
+      </div>
+
+      <div class="modules-panel__summary">
+        <strong>{{ activeModuleCount() }}</strong>
+        <span>modulos activos</span>
+      </div>
+    </div>
+
+    <div class="modules-grid">
+      @for (modulo of moduleCards(); track modulo.id) {
+        <label class="module-card" [class.module-card--active]="modulo.activo">
+          <input
+            type="checkbox"
+            [checked]="modulo.activo"
+            (change)="toggleCompanyModule(modulo.codigo, $any($event.target).checked)"
+          />
+          <div class="module-card__copy">
+            <strong>{{ modulo.nombre }}</strong>
+            <small>{{ modulo.codigo }}</small>
+            <p>{{ modulo.descripcion || 'Modulo contratable de la plataforma.' }}</p>
+          </div>
+          <p-tag [value]="modulo.activo ? 'Activo' : 'Inactivo'" [severity]="modulo.activo ? 'success' : 'danger'" />
+        </label>
+      }
+    </div>
+
+    <div class="actions-row">
+      <p-button label="Recargar modulos" size="small" severity="secondary" [disabled]="saving()" (onClick)="onEmpresaChange()" />
+      <p-button label="Guardar modulos" size="small" [loading]="saving()" (onClick)="saveModules()" />
+    </div>
+  </section>
+</section>

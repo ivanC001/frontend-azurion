@@ -1,0 +1,1486 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  --container-bg-color: 255 255 255;
+  --layout-bg-color: 247 250 252;
+  --inverted-bg-color: 0 20 40;
+  --base-text-color: 31 31 31;
+  --az-dark: #111827;
+  --az-slate: #1d2939;
+  --az-blue: #465fff;
+  --az-blue-soft: #eef2ff;
+  --az-cyan: #0ba5ec;
+  --az-cyan-hover: #0284c7;
+  --az-success: #10b981;
+  --az-bg: #f3f6fb;
+  --az-surface: #ffffff;
+  --az-surface-hover: #f2f4f7;
+  --az-text: #101828;
+  --az-text-soft: #667085;
+  --az-border: #dbe3ee;
+  --az-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --az-shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --az-shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.12);
+}
+
+html.dark {
+  color-scheme: dark;
+  --container-bg-color: 16 24 40;
+  --layout-bg-color: 16 24 40;
+  --base-text-color: 255 255 255;
+  --az-blue: #465fff;
+  --az-cyan: #0ba5ec;
+  --az-success: #12b76a;
+  --az-bg: #101828;
+  --az-surface: rgba(255, 255, 255, 0.03);
+  --az-surface-solid: #101828;
+  --az-surface-alt: #1a2231;
+  --az-surface-hover: rgba(255, 255, 255, 0.05);
+  --az-text: rgba(255, 255, 255, 0.9);
+  --az-text-soft: #98a2b3;
+  --az-border: #1d2939;
+  --az-blue-soft: rgba(70, 95, 255, 0.12);
+  --az-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.36);
+  --az-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --az-shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
+}
+
+html {
+  scroll-behavior: smooth;
+  color: rgb(var(--base-text-color));
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--az-text);
+  font-family:
+    Inter,
+    Outfit,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  margin: 0;
+  background: var(--az-bg);
+  color-scheme: inherit;
+  transition:
+    background-color 0.24s ease,
+    color 0.24s ease;
+}
+
+html.dark body {
+  background: var(--az-bg);
+  color: var(--az-text);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.42) transparent;
+}
+
+html.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  height: 7px;
+  width: 7px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.42);
+  border-radius: 7px;
+}
+
+html.dark *::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.section-shell {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 1.25rem;
+}
+
+.section-kicker {
+  color: var(--az-cyan);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+}
+
+.section-title {
+  color: var(--az-text);
+  font-size: 3rem;
+  letter-spacing: 0;
+  line-height: 1.06;
+  margin: 0;
+}
+
+.section-copy {
+  color: var(--az-text-soft);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin: 1rem 0 0;
+  max-width: 680px;
+}
+
+.p-button.az-primary,
+.az-primary {
+  background: linear-gradient(135deg, var(--az-blue), #5b7cfa);
+  border: 0;
+  box-shadow: 0 14px 30px rgba(70, 95, 255, 0.22);
+  color: #ffffff;
+}
+
+.p-button.az-primary:hover,
+.az-primary:hover {
+  background: linear-gradient(135deg, #3641f5, #465fff);
+}
+
+.p-button.az-secondary,
+.az-secondary {
+  background: #ffffff;
+  border: 1px solid var(--az-border);
+  color: var(--az-text);
+}
+
+.p-button.az-secondary:hover,
+.az-secondary:hover {
+  border-color: rgba(70, 95, 255, 0.35);
+  color: var(--az-blue);
+}
+
+html.dark .p-button.az-secondary,
+html.dark .az-secondary {
+  background: #1d2939;
+  border-color: var(--az-border);
+  color: #98a2b3;
+}
+
+html.dark .p-button.az-secondary:hover,
+html.dark .az-secondary:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #344054;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.az-toast-bridge-hidden {
+  display: none !important;
+}
+
+.p-toast {
+  max-width: min(92vw, 28rem);
+}
+
+.p-toast .p-toast-message {
+  border-radius: 1rem;
+  box-shadow: var(--az-shadow-lg);
+}
+
+.p-toast .p-toast-message-content {
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1rem 1rem 0.95rem;
+}
+
+.p-toast .p-toast-summary {
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.p-toast .p-toast-detail {
+  color: var(--az-text-soft);
+  line-height: 1.45;
+  margin-top: 0.2rem;
+}
+
+html.dark .p-toast .p-toast-message {
+  background: #101828;
+  border: 1px solid var(--az-border);
+}
+
+html.dark .p-toast .p-toast-message-content {
+  color: var(--az-text);
+}
+
+html.dark .p-toast .p-toast-detail {
+  color: var(--az-text-soft);
+}
+
+html.dark
+  .admin-content
+  :is(
+    [class$='-panel'],
+    [class$='-card'],
+    [class$='-header'],
+    .metrics-grid article,
+    .summary-strip
+  ) {
+  background: var(--az-surface);
+  border-color: var(--az-border);
+  color: var(--az-text);
+}
+
+html.dark
+  .admin-content
+  :is(
+    .board-top,
+    .kpi-card,
+    .panel,
+    .quick-link,
+    .table-panel,
+    .reports-header,
+    .quick-range-panel,
+    .filters-panel,
+    .metrics-grid article
+  ) {
+  background: var(--az-surface) !important;
+  border-color: var(--az-border) !important;
+  box-shadow: none !important;
+  color: var(--az-text);
+}
+
+html.dark .admin-content :is(h1, h2, h3, h4, label, strong) {
+  color: var(--az-text) !important;
+}
+
+html.dark .admin-content :is(p, small) {
+  color: var(--az-text-soft) !important;
+}
+
+html.dark .admin-content td {
+  color: var(--az-text) !important;
+}
+
+html.dark
+  .admin-content
+  :is(
+    .summary-strip,
+    .table-head,
+    .filters-panel label,
+    .quick-range-panel span,
+    .metrics-grid span
+  ) {
+  color: var(--az-text-soft) !important;
+}
+
+html.dark .admin-content :is(.reports-eyebrow, .section-kicker) {
+  color: var(--az-blue) !important;
+}
+
+html.dark .admin-content :is(.board-eyebrow, .kpi-trend) {
+  color: #12b76a !important;
+}
+
+html.dark .admin-content :is(.kpi-icon, .quick-link span) {
+  background: #1d2939 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+html.dark .admin-content :is(.bar-rail, th) {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+html.dark .admin-content :is(.grid-line) {
+  stroke: #1d2939 !important;
+}
+
+html.dark .admin-content :is(th, td, .panel-head) {
+  border-color: var(--az-border) !important;
+}
+
+html.dark
+  .admin-content
+  :is(input, textarea, select, .p-inputtext, .p-select, .p-dropdown, .p-multiselect) {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--az-border);
+  color: var(--az-text);
+}
+
+html.dark .admin-content :is(input, textarea, .p-inputtext)::placeholder {
+  color: var(--az-text-soft);
+}
+
+html.dark
+  .admin-content
+  :is(
+    .p-datatable,
+    .p-datatable-table,
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td
+  ) {
+  background: transparent;
+  border-color: var(--az-border);
+  color: var(--az-text);
+}
+
+html.dark .admin-content .p-datatable-tbody > tr:hover > td {
+  background: var(--az-surface-hover);
+}
+
+.admin-content,
+.admin-content
+  :is(
+    .admin-page,
+    .page-header,
+    .content-grid,
+    .stats-grid,
+    .table-panel,
+    .form-panel,
+    .dialog-form,
+    .tenant-toolbar,
+    .table-head
+  ) {
+  min-width: 0;
+}
+
+.admin-content :is(.page-header, .table-head, .tenant-toolbar) {
+  overflow-wrap: anywhere;
+}
+
+.admin-content :is(.form-panel, .dialog-form) label {
+  min-width: 0;
+}
+
+.admin-content
+  :is(
+    input,
+    textarea,
+    select,
+    .p-inputtext,
+    .p-select,
+    .p-dropdown,
+    .p-multiselect,
+    .p-inputnumber,
+    .p-inputnumber-input
+  ) {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-content input[type='checkbox'],
+.admin-content input[type='radio'] {
+  flex: 0 0 auto;
+  height: 1rem;
+  max-width: 1rem;
+  min-width: 1rem;
+  width: 1rem;
+}
+
+.admin-content :is(.p-button, button[pButton]) {
+  max-width: 100%;
+}
+
+.admin-content :is(.p-button-label) {
+  line-height: 1.15;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-content .p-dialog {
+  max-height: calc(100dvh - 2rem);
+}
+
+.admin-content .p-dialog .p-dialog-content {
+  overflow-x: hidden;
+}
+
+.admin-content .p-dialog .p-dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.admin-content .p-datatable-wrapper {
+  max-width: 100%;
+}
+
+.admin-page {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.page-header {
+  align-items: center;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--az-surface) 96%, #ffffff 4%),
+      color-mix(in srgb, var(--az-blue-soft) 72%, #ecfeff 28%)
+    ),
+    radial-gradient(
+      circle at right top,
+      color-mix(in srgb, var(--az-cyan) 16%, transparent),
+      transparent 38%
+    );
+  border: 1px solid var(--az-border);
+  border-radius: 0.95rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.82rem 0.95rem;
+}
+
+.page-header h1 {
+  color: var(--az-text);
+  font-size: clamp(1.12rem, 1.45vw, 1.42rem);
+  font-weight: 820;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.page-header p {
+  color: var(--az-text-soft);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  margin: 0.28rem 0 0;
+  max-width: 58rem;
+}
+
+.page-eyebrow {
+  color: #0f766e !important;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  margin: 0 0 0.22rem !important;
+  text-transform: uppercase;
+}
+
+.header-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.alert,
+.banner {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.78rem 0.85rem;
+}
+
+.alert--error,
+.banner--error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.alert--success {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #047857;
+}
+
+.banner--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.stats-grid,
+.metrics-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  min-width: 0;
+}
+
+.stats-grid article,
+.metrics-grid article {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  box-shadow: var(--az-shadow-sm);
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+  padding: 0.68rem 0.82rem;
+}
+
+.stats-grid span,
+.metrics-grid span {
+  color: var(--az-text-soft);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stats-grid strong,
+.metrics-grid strong {
+  color: var(--az-text);
+  font-size: 1.08rem;
+  font-weight: 850;
+}
+
+.content-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.form-panel,
+.table-panel,
+.tenant-toolbar,
+.toolbar-band,
+.table-band {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  box-shadow: var(--az-shadow-sm);
+  min-width: 0;
+}
+
+.form-panel,
+.tenant-toolbar {
+  padding: 1rem;
+}
+
+.form-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.form-panel h2,
+.table-head h2,
+.tenant-toolbar h2 {
+  color: var(--az-text);
+  font-size: 0.98rem;
+  font-weight: 850;
+  margin: 0;
+}
+
+.panel-copy,
+.tenant-toolbar p {
+  color: var(--az-text-soft);
+  line-height: 1.45;
+  margin: 0.25rem 0 0;
+}
+
+.form-panel label,
+.dialog-form label,
+.tenant-field {
+  color: color-mix(in srgb, var(--az-text) 88%, var(--az-text-soft) 12%);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 750;
+  gap: 0.38rem;
+  min-width: 0;
+}
+
+.table-panel,
+.table-band {
+  overflow: hidden;
+}
+
+.table-head {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.72rem 0.85rem;
+}
+
+.table-tools {
+  flex: 1 1 18rem;
+  min-width: min(18rem, 100%);
+}
+
+.row-actions,
+.table-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.16rem;
+}
+
+.count-chip {
+  background: var(--az-blue-soft);
+  border: 1px solid color-mix(in srgb, var(--az-border) 65%, var(--az-blue) 35%);
+  border-radius: 999px;
+  color: var(--az-blue);
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0.34rem 0.62rem;
+}
+
+.tenant-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.tenant-field {
+  min-width: min(380px, 100%);
+}
+
+.dialog-form {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(13rem, 1fr));
+  padding-top: 0.2rem;
+}
+
+.span-2 {
+  grid-column: 1 / -1;
+}
+
+.section-heading {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+}
+
+.section-heading strong,
+.section-heading span {
+  display: block;
+}
+
+.section-heading strong {
+  color: var(--az-text);
+}
+
+.section-heading span {
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+  font-weight: 650;
+  margin-top: 0.18rem;
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--az-text-soft);
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--az-text);
+}
+
+.admin-content .p-datatable {
+  font-size: 0.84rem;
+}
+
+.admin-content .p-datatable .p-datatable-thead > tr > th {
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  border: 0;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 0.58rem 0.68rem;
+  white-space: nowrap;
+}
+
+.admin-content .p-datatable .p-datatable-tbody > tr > td {
+  border-bottom: 1px solid var(--az-border);
+  color: var(--az-text);
+  padding: 0.58rem 0.68rem;
+  vertical-align: middle;
+}
+
+.admin-content :is(.page-header, .reports-header, .doc-header, .board-top) {
+  padding: 0.78rem 0.9rem !important;
+}
+
+.admin-content
+  :is(.page-header h1, .reports-header h1, .doc-header h1, .board-title h1, .hero-copy h1) {
+  font-size: clamp(1.12rem, 1.45vw, 1.42rem) !important;
+  font-weight: 820 !important;
+  line-height: 1.15 !important;
+}
+
+.admin-content :is(.page-header p, .reports-header p, .doc-header p, .board-title p, .hero-copy p) {
+  font-size: 0.88rem !important;
+  line-height: 1.35 !important;
+  margin-top: 0.28rem !important;
+}
+
+.admin-content
+  :is(.page-eyebrow, .page-header__eyebrow, .reports-eyebrow, .doc-eyebrow, .board-eyebrow) {
+  font-size: 0.64rem !important;
+  letter-spacing: 0.07em !important;
+  margin-bottom: 0.22rem !important;
+}
+
+.admin-content
+  :is(
+    .table-head h2,
+    .doc-card h2,
+    .panel-head h2,
+    .tax-panel h2,
+    .priority-panel h2,
+    .panel h2,
+    .tenant-form h2,
+    .result-panel h2
+  ) {
+  font-size: 0.98rem !important;
+  line-height: 1.2 !important;
+}
+
+.admin-content :is(.kpi-card strong, .metrics strong, .stat-card strong) {
+  font-size: 1.08rem !important;
+}
+
+.admin-content .p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
+  background: color-mix(in srgb, var(--az-surface-hover) 46%, transparent);
+}
+
+.admin-content .p-datatable .p-datatable-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--az-blue-soft) 62%, transparent);
+}
+
+.admin-content .p-paginator {
+  border-top: 1px solid var(--az-border);
+}
+
+html.dark .page-header {
+  background: #101828;
+}
+
+html.dark .page-eyebrow {
+  color: #36bffa !important;
+}
+
+html.dark .alert--error,
+html.dark .banner--error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #fca5a5;
+}
+
+html.dark .alert--success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.22);
+  color: #86efac;
+}
+
+html.dark .banner--info {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+}
+
+html.dark .admin-content .p-datatable .p-datatable-thead > tr > th {
+  background: #1d2939 !important;
+  border-bottom: 1px solid var(--az-border);
+  color: #d0d5dd;
+}
+
+html.dark .admin-content .p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html.dark .admin-content .p-datatable .p-datatable-tbody > tr:hover > td {
+  background: rgba(70, 95, 255, 0.12);
+}
+
+body .crm-dialog--followup-detail,
+body .crm-dialog--opportunity-detail {
+  max-height: calc(100dvh - 1.25rem) !important;
+  max-width: calc(100vw - 1.25rem) !important;
+  width: min(92rem, calc(100vw - 1.25rem)) !important;
+  z-index: 7001 !important;
+}
+
+body .crm-dialog--followup-detail .p-dialog-header,
+body .crm-dialog--opportunity-detail .p-dialog-header {
+  border-radius: 1rem 1rem 0 0;
+  flex-shrink: 0;
+}
+
+body .crm-dialog--followup-detail .p-dialog-content,
+body .crm-dialog--opportunity-detail .p-dialog-content {
+  max-height: calc(100dvh - 5.25rem) !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 760px) {
+  body .crm-dialog--followup-detail,
+  body .crm-dialog--opportunity-detail {
+    max-height: calc(100dvh - 0.75rem) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    width: calc(100vw - 0.75rem) !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .page-header,
+  .tenant-toolbar,
+  .table-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: flex-start;
+  }
+
+  .content-grid,
+  .dialog-form {
+    grid-template-columns: 1fr;
+  }
+
+  .table-tools,
+  .tenant-field {
+    min-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .section-shell {
+    padding: 0 1rem;
+  }
+
+  .section-title {
+    font-size: 2.2rem;
+  }
+}
+
+/* CRM pipeline: Salesforce-style kanban board. */
+.crm-page .salesforce-view--pipeline {
+  gap: 0.85rem;
+}
+
+.crm-page .salesforce-view--pipeline .pipeline-commandbar {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-surface) 96%, #eef6ff);
+  border: 1px solid color-mix(in srgb, var(--az-border) 86%, #c7d2fe);
+  border-radius: 0.9rem;
+  box-shadow: 0 0.55rem 1.35rem rgba(15, 23, 42, 0.045);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.65rem;
+}
+
+.crm-page .pipeline-commandbar__filters,
+.crm-page .pipeline-commandbar__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.crm-page .pipeline-commandbar__actions {
+  justify-content: flex-end;
+}
+
+.crm-page .pipeline-filter-chip,
+.crm-page .pipeline-icon-action,
+.crm-page .pipeline-light-action,
+.crm-page .pipeline-primary-action {
+  align-items: center;
+  border: 1px solid var(--az-border);
+  border-radius: 0.58rem;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  padding: 0.45rem 0.65rem;
+  white-space: nowrap;
+}
+
+.crm-page .pipeline-filter-chip,
+.crm-page .pipeline-icon-action,
+.crm-page .pipeline-light-action {
+  background: var(--az-surface);
+  color: var(--az-text);
+}
+
+.crm-page .pipeline-icon-action {
+  justify-content: center;
+  padding: 0;
+  width: 2.15rem;
+}
+
+.crm-page .pipeline-icon-action.active {
+  background: #eef2ff;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.crm-page .pipeline-primary-action {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.crm-page .pipeline-total {
+  background: #0f172a;
+  border-radius: 0.6rem;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 950;
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+}
+
+.crm-page .pipeline-select {
+  min-width: 11.5rem;
+}
+
+.crm-page .pipeline-board--salesforce {
+  background: #f8fafc;
+  border-color: color-mix(in srgb, var(--az-border) 80%, #cbd5e1);
+  border-radius: 0.95rem;
+  min-height: 31rem;
+  overflow: hidden;
+}
+
+.crm-page .pipeline-scroll--salesforce {
+  align-items: stretch;
+  display: grid;
+  gap: 0.35rem;
+  grid-auto-columns: minmax(15rem, 1fr);
+  grid-auto-flow: column;
+  min-height: 31rem;
+  overflow-x: auto;
+  padding: 0.65rem;
+  scrollbar-width: thin;
+}
+
+.crm-page .pipeline-column--salesforce {
+  --stage-color: #2563eb;
+  background: color-mix(in srgb, var(--stage-color) 4%, #f8fafc);
+  border: 1px solid color-mix(in srgb, var(--stage-color) 18%, #dbe3ef);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  gap: 0.55rem;
+  min-height: 29rem;
+  padding: 0;
+}
+
+.crm-page .pipeline-stage-header {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--stage-color) 11%, #f8fafc);
+  border-bottom: 1px solid color-mix(in srgb, var(--stage-color) 18%, #dbe3ef);
+  clip-path: polygon(0 0, calc(100% - 1rem) 0, 100% 50%, calc(100% - 1rem) 100%, 0 100%, 0.65rem 50%);
+  display: flex;
+  gap: 0.45rem;
+  justify-content: space-between;
+  min-height: 4.65rem;
+  padding: 0.75rem 1.15rem 0.75rem 1.35rem;
+}
+
+.crm-page .pipeline-stage-header span {
+  color: color-mix(in srgb, var(--stage-color) 48%, #334155);
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1.15;
+}
+
+.crm-page .pipeline-stage-header strong {
+  color: #0f172a;
+  font-size: 1.1rem;
+  font-weight: 950;
+}
+
+.crm-page .pipeline-stage-header small {
+  color: #64748b;
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 720;
+  line-height: 1.2;
+  margin-top: 0.2rem;
+}
+
+.crm-page .pipeline-stage-header .pipeline-stage-mode {
+  margin-left: auto;
+}
+
+.crm-page .pipeline-stage-mode {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 950;
+  padding: 0.18rem 0.42rem;
+  white-space: nowrap;
+}
+
+.crm-page .pipeline-stage-mode--strict {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.crm-page .pipeline-stage-mode--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.crm-page .pipeline-stage-mode--free {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.crm-page .pipeline-stack--salesforce {
+  align-content: start;
+  display: grid;
+  gap: 0.55rem;
+  max-height: calc(100vh - 20rem);
+  min-height: 22rem;
+  overflow-y: auto;
+  padding: 0 0.55rem 0.65rem;
+  scrollbar-width: thin;
+}
+
+.crm-page .deal-card--salesforce {
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 86%, #cbd5e1);
+  border-left: 0;
+  border-radius: 0.58rem;
+  box-shadow: 0 0.35rem 0.85rem rgba(15, 23, 42, 0.045);
+  cursor: pointer;
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.65rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.crm-page .deal-card--salesforce:hover {
+  border-color: color-mix(in srgb, var(--stage-color) 30%, var(--az-border));
+  box-shadow: 0 0.75rem 1.35rem rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.crm-page .deal-card__top {
+  align-items: start;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.crm-page .deal-card__top strong {
+  color: var(--az-text);
+  font-size: 0.86rem;
+  font-weight: 950;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.crm-page .deal-card__amount {
+  color: #0f766e;
+  font-size: 0.86rem;
+  font-weight: 950;
+}
+
+.crm-page .deal-card--salesforce > em {
+  color: #2563eb;
+  font-size: 0.74rem;
+  font-style: normal;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.crm-page .deal-card__meta {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.crm-page .deal-card__meta span {
+  align-items: center;
+  color: var(--az-text-soft);
+  display: inline-flex;
+  font-size: 0.72rem;
+  gap: 0.3rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.crm-page .deal-checklist {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.crm-page .deal-checklist span {
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.crm-page .deal-checklist i {
+  background: #e5e7eb;
+  border-radius: 999px;
+  display: block;
+  height: 0.32rem;
+  overflow: hidden;
+}
+
+.crm-page .deal-checklist b {
+  background: linear-gradient(90deg, #14b8a6, #2563eb);
+  display: block;
+  height: 100%;
+}
+
+.crm-page .deal-risk-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.crm-page .deal-risk-list span {
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  color: #c2410c;
+  display: inline-flex;
+  font-size: 0.64rem;
+  font-weight: 900;
+  gap: 0.22rem;
+  padding: 0.18rem 0.42rem;
+}
+
+.crm-page .deal-card__bottom {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: space-between;
+}
+
+.crm-page .deal-temperature,
+.crm-page .deal-result {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 950;
+  padding: 0.22rem 0.48rem;
+}
+
+.crm-page .deal-temperature--hot {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.crm-page .deal-temperature--warm {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.crm-page .deal-temperature--cold {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.crm-page .deal-result {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.crm-page .deal-result--won {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.crm-page .deal-result--lost {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.crm-page .deal-card--won {
+  background: linear-gradient(180deg, #f0fdf4, var(--az-surface));
+}
+
+.crm-page .deal-card--lost {
+  background: linear-gradient(180deg, #fff1f2, var(--az-surface));
+}
+
+.crm-page .deal-card__actions {
+  border-top: 1px solid color-mix(in srgb, var(--az-border) 70%, transparent);
+  display: flex;
+  gap: 0.3rem;
+  justify-content: flex-end;
+  margin-top: 0.2rem;
+  padding-top: 0.45rem;
+}
+
+.crm-page .deal-card__top button,
+.crm-page .deal-card__actions button {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-surface) 96%, #f1f5f9);
+  border: 1px solid color-mix(in srgb, var(--az-border) 90%, #cbd5e1);
+  border-radius: 0.48rem;
+  color: var(--az-text-soft);
+  cursor: pointer;
+  display: inline-flex;
+  height: 1.85rem;
+  justify-content: center;
+  width: 1.85rem;
+}
+
+.crm-page .deal-card__top button:hover,
+.crm-page .deal-card__actions button:hover {
+  border-color: var(--stage-color);
+  color: var(--stage-color);
+}
+
+.crm-page .deal-card__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.crm-page .pipeline-stack--salesforce .pipeline-empty {
+  background: rgba(255, 255, 255, 0.62);
+  min-height: 7rem;
+}
+
+.crm-dialog--stage-review {
+  max-width: min(46rem, calc(100vw - 2rem));
+  width: 46rem;
+}
+
+.stage-review {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.stage-review__head {
+  --stage-color: #2563eb;
+  align-items: center;
+  background: color-mix(in srgb, var(--stage-color) 9%, #f8fafc);
+  border: 1px solid color-mix(in srgb, var(--stage-color) 24%, #dbe3ef);
+  border-radius: 0.9rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.9rem;
+}
+
+.stage-review__head span,
+.stage-review__objective span,
+.stage-review__checklist span {
+  color: #64748b;
+}
+
+.stage-review__head h3 {
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 950;
+  line-height: 1.2;
+  margin: 0.15rem 0;
+}
+
+.stage-review__head p {
+  color: #475569;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.stage-review__head aside {
+  align-items: end;
+  display: grid;
+  gap: 0.3rem;
+  justify-items: end;
+}
+
+.stage-review__head aside strong {
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.stage-review__objective {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #dbe3ef;
+  border-radius: 0.8rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 0.8rem;
+}
+
+.stage-review__objective > i {
+  align-items: center;
+  background: #dbeafe;
+  border-radius: 0.8rem;
+  color: #2563eb;
+  display: inline-flex;
+  height: 2.45rem;
+  justify-content: center;
+  width: 2.45rem;
+}
+
+.stage-review__objective strong,
+.stage-review__checklist strong {
+  color: #0f172a;
+  display: block;
+  font-weight: 950;
+}
+
+.stage-review__alert {
+  align-items: center;
+  border-radius: 0.8rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 0.75rem;
+}
+
+.stage-review__alert--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.stage-review__alert--warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.stage-review__checklist {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.stage-review__checklist article {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 0.78rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.7rem;
+}
+
+.stage-review__check--done {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.stage-review__check--done > i {
+  color: #16a34a;
+}
+
+.stage-review__check--required:not(.stage-review__check--done) > i {
+  color: #ef4444;
+}
+
+.stage-review__checklist button {
+  background: #eef6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.6rem;
+  color: #1d4ed8;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.45rem 0.6rem;
+}
+
+.stage-review__loss {
+  display: grid;
+  font-weight: 900;
+  gap: 0.35rem;
+}
+
+.stage-review__loss textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  min-height: 5rem;
+  padding: 0.75rem;
+  resize: vertical;
+  width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .crm-page .salesforce-view--pipeline .pipeline-commandbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-page .pipeline-commandbar__actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .crm-page .pipeline-scroll--salesforce {
+    grid-auto-columns: minmax(17rem, 86vw);
+    min-height: 28rem;
+  }
+
+  .crm-page .pipeline-commandbar__filters,
+  .crm-page .pipeline-commandbar__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-page .pipeline-filter-chip,
+  .crm-page .pipeline-light-action,
+  .crm-page .pipeline-primary-action,
+  .crm-page .pipeline-total,
+  .crm-page .pipeline-select,
+  .crm-page .pipeline-icon-action {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .stage-review__head,
+  .stage-review__checklist article {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .stage-review__head {
+    display: grid;
+  }
+
+  .stage-review__head aside {
+    justify-items: start;
+  }
+}

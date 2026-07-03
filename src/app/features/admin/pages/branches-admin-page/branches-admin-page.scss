@@ -1,0 +1,172 @@
+.ubigeo-search {
+  align-items: end;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr 44px;
+}
+
+.search-btn {
+  height: 42px;
+  width: 44px;
+}
+
+.ubigeo-preview {
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  color: var(--az-text-soft);
+  font-size: 0.86rem;
+  font-weight: 750;
+  padding: 0.6rem;
+}
+
+.branch-content-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.table-head p {
+  color: var(--az-text-soft);
+  line-height: 1.35;
+  margin: 0.2rem 0 0;
+}
+
+:host ::ng-deep .branch-table .p-datatable-thead > tr > th {
+  white-space: nowrap;
+}
+
+:host ::ng-deep .branch-table .p-datatable-tbody > tr > td {
+  vertical-align: middle;
+}
+
+:host ::ng-deep .branch-table .p-datatable-tbody > tr > td:nth-child(1) {
+  width: 9.5rem;
+}
+
+:host ::ng-deep .branch-table .p-datatable-tbody > tr > td:nth-child(3) {
+  min-width: 18rem;
+}
+
+:host ::ng-deep .branch-table .p-datatable-tbody > tr > td:nth-child(4) {
+  min-width: 16rem;
+}
+
+:host ::ng-deep .p-select {
+  width: 100%;
+}
+
+:host ::ng-deep .save-btn {
+  width: 100%;
+}
+
+.branch-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.2rem;
+}
+
+.status-disable {
+  color: #dc2626;
+}
+
+.status-enable {
+  color: #059669;
+}
+
+.dialog-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dialog-copy {
+  color: var(--az-text-soft);
+  line-height: 1.4;
+  margin: 0 0 1rem;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+:host ::ng-deep .branch-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(48rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .branch-dialog .dialog-form {
+  display: block;
+}
+
+@media (max-width: 520px) {
+  .ubigeo-search {
+    grid-template-columns: 1fr;
+  }
+
+  .search-btn {
+    width: 100%;
+  }
+
+  .dialog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.branch-tax-config {
+  background: color-mix(in srgb, #0ea5e9 6%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #0ea5e9 28%, var(--az-border));
+  border-radius: .75rem;
+  display: grid;
+  gap: .8rem;
+  padding: .8rem;
+}
+
+.branch-tax-config__head {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.branch-tax-config__head > div {
+  display: grid;
+  gap: .15rem;
+}
+
+.branch-tax-config__head span {
+  color: var(--az-text-soft);
+  font-size: .78rem;
+}
+
+.branch-tax-toggle {
+  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: .4rem !important;
+}
+
+.branch-tax-grid {
+  display: grid;
+  gap: .7rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .branch-tax-config__head {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .branch-tax-grid {
+    grid-template-columns: 1fr;
+  }
+}

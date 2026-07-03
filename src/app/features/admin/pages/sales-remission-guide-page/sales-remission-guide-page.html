@@ -1,0 +1,199 @@
+<section class="doc-shell">
+  <header class="doc-header">
+    <div>
+      <p class="doc-eyebrow">Ventas</p>
+      <h1>Guia de remision</h1>
+    </div>
+    <div class="doc-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="loadData()">Recargar</button>
+      <button pButton type="button" class="p-button-success" icon="pi pi-check" [loading]="saving()" (click)="registrarGuia()">Registrar</button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="banner banner--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="banner banner--success">{{ successMessage() }}</div>
+  }
+
+  <section class="doc-card">
+    <div class="form-grid">
+      <label>
+        Sucursal origen
+        <p-select [options]="sucursalOptions()" optionLabel="label" optionValue="value" [ngModel]="sucursalOrigenId()" (ngModelChange)="sucursalOrigenId.set($event)" />
+      </label>
+      <label>
+        Sucursal destino
+        <p-select [options]="sucursalOptions()" optionLabel="label" optionValue="value" [ngModel]="sucursalDestinoId()" (ngModelChange)="sucursalDestinoId.set($event)" />
+      </label>
+      <label>
+        Fecha traslado
+        <input pInputText type="date" [ngModel]="fechaTraslado()" (ngModelChange)="fechaTraslado.set($event)" />
+      </label>
+      <label>
+        Motivo traslado
+        <input pInputText [ngModel]="motivoTraslado()" (ngModelChange)="motivoTraslado.set($event)" />
+      </label>
+      <label>
+        Transportista
+        <input pInputText [ngModel]="transportista()" (ngModelChange)="transportista.set($event)" />
+      </label>
+      <label>
+        Observacion
+        <input pInputText [ngModel]="observacion()" (ngModelChange)="observacion.set($event)" />
+      </label>
+    </div>
+  </section>
+
+  <section class="doc-card">
+    <h2>Items de traslado</h2>
+    <div class="item-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined p-button-sm" icon="pi pi-plus" (click)="addItem()">Agregar item</button>
+    </div>
+
+    @for (item of items(); track $index) {
+      <div class="item-row">
+        <label>
+          Producto
+          <p-select
+            [options]="productoOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="item.productoId"
+            (ngModelChange)="item.productoId = $event; onProductoChange($index)"
+            [filter]="true"
+          />
+        </label>
+        <label>
+          Cantidad
+          <input pInputText type="number" [ngModel]="item.cantidad" (ngModelChange)="item.cantidad = +$event || 0" />
+        </label>
+        <label>
+          Descripcion
+          <input pInputText [ngModel]="item.descripcion" (ngModelChange)="item.descripcion = $event" />
+        </label>
+        <button type="button" pButton class="p-button-rounded p-button-danger p-button-text remove-btn" icon="pi pi-trash" (click)="removeItem($index)" [disabled]="items().length <= 1"></button>
+      </div>
+    }
+  </section>
+
+  <section class="guide-metrics">
+    <div>
+      <span>Total guias</span>
+      <strong>{{ metrics().total }}</strong>
+    </div>
+    <div>
+      <span>Emitidas hoy</span>
+      <strong>{{ metrics().hoy }}</strong>
+    </div>
+    <div>
+      <span>Aceptadas</span>
+      <strong>{{ metrics().aceptadas }}</strong>
+    </div>
+    <div>
+      <span>Pendientes</span>
+      <strong>{{ metrics().pendientes }}</strong>
+    </div>
+  </section>
+
+  <section class="doc-card guide-list">
+    <div class="guide-list__toolbar">
+      <div>
+        <h2>Registro de guias de remision</h2>
+        <p>Listado guardado en Azurion y actualizado por webhook desde facturador.</p>
+      </div>
+      <div class="guide-search">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          placeholder="Buscar guia, sucursal, estado o responsable..."
+          [ngModel]="guiaQuery()"
+          (ngModelChange)="guiaQuery.set($event)"
+        />
+        <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-sync" (click)="refreshGuias()">Actualizar</button>
+      </div>
+    </div>
+
+    <div class="guide-table-wrap">
+      <table class="guide-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Guia</th>
+            <th>Traslado</th>
+            <th>Fecha</th>
+            <th>Responsable</th>
+            <th>Estado</th>
+            <th>Facturador</th>
+            <th>Archivos</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (guia of filteredGuias(); track guia.id) {
+            <tr>
+              <td>{{ guia.id }}</td>
+              <td>
+                <strong>{{ documentLabel(guia) }}</strong>
+                <small>{{ guia.externalId }}</small>
+              </td>
+              <td>
+                <strong>{{ guia.sucursalOrigenNombre }} -> {{ guia.sucursalDestinoNombre }}</strong>
+                <small>{{ guia.itemsResumen || 'Sin detalle de items' }}</small>
+              </td>
+              <td>
+                <strong>{{ guia.fechaTraslado }}</strong>
+                <small>Emision: {{ guia.fechaEmision }}</small>
+              </td>
+              <td>
+                <strong>{{ guia.responsableNombre }}</strong>
+                <small>{{ guia.motivoTraslado || 'VENTA' }}</small>
+              </td>
+              <td>
+                <span [class]="statusClass(guia)">{{ statusLabel(guia) }}</span>
+              </td>
+              <td>
+                <strong>{{ guia.facturadorHttpStatus || '-' }}</strong>
+                <small>{{ shortMessage(guia) }}</small>
+              </td>
+              <td>
+                <div class="file-actions">
+                  <button
+                    type="button"
+                    pButton
+                    class="p-button-text p-button-sm"
+                    icon="pi pi-file-pdf"
+                    title="PDF"
+                    (click)="openAsset(guia.facturadorPdfUrl)"
+                  ></button>
+                  <button
+                    type="button"
+                    pButton
+                    class="p-button-text p-button-sm"
+                    icon="pi pi-code"
+                    title="XML"
+                    (click)="openAsset(guia.facturadorXmlUrl)"
+                  ></button>
+                  <button
+                    type="button"
+                    pButton
+                    class="p-button-text p-button-sm"
+                    icon="pi pi-download"
+                    title="CDR"
+                    (click)="openAsset(guia.facturadorCdrUrl)"
+                  ></button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-row">
+                {{ loading() ? 'Cargando guias...' : 'No hay guias de remision registradas para este tenant.' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

@@ -1,0 +1,47 @@
+<header class="navbar" [class.navbar--scrolled]="isScrolled">
+  <div class="navbar__inner">
+    <a class="brand" routerLink="/inicio" fragment="inicio" aria-label="AZURION inicio" (click)="closeMenu()">
+      <span class="brand__mark">
+        <img src="assets/azurion-mark.png" alt="AZURION" />
+      </span>
+      <span class="brand__copy">
+        <strong>AZURION</strong>
+        <small>Gestiona. Controla. Crece.</small>
+      </span>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label="Abrir menu"
+      [attr.aria-expanded]="isMenuOpen"
+      (click)="toggleMenu()"
+    >
+      <i class="pi" [class.pi-bars]="!isMenuOpen" [class.pi-times]="isMenuOpen"></i>
+    </button>
+
+    <div class="navbar__panel" [class.navbar__panel--open]="isMenuOpen">
+      <nav class="nav-links" aria-label="Navegacion principal">
+        @for (item of navItems; track item.label) {
+          <a [routerLink]="['/inicio']" [fragment]="item.fragment" (click)="closeMenu()">
+            {{ item.label }}
+            @if (item.label === 'Recursos') {
+              <i class="pi pi-angle-down"></i>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="navbar__actions">
+        <a class="nav-login" routerLink="/auth/login" (click)="closeMenu()">
+          <i class="pi pi-user"></i>
+          <span>Iniciar sesion</span>
+        </a>
+        <a pButton class="nav-demo" routerLink="/inicio" fragment="contacto" (click)="closeMenu()">
+          <i class="pi pi-send"></i>
+          <span>Solicitar demo</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>

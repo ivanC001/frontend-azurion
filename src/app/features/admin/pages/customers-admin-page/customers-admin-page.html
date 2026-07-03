@@ -1,0 +1,321 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Directorio comercial</p>
+      <h1>Directorio de clientes</h1>
+      <p>Datos fiscales para facturas y boletas, condiciones de credito y seguimiento de deudores.</p>
+    </div>
+    <div class="header-actions">
+      <span class="count-chip">Total: {{ filteredClientes().length }}</span>
+      <p-button
+        label="Nuevo cliente"
+        icon="pi pi-user-plus"
+        styleClass="az-primary"
+        [disabled]="isGeneralAdmin() && !form.tenantId"
+        (onClick)="openCreateDialog()"
+      />
+      <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="stats-grid">
+    <article><span>Total clientes</span><strong>{{ customerStats().total }}</strong></article>
+    <article><span>Activos</span><strong>{{ customerStats().activos }}</strong></article>
+    <article><span>Deudores</span><strong>{{ customerStats().deudores }}</strong></article>
+    <article><span>Deuda pendiente</span><strong>S/ {{ customerStats().deudaTotal | number: '1.2-2' }}</strong></article>
+  </section>
+
+  @if (isGeneralAdmin()) {
+    <section class="tenant-toolbar">
+      <div>
+        <h2>Tenant de trabajo</h2>
+        @if (selectedEmpresa(); as empresa) {
+          <p>{{ empresa.razonSocial }} | RUC {{ empresa.ruc }} | {{ empresa.tenantId }}</p>
+        } @else {
+          <p>Selecciona una empresa para administrar sus clientes.</p>
+        }
+      </div>
+      <label class="tenant-field">
+        <span>Empresa / Tenant</span>
+        <p-select
+          name="tenantId"
+          [options]="tenantOptions()"
+          [loading]="loadingEmpresas()"
+          [(ngModel)]="form.tenantId"
+          placeholder="Selecciona empresa / tenant"
+          [showClear]="true"
+          (ngModelChange)="onTenantChange()"
+        />
+      </label>
+    </section>
+  }
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>Clientes registrados</h2>
+      <div class="table-tools">
+        <input
+          pInputText
+          type="text"
+          [value]="searchTerm()"
+          (input)="setSearch($event)"
+          placeholder="Buscar por documento, nombre o email"
+        />
+      </div>
+    </div>
+
+    <p-table
+      [value]="filteredClientes()"
+      [loading]="loading()"
+      [paginator]="filteredClientes().length > 12"
+      [rows]="12"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Tipo doc</th>
+          <th>Documento</th>
+          <th>Nombre / Razon social</th>
+          <th>Contacto</th>
+          <th>Credito</th>
+          <th>Deuda</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+        <tr>
+          <td>{{ rowIndex + 1 }}</td>
+          <td>{{ formatTipoDocumento(item.tipoDocumento) }}</td>
+          <td><strong>{{ item.numeroDocumento }}</strong></td>
+          <td>{{ item.nombre }}</td>
+          <td>
+            <strong>{{ item.email || 'Sin email' }}</strong>
+            <small>{{ item.telefono || 'Sin telefono' }}</small>
+          </td>
+          <td>
+            <strong>S/ {{ item.limiteCredito | number: '1.2-2' }}</strong>
+            <small>Disponible: S/ {{ item.creditoDisponible | number: '1.2-2' }}</small>
+          </td>
+          <td><strong [class.debt-value]="item.deudor">S/ {{ item.saldoDeuda | number: '1.2-2' }}</strong></td>
+          <td><p-tag [value]="customerStatusLabel(item)" [severity]="customerStatusSeverity(item)" /></td>
+          <td>
+            <div class="row-actions">
+              @if (item.deudor) {
+                <button
+                  type="button"
+                  pButton
+                  class="p-button-text p-button-success p-button-rounded"
+                  icon="pi pi-wallet"
+                  pTooltip="Registrar abono"
+                  tooltipPosition="top"
+                  (click)="openAbonoDialog(item)"
+                ></button>
+              }
+              <button
+                type="button"
+                pButton
+                class="p-button-text p-button-secondary p-button-rounded"
+                icon="pi pi-pencil"
+                pTooltip="Editar cliente"
+                tooltipPosition="top"
+                (click)="openEditDialog(item)"
+              ></button>
+              <button
+                type="button"
+                pButton
+                class="p-button-text p-button-danger p-button-rounded"
+                icon="pi pi-trash"
+                pTooltip="Eliminar cliente"
+                tooltipPosition="top"
+                (click)="deleteCliente(item)"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  [header]="form.id ? 'Editar cliente' : 'Nuevo cliente'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="clienteDialogVisible()"
+  (visibleChange)="clienteDialogVisible.set($event)"
+  styleClass="customer-dialog"
+>
+  <form class="dialog-form">
+    @if (isGeneralAdmin()) {
+      <label>
+        Tenant destino <span class="required">*</span>
+        <p-select
+          name="formTenantId"
+          [options]="tenantOptions()"
+          [(ngModel)]="form.tenantId"
+          placeholder="Selecciona tenant"
+          [showClear]="true"
+        />
+      </label>
+    }
+
+    <div class="section-heading span-2">
+      <div>
+        <strong>Identificacion fiscal</strong>
+        <span>Información utilizada al emitir facturas y boletas.</span>
+      </div>
+    </div>
+
+    <label>
+      Tipo documento <span class="required">*</span>
+      <p-select
+        name="tipoDocumento"
+        [options]="[{ label: 'RUC', value: '6' }, { label: 'DNI', value: '1' }]"
+        [(ngModel)]="form.tipoDocumento"
+        (ngModelChange)="onTipoDocumentoChange()"
+      />
+    </label>
+
+    <label>
+      Numero documento <span class="required">*</span>
+      <input
+        pInputText
+        name="numeroDocumento"
+        [(ngModel)]="form.numeroDocumento"
+        [placeholder]="form.tipoDocumento === '6' ? 'RUC 11 digitos' : 'DNI 8 digitos'"
+        [maxlength]="form.tipoDocumento === '6' ? 11 : 8"
+        inputmode="numeric"
+        (input)="sanitizeNumeroDocumento($event)"
+      />
+    </label>
+
+    <label>
+      Nombre / Razon social <span class="required">*</span>
+      <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Cliente demo SAC" />
+    </label>
+
+    <label>
+      Email
+      <input pInputText type="email" name="email" [(ngModel)]="form.email" placeholder="correo@cliente.com" />
+    </label>
+    <label>
+      Telefono
+      <input pInputText name="telefono" [(ngModel)]="form.telefono" placeholder="987654321" />
+    </label>
+    <label class="span-2">
+      Direccion fiscal @if (form.tipoDocumento === '6') { <span class="required">*</span> }
+      <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Direccion usada en facturas y comprobantes" />
+    </label>
+    <div class="span-2">
+      <app-ubigeo-picker
+        name="clienteUbigeo"
+        [(value)]="form.ubigeo"
+        [required]="form.tipoDocumento === '6'"
+        label="Ubigeo fiscal"
+      />
+    </div>
+
+    <div class="section-heading span-2">
+      <div>
+        <strong>Condiciones de credito</strong>
+        <span>Controla cuánto puede comprar a crédito y el plazo acordado.</span>
+      </div>
+    </div>
+    <label>
+      Limite de credito
+      <input pInputText type="number" min="0" name="limiteCredito" [(ngModel)]="form.limiteCredito" placeholder="0.00" />
+    </label>
+    <label>
+      Dias de credito
+      <input pInputText type="number" min="0" name="diasCredito" [(ngModel)]="form.diasCredito" placeholder="0" />
+    </label>
+    <label>
+      Estado
+      <p-select
+        name="activo"
+        [options]="[{ label: 'Activo', value: true }, { label: 'Inactivo', value: false }]"
+        [(ngModel)]="form.activo"
+      />
+    </label>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="clienteDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveCliente()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  header="Registrar abono"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="abonoDialogVisible()"
+  (visibleChange)="abonoDialogVisible.set($event)"
+  styleClass="customer-payment-dialog"
+>
+  @if (selectedDeudor(); as cliente) {
+    <section class="debt-summary">
+      <div>
+        <span>Cliente</span>
+        <strong>{{ cliente.nombre }}</strong>
+        <small>{{ formatTipoDocumento(cliente.tipoDocumento) }} {{ cliente.numeroDocumento }}</small>
+      </div>
+      <div>
+        <span>Deuda pendiente</span>
+        <strong class="debt-value">S/ {{ cliente.saldoDeuda | number: '1.2-2' }}</strong>
+      </div>
+    </section>
+
+    <form class="payment-form">
+      <label>
+        Monto del abono
+        <input
+          pInputText
+          type="number"
+          min="0.01"
+          step="0.01"
+          [max]="cliente.saldoDeuda"
+          name="montoAbono"
+          [(ngModel)]="abonoForm.monto"
+        />
+      </label>
+      <label>
+        Observacion
+        <input pInputText name="observacionAbono" [(ngModel)]="abonoForm.observacion" placeholder="Transferencia, efectivo u otra referencia" />
+      </label>
+    </form>
+
+    <section class="payment-history">
+      <h3>Ultimos abonos</h3>
+      <p-table [value]="abonos()" [loading]="loadingAbonos()" [rows]="5">
+        <ng-template pTemplate="header">
+          <tr><th>Fecha</th><th>Monto</th><th>Saldo final</th><th>Observacion</th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-abono>
+          <tr>
+            <td>{{ abono.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td><strong>S/ {{ abono.monto | number: '1.2-2' }}</strong></td>
+            <td>S/ {{ abono.saldoResultante | number: '1.2-2' }}</td>
+            <td>{{ abono.observacion || 'Sin observacion' }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="abonoDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" icon="pi pi-check" [loading]="saving()" (click)="saveAbono()">Registrar abono</button>
+  </ng-template>
+</p-dialog>

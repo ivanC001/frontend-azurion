@@ -1,0 +1,219 @@
+<section class="companies-page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Panel administrativo</p>
+      <h1>Registro de empresas</h1>
+      <p>Alta de tenants, esquemas y suscripciones SaaS en AZURION con sincronizacion al facturador.</p>
+    </div>
+
+    <p-button label="Nueva empresa" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateDialog()" />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert--success">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <div class="metrics">
+    <article>
+      <span>Empresas activas</span>
+      <strong>{{ activeCompanies() }}</strong>
+    </article>
+    <article>
+      <span>Planes disponibles</span>
+      <strong>{{ planes().length }}</strong>
+    </article>
+    <article>
+      <span>Suscripciones activas</span>
+      <strong>{{ activeSubscriptions() }}</strong>
+    </article>
+    <article>
+      <span>Modulos contratables</span>
+      <strong>{{ moduleCount() }}</strong>
+    </article>
+  </div>
+
+  <section class="table-panel">
+    <div class="table-panel__head">
+      <div>
+        <h2>Empresas registradas</h2>
+        <p>Listado obtenido desde <code>/api/v1/saas/empresas</code>.</p>
+      </div>
+    </div>
+
+    <p-table
+      [value]="empresas()"
+      [loading]="loading()"
+      [paginator]="empresas().length > 8"
+      [rows]="8"
+      responsiveLayout="scroll"
+      styleClass="companies-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Empresa</th>
+          <th>RUC</th>
+          <th>Tenant</th>
+          <th>Schema</th>
+          <th>Plan</th>
+          <th>Estado</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-empresa>
+        <tr>
+          <td>
+            <strong>{{ empresa.razonSocial }}</strong>
+            <small>ID {{ empresa.id }}</small>
+          </td>
+          <td>{{ empresa.ruc }}</td>
+          <td><code>{{ empresa.tenantId }}</code></td>
+          <td><code>{{ empresa.schemaName }}</code></td>
+          <td>
+            @if (subscriptionFor(empresa.id); as subscription) {
+              <div class="plan-cell">
+                <strong>{{ planName(subscription.planId) }}</strong>
+                <p-tag [value]="subscription.estado" [severity]="subscriptionSeverity(subscription.estado)" />
+              </div>
+            } @else {
+              <span class="muted">Sin suscripcion</span>
+            }
+          </td>
+          <td>
+            <p-tag [value]="empresa.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(empresa.activo)" />
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">Todavia no hay empresas registradas.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Registrar empresa"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  styleClass="company-dialog"
+>
+  <form class="company-form">
+    <label>
+      RUC
+      <input pInputText name="ruc" maxlength="11" [(ngModel)]="form.ruc" placeholder="20123456789" />
+    </label>
+
+    <label>
+      Razon social
+      <input
+        pInputText
+        name="razonSocial"
+        [(ngModel)]="form.razonSocial"
+        placeholder="Empresa Demo SAC"
+        (blur)="generateTenantFields()"
+      />
+    </label>
+
+    <label>
+      Tenant ID
+      <input pInputText name="tenantId" [(ngModel)]="form.tenantId" placeholder="empresa_demo" />
+      <small>Formato backend: <code>^[a-z][a-z0-9_]&#123;2,62&#125;$</code></small>
+    </label>
+
+    <label>
+      Schema name
+      <input pInputText name="schemaName" [(ngModel)]="form.schemaName" placeholder="tenant_empresa_demo" />
+    </label>
+
+    <label>
+      Plan inicial
+      <p-select
+        name="planId"
+        [options]="planOptions()"
+        [ngModel]="form.planId"
+        (ngModelChange)="onPlanChanged($event)"
+        placeholder="Seleccionar plan"
+        [showClear]="true"
+      />
+      <small>Si eliges un plan, sus modulos se cargan automaticamente para el provisioning inicial.</small>
+    </label>
+
+    <label>
+      Fecha de inicio
+      <input pInputText type="date" name="fechaInicio" [(ngModel)]="form.fechaInicio" />
+    </label>
+
+    <div class="modules-field">
+      <div class="modules-field__header">
+        <strong>Modulos iniciales del tenant</strong>
+        <small>AZURION ejecutara solo las migraciones necesarias para estos modulos al crear la empresa.</small>
+      </div>
+
+      <div class="modules-grid">
+        @for (modulo of assignableModules(); track modulo.id) {
+          <label class="module-option" [class.module-option--active]="isModuleSelected(modulo.codigo)">
+            <input
+              type="checkbox"
+              [checked]="isModuleSelected(modulo.codigo)"
+              (change)="toggleModule(modulo.codigo, $any($event.target).checked)"
+            />
+            <span class="module-option__copy">
+              <strong>{{ modulo.nombre }}</strong>
+              <small>{{ modulo.codigo }}</small>
+            </span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <label>
+      Logo empresa
+      <input
+        type="file"
+        name="logoFile"
+        accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+        (change)="onLogoFileSelected($event)"
+      />
+      <small>Formatos permitidos: PNG, JPG, JPEG, WEBP o SVG. Maximo 2 MB.</small>
+      @if (form.logoFile) {
+        <small>Archivo: {{ form.logoFile.name }}</small>
+      }
+    </label>
+
+    <label class="check-field">
+      <input
+        type="checkbox"
+        name="syncFacturador"
+        [(ngModel)]="form.syncFacturador"
+        [disabled]="!isModuleSelected('FACTURACION')"
+      />
+      <span>Registrar tambien en facturador (solo si FACTURACION esta activa)</span>
+    </label>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" styleClass="az-secondary" severity="secondary" (onClick)="closeCreateDialog()" />
+    <p-button
+      label="Registrar empresa"
+      icon="pi pi-save"
+      styleClass="az-primary"
+      [loading]="saving()"
+      (onClick)="saveEmpresa()"
+    />
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,174 @@
+<section class="reports-shell">
+  <header class="reports-header">
+    <div>
+      <p class="reports-eyebrow">Reportes</p>
+      <h1>Reportes</h1>
+      <p>Filtra rapido y exporta ventas, compras, inventario, caja, notas y guias.</p>
+    </div>
+    <div class="header-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" label="Recargar" [loading]="loading()" (click)="loadReports()"></button>
+      <button pButton type="button" class="az-primary" icon="pi pi-file-excel" label="Exportar Excel" [disabled]="!reportRows().length" (click)="exportExcel()"></button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="quick-range-panel">
+    <span>Rango rapido</span>
+    <div class="quick-range-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined" label="Hoy" (click)="setQuickRange('today')"></button>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" label="7 dias" (click)="setQuickRange('last7')"></button>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" label="30 dias" (click)="setQuickRange('last30')"></button>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" label="Este mes" (click)="setQuickRange('month')"></button>
+    </div>
+  </section>
+
+  <section class="filters-panel">
+    <label>
+      Modulo
+      <p-select
+        [options]="moduleOptions"
+        [ngModel]="moduleFilter()"
+        (ngModelChange)="onModuleChange($event)"
+        placeholder="Modulo"
+      />
+    </label>
+    <label>
+      Desde
+      <input pInputText type="date" [ngModel]="startDateFilter()" (ngModelChange)="startDateFilter.set($event || null)" />
+    </label>
+    <label>
+      Hasta
+      <input pInputText type="date" [ngModel]="endDateFilter()" (ngModelChange)="endDateFilter.set($event || null)" />
+    </label>
+    <label>
+      Estado / tipo
+      <p-select
+        [options]="statusOptions()"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+        placeholder="Todos"
+        [showClear]="true"
+      />
+    </label>
+    <label>
+      Producto
+      <p-select
+        [options]="productoOptions()"
+        [ngModel]="productoFilter()"
+        (ngModelChange)="productoFilter.set($event)"
+        placeholder="Todos"
+        [showClear]="true"
+        [filter]="true"
+      />
+    </label>
+    <label>
+      Almacen
+      <p-select
+        [options]="almacenOptions()"
+        [ngModel]="almacenFilter()"
+        (ngModelChange)="almacenFilter.set($event)"
+        placeholder="Todos"
+        [showClear]="true"
+        [filter]="true"
+      />
+    </label>
+    <label>
+      Caja
+      <p-select
+        [options]="cajaOptions()"
+        [ngModel]="cajaFilter()"
+        (ngModelChange)="cajaFilter.set($event)"
+        placeholder="Todas"
+        [showClear]="true"
+        [filter]="true"
+      />
+    </label>
+    <label class="wide">
+      Buscar
+      <input
+        pInputText
+        type="search"
+        [ngModel]="queryFilter()"
+        (ngModelChange)="queryFilter.set($event)"
+        placeholder="Cliente, documento, producto, motivo, referencia..."
+      />
+    </label>
+    <button pButton type="button" class="p-button-secondary p-button-text clear-button" icon="pi pi-filter-slash" label="Limpiar" (click)="clearFilters()"></button>
+  </section>
+
+  <section class="summary-strip">
+    {{ activeFiltersSummary() }}
+  </section>
+
+  <section class="metrics-grid">
+    <article>
+      <span>Filas</span>
+      <strong>{{ metrics().rows }}</strong>
+    </article>
+    <article>
+      <span>Monto</span>
+      <strong>S/ {{ metrics().totalAmount.toFixed(2) }}</strong>
+    </article>
+    <article>
+      <span>Cantidad</span>
+      <strong>{{ metrics().totalQuantity.toFixed(2) }}</strong>
+    </article>
+    <article>
+      <span>OK / Error</span>
+      <strong>{{ metrics().accepted }} / {{ metrics().errors }}</strong>
+    </article>
+    @if (moduleFilter() === 'compras') {
+      <article>
+        <span>Ganancia proyectada</span>
+        <strong>S/ {{ metrics().totalProfit.toFixed(2) }}</strong>
+      </article>
+    }
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>{{ moduleOptions.find(item => item.value === moduleFilter())?.label }}</h2>
+      <span>{{ reportRows().length }} resultado(s)</span>
+    </div>
+
+    <p-table
+      [value]="reportRows()"
+      [loading]="loading()"
+      [paginator]="reportRows().length > 15"
+      [rows]="15"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          @for (column of columns(); track column.key) {
+            <th [class]="cellClass(column)">{{ column.label }}</th>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          @for (column of columns(); track column.key) {
+            <td [class]="cellClass(column)">
+              @if (isStatusColumn(column) && row[column.key]) {
+                <p-tag [value]="row[column.key]" [severity]="statusSeverity(row[column.key])"></p-tag>
+              } @else {
+                {{ displayCell(row, column) }}
+              }
+            </td>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="columns().length">No hay informacion para los filtros seleccionados.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>

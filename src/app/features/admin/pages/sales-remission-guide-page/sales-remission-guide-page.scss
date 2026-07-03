@@ -1,0 +1,266 @@
+.doc-shell {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.doc-header {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d6e2ef;
+  border-radius: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+}
+
+.doc-eyebrow {
+  color: #0f766e;
+  font-size: 0.74rem;
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+  text-transform: uppercase;
+}
+
+.doc-header h1 {
+  color: #0f172a;
+  font-size: 1.9rem;
+  margin: 0;
+}
+
+.doc-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.doc-card {
+  background: #fff;
+  border: 1px solid #d6e2ef;
+  border-radius: 0.85rem;
+  padding: 0.9rem;
+}
+
+.doc-card h2 {
+  color: #0f172a;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.item-actions {
+  margin: 0.65rem 0 0.8rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-grid label,
+.item-row label {
+  color: #1e293b;
+  display: grid;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 0.35rem;
+}
+
+.item-row {
+  align-items: end;
+  border: 1px solid #dbe5ef;
+  border-radius: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: minmax(220px, 2fr) minmax(120px, 0.8fr) minmax(240px, 2fr) auto;
+  padding: 0.65rem;
+}
+
+.remove-btn {
+  margin-bottom: 0.2rem;
+}
+
+.banner {
+  border-radius: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.7rem 0.8rem;
+}
+
+.banner--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.banner--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.guide-metrics {
+  background: #fff;
+  border: 1px solid #d6e2ef;
+  border-radius: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.guide-metrics div {
+  border-right: 1px solid #e2e8f0;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+}
+
+.guide-metrics div:last-child {
+  border-right: 0;
+}
+
+.guide-metrics span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.guide-metrics strong {
+  color: #0f172a;
+  font-size: 1.45rem;
+}
+
+.guide-list {
+  padding: 0;
+}
+
+.guide-list__toolbar {
+  align-items: center;
+  border-bottom: 1px solid #dbe5ef;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+}
+
+.guide-list__toolbar p {
+  color: #64748b;
+  margin: 0.25rem 0 0;
+}
+
+.guide-search {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: auto minmax(260px, 420px) auto;
+}
+
+.guide-search i {
+  color: #64748b;
+}
+
+.guide-table-wrap {
+  overflow-x: auto;
+}
+
+.guide-table {
+  border-collapse: collapse;
+  min-width: 1180px;
+  width: 100%;
+}
+
+.guide-table th {
+  background: #1e80dc;
+  color: #fff;
+  font-size: 0.82rem;
+  padding: 0.8rem 0.75rem;
+  text-align: left;
+}
+
+.guide-table td {
+  border-bottom: 1px solid #e2e8f0;
+  color: #172033;
+  font-size: 0.88rem;
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+.guide-table strong,
+.guide-table small {
+  display: block;
+}
+
+.guide-table small {
+  color: #64748b;
+  line-height: 1.35;
+  margin-top: 0.2rem;
+  max-width: 360px;
+}
+
+.status-pill {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.28rem 0.55rem;
+}
+
+.status-pill--ok {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.status-pill--error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill--processing {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-pill--pending {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.file-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.empty-row {
+  color: #64748b;
+  font-weight: 700;
+  padding: 1.2rem !important;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .doc-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .form-grid,
+  .item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-list__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .guide-search {
+    grid-template-columns: auto 1fr;
+  }
+
+  .guide-search button {
+    grid-column: 1 / -1;
+  }
+}

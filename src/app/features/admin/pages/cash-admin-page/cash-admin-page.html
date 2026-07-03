@@ -1,0 +1,297 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Caja</p>
+      <h1>Gestion de caja</h1>
+      <p>Apertura, movimientos, depositos y cierre por sucursal.</p>
+    </div>
+    <div class="header-actions">
+      <p-button label="Abrir caja" icon="pi pi-plus" styleClass="az-primary" (onClick)="openAbrirDialog()" />
+      <p-button label="Movimiento" icon="pi pi-arrow-right-arrow-left" styleClass="az-secondary" (onClick)="openMovimientoDialog()" />
+      <p-button label="Deposito" icon="pi pi-wallet" styleClass="az-secondary" (onClick)="openDepositoDialog()" />
+      <p-button label="Cerrar caja" icon="pi pi-lock" severity="danger" (onClick)="openCierreDialog()" />
+      <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadData()" />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  @if (selectedCaja(); as caja) {
+    <section class="turno-panel">
+      <article>
+        <span>Caja</span>
+        <strong>Caja #{{ caja.id }}</strong>
+        <small>{{ caja.codigo }} - {{ caja.nombre }}</small>
+      </article>
+      <article>
+        <span>Fecha</span>
+        <strong>{{ caja.fechaApertura | date: 'dd/MM/yyyy' }}</strong>
+        <small>Apertura: {{ caja.fechaApertura | date: 'HH:mm' }}</small>
+      </article>
+      <article>
+        <span>Apertura</span>
+        <strong>S/ {{ caja.saldoCapital | number: '1.2-2' }}</strong>
+        <small>Saldo actual: S/ {{ caja.saldoActual | number: '1.2-2' }}</small>
+      </article>
+      <article>
+        <span>Ventas del turno</span>
+        <strong>{{ ventaMovimientos().length }}</strong>
+        <small>Total: S/ {{ totalVentas() | number: '1.2-2' }}</small>
+      </article>
+    </section>
+  }
+
+  <section class="table-panel">
+    <div class="table-head table-head--filters">
+      <h2>Historial de cajas</h2>
+      <div class="filters">
+        <p-select
+          [options]="estadoOptions()"
+          [ngModel]="estadoFilter()"
+          (ngModelChange)="estadoFilter.set($event)"
+          placeholder="Estado"
+          [showClear]="true"
+        />
+        <p-select
+          [options]="sucursalOptions()"
+          [ngModel]="sucursalFilter()"
+          (ngModelChange)="sucursalFilter.set($event)"
+          placeholder="Sucursal"
+          [showClear]="true"
+        />
+        <p-button label="Aplicar" styleClass="az-secondary" (onClick)="applyFilters()" />
+      </div>
+    </div>
+    <p-table
+      [value]="cajas()"
+      [loading]="loading()"
+      [paginator]="cajas().length > 8"
+      [rows]="8"
+      responsiveLayout="scroll"
+      styleClass="history-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Sucursal</th>
+          <th>Estado</th>
+          <th>Apertura / Cierre</th>
+          <th>Inicial</th>
+          <th>Resultado</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+        <tr [ngClass]="historialRowClass(item)">
+          <td><strong>{{ rowIndex + 1 }}</strong></td>
+          <td>
+            <strong>{{ cajaUsuario(item) }}</strong>
+            <small>{{ item.codigo }} - {{ item.nombre }}</small>
+          </td>
+          <td>{{ item.sucursalCodigo }} - {{ item.sucursalNombre }}</td>
+          <td><p-tag [value]="item.estado" [severity]="cajaSeverity(item.estado)" /></td>
+          <td>
+            <div class="schedule-cell">
+              <span class="schedule-open">
+                <i class="pi pi-play"></i>
+                {{ item.fechaApertura | date: 'dd/MM HH:mm' }}
+              </span>
+              <span class="schedule-close">
+                <i class="pi pi-stop"></i>
+                {{ item.fechaCierre ? (item.fechaCierre | date: 'dd/MM HH:mm') : '-' }}
+              </span>
+            </div>
+          </td>
+          <td>S/ {{ item.saldoCapital | number: '1.2-2' }}</td>
+          <td>
+            <span class="result-chip" [ngClass]="resultadoClase(item)">{{ resultadoTexto(item) }}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button
+                type="button"
+                pButton
+                class="p-button-rounded p-button-sm p-button-info p-button-text"
+                icon="pi pi-eye"
+                (click)="onCajaSelect(item.id)"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>Movimientos de caja</h2>
+      @if (selectedCaja(); as caja) {
+        <small>Caja: {{ caja.codigo }} - {{ caja.nombre }}</small>
+      }
+    </div>
+    <p-table [value]="movimientos()" [loading]="loading()" [paginator]="movimientos().length > 10" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Monto</th>
+          <th>Saldo</th>
+          <th>Descripcion</th>
+          <th>Referencia</th>
+          <th>Responsable</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.fechaMovimiento | date: 'yyyy-MM-dd HH:mm' }}</td>
+          <td>{{ item.tipoMovimiento }}</td>
+          <td>S/ {{ item.monto | number: '1.2-2' }}</td>
+          <td>S/ {{ item.saldoResultante | number: '1.2-2' }}</td>
+          <td>{{ item.descripcion }}</td>
+          <td>{{ item.referencia || '-' }}</td>
+          <td>{{ item.responsableNombre }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-head">
+      <h2>Ventas realizadas en caja</h2>
+      @if (selectedCaja(); as caja) {
+        <small>Caja #{{ caja.id }} - Total ventas: S/ {{ totalVentas() | number: '1.2-2' }}</small>
+      }
+    </div>
+    <p-table [value]="ventaMovimientos()" [loading]="loading()" [paginator]="ventaMovimientos().length > 10" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Comprobante</th>
+          <th>Monto</th>
+          <th>Detalle</th>
+          <th>Responsable</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.fechaMovimiento | date: 'yyyy-MM-dd HH:mm' }}</td>
+          <td>{{ item.referencia || 'VENTA-MOSTRADOR' }}</td>
+          <td>S/ {{ item.monto | number: '1.2-2' }}</td>
+          <td>{{ item.descripcion }}</td>
+          <td>{{ item.responsableNombre }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">No hay ventas marcadas en esta caja.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog header="Abrir caja" [modal]="true" [draggable]="false" [resizable]="false" [visible]="abrirDialogVisible()" (visibleChange)="abrirDialogVisible.set($event)" styleClass="cash-dialog">
+  <form class="dialog-form">
+    <label>
+      Sucursal
+      <p-select name="sucursalId" [options]="sucursalOptions()" [(ngModel)]="abrirForm.sucursalId" placeholder="Selecciona sucursal" />
+    </label>
+    <label>
+      Codigo
+      <input pInputText name="codigo" [(ngModel)]="abrirForm.codigo" placeholder="CJ-01" />
+    </label>
+    <label>
+      Nombre
+      <input pInputText name="nombre" [(ngModel)]="abrirForm.nombre" placeholder="Caja principal" />
+    </label>
+    <label>
+      Saldo inicial
+      <input pInputText type="number" name="saldoCapital" [(ngModel)]="abrirForm.saldoCapital" />
+    </label>
+    <label>
+      Observacion
+      <input pInputText name="observacion" [(ngModel)]="abrirForm.observacion" placeholder="Observacion de apertura" />
+    </label>
+  </form>
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="abrirDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="abrirCaja()">Abrir caja</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Registrar movimiento" [modal]="true" [draggable]="false" [resizable]="false" [visible]="movimientoDialogVisible()" (visibleChange)="movimientoDialogVisible.set($event)" styleClass="cash-dialog">
+  <form class="dialog-form">
+    <label>
+      Tipo
+      <p-select
+        name="tipoMovimiento"
+        [options]="[{ label: 'Entrada', value: 'ENTRADA' }, { label: 'Salida', value: 'SALIDA' }]"
+        [(ngModel)]="movimientoForm.tipoMovimiento"
+      />
+    </label>
+    <label>
+      Monto
+      <input pInputText type="number" name="monto" [(ngModel)]="movimientoForm.monto" />
+    </label>
+    <label>
+      Descripcion
+      <input pInputText name="descripcion" [(ngModel)]="movimientoForm.descripcion" placeholder="Pago, devolucion, etc." />
+    </label>
+    <label>
+      Referencia
+      <input pInputText name="referencia" [(ngModel)]="movimientoForm.referencia" placeholder="Nro operacion" />
+    </label>
+  </form>
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="movimientoDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="registrarMovimientoCaja()">Guardar</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Deposito a cuenta empresarial" [modal]="true" [draggable]="false" [resizable]="false" [visible]="depositoDialogVisible()" (visibleChange)="depositoDialogVisible.set($event)" styleClass="cash-dialog">
+  <form class="dialog-form">
+    <label>
+      Monto
+      <input pInputText type="number" name="monto" [(ngModel)]="depositoForm.monto" />
+    </label>
+    <label>
+      Cuenta empresarial
+      <input pInputText name="cuentaEmpresarial" [(ngModel)]="depositoForm.cuentaEmpresarial" placeholder="Cuenta destino" />
+    </label>
+    <label>
+      Numero operacion
+      <input pInputText name="numeroOperacion" [(ngModel)]="depositoForm.numeroOperacion" placeholder="Operacion bancaria" />
+    </label>
+    <label>
+      Observacion
+      <input pInputText name="observacion" [(ngModel)]="depositoForm.observacion" placeholder="Detalle del deposito" />
+    </label>
+  </form>
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="depositoDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="registrarDeposito()">Registrar deposito</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog header="Cerrar caja" [modal]="true" [draggable]="false" [resizable]="false" [visible]="cierreDialogVisible()" (visibleChange)="cierreDialogVisible.set($event)" styleClass="cash-dialog">
+  <form class="dialog-form">
+    <label>
+      Saldo de cierre
+      <input pInputText type="number" name="saldoSalida" [(ngModel)]="cierreForm.saldoSalida" />
+    </label>
+    <label>
+      Observacion
+      <input pInputText name="observacion" [(ngModel)]="cierreForm.observacion" placeholder="Detalle de cierre" />
+    </label>
+  </form>
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="cierreDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="p-button-danger" [loading]="saving()" (click)="cerrarCaja()">Cerrar caja</button>
+  </ng-template>
+</p-dialog>

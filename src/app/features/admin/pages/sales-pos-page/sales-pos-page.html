@@ -1,0 +1,343 @@
+<section class="pos-shell">
+  <header class="pos-statusbar">
+    <div class="status-brand">
+      <span class="status-icon"><i class="pi pi-shopping-cart"></i></span>
+      <div>
+        <strong>Punto de venta</strong>
+        <small>Venta rápida Azurion</small>
+      </div>
+    </div>
+
+    <div class="status-facts">
+      <span><i class="pi pi-building"></i> {{ selectedCaja()?.sucursalNombre || 'Sin sucursal' }}</span>
+      <span><i class="pi pi-user"></i> {{ selectedCaja()?.responsableAperturaNombre || 'Usuario actual' }}</span>
+      <span [class.fact-ok]="selectedCaja()"><i class="pi pi-credit-card"></i> Caja: {{ selectedCaja() ? 'Abierta' : 'No disponible' }}</span>
+      <span><i class="pi pi-box"></i> {{ cart()[0]?.producto?.almacenNombre || 'Inventario general' }}</span>
+      <span><i class="pi pi-percentage"></i> {{ sucursalTaxLabel() }}</span>
+    </div>
+
+    <a routerLink="/admin/ventas" class="history-link"><i class="pi pi-history"></i> Historial</a>
+  </header>
+
+  <div class="pos-workspace">
+    <section class="pos-panel product-panel">
+      <div class="panel-title">
+        <div>
+          <span class="panel-kicker">Catalogo</span>
+          <h2>Buscar productos</h2>
+        </div>
+        <button type="button" class="icon-button" title="Recargar productos" (click)="loadData()"><i class="pi pi-refresh"></i></button>
+      </div>
+
+      <label class="product-search">
+        <i class="pi pi-search"></i>
+        <input
+          type="search"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          (keydown.enter)="addSearchMatch()"
+          placeholder="Producto, SKU o codigo de barras..."
+          autofocus
+        />
+        <span class="scanner-hint"><i class="pi pi-barcode"></i></span>
+      </label>
+
+      <div class="filter-row">
+        <button type="button" [class.active]="productFilter() === 'TODOS'" (click)="selectFilter('TODOS')">Todos</button>
+        <button type="button" [class.active]="productFilter() === 'CON_STOCK'" (click)="selectFilter('CON_STOCK')">Con stock</button>
+        <button type="button" [class.active]="productFilter() === 'STOCK_BAJO'" (click)="selectFilter('STOCK_BAJO')">Stock bajo</button>
+        <button type="button" [class.active]="productFilter() === 'SERVICIOS'" (click)="selectFilter('SERVICIOS')">Servicios</button>
+      </div>
+
+      <div class="product-grid">
+        @if (loading()) {
+          <div class="panel-empty"><i class="pi pi-spin pi-spinner"></i><strong>Cargando productos...</strong></div>
+        } @else {
+          @for (producto of filteredProducts(); track producto.id) {
+            <button
+              type="button"
+              class="product-card"
+              [class.out-of-stock]="!isService(producto) && stockDisponibleSucursal(producto) <= 0"
+              (click)="addProduct(producto)"
+            >
+              <span class="product-visual">
+                <span
+                  class="stock-status"
+                  [class.available]="isService(producto) || stockDisponibleSucursal(producto) > (producto.stockMinimoGlobal || 0)"
+                  [class.low]="!isService(producto) && stockDisponibleSucursal(producto) > 0 && stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)"
+                  [class.empty]="!isService(producto) && stockDisponibleSucursal(producto) <= 0"
+                >
+                  {{ isService(producto) ? 'Servicio' : stockDisponibleSucursal(producto) > 0 ? 'Disponible' : 'Sin stock' }}
+                </span>
+                <span class="product-image">
+                  @if (productImage(producto)) {
+                    <img [src]="productImage(producto)!" [alt]="producto.nombre" />
+                  } @else {
+                    <span>{{ productInitials(producto) }}</span>
+                  }
+                </span>
+              </span>
+              <span class="product-copy">
+                <strong>{{ producto.nombre }}</strong>
+                <small>{{ producto.sku }}</small>
+              </span>
+              <span class="stock-summary">
+                @if (isService(producto)) {
+                  <span><small>Tipo</small><strong>Servicio</strong></span>
+                } @else {
+                  <span [class.stock-low]="stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)">
+                    <small>Sucursal</small><strong>{{ stockDisponibleSucursal(producto) }}</strong>
+                  </span>
+                  <span><small>Empresa</small><strong>{{ stockEmpresa(producto) }}</strong></span>
+                }
+              </span>
+              <span class="product-footer">
+                <span class="product-price"><small>Precio</small><strong>S/ {{ producto.precio | number: '1.2-2' }}</strong></span>
+                <span class="add-product" title="Agregar al carrito"><i class="pi pi-plus"></i></span>
+              </span>
+            </button>
+          } @empty {
+            <div class="panel-empty"><i class="pi pi-search"></i><strong>No encontramos productos</strong><span>Prueba con otro nombre, SKU o codigo.</span></div>
+          }
+        }
+      </div>
+    </section>
+
+    <section class="pos-panel cart-panel">
+      <div class="panel-title cart-heading">
+        <div>
+          <span class="panel-kicker">Venta actual</span>
+          <h2>Carrito</h2>
+        </div>
+        <span class="item-count">{{ totalUnits() }} unidad(es)</span>
+      </div>
+
+      <div class="cart-columns">
+        <span>Producto</span><span>Cantidad</span><span>Precio</span><span>Desc.</span><span>Total</span><span></span>
+      </div>
+
+      <div class="cart-list">
+        @for (item of cart(); track item.producto.id) {
+          <article class="cart-row">
+            <div class="cart-product">
+              <strong>{{ item.producto.nombre }}</strong>
+              <small>{{ item.producto.sku }} · {{ item.producto.almacenCodigo }}</small>
+            </div>
+            <div class="quantity-control">
+              <button type="button" (click)="changeQuantity(item.producto.id, -1)"><i class="pi pi-minus"></i></button>
+              <input type="number" [ngModel]="item.cantidad" (ngModelChange)="updateQuantity(item.producto.id, $event)" />
+              <button type="button" (click)="changeQuantity(item.producto.id, 1)"><i class="pi pi-plus"></i></button>
+            </div>
+            <strong class="money">S/ {{ item.producto.precio | number: '1.2-2' }}</strong>
+            <label class="discount-input"><span>S/</span><input type="number" [ngModel]="item.descuento" (ngModelChange)="updateDiscount(item.producto.id, $event)" /></label>
+            <strong class="money row-total">S/ {{ itemTotal(item) | number: '1.2-2' }}</strong>
+            <button type="button" class="remove-item" title="Quitar producto" (click)="removeProduct(item.producto.id)"><i class="pi pi-trash"></i></button>
+          </article>
+        } @empty {
+          <div class="cart-empty">
+            <span><i class="pi pi-shopping-cart"></i></span>
+            <strong>El carrito esta vacio</strong>
+            <p>Busca o escanea un producto para comenzar.</p>
+          </div>
+        }
+      </div>
+
+      <div class="cart-summary">
+        <div><span>Subtotal</span><strong>S/ {{ subtotal() | number: '1.2-2' }}</strong></div>
+        <div><span>Descuento</span><strong class="discount-total">- S/ {{ descuentoTotal() | number: '1.2-2' }}</strong></div>
+        <div class="grand-total"><span>Total a cobrar</span><strong>S/ {{ total() | number: '1.2-2' }}</strong></div>
+      </div>
+    </section>
+
+    <aside class="pos-panel checkout-panel">
+      <div class="panel-title">
+        <div>
+          <span class="panel-kicker">Cobro</span>
+          <h2>Venta y pago</h2>
+        </div>
+        <button type="button" class="icon-button danger" title="Limpiar venta" (click)="clearSale()"><i class="pi pi-trash"></i></button>
+      </div>
+
+      <section class="checkout-section">
+        <label class="section-label">Comprobante</label>
+        <div class="segmented-control">
+          @for (option of documentOptions; track option.value) {
+            <button type="button" [class.active]="tipoComprobante === option.value" (click)="selectDocument(option.value)">
+              <i [class]="'pi ' + option.icon"></i><span>{{ option.label }}</span>
+            </button>
+          }
+        </div>
+        <p class="context-note">
+          @if (tipoComprobante === 'TICKET_VENTA') {
+            Venta interna inmediata, sin SUNAT.
+          } @else {
+            El comprobante se enviara al Facturador en segundo plano.
+          }
+        </p>
+        @if (tipoComprobante === 'FACTURA') {
+          <p class="invoice-rule"><i class="pi pi-building"></i><span>Las facturas solo se emiten a clientes registrados con RUC de 11 digitos.</span></p>
+        }
+      </section>
+
+      <section class="checkout-section">
+        <div class="section-row">
+          <label class="section-label">Cliente</label>
+          <a routerLink="/admin/clientes"><i class="pi pi-user-plus"></i> Registrar</a>
+        </div>
+        <p-select
+          [options]="clienteOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedClienteId()"
+          (ngModelChange)="selectedClienteId.set($event)"
+          [filter]="true"
+          [showClear]="true"
+          [placeholder]="clientePlaceholder()"
+          appendTo="body"
+        />
+
+        @if (selectedCliente(); as cliente) {
+          <article class="customer-card" [class.has-debt]="cliente.deudor">
+            <span class="customer-avatar">{{ cliente.nombre.charAt(0) }}</span>
+            <div>
+              <strong>{{ cliente.nombre }}</strong>
+              <small>{{ cliente.numeroDocumento }} · {{ cliente.telefono || 'Sin telefono' }}</small>
+              <div class="credit-line">
+                <span>Credito disponible <strong>S/ {{ cliente.creditoDisponible | number: '1.2-2' }}</strong></span>
+                <span>Deuda <strong>S/ {{ cliente.saldoDeuda | number: '1.2-2' }}</strong></span>
+              </div>
+            </div>
+          </article>
+        } @else {
+          <div class="customer-empty"><i class="pi pi-user"></i><span>Cliente general</span></div>
+        }
+      </section>
+
+      <section class="checkout-section">
+        <label class="section-label">Caja</label>
+        <p-select
+          [options]="cajaOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedCajaId()"
+          (ngModelChange)="onCajaChange($event)"
+          placeholder="Selecciona caja abierta"
+          appendTo="body"
+        />
+      </section>
+
+      <section class="checkout-section payment-section">
+        <label class="section-label">Condicion de pago</label>
+        <div class="pay-mode">
+          <button type="button" [class.active]="formaPago === 'CONTADO'" (click)="formaPago = 'CONTADO'">Contado</button>
+          <button type="button" [class.active]="formaPago === 'CREDITO'" (click)="formaPago = 'CREDITO'">Credito</button>
+        </div>
+
+        @if (formaPago === 'CONTADO') {
+          <label class="field-label">Metodo
+            <p-select [options]="methodOptions" optionLabel="label" optionValue="value" [(ngModel)]="metodoPago" appendTo="body" />
+          </label>
+
+          @if (metodoPago === 'EFECTIVO') {
+            <div class="cash-grid">
+              <label class="field-label">Recibido
+                <span class="money-input"><span>S/</span><input type="number" [(ngModel)]="montoRecibido" /></span>
+              </label>
+              <label class="field-label">Vuelto
+                <strong class="change-value">S/ {{ vuelto() | number: '1.2-2' }}</strong>
+              </label>
+            </div>
+          }
+        } @else {
+          <div class="credit-warning"><i class="pi pi-info-circle"></i><span>La venta se cargara al credito disponible del cliente.</span></div>
+        }
+      </section>
+
+      @if (lastSale(); as result) {
+        <button type="button" class="last-sale" (click)="openLastTicket()">
+          <i class="pi pi-check-circle"></i>
+          <div><strong>{{ result.venta.externalId }}</strong><span>{{ result.facturacion.message }}</span></div>
+          <i class="pi pi-print"></i>
+        </button>
+      }
+
+      <button type="button" class="charge-button" [disabled]="saving() || !cart().length || !selectedCajaId()" (click)="submitSale()">
+        @if (saving()) {
+          <i class="pi pi-spin pi-spinner"></i><span>Procesando venta...</span>
+        } @else {
+          <i class="pi pi-check-circle"></i><span>Cobrar S/ {{ total() | number: '1.2-2' }}</span>
+        }
+      </button>
+    </aside>
+  </div>
+</section>
+
+<p-dialog
+  header="Ticket generado"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="ticketDialogVisible()"
+  (visibleChange)="ticketDialogVisible.set($event)"
+  styleClass="ticket-preview-dialog"
+>
+  @if (ticketPreview(); as ticket) {
+    <section class="ticket-success">
+      <span><i class="pi pi-check"></i></span>
+      <div>
+        <strong>Venta registrada correctamente</strong>
+        <p>{{ ticket.facturacionMessage }}</p>
+      </div>
+    </section>
+
+    <article class="ticket-preview">
+      <header>
+        @if (ticket.logoUrl) {
+          <img [src]="ticket.logoUrl" alt="Logo empresa" />
+        }
+        <div>
+          <h3>{{ ticket.empresaNombre }}</h3>
+          <p>RUC {{ ticket.empresaRuc || '-' }}</p>
+          <p>{{ ticket.sucursalNombre }}</p>
+        </div>
+        <div class="ticket-number">
+          <span>Ticket de venta</span>
+          <strong>{{ ticket.externalId }}</strong>
+        </div>
+      </header>
+
+      <div class="ticket-meta">
+        <div><span>Fecha</span><strong>{{ previewDate(ticket.fecha) }}</strong></div>
+        <div><span>Caja</span><strong>{{ ticket.cajaNombre }}</strong></div>
+        <div><span>Cliente</span><strong>{{ ticket.clienteNombre }}</strong></div>
+        <div><span>Documento</span><strong>{{ ticket.clienteDocumento }}</strong></div>
+        <div><span>Comprobante solicitado</span><strong>{{ ticket.requestedDocument }}</strong></div>
+        <div><span>Vendedor</span><strong>{{ ticket.vendedor }}</strong></div>
+        <div><span>Pago</span><strong>{{ ticket.formaPago === 'CREDITO' ? 'Credito' : ticket.metodoPago }}</strong></div>
+      </div>
+
+      <div class="ticket-items">
+        @for (item of ticket.items; track item.sku) {
+          <div>
+            <span><strong>{{ item.cantidad }} x {{ item.nombre }}</strong><small>{{ item.sku }}</small></span>
+            <strong>S/ {{ item.total | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </div>
+
+      <div class="ticket-totals">
+        <div><span>Subtotal</span><strong>S/ {{ ticket.subtotal | number: '1.2-2' }}</strong></div>
+        <div><span>Descuento</span><strong>- S/ {{ ticket.descuento | number: '1.2-2' }}</strong></div>
+        <div class="preview-grand"><span>Total</span><strong>S/ {{ ticket.total | number: '1.2-2' }}</strong></div>
+        <div><span>Recibido</span><strong>S/ {{ ticket.recibido | number: '1.2-2' }}</strong></div>
+        <div><span>Vuelto</span><strong>S/ {{ ticket.vuelto | number: '1.2-2' }}</strong></div>
+      </div>
+    </article>
+
+    <div class="print-formats">
+      <button type="button" (click)="printTicket('A4')"><i class="pi pi-file"></i><span><strong>A4</strong><small>Hoja completa</small></span></button>
+      <button type="button" (click)="printTicket('80MM')"><i class="pi pi-receipt"></i><span><strong>80 mm</strong><small>Ticket termico</small></span></button>
+      <button type="button" (click)="printTicket('58MM')"><i class="pi pi-receipt"></i><span><strong>58 mm</strong><small>Ticket compacto</small></span></button>
+    </div>
+  }
+</p-dialog>

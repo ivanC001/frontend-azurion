@@ -1,0 +1,106 @@
+<section class="doc-shell">
+  <header class="doc-header">
+    <div>
+      <p class="doc-eyebrow">Ventas</p>
+      <h1>Nota de debito</h1>
+    </div>
+    <div class="doc-actions">
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" [loading]="loading()" (click)="loadData()">Recargar</button>
+      <button pButton type="button" class="p-button-success" icon="pi pi-check" [loading]="saving()" (click)="registrarNotaDebito()">Registrar</button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="banner banner--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="banner banner--success">{{ successMessage() }}</div>
+  }
+
+  <section class="doc-card">
+    <div class="form-grid">
+      <label>
+        Venta referenciada
+        <p-select
+          [options]="ventaOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="selectedVentaId()"
+          (ngModelChange)="selectedVentaId.set($event)"
+          placeholder="Selecciona una venta emitida"
+          [filter]="true"
+        />
+      </label>
+      <label>
+        Codigo de motivo
+        <p-select [options]="motivoOptions" optionLabel="label" optionValue="value" [ngModel]="motivoCodigo()" (ngModelChange)="motivoCodigo.set($event)" />
+      </label>
+      <label>
+        Monto de cargo
+        <input pInputText type="number" [ngModel]="montoCargo()" (ngModelChange)="montoCargo.set(+$event || 0)" />
+      </label>
+      <label class="wide">
+        Motivo
+        <input pInputText [ngModel]="motivoDescripcion()" (ngModelChange)="motivoDescripcion.set($event)" />
+      </label>
+    </div>
+  </section>
+
+  @if (selectedVenta()) {
+    <section class="doc-card">
+      <h2>Venta vinculada</h2>
+      <div class="summary-grid">
+        <article><span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong></article>
+        <article><span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong></article>
+        <article><span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong></article>
+        <article><span>Total</span><strong>{{ selectedVenta()!.moneda }} {{ selectedVenta()!.total | number: '1.2-2' }}</strong></article>
+      </div>
+    </section>
+  }
+
+  <section class="doc-card">
+    <h2>Estado de notas de debito</h2>
+    <p-table [value]="notas()" [paginator]="notas().length > 8" [rows]="8" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nota</th>
+          <th>Referencia</th>
+          <th>Cliente</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th>Motivo</th>
+          <th>Facturador</th>
+          <th>Archivos</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>
+            <strong>{{ item.externalId }}</strong>
+            @if (item.facturadorDocumentoId) {
+              <small>#{{ item.facturadorDocumentoId }}</small>
+            }
+          </td>
+          <td>{{ item.ventaNumeroDocumento || item.ventaExternalId }}</td>
+          <td>{{ item.clienteNombre }}</td>
+          <td>{{ item.moneda }} {{ item.monto | number: '1.2-2' }}</td>
+          <td><p-tag [value]="statusLabel(item)" [severity]="estadoSeverity(item)" /></td>
+          <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ item.motivoCodigo }} - {{ item.motivoDescripcion }}</td>
+          <td>{{ item.facturadorMensaje || 'Pendiente de respuesta' }}</td>
+          <td class="file-actions">
+            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-file-pdf" (click)="openAsset(item.facturadorPdfUrl)"></button>
+            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-code" (click)="openAsset(item.facturadorXmlUrl)"></button>
+            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-download" (click)="openAsset(item.facturadorCdrUrl)"></button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">Todavia no registras notas de debito.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>

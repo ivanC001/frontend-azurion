@@ -1,0 +1,154 @@
+<section class="facturador-config">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Configuracion facturador</p>
+      <h1>Series, correlativos y tablas de emision</h1>
+      <p>
+        Los tenants nuevos inician automaticamente con series por defecto. Esta vista centraliza cambios
+        de series, IGV y moneda por tenant.
+      </p>
+    </div>
+    <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadTenants()" />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="table-panel">
+    <div class="table-panel__head">
+      <div>
+        <h2>Tenants y configuracion actual</h2>
+        <p>Selecciona un tenant y abre el modal para administrar su configuracion.</p>
+      </div>
+    </div>
+
+    <p-table
+      [value]="tenants()"
+      [loading]="loading()"
+      [paginator]="tenants().length > 10"
+      [rows]="10"
+      responsiveLayout="scroll"
+      styleClass="config-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Empresa</th>
+          <th>RUC</th>
+          <th>Modo</th>
+          <th>Factura</th>
+          <th>Boleta</th>
+          <th>NC</th>
+          <th>ND</th>
+          <th>Guia</th>
+          <th>IGV</th>
+          <th>Moneda</th>
+          <th>Opciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-tenant>
+        <tr>
+          <td>
+            <strong>{{ tenant.business_name || 'Empresa sin nombre' }}</strong>
+            <small>ID {{ tenant.tenant_id }} | {{ tenant.schema }}</small>
+          </td>
+          <td>{{ tenant.ruc }}</td>
+          <td>
+            <p-tag [value]="tenant.sunat_mode || tenant.modo_sunat || 'beta'" [severity]="modeTag(tenant.sunat_mode || tenant.modo_sunat)" />
+          </td>
+          <td>{{ tenant.serie_factura || 'F001' }}</td>
+          <td>{{ tenant.serie_boleta || 'B001' }}</td>
+          <td>{{ tenant.serie_nc || 'FC01' }}</td>
+          <td>{{ tenant.serie_nd || 'FD01' }}</td>
+          <td>{{ tenant.serie_guia || 'T001' }}</td>
+          <td>{{ tenant.igv ?? 18 }}</td>
+          <td>{{ tenant.moneda || 'PEN' }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              class="p-button-sm p-button-rounded p-button-info p-button-text"
+              icon="pi pi-pencil"
+              (click)="openEditModal(tenant)"
+            >
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11">No hay tenants registrados en facturador.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Editar series y parametros"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="editVisible()"
+  (visibleChange)="editVisible.set($event)"
+  [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (detailLoading()) {
+    <div class="detail-loading">Cargando configuracion del tenant...</div>
+  } @else if (selectedTenantDetail(); as detail) {
+    <div class="tenant-meta">
+      <div><span>Empresa</span><strong>{{ detail.business_name }}</strong></div>
+      <div><span>RUC</span><strong>{{ detail.ruc }}</strong></div>
+      <div><span>Schema</span><strong>{{ detail.schema }}</strong></div>
+      <div><span>Tenant</span><strong>{{ detail.tenant_id }}</strong></div>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        Serie factura
+        <input pInputText name="serie_factura" [(ngModel)]="form.serie_factura" maxlength="10" />
+      </label>
+      <label>
+        Serie boleta
+        <input pInputText name="serie_boleta" [(ngModel)]="form.serie_boleta" maxlength="10" />
+      </label>
+      <label>
+        Serie NC
+        <input pInputText name="serie_nc" [(ngModel)]="form.serie_nc" maxlength="10" />
+      </label>
+      <label>
+        Serie ND
+        <input pInputText name="serie_nd" [(ngModel)]="form.serie_nd" maxlength="10" />
+      </label>
+      <label>
+        Serie guia
+        <input pInputText name="serie_guia" [(ngModel)]="form.serie_guia" maxlength="10" />
+      </label>
+      <label>
+        IGV
+        <input pInputText type="number" name="igv" [(ngModel)]="form.igv" />
+      </label>
+      <label>
+        Moneda
+        <input pInputText name="moneda" maxlength="3" [(ngModel)]="form.moneda" />
+      </label>
+    </div>
+
+    <div class="series-preview">
+      <article><span>Factura</span><strong>{{ previewSeries().factura }}</strong></article>
+      <article><span>Boleta</span><strong>{{ previewSeries().boleta }}</strong></article>
+      <article><span>Nota credito</span><strong>{{ previewSeries().nc }}</strong></article>
+      <article><span>Nota debito</span><strong>{{ previewSeries().nd }}</strong></article>
+      <article><span>Guia</span><strong>{{ previewSeries().guia }}</strong></article>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" class="az-secondary p-button-outlined" (click)="editVisible.set(false)">Cancelar</button>
+    <button pButton type="button" class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveConfig()">Guardar</button>
+  </ng-template>
+</p-dialog>

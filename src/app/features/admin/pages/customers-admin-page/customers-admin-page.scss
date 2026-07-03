@@ -1,0 +1,77 @@
+:host ::ng-deep .customer-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(52rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .customer-dialog .p-dialog-content {
+  padding-top: 0.25rem;
+}
+
+.required {
+  color: #dc2626;
+}
+
+:host ::ng-deep .customer-payment-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(46rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .p-select {
+  width: 100%;
+}
+
+td small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.76rem;
+  margin-top: 0.18rem;
+}
+
+.debt-value {
+  color: #dc2626;
+}
+
+.debt-summary {
+  align-items: center;
+  background: var(--az-surface-soft);
+  border: 1px solid var(--az-border);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.debt-summary div,
+.payment-form label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.debt-summary span,
+.debt-summary small {
+  color: var(--az-text-soft);
+}
+
+.payment-form {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(10rem, 0.7fr) minmax(14rem, 1.3fr);
+}
+
+.payment-history {
+  margin-top: 1.25rem;
+}
+
+.payment-history h3 {
+  margin: 0 0 0.65rem;
+}
+
+@media (max-width: 640px) {
+  .debt-summary,
+  .payment-form {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

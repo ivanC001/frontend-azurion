@@ -1,0 +1,156 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Inventario base</p>
+      <h1>Almacenes</h1>
+      <p>Registra y administra almacenes para inventario y stock.</p>
+    </div>
+    <div class="header-actions">
+      <p-button
+        label="Nuevo almacen"
+        icon="pi pi-plus"
+        styleClass="az-primary"
+        (onClick)="openCreate()"
+      />
+      <p-button
+        label="Actualizar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="load()"
+      />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="stats-grid">
+    <article>
+      <span>Almacenes</span>
+      <strong>{{ warehouseStats().total }}</strong>
+    </article>
+    <article>
+      <span>Activos</span>
+      <strong>{{ warehouseStats().active }}</strong>
+    </article>
+    <article>
+      <span>Sucursales con almacen</span>
+      <strong>{{ warehouseStats().branches }}</strong>
+    </article>
+  </section>
+
+  <div class="content-grid warehouse-content-grid">
+    <section class="table-panel">
+      <div class="table-head">
+        <div>
+          <h2>Almacenes registrados</h2>
+          <p>Consulta los almacenes activos por sucursal desde una sola lista.</p>
+        </div>
+      </div>
+      <p-table
+        [value]="almacenes()"
+        [loading]="loading()"
+        [paginator]="almacenes().length > 8"
+        [rows]="8"
+        responsiveLayout="scroll"
+        styleClass="warehouse-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Codigo</th>
+            <th>Nombre</th>
+            <th>Sucursal</th>
+            <th>Direccion</th>
+            <th>Estado</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <strong>{{ item.codigo }}</strong>
+            </td>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.sucursalCodigo }} - {{ item.sucursalNombre }}</td>
+            <td>{{ item.direccion || 'Sin direccion' }}</td>
+            <td>
+              <p-tag
+                [value]="item.activo ? 'Activo' : 'Inactivo'"
+                [severity]="statusSeverity(item.activo)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <strong>Todavia no hay almacenes registrados.</strong>
+                <span>Crea el primer almacen para comenzar a controlar stock por sucursal.</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</section>
+
+<p-dialog
+  header="Registrar almacen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  styleClass="warehouse-dialog"
+>
+  <form class="dialog-form">
+    <p class="dialog-copy">
+      Completa los datos base del almacen y asignalo a la sucursal donde controlara stock.
+    </p>
+    <div class="dialog-grid">
+      <label>
+        Codigo <span class="required">*</span>
+        <input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="ALM-01" />
+      </label>
+      <label>
+        Nombre <span class="required">*</span>
+        <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Almacen principal" />
+      </label>
+      <label class="wide-field">
+        Direccion
+        <input
+          pInputText
+          name="direccion"
+          [(ngModel)]="form.direccion"
+          placeholder="Direccion referencial"
+        />
+      </label>
+      <label class="wide-field">
+        Sucursal <span class="required">*</span>
+        <p-select
+          name="sucursalId"
+          [options]="sucursalOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="form.sucursalId"
+          placeholder="Selecciona la sucursal"
+          appendTo="body"
+        />
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="dialogVisible.set(false)"
+      />
+      <p-button label="Guardar almacen" icon="pi pi-save" [loading]="saving()" (onClick)="save()" />
+    </div>
+  </form>
+</p-dialog>

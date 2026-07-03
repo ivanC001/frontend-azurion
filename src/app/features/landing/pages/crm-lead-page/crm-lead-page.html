@@ -1,0 +1,159 @@
+<main class="crm-lead-page">
+  <section class="lead-shell">
+    <header class="lead-header">
+      <a routerLink="/" class="brand-mark" aria-label="Volver a AZURION">
+        <img src="assets/azurion-mark.png" alt="AZURION" />
+        <span>
+          <strong>AZURION</strong>
+          <small>CRM Landing</small>
+        </span>
+      </a>
+      <a routerLink="/" class="back-link">
+        <i class="pi pi-arrow-left"></i>
+        Volver
+      </a>
+    </header>
+
+    <div class="lead-hero">
+      <section class="offer-panel">
+        <p class="eyebrow">Captacion comercial</p>
+        <h1>{{ catalogoItem()?.nombre || 'Oferta conectada al CRM' }}</h1>
+        <p class="hero-copy">
+          Registra tu interes y el equipo comercial recibira el prospecto en AZURION con la oferta, campania y contexto listos para seguimiento.
+        </p>
+
+        @if (catalogoItem()) {
+          <div class="offer-card">
+            <div class="offer-icon">
+              <i class="pi pi-tags"></i>
+            </div>
+            <div>
+              <span>{{ humanize(catalogoItem()!.tipoItem) }}</span>
+              <strong>{{ catalogoItem()!.nombre }}</strong>
+              @if (catalogoItem()!.descripcion) {
+                <p>{{ catalogoItem()!.descripcion }}</p>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="offer-card offer-card--muted">
+            <div class="offer-icon">
+              <i class="pi pi-lock"></i>
+            </div>
+            <div>
+              <span>{{ loadingCatalog() ? 'Validando enlace' : 'Enlace pendiente' }}</span>
+              <strong>{{ loadingCatalog() ? 'Cargando oferta CRM...' : 'Falta tenant, catalogoItemId o token' }}</strong>
+              <p>Genera el enlace desde Productos CRM para que esta landing envie leads seguros al tenant correcto.</p>
+            </div>
+          </div>
+        }
+
+        <div class="trust-grid">
+          @for (badge of offerBadges(); track badge.label) {
+            <div>
+              <i [class]="badge.icon"></i>
+              <span>{{ badge.label }}</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <form class="lead-form" (ngSubmit)="submit()">
+        <div class="form-heading">
+          <div>
+            <span>Formulario rapido</span>
+            <h2>Enviar lead al CRM</h2>
+          </div>
+          <i class="pi pi-send"></i>
+        </div>
+
+        @if (successMessage()) {
+          <div class="lead-alert lead-alert--success">
+            <i class="pi pi-check-circle"></i>
+            {{ successMessage() }}
+          </div>
+        }
+        @if (errorMessage()) {
+          <div class="lead-alert lead-alert--error">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="form-grid">
+          <label>
+            Tipo persona
+            <p-select name="tipoPersona" [options]="personTypeOptions" [(ngModel)]="form.tipoPersona" appendTo="body" />
+          </label>
+          <label>
+            Origen
+            <input pInputText value="Landing web" disabled />
+          </label>
+          <label>
+            Tipo documento
+            <p-select name="tipoDocumento" [options]="documentTypeOptions" [(ngModel)]="form.tipoDocumento" appendTo="body" />
+          </label>
+          <label>
+            Documento
+            <input pInputText name="numeroDocumento" [(ngModel)]="form.numeroDocumento" placeholder="DNI, RUC o CE" />
+          </label>
+          <label class="span-2">
+            Nombre / contacto
+            <input pInputText name="nombre" [(ngModel)]="form.nombre" autocomplete="name" />
+          </label>
+          <label>
+            Empresa
+            <input pInputText name="empresa" [(ngModel)]="form.empresa" autocomplete="organization" placeholder="Opcional" />
+          </label>
+          <label>
+            Fecha de interes
+            <input pInputText type="date" name="fechaInteres" [(ngModel)]="form.fechaInteres" />
+          </label>
+          <label>
+            Telefono
+            <input pInputText name="telefono" [(ngModel)]="form.telefono" autocomplete="tel" />
+          </label>
+          <label>
+            Correo
+            <input pInputText type="email" name="correo" [(ngModel)]="form.correo" autocomplete="email" />
+          </label>
+          <label class="span-2">
+            Direccion
+            <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Opcional" />
+          </label>
+          <label class="bot-field" aria-hidden="true">
+            Website
+            <input pInputText name="website" [(ngModel)]="form.website" tabindex="-1" autocomplete="off" />
+          </label>
+          <label class="span-2">
+            Mensaje
+            <textarea pTextarea name="necesidad" rows="4" [(ngModel)]="form.necesidad" placeholder="Mensaje, dudas, horario o necesidad principal"></textarea>
+          </label>
+        </div>
+
+        <div class="context-strip">
+          <div>
+            <span>Tenant</span>
+            <strong>{{ form.tenantId || 'No configurado' }}</strong>
+          </div>
+          <div>
+            <span>Campania</span>
+            <strong>{{ campaignLabel }}</strong>
+          </div>
+          <div>
+            <span>Oferta</span>
+            <strong>{{ catalogoItem()?.nombre || 'Sin validar' }}</strong>
+          </div>
+        </div>
+
+        <p-button
+          type="submit"
+          label="Enviar al CRM"
+          icon="pi pi-send"
+          [loading]="saving()"
+          [disabled]="!hasValidLandingContext()"
+        />
+      </form>
+    </div>
+  </section>
+</main>

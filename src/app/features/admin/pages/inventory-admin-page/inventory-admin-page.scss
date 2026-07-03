@@ -1,0 +1,252 @@
+.table-head--filters {
+  gap: 1rem;
+}
+
+.stock-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.profit-negative {
+  color: #dc2626;
+}
+
+.purchase-form,
+.purchase-section,
+.purchase-lines {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.purchase-section {
+  border-bottom: 1px solid var(--az-border);
+  padding-bottom: 1rem;
+}
+
+.purchase-section__head {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.purchase-section__head > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.purchase-section__head strong {
+  color: var(--az-text);
+  font-size: 1rem;
+}
+
+.purchase-section__head span {
+  color: var(--az-text-soft);
+  font-size: 0.8rem;
+}
+
+.purchase-grid,
+.purchase-lot-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.purchase-form label {
+  color: var(--az-text);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 750;
+  gap: 0.35rem;
+}
+
+.purchase-line {
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.8rem;
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.75rem;
+}
+
+.purchase-line__main {
+  align-items: end;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(14rem, 1.5fr) repeat(3, minmax(7rem, 0.65fr)) 2.5rem;
+}
+
+.purchase-remove {
+  align-items: center;
+  background: color-mix(in srgb, #ef4444 8%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #ef4444 30%, var(--az-border));
+  border-radius: 0.55rem;
+  color: #dc2626;
+  cursor: pointer;
+  display: flex;
+  height: 2.55rem;
+  justify-content: center;
+}
+
+.purchase-line__result,
+.purchase-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.purchase-line__result span {
+  color: var(--az-text-soft);
+  font-size: 0.75rem;
+}
+
+.purchase-line__result strong {
+  color: var(--az-text);
+  margin-left: 0.2rem;
+}
+
+.purchase-totals {
+  background: color-mix(in srgb, #10b981 8%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 30%, var(--az-border));
+  border-radius: 0.8rem;
+  justify-content: flex-end;
+  padding: 0.8rem;
+}
+
+.purchase-totals span {
+  color: var(--az-text-soft);
+  display: grid;
+  font-size: 0.75rem;
+  gap: 0.15rem;
+  min-width: 8.5rem;
+}
+
+.purchase-totals strong {
+  color: var(--az-text);
+  font-size: 1rem;
+}
+
+.movement-summary {
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.7rem;
+  color: var(--az-text-soft);
+  font-size: 0.88rem;
+  font-weight: 750;
+  grid-column: 1 / -1;
+  padding: 0.75rem 0.85rem;
+}
+
+.expiry-entry-note {
+  align-items: center;
+  background: color-mix(in srgb, #f59e0b 10%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--az-border));
+  border-radius: 0.65rem;
+  color: var(--az-text);
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+  padding: 0.65rem 0.75rem;
+}
+
+.expiry-entry-note--optional {
+  background: color-mix(in srgb, #10b981 8%, var(--az-surface));
+  border-color: color-mix(in srgb, #10b981 30%, var(--az-border));
+}
+
+:host ::ng-deep .movement-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(46rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .purchase-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(72rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .purchase-dialog .p-dialog-content {
+  max-height: calc(100dvh - 11rem);
+  overflow-y: auto;
+}
+
+:host ::ng-deep .movement-dialog .p-dialog-content {
+  max-height: calc(100dvh - 12rem);
+  overflow-y: auto;
+}
+
+:host ::ng-deep .p-select {
+  width: 100%;
+}
+
+:host ::ng-deep .stock-row--low > td {
+  background: color-mix(in srgb, #ef4444 9%, var(--az-surface));
+  color: #b91c1c;
+}
+
+:host ::ng-deep .stock-row--critical > td {
+  background: color-mix(in srgb, #ef4444 17%, var(--az-surface));
+  color: #991b1b;
+  font-weight: 750;
+}
+
+:host ::ng-deep .stock-row--expiring > td {
+  background: color-mix(in srgb, #f59e0b 12%, var(--az-surface));
+  color: #a16207;
+}
+
+:host ::ng-deep .stock-row--expired > td {
+  background: color-mix(in srgb, #ef4444 20%, var(--az-surface));
+  color: #991b1b;
+  font-weight: 800;
+}
+
+:host-context(.dark) ::ng-deep .stock-row--low > td,
+:host-context(.dark) ::ng-deep .stock-row--critical > td,
+:host-context(.dark) ::ng-deep .stock-row--expired > td {
+  color: #fca5a5;
+}
+
+:host-context(.dark) ::ng-deep .stock-row--expiring > td {
+  color: #fcd34d;
+}
+
+:host ::ng-deep .expiry-row--soon > td {
+  background: color-mix(in srgb, #f59e0b 11%, var(--az-surface));
+  color: #a16207;
+}
+
+:host ::ng-deep .expiry-row--expired > td {
+  background: color-mix(in srgb, #ef4444 18%, var(--az-surface));
+  color: #991b1b;
+  font-weight: 750;
+}
+
+:host-context(.dark) ::ng-deep .expiry-row--soon > td {
+  color: #fcd34d;
+}
+
+:host-context(.dark) ::ng-deep .expiry-row--expired > td {
+  color: #fca5a5;
+}
+
+@media (max-width: 980px) {
+  .stock-filter {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .purchase-grid,
+  .purchase-lot-grid,
+  .purchase-line__main {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-section__head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

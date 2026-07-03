@@ -1,0 +1,208 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Sedes operativas</p>
+      <h1>Sucursales y locales</h1>
+      <p>Registra sedes con ubigeo real e IGV para caja, ventas, comprobantes y reportes.</p>
+    </div>
+    <div class="header-actions">
+      <p-button label="Nueva sucursal" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreate()" />
+      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+
+  <section class="stats-grid">
+    <article>
+      <span>Sucursales</span>
+      <strong>{{ branchStats().total }}</strong>
+    </article>
+    <article>
+      <span>Activas</span>
+      <strong>{{ branchStats().active }}</strong>
+    </article>
+  </section>
+
+  <div class="content-grid branch-content-grid">
+    <section class="table-panel">
+      <div class="table-head">
+        <div>
+          <h2>Sucursales registradas</h2>
+          <p>Administra sedes, ubigeo, estado e IGV operativo desde una sola lista.</p>
+        </div>
+      </div>
+      <p-table
+        [value]="sucursales()"
+        [loading]="loading()"
+        [paginator]="sucursales().length > 8"
+        [rows]="8"
+        responsiveLayout="scroll"
+        styleClass="branch-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Codigo</th>
+            <th>Nombre</th>
+            <th>Direccion</th>
+            <th>Ubigeo</th>
+            <th>IGV</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td><strong>{{ item.codigo }}</strong></td>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.direccion || 'Sin direccion' }}</td>
+            <td>{{ item.ubigeoCodigo }} - {{ item.distrito }}, {{ item.provincia }}</td>
+            <td>{{ item.igvPorcentaje }}%</td>
+            <td>
+              <p-tag [value]="item.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(item.activo)" />
+            </td>
+            <td>
+              <div class="branch-actions">
+                <button
+                  type="button"
+                  pButton
+                  class="p-button-text p-button-rounded"
+                  icon="pi pi-pencil"
+                  pTooltip="Editar sucursal"
+                  tooltipPosition="top"
+                  (click)="openEdit(item)"
+                ></button>
+                <button
+                  type="button"
+                  pButton
+                  class="p-button-text p-button-rounded"
+                  [class.status-disable]="item.activo"
+                  [class.status-enable]="!item.activo"
+                  [icon]="item.activo ? 'pi pi-ban' : 'pi pi-check-circle'"
+                  [pTooltip]="item.activo ? 'Deshabilitar sucursal' : 'Habilitar sucursal'"
+                  tooltipPosition="top"
+                  [loading]="changingStatusId() === item.id"
+                  (click)="toggleStatus(item)"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</section>
+
+<p-dialog
+  header="Registrar sucursal"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="createDialogVisible()"
+  (visibleChange)="createDialogVisible.set($event)"
+  styleClass="branch-dialog"
+>
+  <form class="dialog-form">
+    <p class="dialog-copy">Completa los datos base y elige el ubigeo para dejar la sede lista para operar.</p>
+    <div class="dialog-grid">
+      <label>
+        Codigo <span class="required">*</span>
+        <input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="SUC-01" />
+      </label>
+      <label>
+        Nombre <span class="required">*</span>
+        <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Sucursal centro" />
+      </label>
+      <label class="wide-field">
+        Direccion
+        <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Direccion referencial" />
+      </label>
+      <div class="wide-field">
+        <app-ubigeo-picker name="sucursalUbigeo" [(value)]="form.ubigeoCodigo" [required]="true" />
+      </div>
+      <label>
+        IGV de la sucursal (%) <span class="required">*</span>
+        <input pInputText type="number" min="0" max="100" step="0.01" name="igvPorcentaje" [(ngModel)]="form.igvPorcentaje" placeholder="18.00" />
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="createDialogVisible.set(false)" />
+      <p-button label="Guardar sucursal" icon="pi pi-save" [loading]="saving()" (onClick)="save()" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Editar sucursal"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="editDialogVisible()"
+  (visibleChange)="editDialogVisible.set($event)"
+  styleClass="branch-dialog"
+>
+  <form class="dialog-form">
+    <div class="dialog-grid">
+      <label>
+        Codigo <span class="required">*</span>
+        <input pInputText name="editCodigo" [(ngModel)]="editForm.codigo" placeholder="SUC-01" />
+      </label>
+      <label>
+        Nombre <span class="required">*</span>
+        <input pInputText name="editNombre" [(ngModel)]="editForm.nombre" placeholder="Sucursal centro" />
+      </label>
+      <label class="wide-field">
+        Direccion
+        <input pInputText name="editDireccion" [(ngModel)]="editForm.direccion" placeholder="Direccion referencial" />
+      </label>
+      <div class="wide-field">
+        <app-ubigeo-picker name="editSucursalUbigeo" [(value)]="editForm.ubigeoCodigo" [required]="true" />
+      </div>
+      <label>
+        IGV de la sucursal (%) <span class="required">*</span>
+        <input pInputText type="number" min="0" max="100" step="0.01" name="editIgvPorcentaje" [(ngModel)]="editForm.igvPorcentaje" />
+      </label>
+      <section class="branch-tax-config wide-field">
+        <div class="branch-tax-config__head">
+          <div>
+            <strong>Configuracion tributaria</strong>
+            <span>Opcional. Si no se configura, la sucursal hereda las reglas de empresa.</span>
+          </div>
+          <label class="branch-tax-toggle">
+            <input type="checkbox" name="usarConfiguracionEmpresa" [(ngModel)]="editForm.usarConfiguracionEmpresa" />
+            <span>Heredar de empresa</span>
+          </label>
+        </div>
+        @if (!editForm.usarConfiguracionEmpresa) {
+          <div class="branch-tax-grid">
+            <label>
+              Tipo operacion
+              <input pInputText name="tipoOperacionDefaultId" [(ngModel)]="editForm.tipoOperacionDefaultId" placeholder="0101" />
+            </label>
+            <label>
+              Afectacion
+              <p-select name="tipoAfectacionDefaultId" [options]="afectacionOptions" [(ngModel)]="editForm.tipoAfectacionDefaultId" appendTo="body" />
+            </label>
+            <label>
+              Tributo
+              <p-select name="tributoDefaultId" [options]="tributoOptions" [(ngModel)]="editForm.tributoDefaultId" appendTo="body" />
+            </label>
+            <label>
+              Porcentaje
+              <input pInputText type="number" min="0" max="100" name="porcentajeIgvDefault" [(ngModel)]="editForm.porcentajeIgvDefault" />
+            </label>
+          </div>
+        }
+      </section>
+    </div>
+    <div class="dialog-actions">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="editDialogVisible.set(false)" />
+      <p-button label="Guardar cambios" icon="pi pi-save" [loading]="saving()" (onClick)="saveEdit()" />
+    </div>
+  </form>
+</p-dialog>

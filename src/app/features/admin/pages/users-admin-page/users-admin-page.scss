@@ -1,0 +1,157 @@
+.users-stats {
+  grid-template-columns: repeat(4, minmax(8rem, 1fr));
+}
+
+.role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.branch-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.branch-tags span {
+  background: color-mix(in srgb, #10b981 12%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 35%, var(--az-border));
+  border-radius: 999px;
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.22rem 0.48rem;
+}
+
+.branch-tags .branch-tag--empty {
+  background: var(--az-surface-hover);
+  border-color: var(--az-border);
+  color: var(--az-text-soft);
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.role-tags span {
+  background: var(--az-blue-soft);
+  border: 1px solid color-mix(in srgb, var(--az-border) 65%, var(--az-blue) 35%);
+  border-radius: 999px;
+  color: var(--az-blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.22rem 0.48rem;
+}
+
+.role-tags .role-tag--empty {
+  background: var(--az-surface-hover);
+  border-color: var(--az-border);
+  color: var(--az-text-soft);
+}
+
+.roles-block {
+  display: grid;
+  gap: 0.42rem;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.roles-title {
+  color: var(--az-text);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.roles-selector {
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.6rem;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 11rem;
+  overflow: auto;
+  padding: 0.55rem 0.6rem;
+}
+
+.role-option {
+  align-items: center;
+  color: var(--az-text);
+  cursor: pointer;
+  display: flex !important;
+  font-size: 0.84rem !important;
+  font-weight: 750 !important;
+  gap: 0.45rem !important;
+  justify-content: flex-start !important;
+  padding: 0.42rem 0.48rem;
+  border-radius: 0.45rem;
+}
+
+.role-option:hover {
+  background: var(--az-surface);
+}
+
+.role-option input[type='checkbox'] {
+  accent-color: var(--az-blue);
+  flex: 0 0 auto;
+  height: 1rem;
+  margin: 0;
+  width: 1rem !important;
+}
+
+.role-option span,
+.role-option strong,
+.role-option small {
+  display: block;
+}
+
+.role-option strong {
+  color: var(--az-text);
+  font-size: 0.84rem;
+}
+
+.role-option small {
+  color: var(--az-text-soft);
+  font-size: 0.7rem;
+  margin-top: 0.08rem;
+}
+
+.tenant-meta {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.76rem;
+}
+
+.tenant-meta--warn {
+  color: #b45309;
+}
+
+.dialog-form h3 {
+  color: var(--az-text);
+  font-size: 1rem;
+  margin: 0.25rem 0 0;
+}
+
+:host ::ng-deep .users-dialog,
+:host ::ng-deep .roles-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(46rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .users-dialog .p-dialog-content,
+:host ::ng-deep .roles-dialog .p-dialog-content {
+  max-height: calc(100dvh - 12rem);
+  overflow-y: auto;
+}
+
+:host ::ng-deep .p-select,
+:host ::ng-deep .p-multiselect,
+:host ::ng-deep .dialog-form .p-button {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .users-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

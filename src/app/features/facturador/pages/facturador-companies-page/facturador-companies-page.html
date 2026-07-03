@@ -1,0 +1,414 @@
+<section class="facturador-page">
+  <header class="page-header">
+    <div>
+      <p class="page-header__eyebrow">Panel facturador</p>
+      <h1>Administracion de tenants facturador</h1>
+      <p>
+        Vista exclusiva para admin general. Lista, detalle y alta de tenants del motor de facturacion
+        usando la conexion <code>facturador</code>.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <p-button
+        label="Configurar series"
+        icon="pi pi-cog"
+        styleClass="az-secondary"
+        [disabled]="tenants().length === 0"
+        (onClick)="openSeriesConfigFirst()"
+      />
+      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadTenants()" />
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert--success">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <div class="metrics">
+    <article>
+      <span>Tenants registrados</span>
+      <strong>{{ tenants().length }}</strong>
+    </article>
+    <article>
+      <span>Tenants activos</span>
+      <strong>{{ activeTenants() }}</strong>
+    </article>
+    <article>
+      <span>Modo beta</span>
+      <strong>{{ betaTenants() }}</strong>
+    </article>
+  </div>
+
+  <section class="table-panel">
+    <div class="table-panel__head">
+      <div>
+        <h2>Tenants registrados</h2>
+        <p>Listado obtenido desde <code>/api/tenants</code>. Cada opcion abre su propio modal.</p>
+      </div>
+    </div>
+
+    <p-table
+      [value]="tenants()"
+      [loading]="loading()"
+      [paginator]="tenants().length > 8"
+      [rows]="8"
+      responsiveLayout="scroll"
+      styleClass="tenants-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Empresa</th>
+          <th>RUC</th>
+          <th>Schema</th>
+          <th>Modo SUNAT</th>
+          <th>API key</th>
+          <th>Logo</th>
+          <th>Estado</th>
+          <th>Opciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-tenant>
+        <tr>
+          <td>
+            <strong>{{ tenant.business_name || 'Empresa sin nombre' }}</strong>
+            <small>ID {{ tenant.tenant_id }}</small>
+          </td>
+          <td>{{ tenant.ruc }}</td>
+          <td><code>{{ tenant.schema }}</code></td>
+          <td>
+            <p-tag [value]="tenant.sunat_mode || tenant.modo_sunat || 'beta'" [severity]="modeSeverity(tenant.sunat_mode || tenant.modo_sunat)" />
+          </td>
+          <td>
+            @if (tenant.api_key) {
+              <code>{{ tenant.api_key }}</code>
+            } @else {
+              <span class="muted">Oculta</span>
+            }
+          </td>
+          <td>{{ tenant.logo_pdf_url || '-' }}</td>
+          <td>
+            <p-tag [value]="tenant.is_active === false ? 'Inactivo' : 'Activo'" [severity]="activeSeverity(tenant.is_active)" />
+          </td>
+          <td>
+            <div class="row-actions">
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-info p-button-text"
+                icon="pi pi-eye"
+                (click)="openTenantDetail(tenant)"
+                pTooltip="Detalle"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-help p-button-text"
+                icon="pi pi-key"
+                (click)="openTenantApiKey(tenant)"
+                pTooltip="API key"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-secondary p-button-text"
+                icon="pi pi-cog"
+                (click)="openSeriesConfig(tenant)"
+                pTooltip="Configuracion"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                type="button"
+                class="p-button-rounded p-button-sm p-button-success p-button-text"
+                icon="pi pi-image"
+                (click)="openTenantLogo(tenant)"
+                pTooltip="Logo"
+                tooltipPosition="top"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">Todavia no hay tenants registrados en el facturador.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <div class="content-grid">
+    <form class="tenant-form">
+      <div class="form-section">
+        <div class="form-section__head">
+          <i class="pi pi-building"></i>
+          <div>
+            <h2>Datos de empresa</h2>
+            <p>Registro principal del tenant en facturador.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            RUC
+            <input pInputText name="ruc" maxlength="11" [(ngModel)]="form.ruc" placeholder="20601234567" />
+          </label>
+
+          <label>
+            Razon social
+            <input pInputText name="business_name" [(ngModel)]="form.business_name" placeholder="Empresa Facturadora SAC" />
+          </label>
+
+          <label>
+            Modo SUNAT
+            <p-select name="sunat_mode" [options]="sunatModeOptions" [(ngModel)]="form.sunat_mode" />
+          </label>
+
+          <label>
+            Cliente API
+            <input pInputText name="api_client_name" [(ngModel)]="form.api_client_name" placeholder="default-client" />
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__head">
+          <i class="pi pi-image"></i>
+          <div>
+            <h2>Logo obligatorio</h2>
+            <p>Para registrar tenant debes cargar logo (archivo o URL).</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Logo (archivo)
+            <input
+              type="file"
+              name="logo_file"
+              accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+              (change)="onLogoFileSelected($event)"
+            />
+            <small>Formato: PNG, JPG, JPEG, WEBP o SVG. Maximo 2 MB.</small>
+            @if (form.logo_file) {
+              <small>Archivo: {{ form.logo_file.name }}</small>
+            }
+          </label>
+
+          <label>
+            URL logo
+            <input pInputText name="logo_pdf_url" [(ngModel)]="form.logo_pdf_url" placeholder="https://..." />
+            <small>Puedes usar URL en lugar de archivo.</small>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__head">
+          <i class="pi pi-key"></i>
+          <div>
+            <h2>Credenciales SUNAT</h2>
+            <p>Para production es obligatorio adjuntar certificado digital.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            RUC SOL
+            <input pInputText name="ruc_sol" maxlength="11" [(ngModel)]="form.ruc_sol" placeholder="20000000001" />
+          </label>
+
+          <label>
+            Usuario SOL
+            <input pInputText name="usuario_sol" [(ngModel)]="form.usuario_sol" placeholder="MODDATOS" />
+          </label>
+
+          <label>
+            Clave SOL
+            <p-password name="clave_sol" [(ngModel)]="form.clave_sol" [feedback]="false" [toggleMask]="true" placeholder="Clave SOL" />
+          </label>
+
+          <label>
+            Password certificado
+            <p-password
+              name="certificado_password"
+              [(ngModel)]="form.certificado_password"
+              [feedback]="false"
+              [toggleMask]="true"
+              placeholder="Opcional"
+            />
+          </label>
+
+          <label>
+            Archivo firma digital
+            <input
+              type="file"
+              name="certificado_file"
+              accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
+              (change)="onCertificateFileSelected($event)"
+            />
+            <small>Formato: PEM, PFX o P12. Maximo 5 MB.</small>
+            @if (form.certificado_file) {
+              <small>Archivo: {{ form.certificado_file.name }}</small>
+            }
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        @if (form.sunat_mode === 'production' && !form.certificado_file) {
+          <small class="muted">Para produccion es obligatorio adjuntar archivo de firma digital.</small>
+        }
+        <p-button
+          label="Registrar tenant en facturador"
+          icon="pi pi-save"
+          styleClass="az-primary"
+          [loading]="saving()"
+          (onClick)="saveTenant()"
+        />
+      </div>
+    </form>
+
+    <aside class="result-panel">
+      <h2>Resultado del registro</h2>
+      <p>La API key se devuelve al crear o consultar detalle del tenant.</p>
+
+      @if (lastCreated(); as created) {
+        <div class="result-card">
+          <span>Tenant</span>
+          <strong>{{ created.tenant_id }} | {{ created.schema }}</strong>
+
+          <span>Modo SUNAT</span>
+          <p-tag [value]="created.modo_sunat || created.sunat_mode || 'beta'" [severity]="modeSeverity(created.modo_sunat || created.sunat_mode)" />
+
+          <span>API key</span>
+          <code>{{ created.api_key || 'No disponible' }}</code>
+
+          <div class="result-actions">
+            <p-button
+              label="Copiar API key"
+              icon="pi pi-copy"
+              styleClass="az-secondary copy-button"
+              [disabled]="!created.api_key"
+              (onClick)="copyApiKey()"
+            />
+            <p-button label="Ver detalle" icon="pi pi-eye" styleClass="az-secondary" (onClick)="openTenantDetail(created)" />
+          </div>
+        </div>
+      } @else {
+        <div class="empty-result">
+          <i class="pi pi-shield"></i>
+          <span>Registra o selecciona un tenant para ver detalle y API key.</span>
+        </div>
+      }
+    </aside>
+  </div>
+</section>
+
+<p-dialog
+  header="Detalle tenant facturador"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="detailVisible()"
+  (visibleChange)="detailVisible.set($event)"
+  [style]="{ width: '920px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (detailLoading()) {
+    <div class="detail-loading">Cargando detalle del tenant...</div>
+  } @else if (selectedTenantDetail(); as detail) {
+    <div class="detail-grid">
+      <article><span>Tenant ID</span><strong>{{ detail.tenant_id }}</strong></article>
+      <article><span>Empresa</span><strong>{{ detail.business_name }}</strong></article>
+      <article><span>RUC</span><strong>{{ detail.ruc }}</strong></article>
+      <article><span>Schema</span><strong>{{ detail.schema }}</strong></article>
+      <article><span>Modo SUNAT</span><strong>{{ detail.sunat_mode || detail.configuracion?.modo_sunat || 'beta' }}</strong></article>
+      <article><span>Estado</span><strong>{{ detail.is_active === false ? 'Inactivo' : 'Activo' }}</strong></article>
+      <article class="full"><span>API key</span><code>{{ selectedTenantApiKey() }}</code></article>
+      <article class="full"><span>Logo</span><strong>{{ tenantLogoValue(detail) }}</strong></article>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" class="p-button-secondary p-button-outlined" (click)="detailVisible.set(false)">Cerrar</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  header="API Key tenant"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="apiKeyVisible()"
+  (visibleChange)="apiKeyVisible.set($event)"
+  [style]="{ width: '640px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (detailLoading()) {
+    <div class="detail-loading">Cargando API key...</div>
+  } @else if (selectedTenantDetail(); as detail) {
+    <div class="detail-grid">
+      <article><span>Empresa</span><strong>{{ detail.business_name }}</strong></article>
+      <article><span>Schema</span><strong>{{ detail.schema }}</strong></article>
+      <article class="full"><span>API key</span><code>{{ selectedTenantApiKey() }}</code></article>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" class="p-button-secondary p-button-outlined" (click)="apiKeyVisible.set(false)">Cerrar</button>
+    <button
+      pButton
+      type="button"
+      class="p-button-info"
+      icon="pi pi-copy"
+      [disabled]="!selectedTenantDetail()?.api_key && !selectedTenantDetail()?.configuracion?.token_api"
+      (click)="copyDetailApiKey()"
+    >
+      Copiar API key
+    </button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  header="Logo tenant"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="logoVisible()"
+  (visibleChange)="logoVisible.set($event)"
+  [style]="{ width: '680px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (detailLoading()) {
+    <div class="detail-loading">Cargando logo...</div>
+  } @else if (selectedTenantDetail(); as detail) {
+    <div class="detail-grid">
+      <article><span>Empresa</span><strong>{{ detail.business_name }}</strong></article>
+      <article><span>Schema</span><strong>{{ detail.schema }}</strong></article>
+      <article class="full"><span>Logo registrado</span><strong>{{ tenantLogoValue(detail) }}</strong></article>
+      @if (hasTenantLogo(detail) && isHttpUrl(tenantLogoValue(detail))) {
+        <article class="full">
+          <span>Preview</span>
+          <img [src]="tenantLogoValue(detail)" alt="Logo tenant" class="logo-preview" />
+        </article>
+      }
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton type="button" class="p-button-secondary p-button-outlined" (click)="logoVisible.set(false)">Cerrar</button>
+  </ng-template>
+</p-dialog>

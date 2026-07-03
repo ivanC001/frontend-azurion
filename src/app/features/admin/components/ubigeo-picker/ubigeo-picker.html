@@ -1,0 +1,46 @@
+<section class="ubigeo-picker">
+  <div class="ubigeo-search">
+    <label>
+      <span>{{ searchLabel }} @if (required) { <b>*</b> }</span>
+      <input
+        pInputText
+        [name]="name + 'Search'"
+        [value]="search"
+        [disabled]="disabled"
+        (input)="setSearch($event)"
+        (keyup.enter)="searchUbigeos()"
+        [placeholder]="placeholder"
+      />
+    </label>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined search-btn"
+      icon="pi pi-search"
+      [disabled]="disabled"
+      [loading]="loading()"
+      (click)="searchUbigeos()"
+    ></button>
+  </div>
+
+  <label>
+    <span>{{ label }} @if (required) { <b>*</b> }</span>
+    <p-select
+      [name]="name"
+      [options]="optionItems()"
+      [ngModel]="value"
+      (ngModelChange)="updateValue($event)"
+      [disabled]="disabled"
+      [showClear]="!required"
+      placeholder="Selecciona ubigeo"
+      appendTo="body"
+    />
+  </label>
+
+  @if (selectedUbigeo(); as ubigeo) {
+    <div class="ubigeo-preview">
+      <strong>{{ ubigeo.codigo }}</strong>
+      <span>{{ ubigeo.distrito }} / {{ ubigeo.provincia }} / {{ ubigeo.departamento }}</span>
+    </div>
+  }
+</section>

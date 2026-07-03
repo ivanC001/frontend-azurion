@@ -1,0 +1,55 @@
+<section class="contact" id="contacto">
+  <div class="section-shell contact__grid">
+    <div>
+      <p class="section-kicker">Contacto</p>
+      <h2 class="section-title">Conversemos sobre tu operacion</h2>
+      <p class="section-copy">
+        Agenda una demo y revisemos como AZURION puede ordenar tus ventas,
+        inventario, caja y facturacion electronica.
+      </p>
+
+      <div class="contact__channels">
+        @for (channel of channels; track channel.label) {
+          <article>
+            <i class="pi {{ channel.icon }}"></i>
+            <span>{{ channel.label }}</span>
+          </article>
+        }
+      </div>
+    </div>
+
+    <form class="contact-form" (ngSubmit)="submit()">
+      @if (successMessage()) {
+        <div class="lead-alert lead-alert--success">{{ successMessage() }}</div>
+      }
+      @if (errorMessage()) {
+        <div class="lead-alert lead-alert--error">{{ errorMessage() }}</div>
+      }
+      <label>
+        Tenant destino
+        <input pInputText type="text" name="tenantId" [(ngModel)]="form.tenantId" placeholder="interamericana_norte" />
+      </label>
+      <label>
+        Nombre
+        <input pInputText type="text" name="name" autocomplete="name" [(ngModel)]="form.name" />
+      </label>
+      <label>
+        Empresa
+        <input pInputText type="text" name="company" autocomplete="organization" [(ngModel)]="form.company" />
+      </label>
+      <label>
+        Correo
+        <input pInputText type="email" name="email" autocomplete="email" [(ngModel)]="form.email" />
+      </label>
+      <label>
+        Telefono
+        <input pInputText type="tel" name="phone" autocomplete="tel" [(ngModel)]="form.phone" />
+      </label>
+      <label class="contact-form__wide">
+        Mensaje
+        <textarea pTextarea name="message" rows="5" [(ngModel)]="form.message"></textarea>
+      </label>
+      <p-button type="submit" label="Solicitar Demo" icon="pi pi-send" styleClass="az-primary contact-button" [loading]="saving()" />
+    </form>
+  </div>
+</section>
