@@ -133,7 +133,7 @@
 
   <section class="table-panel">
     <div class="table-head">
-      <h2>{{ moduleOptions.find(item => item.value === moduleFilter())?.label }}</h2>
+      <h2>{{ currentModuleLabel() }}</h2>
       <span>{{ reportRows().length }} resultado(s)</span>
     </div>
 
@@ -166,7 +166,9 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="columns().length">No hay informacion para los filtros seleccionados.</td>
+          <td [attr.colspan]="columns().length">
+            No hay informacion para este modulo. Prueba limpiar filtros o recargar reportes.
+          </td>
         </tr>
       </ng-template>
     </p-table>

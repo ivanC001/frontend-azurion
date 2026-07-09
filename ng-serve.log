@@ -1,0 +1,50 @@
+
+> azurion-frontend@0.0.0 start
+> ng serve --host 0.0.0.0 --port 4200
+
+[1m[33m
+Warning: This is a simple server for use in testing or debugging Angular applications
+locally. It hasn't been reviewed for security issues.
+
+Binding this server to an open connection can result in compromising your application or
+computer. Using a different host than the one passed to the "--host" flag might result in
+websocket connection issues.
+    [39m[22m
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                        [2m | [22m [36m65.13 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                          [2m | [22m [36m20.65 kB[39m[2m | [22m
+[32mchunk-FN2G6TFP.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m4.84 kB[39m[2m | [22m
+[32mchunk-NTVVCUPG.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.56 kB[39m[2m | [22m
+[32mchunk-GOMI4DH3.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.37 kB[39m[2m | [22m
+[32mchunk-22ECY2S6.js[39m  [2m | [22m[2m-[22m                             [2m | [22m[36m666 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                 [2m | [22m [1m94.22 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mchunk-ZBIG5NOR.js[39m  [2m | [22m[2mcrm-admin-page[22m                [2m | [22m  [36m1.79 MB[39m[2m | [22m
+[32mchunk-26DEW2M5.js[39m  [2m | [22m[2mlanding-page[22m                  [2m | [22m[36m155.26 kB[39m[2m | [22m
+[32mchunk-K2PCRU3G.js[39m  [2m | [22m[2msales-admin-page[22m              [2m | [22m[36m147.86 kB[39m[2m | [22m
+[32mchunk-N5MT3JRO.js[39m  [2m | [22m[2msales-pos-page[22m                [2m | [22m[36m141.71 kB[39m[2m | [22m
+[32mchunk-UYM3OCVS.js[39m  [2m | [22m[2mcompany-roles-permissions-page[22m[2m | [22m[36m135.53 kB[39m[2m | [22m
+[32mchunk-M6OCUCF4.js[39m  [2m | [22m[2minventory-admin-page[22m          [2m | [22m[36m118.01 kB[39m[2m | [22m
+[32mchunk-667AWAUD.js[39m  [2m | [22m[2mapp-layout[22m                    [2m | [22m[36m100.67 kB[39m[2m | [22m
+[32mchunk-52DYRAGT.js[39m  [2m | [22m[2mproducts-admin-page[22m           [2m | [22m [36m90.39 kB[39m[2m | [22m
+[32mchunk-47AWLSVJ.js[39m  [2m | [22m[2mfacturador-companies-page[22m     [2m | [22m [36m86.30 kB[39m[2m | [22m
+[32mchunk-QLPMILJ2.js[39m  [2m | [22m[2mcash-admin-page[22m               [2m | [22m [36m83.14 kB[39m[2m | [22m
+[32mchunk-5LTAHHNF.js[39m  [2m | [22m[2musers-admin-page[22m              [2m | [22m [36m70.23 kB[39m[2m | [22m
+[32mchunk-5NZHRRP7.js[39m  [2m | [22m[2mcustomers-admin-page[22m          [2m | [22m [36m69.68 kB[39m[2m | [22m
+[32mchunk-RA5JGSHB.js[39m  [2m | [22m[2madmin-dashboard-page[22m          [2m | [22m [36m63.08 kB[39m[2m | [22m
+[32mchunk-4VFGWHLR.js[39m  [2m | [22m[2mreports-admin-page[22m            [2m | [22m [36m61.66 kB[39m[2m | [22m
+[32mchunk-REJIO3H6.js[39m  [2m | [22m[2msales-quotes-page[22m             [2m | [22m [36m57.33 kB[39m[2m | [22m
+[2m...and 25 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [10.083 seconds] - 2026-07-09T17:24:59.079Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.56.1:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.43.55:[1m4200[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m

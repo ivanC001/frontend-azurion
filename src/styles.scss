@@ -1484,3 +1484,836 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
     justify-items: start;
   }
 }
+/* PrimeNG renders this CRM dialog under body, so its visual shell belongs here. */
+.crm-dialog--negotiation-modern {
+  width: min(70rem, calc(100vw - 1.25rem)) !important;
+  max-height: calc(100vh - 1.25rem);
+
+  .p-dialog-header {
+    border-bottom: 0;
+    padding: 1.15rem 1.35rem 0.7rem;
+  }
+
+  .p-dialog-title {
+    color: #17233a;
+    font-size: 1.15rem;
+    font-weight: 900;
+  }
+
+  .p-dialog-content {
+    overflow: auto;
+    padding: 0 1.35rem 1rem;
+  }
+
+  .negotiation-modern-form {
+    color: #17233a;
+  }
+
+  .negotiation-modern-layout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 24rem minmax(0, 1fr);
+  }
+
+  .negotiation-modern-summary,
+  .negotiation-modern-fields {
+    border: 1px solid #d6e0ee;
+    border-radius: 0.45rem;
+  }
+
+  .negotiation-modern-summary {
+    background: linear-gradient(145deg, #fff 55%, #f8fbff);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.2rem;
+  }
+
+  .negotiation-modern-summary header {
+    align-items: center;
+    border-bottom: 1px solid #e1e8f2;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 2.7rem minmax(0, 1fr);
+    padding-bottom: 1rem;
+  }
+
+  .negotiation-modern-icon {
+    align-items: center;
+    background: #eaf2ff;
+    border-radius: 50%;
+    color: #2563eb;
+    display: inline-flex;
+    font-size: 1.1rem;
+    height: 2.7rem;
+    justify-content: center;
+    width: 2.7rem;
+  }
+
+  .negotiation-modern-summary small,
+  .negotiation-modern-summary dt {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .negotiation-modern-summary header small {
+    display: block;
+    text-transform: uppercase;
+  }
+
+  .negotiation-modern-summary header strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-top: 0.18rem;
+  }
+
+  .negotiation-modern-summary dl {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+  }
+
+  .negotiation-modern-summary dl div {
+    display: grid;
+    gap: 0.1rem;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+
+  .negotiation-modern-summary dt {
+    display: contents;
+  }
+
+  .negotiation-modern-summary dt i {
+    align-items: center;
+    background: #eef5ff;
+    border-radius: 50%;
+    color: #2563eb;
+    display: inline-flex;
+    font-size: 0.8rem;
+    grid-row: 1 / span 2;
+    height: 2rem;
+    justify-content: center;
+    width: 2rem;
+  }
+
+  .negotiation-modern-summary dd {
+    font-size: 0.75rem;
+    font-weight: 850;
+    margin: 0;
+  }
+
+  .negotiation-modern-status {
+    align-items: center;
+    display: flex;
+    font-size: 0.7rem;
+    gap: 0.6rem;
+    margin: 0;
+  }
+
+  .negotiation-modern-status span {
+    background: #e6f8ee;
+    border: 1px solid #c7ecd8;
+    border-radius: 1rem;
+    color: #0b9b5b;
+    font-weight: 850;
+    padding: 0.25rem 0.85rem;
+  }
+
+  .negotiation-financial-card {
+    border: 1px solid #d8e1ed;
+    border-radius: 0.4rem;
+    padding: 0.8rem;
+  }
+
+  .negotiation-financial-card h3 {
+    font-size: 0.72rem;
+    margin: 0 0 0.7rem;
+  }
+
+  .negotiation-financial-card div {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 0.65rem 0.25rem;
+  }
+
+  .negotiation-financial-card span {
+    color: #64748b;
+    font-size: 0.62rem;
+    padding: 0 0.45rem;
+    text-align: center;
+  }
+
+  .negotiation-financial-card span + span {
+    border-left: 1px solid #dbe3ed;
+  }
+
+  .negotiation-financial-card b {
+    color: #17233a;
+    display: block;
+    font-size: 0.72rem;
+    margin-top: 0.3rem;
+  }
+
+  .negotiation-financial-card span:nth-child(2) b {
+    color: #0b9b5b;
+  }
+
+  .negotiation-financial-card span:last-child b {
+    color: #2563eb;
+  }
+
+  .negotiation-modern-note {
+    align-items: center;
+    background: #f4f8ff;
+    border: 1px solid #cfe0fb;
+    border-radius: 0.4rem;
+    color: #334155;
+    display: grid;
+    font-size: 0.68rem;
+    gap: 0.65rem;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    line-height: 1.4;
+    margin: auto 0 0;
+    padding: 0.75rem;
+  }
+
+  .negotiation-modern-note i {
+    color: #2563eb;
+    font-size: 1.25rem;
+  }
+
+  .negotiation-modern-fields {
+    padding: 1.1rem;
+  }
+
+  .negotiation-fields-grid {
+    display: grid;
+    gap: 0.75rem 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .negotiation-fields-grid > label {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .negotiation-fields-grid > label > span:first-child {
+    font-size: 0.68rem;
+    font-weight: 850;
+  }
+
+  .negotiation-fields-grid label b {
+    color: #dc2626;
+  }
+
+  input.p-inputtext,
+  textarea,
+  .p-select {
+    border-color: #ccd8e8;
+    border-radius: 0.35rem;
+    font-size: 0.72rem;
+    min-height: 2.15rem;
+    width: 100%;
+  }
+
+  .p-select-label {
+    font-size: 0.72rem;
+    padding-block: 0.55rem;
+  }
+
+  .negotiation-input-affix {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.6rem;
+  }
+
+  .negotiation-input-affix input {
+    border-radius: 0.35rem 0 0 0.35rem;
+  }
+
+  .negotiation-input-affix em {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #ccd8e8;
+    border-left: 0;
+    border-radius: 0 0.35rem 0.35rem 0;
+    color: #64748b;
+    display: flex;
+    font-size: 0.68rem;
+    font-style: normal;
+    justify-content: center;
+  }
+
+  .negotiation-modern-check {
+    align-items: center;
+    background: #f3f7ff;
+    border: 1px solid #cfe0fb;
+    border-radius: 0.35rem;
+    display: flex !important;
+    min-height: 2.2rem;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .negotiation-modern-check input {
+    accent-color: #2563eb;
+    height: 1rem;
+    width: 1rem;
+  }
+
+  .negotiation-modern-observation {
+    grid-column: 1 / -1;
+    position: relative;
+  }
+
+  .negotiation-modern-observation textarea {
+    min-height: 4.4rem;
+    padding-bottom: 1.2rem;
+    resize: vertical;
+  }
+
+  .negotiation-modern-observation small {
+    bottom: 0.35rem;
+    color: #64748b;
+    font-size: 0.58rem;
+    position: absolute;
+    right: 0.55rem;
+  }
+
+  .negotiation-modern-actions {
+    border-top: 1px solid #dbe3ed;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin: 1rem -1.35rem -1rem;
+    padding: 0.8rem 1.35rem 0;
+  }
+
+  .negotiation-modern-actions button {
+    border-radius: 0.4rem;
+    font-size: 0.75rem;
+    min-height: 2.25rem;
+    padding: 0.5rem 1.15rem;
+  }
+
+  .negotiation-modern-actions .secondary-button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 800;
+    justify-content: center;
+  }
+
+  .negotiation-modern-actions .secondary-button:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #17233a;
+  }
+
+  .negotiation-modern-actions .primary-button {
+    align-items: center;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    box-shadow: 0 0.35rem 0.9rem rgba(37, 99, 235, 0.2);
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-weight: 850;
+    gap: 0.4rem;
+    justify-content: center;
+  }
+
+  .negotiation-modern-actions .primary-button:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+  }
+
+  .negotiation-modern-actions button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.22);
+    outline-offset: 2px;
+  }
+
+  .negotiation-modern-actions button:disabled {
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+@media (max-width: 850px) {
+  .crm-dialog--negotiation-modern .negotiation-modern-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .crm-dialog--negotiation-modern {
+    width: calc(100vw - 0.5rem) !important;
+
+    .p-dialog-header,
+    .p-dialog-content {
+      padding-inline: 0.75rem;
+    }
+
+    .negotiation-fields-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .negotiation-modern-observation {
+      grid-column: auto;
+    }
+
+    .negotiation-financial-card div {
+      grid-template-columns: 1fr;
+    }
+
+    .negotiation-financial-card span + span {
+      border-left: 0;
+      border-top: 1px solid #dbe3ed;
+      margin-top: 0.45rem;
+      padding-top: 0.45rem;
+    }
+  }
+}
+
+/* Negotiation workspace inside the opportunity detail dialog. */
+.crm-dialog--opportunity-detail {
+  .opportunity-stage-line {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .opportunity-activity-card--negotiation {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .opportunity-activity-card--negotiation > .opportunity-activity-head {
+    display: none;
+  }
+
+  .document-add-action {
+    align-items: center;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 0.45rem;
+    box-shadow: 0 0.3rem 0.8rem rgba(37, 99, 235, 0.18);
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.68rem;
+    font-weight: 850;
+    gap: 0.4rem;
+    min-height: 2rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .document-add-action:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+  }
+
+  .negotiation-workspace {
+    align-items: stretch;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1.7fr) minmax(19rem, 0.95fr);
+  }
+
+  .negotiation-workspace-main {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-width: 0;
+  }
+
+  .negotiation-quotes-panel,
+  .negotiation-latest-panel,
+  .negotiation-decision-panel {
+    background: #fff;
+    border: 1px solid #d9e3f0;
+    border-radius: 0.65rem;
+  }
+
+  .negotiation-quotes-panel {
+    padding: 0.75rem;
+  }
+
+  .negotiation-section-title,
+  .negotiation-latest-panel > header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-height: 1.7rem;
+  }
+
+  .negotiation-section-title > div,
+  .negotiation-latest-panel > header {
+    align-items: center;
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  .negotiation-section-title i,
+  .negotiation-latest-panel > header i {
+    color: #64748b;
+    font-size: 0.78rem;
+  }
+
+  .negotiation-section-title strong,
+  .negotiation-latest-panel > header strong {
+    color: #17233a;
+    font-size: 0.72rem;
+  }
+
+  .negotiation-section-title > button {
+    align-items: center;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.4rem;
+    color: #2563eb;
+    cursor: pointer;
+    display: inline-flex;
+    height: 1.7rem;
+    justify-content: center;
+    width: 1.7rem;
+  }
+
+  .negotiation-quote-list {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+  }
+
+  .negotiation-quote-card {
+    background: #fff;
+    border: 1px solid #dbe5f1;
+    border-left: 3px solid #94a3b8;
+    border-radius: 0.5rem;
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .negotiation-quote-card--accepted {
+    border-left-color: #10b981;
+  }
+
+  .negotiation-quote-card--adjustment {
+    border-left-color: #8b5cf6;
+  }
+
+  .negotiation-quote-card--rejected {
+    border-left-color: #ef4444;
+  }
+
+  .negotiation-quote-card--waiting {
+    border-left-color: #f59e0b;
+  }
+
+  .negotiation-quote-meta {
+    align-items: center;
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: auto auto auto minmax(8.5rem, 1fr);
+  }
+
+  .negotiation-quote-meta strong {
+    color: #17233a;
+    font-size: 0.78rem;
+  }
+
+  .negotiation-quote-meta span {
+    color: #64748b;
+    font-size: 0.64rem;
+  }
+
+  .negotiation-quote-meta b {
+    color: #334155;
+    font-size: 0.68rem;
+  }
+
+  .negotiation-decision {
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: 850;
+    justify-self: end;
+    padding: 0.25rem 0.55rem;
+  }
+
+  .negotiation-decision--accepted {
+    background: #dcfce7;
+    color: #047857;
+  }
+
+  .negotiation-decision--adjustment {
+    background: #f3e8ff;
+    color: #7e22ce;
+  }
+
+  .negotiation-decision--rejected {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .negotiation-decision--waiting {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  .negotiation-quote-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .negotiation-quote-actions button,
+  .negotiation-decision-panel nav button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #d6e0ed;
+    border-radius: 0.4rem;
+    color: #17233a;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.62rem;
+    font-weight: 800;
+    gap: 0.35rem;
+    justify-content: center;
+    min-height: 1.8rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .negotiation-quote-actions button:disabled,
+  .negotiation-decision-panel nav button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+
+  .negotiation-empty-state {
+    align-items: center;
+    color: #64748b;
+    display: flex;
+    font-size: 0.68rem;
+    gap: 0.45rem;
+    justify-content: center;
+    min-height: 5rem;
+  }
+
+  .negotiation-latest-panel {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .negotiation-latest-panel > article {
+    align-items: start;
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    margin-top: 0.45rem;
+  }
+
+  .negotiation-latest-panel > article > i {
+    align-items: center;
+    background: #eef4ff;
+    border-radius: 0.45rem;
+    color: #2563eb;
+    display: flex;
+    height: 2rem;
+    justify-content: center;
+    width: 2rem;
+  }
+
+  .negotiation-latest-panel article div {
+    min-width: 0;
+  }
+
+  .negotiation-latest-panel article strong {
+    display: block;
+    font-size: 0.7rem;
+  }
+
+  .negotiation-latest-panel article span,
+  .negotiation-latest-panel article p,
+  .negotiation-latest-panel time {
+    color: #64748b;
+    font-size: 0.6rem;
+  }
+
+  .negotiation-latest-panel article span {
+    display: inline-block;
+    margin-top: 0.18rem;
+  }
+
+  .negotiation-latest-panel article em {
+    background: #dcfce7;
+    border-radius: 999px;
+    color: #047857;
+    display: inline-flex;
+    font-size: 0.55rem;
+    font-style: normal;
+    font-weight: 800;
+    gap: 0.25rem;
+    margin: 0.25rem 0 0 0.35rem;
+    padding: 0.18rem 0.42rem;
+  }
+
+  .negotiation-latest-panel article p {
+    margin: 0.25rem 0 0;
+  }
+
+  .negotiation-latest-panel time {
+    white-space: nowrap;
+  }
+
+  .negotiation-decision-panel {
+    background: linear-gradient(145deg, #fff, #f7fffb);
+    border-color: #bdebd4;
+    display: flex;
+    flex-direction: column;
+    padding: 0.85rem;
+  }
+
+  .negotiation-decision-panel > header {
+    align-items: start;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .negotiation-decision-panel header span {
+    color: #17233a;
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 900;
+  }
+
+  .negotiation-decision-panel header strong {
+    color: #64748b;
+    display: block;
+    font-size: 0.62rem;
+    margin-top: 0.2rem;
+  }
+
+  .negotiation-decision-panel header em {
+    background: #fef3c7;
+    border-radius: 999px;
+    color: #b45309;
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: 850;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .negotiation-decision-panel header em.ready {
+    background: #dcfce7;
+    color: #047857;
+  }
+
+  .negotiation-decision-checks {
+    border-bottom: 1px dashed #cbd5e1;
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+
+  .negotiation-decision-checks p {
+    align-items: center;
+    color: #334155;
+    display: flex;
+    font-size: 0.65rem;
+    font-weight: 800;
+    gap: 0.45rem;
+    margin: 0;
+  }
+
+  .negotiation-decision-checks p i {
+    color: #94a3b8;
+  }
+
+  .negotiation-decision-checks p.done i {
+    color: #10b981;
+  }
+
+  .negotiation-decision-help {
+    color: #64748b;
+    font-size: 0.6rem;
+    line-height: 1.5;
+    margin: 0.65rem 0;
+  }
+
+  .negotiation-decision-help p {
+    margin: 0.1rem 0;
+  }
+
+  .negotiation-decision-panel nav {
+    display: grid;
+    gap: 0.45rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: auto;
+  }
+
+  .negotiation-decision-panel nav .negotiation-upload-action {
+    grid-column: 1 / -1;
+  }
+
+  .negotiation-decision-panel nav .negotiation-win-action {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+
+  .negotiation-decision-panel nav .negotiation-loss-action {
+    background: #ef2525;
+    border-color: #ef2525;
+    color: #fff;
+  }
+}
+
+@media (max-width: 900px) {
+  .crm-dialog--opportunity-detail {
+    .negotiation-workspace {
+      grid-template-columns: 1fr;
+    }
+
+    .negotiation-decision-panel nav {
+      margin-top: 0;
+    }
+  }
+}
+
+@media (max-width: 580px) {
+  .crm-dialog--opportunity-detail {
+    .negotiation-quote-meta {
+      grid-template-columns: 1fr auto;
+    }
+
+    .negotiation-decision {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .negotiation-decision-panel nav {
+      grid-template-columns: 1fr;
+    }
+
+    .negotiation-decision-panel nav .negotiation-upload-action {
+      grid-column: auto;
+    }
+
+    .negotiation-latest-panel > article {
+      grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .negotiation-latest-panel time {
+      grid-column: 2;
+    }
+  }
+}

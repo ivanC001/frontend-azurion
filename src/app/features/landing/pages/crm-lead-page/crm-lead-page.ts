@@ -9,6 +9,11 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { PublicCrmApiService, PublicCrmCatalogoItem } from '../../data/public-crm-api.service';
 
+const DEFAULT_LANDING_TENANT_RUC = '20000000001';
+const DEFAULT_LANDING_CAMPAIGN = 'municipios';
+const DEFAULT_LANDING_CATALOGO_ITEM_ID = 2;
+const DEFAULT_LANDING_CATALOGO_TOKEN = '17PpDlCo06aCju4Z6iptGGvxzLbMMv9k';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-crm-lead-page',
@@ -26,11 +31,14 @@ export class CrmLeadPage implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly catalogoItem = signal<PublicCrmCatalogoItem | null>(null);
   protected readonly today = new Date().toISOString().slice(0, 10);
-  protected readonly campaignLabel = this.route.snapshot.queryParamMap.get('campania') || 'Landing CRM';
+  protected readonly campaignLabel = this.route.snapshot.queryParamMap.get('campania') || DEFAULT_LANDING_CAMPAIGN;
   protected readonly form = {
-    tenantId: this.route.snapshot.queryParamMap.get('tenant') || '',
-    catalogoItemId: this.parseNumberParam('catalogoItemId'),
-    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || '',
+    tenantId: this.route.snapshot.queryParamMap.get('tenant')
+      || this.route.snapshot.queryParamMap.get('Ruc_tenant')
+      || this.route.snapshot.queryParamMap.get('rucTenant')
+      || DEFAULT_LANDING_TENANT_RUC,
+    catalogoItemId: this.parseNumberParam('catalogoItemId') || DEFAULT_LANDING_CATALOGO_ITEM_ID,
+    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || DEFAULT_LANDING_CATALOGO_TOKEN,
     tipoInteres: this.route.snapshot.queryParamMap.get('tipoInteres') || 'PRODUCTO',
     interesPrincipal: this.route.snapshot.queryParamMap.get('interes') || '',
     presupuestoEstimado: this.parseNumberParam('precio') || this.parseNumberParam('presupuesto') || 0,
@@ -38,12 +46,12 @@ export class CrmLeadPage implements OnInit {
     tipoPersona: this.route.snapshot.queryParamMap.get('tipoPersona') || 'NATURAL',
     tipoDocumento: this.route.snapshot.queryParamMap.get('tipoDocumento') || 'DNI',
     numeroDocumento: this.route.snapshot.queryParamMap.get('numeroDocumento') || this.route.snapshot.queryParamMap.get('documento') || '',
-    nombre: this.route.snapshot.queryParamMap.get('nombre') || 'Cliente interesado',
-    empresa: this.route.snapshot.queryParamMap.get('empresa') || '',
+    nombre: this.route.snapshot.queryParamMap.get('nombre') || 'Cliente Landing Python',
+    empresa: this.route.snapshot.queryParamMap.get('empresa') || 'Empresa Demo SAC',
     correo: this.route.snapshot.queryParamMap.get('correo') || 'cliente.demo@correo.com',
     telefono: this.route.snapshot.queryParamMap.get('telefono') || '999999999',
     direccion: this.route.snapshot.queryParamMap.get('direccion') || '',
-    necesidad: this.route.snapshot.queryParamMap.get('mensaje') || this.route.snapshot.queryParamMap.get('necesidad') || 'Hola, deseo recibir informacion y que me contacten.',
+    necesidad: this.route.snapshot.queryParamMap.get('mensaje') || this.route.snapshot.queryParamMap.get('necesidad') || 'Estoy interesado en el curso Python Intermedio.',
     website: '',
   };
 
@@ -121,6 +129,7 @@ export class CrmLeadPage implements OnInit {
     this.crmApi
       .captureLead({
         tenantId: this.form.tenantId.trim(),
+        Ruc_tenant: this.form.tenantId.trim(),
         tipoPersona: this.form.tipoPersona,
         tipoDocumento: this.form.tipoDocumento || null,
         numeroDocumento: this.form.numeroDocumento.trim() || null,

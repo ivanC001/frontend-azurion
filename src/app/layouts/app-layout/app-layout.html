@@ -33,6 +33,14 @@
     <nav class="sidebar-nav">
       @for (section of navSections(); track section.label) {
         <section class="nav-section">
+          @if (section.groupTitle) {
+            <div class="nav-module-heading">
+              @if (section.groupIcon) {
+                <span><i [class]="'pi ' + section.groupIcon"></i></span>
+              }
+              <strong>{{ section.groupTitle }}</strong>
+            </div>
+          }
           <p class="nav-section-title">{{ section.label }}</p>
           <div class="nav-section-items">
             @for (item of section.items; track item.label) {

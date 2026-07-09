@@ -7,7 +7,8 @@ import { ApiUrlService } from '@core/api/api-url.service';
 import { APP_SETTINGS } from '@core/config/app-settings';
 
 export interface PublicCrmLeadRequest {
-  readonly tenantId: string;
+  readonly tenantId?: string | null;
+  readonly Ruc_tenant?: string | null;
   readonly tipoPersona?: string | null;
   readonly tipoDocumento?: string | null;
   readonly numeroDocumento?: string | null;
@@ -56,15 +57,16 @@ export class PublicCrmApiService {
   private readonly settings = inject(APP_SETTINGS);
 
   captureLead(request: PublicCrmLeadRequest) {
-    const tenantId = request.tenantId.trim();
-    const headers = new HttpHeaders({
-      [this.settings.tenancy.headerName]: tenantId,
-    });
+    const tenantReference = (request.tenantId ?? request.Ruc_tenant ?? '').trim();
+    const headers = tenantReference
+      ? new HttpHeaders({ [this.settings.tenancy.headerName]: tenantReference })
+      : new HttpHeaders();
     const { tenantId: _tenantId, ...payload } = request;
+    const body = tenantReference && !payload.Ruc_tenant ? { ...payload, Ruc_tenant: tenantReference } : payload;
     return this.http
       .post<ApiResponse<PublicCrmLeadResponse>>(
         this.apiUrl.url('saasCore', '/v1/public/crm/leads'),
-        payload,
+        body,
         { headers },
       )
       .pipe(map((response) => response.data));

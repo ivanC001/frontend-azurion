@@ -26,6 +26,8 @@ interface NavLinkItem {
 interface NavSection {
   label: string;
   items: NavLinkItem[];
+  groupTitle?: string;
+  groupIcon?: string;
 }
 
 interface SearchableRoute {
@@ -234,7 +236,9 @@ export class AppLayout {
         ],
       },
       {
-        label: 'CRM',
+        label: 'General',
+        groupTitle: 'CRM',
+        groupIcon: 'pi-chart-line',
         items: [
           {
             label: 'Dashboard',
@@ -243,6 +247,11 @@ export class AppLayout {
             permission: 'CRM_READ',
             module: 'CRM',
           },
+        ],
+      },
+      {
+        label: 'Captacion',
+        items: [
           {
             label: 'Prospectos',
             route: '/admin/crm/prospectos',
@@ -257,6 +266,11 @@ export class AppLayout {
             permission: 'CRM_READ',
             module: 'CRM',
           },
+        ],
+      },
+      {
+        label: 'Comercial',
+        items: [
           {
             label: 'Pipeline',
             route: '/admin/crm/pipeline',
@@ -271,25 +285,23 @@ export class AppLayout {
             permission: 'CRM_READ',
             module: 'CRM',
           },
+        ],
+      },
+      {
+        label: 'Postventa',
+        items: [
           {
             label: 'Clientes',
             route: '/admin/crm/clientes',
-            icon: 'pi-trophy',
+            icon: 'pi-users',
             permission: 'CRM_READ',
             module: 'CRM',
           },
           {
-            label: 'Reportes',
-            route: '/admin/reportes',
-            icon: 'pi-chart-bar',
-            permission: 'REPORTES_READ',
-            module: 'REPORTES',
-          },
-          {
-            label: 'Configuracion',
-            route: '/admin/crm/administracion',
-            icon: 'pi-sliders-h',
-            permission: 'CRM_CONFIG_MANAGE',
+            label: 'Seguimiento de pagos',
+            route: '/admin/crm/seguimiento-pagos',
+            icon: 'pi-credit-card',
+            permission: 'CRM_READ',
             module: 'CRM',
           },
         ],

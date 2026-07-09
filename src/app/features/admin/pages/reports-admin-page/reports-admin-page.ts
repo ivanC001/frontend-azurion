@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -69,8 +69,8 @@ export class ReportsAdminPage {
   protected readonly almacenFilter = signal<number | null>(null);
   protected readonly productoFilter = signal<number | null>(null);
   protected readonly cajaFilter = signal<number | null>(null);
-  protected readonly startDateFilter = signal<string | null>(this.defaultStartDate());
-  protected readonly endDateFilter = signal<string | null>(this.today());
+  protected readonly startDateFilter = signal<string | null>(null);
+  protected readonly endDateFilter = signal<string | null>(null);
 
   protected readonly moduleOptions = [
     { label: 'Ventas', value: 'ventas' as const },
@@ -81,6 +81,10 @@ export class ReportsAdminPage {
     { label: 'Notas credito/debito', value: 'notas' as const },
     { label: 'Guias remision', value: 'guias' as const },
   ];
+
+  protected readonly currentModuleLabel = computed(
+    () => this.moduleOptions.find((item) => item.value === this.moduleFilter())?.label || 'Reporte',
+  );
 
   protected readonly almacenOptions = computed(() =>
     this.almacenes().map((almacen) => ({
@@ -275,7 +279,7 @@ export class ReportsAdminPage {
 
   protected readonly activeFiltersSummary = computed(() => {
     const parts = [
-      `Modulo: ${this.moduleOptions.find((item) => item.value === this.moduleFilter())?.label || 'Reporte'}`,
+      `Modulo: ${this.currentModuleLabel()}`,
       this.startDateFilter() ? `Desde ${this.startDateFilter()}` : null,
       this.endDateFilter() ? `Hasta ${this.endDateFilter()}` : null,
       this.statusFilter() ? `Estado ${this.statusFilter()}` : null,
@@ -292,23 +296,39 @@ export class ReportsAdminPage {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.successMessage.set(null);
+    const failedModules: string[] = [];
+    const safeList = <T>(request$: Observable<T>, fallback: T, label: string) =>
+      request$.pipe(
+        catchError(() => {
+          failedModules.push(label);
+          return of(fallback);
+        }),
+      );
 
     forkJoin({
-      ventas: this.api.listVentas(),
-      compras: this.api.listCompras(),
-      almacenes: this.api.listAlmacenes(),
-      productos: this.api.listProductos(),
-      stock: this.api.listStock(),
-      kardex: this.api.listKardex(),
-      cajas: this.api.listCajas(),
-      guias: this.api.listGuiasRemision(),
-      notasCredito: this.api.listNotasCredito(),
-      notasDebito: this.api.listNotasDebito(),
+      ventas: safeList(this.api.listVentas(), [] as VentaRecord[], 'ventas'),
+      compras: safeList(this.api.listCompras(), [] as Compra[], 'compras'),
+      almacenes: safeList(this.api.listAlmacenes(), [] as Almacen[], 'almacenes'),
+      productos: safeList(this.api.listProductos(), [] as Producto[], 'productos'),
+      stock: safeList(this.api.listStock(), [] as StockItem[], 'stock'),
+      kardex: safeList(this.api.listKardex(), [] as KardexMovimiento[], 'kardex'),
+      cajas: safeList(this.api.listCajas(), [] as Caja[], 'caja'),
+      guias: safeList(this.api.listGuiasRemision(), [] as GuiaRemisionRecord[], 'guias'),
+      notasCredito: safeList(
+        this.api.listNotasCredito(),
+        [] as NotaFiscalRecord[],
+        'notas credito',
+      ),
+      notasDebito: safeList(this.api.listNotasDebito(), [] as NotaFiscalRecord[], 'notas debito'),
     })
       .pipe(
         switchMap((base) => {
           const movimientosRequests = base.cajas.map((caja) =>
-            this.api.listCajaMovimientos(caja.id),
+            safeList(
+              this.api.listCajaMovimientos(caja.id),
+              [] as CajaMovimiento[],
+              `movimientos caja ${caja.codigo || caja.id}`,
+            ),
           );
           const movimientos$ = movimientosRequests.length
             ? forkJoin(movimientosRequests)
@@ -333,7 +353,12 @@ export class ReportsAdminPage {
           this.notasCredito.set(base.notasCredito);
           this.notasDebito.set(base.notasDebito);
           this.movimientosCaja.set(movimientosCaja.flat());
-          this.successMessage.set('Reportes actualizados.');
+          const uniqueFailures = Array.from(new Set(failedModules));
+          this.successMessage.set(
+            uniqueFailures.length
+              ? `Reportes cargados parcialmente. Sin datos de: ${uniqueFailures.join(', ')}.`
+              : 'Reportes actualizados.',
+          );
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -712,12 +737,6 @@ export class ReportsAdminPage {
 
   private today(): string {
     return new Date().toISOString().slice(0, 10);
-  }
-
-  private defaultStartDate(): string {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return date.toISOString().slice(0, 10);
   }
 
   private resolveError(error: unknown): string {

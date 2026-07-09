@@ -1050,6 +1050,18 @@ export interface CreateCrmProspectoRequest {
 
 export type UpdateCrmProspectoRequest = Partial<CreateCrmProspectoRequest>;
 
+export interface RepartirCrmProspectosRequest {
+  readonly prospectoIds: readonly number[];
+  readonly responsableIds: readonly string[];
+  readonly soloNuevos?: boolean | null;
+}
+
+export interface RepartirCrmProspectosResponse {
+  readonly totalAsignados: number;
+  readonly asignadosPorResponsable: Record<string, number>;
+  readonly prospectos: CrmProspecto[];
+}
+
 export interface CrmCatalogoItem {
   readonly id: number;
   readonly tipoItem: string;
@@ -1291,6 +1303,31 @@ export interface CrmReportes {
   readonly actividadesRealizadas: number;
   readonly prospectosConvertidos: number;
   readonly prospectosDescartados: number;
+}
+
+export interface CrmCanalTokenConfig {
+  readonly id?: number | null;
+  readonly canal: 'WEB' | 'WHATSAPP' | 'INSTAGRAM' | 'FACEBOOK' | string;
+  readonly nombre: string;
+  readonly accessToken?: string | null;
+  readonly verifyToken?: string | null;
+  readonly webhookUrl?: string | null;
+  readonly appId?: string | null;
+  readonly phoneNumberId?: string | null;
+  readonly activo: boolean;
+  readonly metadataJson?: string | null;
+}
+
+export interface UpdateCrmCanalTokenConfigRequest {
+  readonly canal: string;
+  readonly nombre?: string | null;
+  readonly accessToken?: string | null;
+  readonly verifyToken?: string | null;
+  readonly webhookUrl?: string | null;
+  readonly appId?: string | null;
+  readonly phoneNumberId?: string | null;
+  readonly activo?: boolean | null;
+  readonly metadataJson?: string | null;
 }
 
 export interface GenerarCotizacionDesdeOportunidadRequest extends CreateCotizacionRequest {
@@ -2247,6 +2284,22 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmIntegraciones() {
+    return this.http
+      .get<ApiResponse<CrmCanalTokenConfig[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/integraciones'), {
+        headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  saveCrmIntegracion(request: UpdateCrmCanalTokenConfigRequest) {
+    return this.http
+      .put<ApiResponse<CrmCanalTokenConfig>>(this.apiUrl.url('saasCore', '/v1/saas/crm/integraciones'), request, {
+        headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
   createCrmCatalogoItem(request: CreateCrmCatalogoItemRequest) {
     return this.http
       .post<ApiResponse<CrmCatalogoItem>>(this.apiUrl.url('saasCore', '/v1/saas/crm/catalogo'), request, {
@@ -2295,12 +2348,25 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  repartirCrmProspectos(request: RepartirCrmProspectosRequest) {
+    return this.http
+      .post<ApiResponse<RepartirCrmProspectosResponse>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/repartir'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   convertirCrmProspectoCliente(id: number) {
     return this.http
       .post<ApiResponse<Cliente>>(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${id}/convertir-cliente`), null, {
         headers: this.session.apiHeaders(),
       })
-      .pipe(map((response) => response.data));
+      .pipe(
+        map((response) => response.data),
+        tap(() => this.invalidateCache('clientes')),
+      );
   }
 
   listCrmEtapas() {

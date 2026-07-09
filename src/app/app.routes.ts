@@ -262,6 +262,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'crm/seguimiento-pagos',
+        canActivate: [permissionGuard],
+        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'seguimientoPagos' },
+        loadComponent: () =>
+          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
+            (component) => component.CrmAdminPage,
+          ),
+      },
+      {
         path: 'crm/productos',
         canActivate: [permissionGuard],
         data: { permission: 'CRM_CATALOG_MANAGE', module: 'CRM', initialTab: 'catalogo' },

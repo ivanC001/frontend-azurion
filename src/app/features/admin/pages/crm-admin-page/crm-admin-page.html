@@ -1,41 +1,68 @@
-﻿<section class="admin-page crm-page">
-  <header class="page-header crm-header" [class.crm-header--followup]="activeTab() === 'seguimiento'">
-    <div>
-      <p class="page-eyebrow">{{ pageMeta().eyebrow }}</p>
-      <h1>{{ pageMeta().title }}</h1>
-      <p>{{ pageMeta().description }}</p>
-    </div>
-    <div class="header-actions crm-header-actions">
-      @if (activeTab() !== 'dashboard') {
-        <label class="search-box crm-header-search">
-          <i class="pi pi-search"></i>
-          <input pInputText name="crmSearch" [ngModel]="query()" (ngModelChange)="query.set($event)" [placeholder]="activeTab() === 'seguimiento' ? 'Buscar prospectos...' : 'Buscar nombre, documento, estado...'" />
-        </label>
-      }
-      @if (activeTab() === 'seguimiento') {
-        <div class="followup-header-actions">
-          <button type="button" class="az-light-action" [class.active]="showFollowUpFilters()" (click)="showFollowUpFilters.set(!showFollowUpFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showFollowUpFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
-          <button type="button" class="az-light-action" (click)="exportFollowUpCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
-          <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
-          <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateActivity()"><i class="pi pi-plus"></i><span>Nueva actividad</span></button>
-        </div>
-      } @else if (activeTab() !== 'dashboard') {
-        <div class="crm-funnel-actions">
-          <button type="button" title="Nuevo prospecto" aria-label="Nuevo prospecto" (click)="openCreateProspect()"><i class="pi pi-user-plus"></i></button>
-          <button type="button" title="Nueva oportunidad" aria-label="Nueva oportunidad" (click)="openCreateOpportunity()"><i class="pi pi-briefcase"></i></button>
-          @if (canManageCrmCatalog()) {
-            <button type="button" title="Productos CRM" aria-label="Productos CRM" [class.active]="activeTab() === 'catalogo'" (click)="setTab('catalogo')"><i class="pi pi-tags"></i></button>
+<section class="admin-page crm-page" [class.crm-page--executive]="activeTab() === 'dashboard'">
+  @if (activeTab() !== 'embudo') {
+    <header class="page-header crm-header" [class.crm-header--followup]="activeTab() === 'seguimiento'" [class.crm-header--capture]="isCommercialStageTab()">
+      <div>
+        <p class="page-eyebrow">{{ pageMeta().eyebrow }}</p>
+        <h1>{{ pageMeta().title }}</h1>
+        <p>{{ pageMeta().description }}</p>
+      </div>
+      <div class="header-actions crm-header-actions">
+        @if (activeTab() !== 'dashboard') {
+          <label class="search-box crm-header-search">
+            <i class="pi pi-search"></i>
+            <input pInputText name="crmSearch" [ngModel]="query()" (ngModelChange)="query.set($event)" [placeholder]="activeTab() === 'seguimiento' ? 'Buscar prospectos...' : activeTab() === 'captacion' ? 'Buscar lead...' : activeTab() === 'oportunidades' ? 'Buscar oportunidades...' : activeTab() === 'clientes' ? 'Buscar clientes...' : activeTab() === 'seguimientoPagos' ? 'Buscar cliente, producto o deuda...' : 'Buscar nombre, documento, estado...'" />
+          </label>
+        }
+        @if (activeTab() === 'seguimiento') {
+          <div class="followup-header-actions">
+            <button type="button" class="az-light-action" [class.active]="showFollowUpFilters()" (click)="showFollowUpFilters.set(!showFollowUpFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showFollowUpFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
+            <button type="button" class="az-light-action" (click)="exportFollowUpCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
+            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
+            <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateActivity()"><i class="pi pi-plus"></i><span>Nueva actividad</span></button>
+          </div>
+        } @else if (activeTab() === 'oportunidades') {
+          <div class="followup-header-actions">
+            <button type="button" class="az-light-action" [class.active]="showOpportunityFilters()" (click)="showOpportunityFilters.set(!showOpportunityFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showOpportunityFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
+            <button type="button" class="az-light-action" (click)="exportOpportunitiesCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
+            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
+            <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateOpportunity()"><i class="pi pi-plus"></i><span>Nueva oportunidad</span></button>
+          </div>
+        } @else if (activeTab() === 'clientes') {
+          <div class="followup-header-actions">
+            <button type="button" class="az-light-action" [class.active]="showClientFilters()" (click)="showClientFilters.set(!showClientFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showClientFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
+            <button type="button" class="az-light-action" (click)="exportClientsCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
+            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
+          </div>
+        } @else if (activeTab() === 'seguimientoPagos') {
+          <div class="followup-header-actions">
+            <button type="button" class="az-light-action" (click)="exportClientsCsv()"><i class="pi pi-download"></i><span>Exportar clientes</span></button>
+            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
+          </div>
+        } @else if (activeTab() !== 'dashboard') {
+          @if (activeTab() === 'captacion') {
+            <div class="followup-header-actions prospect-header-actions">
+              <button type="button" class="az-light-action" [class.active]="showProspectFilters()" (click)="showProspectFilters.set(!showProspectFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showProspectFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
+              @if (canManageCrmCatalog()) {
+                <button type="button" class="az-icon-action" title="Productos CRM" aria-label="Productos CRM" [class.active]="activeTab() === 'catalogo'" (click)="setTab('catalogo')"><i class="pi pi-tags"></i></button>
+              }
+            </div>
+          } @else {
+            <div class="crm-funnel-actions">
+              <button type="button" title="Nuevo prospecto" aria-label="Nuevo prospecto" (click)="openCreateProspect()"><i class="pi pi-user-plus"></i></button>
+              @if (canManageCrmCatalog()) {
+                <button type="button" title="Productos CRM" aria-label="Productos CRM" [class.active]="activeTab() === 'catalogo'" (click)="setTab('catalogo')"><i class="pi pi-tags"></i></button>
+              }
+            </div>
           }
-          @if (canManageCrmConfig()) {
-            <button type="button" title="Panel administrativo CRM" aria-label="Panel administrativo CRM" [class.active]="activeTab() === 'administracion'" (click)="setTab('administracion')"><i class="pi pi-sliders-h"></i></button>
-          }
-        </div>
-      }
-      @if (activeTab() !== 'seguimiento') {
-        <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
-      }
-    </div>
-  </header>
+        }
+        @if (activeTab() === 'captacion') {
+          <p-button label="Crear prospecto" icon="pi pi-user-plus" styleClass="az-secondary" (onClick)="openCreateProspect()" />
+        } @else if (activeTab() !== 'seguimiento' && activeTab() !== 'oportunidades' && activeTab() !== 'clientes') {
+          <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+        }
+      </div>
+    </header>
+  }
 
   @if (errorMessage()) {
     <div class="alert alert--error">{{ errorMessage() }}</div>
@@ -127,6 +154,94 @@
       </section>
     }
 
+    <p-dialog
+      [showHeader]="false"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [visible]="prospectDistributionDialogOpen()"
+      (visibleChange)="!$event && prospectDistributionDialogOpen.set(false)"
+      [style]="{ width: 'min(58rem, calc(100vw - 1rem))' }"
+      [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+      appendTo="body"
+    >
+      <section style="background: linear-gradient(180deg, #f8fbff 0%, #ffffff 42%); color: #0f172a; display: grid; gap: 1rem; padding: 1rem;">
+        <header style="align-items: center; display: grid; gap: .85rem; grid-template-columns: auto minmax(0, 1fr) auto;">
+          <span style="align-items: center; background: #dbeafe; border-radius: .8rem; color: #2563eb; display: inline-flex; font-size: 1.1rem; height: 2.7rem; justify-content: center; width: 2.7rem;">
+            <i class="pi pi-users"></i>
+          </span>
+          <div style="min-width: 0;">
+            <h2 style="font-size: 1.12rem; font-weight: 950; line-height: 1.1; margin: 0;">Repartir leads nuevos</h2>
+            <p style="color: #64748b; font-size: .78rem; line-height: 1.35; margin: .25rem 0 0;">
+              Distribucion rapida y equitativa entre vendedores activos.
+            </p>
+          </div>
+          <button type="button" aria-label="Cerrar" (click)="prospectDistributionDialogOpen.set(false)" style="align-items: center; background: #fff; border: 1px solid #dbe3ef; border-radius: .7rem; color: #64748b; cursor: pointer; display: inline-flex; height: 2.35rem; justify-content: center; width: 2.35rem;">
+            <i class="pi pi-times"></i>
+          </button>
+        </header>
+
+        <div style="align-items: center; background: linear-gradient(135deg, #ecfdf5, #eff6ff); border: 1px solid #bfdbfe; border-radius: .9rem; display: grid; gap: .8rem; grid-template-columns: auto minmax(0, 1fr) auto; padding: .85rem;">
+          <span style="align-items: center; background: #ffffff; border-radius: .75rem; color: #059669; display: inline-flex; height: 2.65rem; justify-content: center; width: 2.65rem;">
+            <i class="pi pi-megaphone"></i>
+          </span>
+          <div>
+            <strong style="display: block; font-size: .98rem;">{{ distributionCandidateLeads().length }} leads listos para repartir</strong>
+            <span style="color: #64748b; display: block; font-size: .74rem; margin-top: .18rem;">
+              {{ selectedProspectCount() ? 'Se usaran solo los leads seleccionados.' : 'Se usaran todos los leads nuevos filtrados actualmente.' }}
+            </span>
+          </div>
+          <b style="background: #2563eb; border-radius: 999px; color: #fff; font-size: .78rem; padding: .38rem .7rem;">{{ selectedProspectCount() || distributionCandidateLeads().length }}</b>
+        </div>
+
+        <div style="display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.1fr) minmax(17rem, .9fr);">
+          <section style="background: #fff; border: 1px solid #dbe3ef; border-radius: .9rem; display: grid; gap: .65rem; padding: .85rem;">
+            <div style="align-items: center; display: flex; justify-content: space-between;">
+              <h3 style="font-size: .86rem; font-weight: 950; margin: 0;">Vendedores activos</h3>
+              <span style="background: #eef2ff; border-radius: 999px; color: #2563eb; font-size: .68rem; font-weight: 900; padding: .25rem .55rem;">{{ prospectDistributionSelectedSellerIds().length }} seleccionados</span>
+            </div>
+            @for (seller of crmSellerUsers(); track seller.id) {
+              <label
+                [style.border-color]="isDistributionSellerSelected(seller.id) ? '#93c5fd' : '#e2e8f0'"
+                [style.background]="isDistributionSellerSelected(seller.id) ? '#eff6ff' : '#f8fafc'"
+                style="align-items: center; border: 1px solid; border-radius: .78rem; cursor: pointer; display: grid; gap: .62rem; grid-template-columns: auto auto minmax(0, 1fr); padding: .62rem;"
+              >
+                <input type="checkbox" [checked]="isDistributionSellerSelected(seller.id)" (change)="toggleDistributionSeller(seller.id, $event)" style="accent-color: #2563eb; height: 1rem; width: 1rem;" />
+                <span style="align-items: center; background: #22c55e; border-radius: 999px; color: #fff; display: inline-flex; font-size: .68rem; font-weight: 950; height: 2rem; justify-content: center; width: 2rem;">{{ userInitials(seller) }}</span>
+                <span style="display: grid; gap: .12rem; min-width: 0;">
+                  <strong style="font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ seller.nombres || seller.username }}</strong>
+                  <em style="color: #64748b; font-size: .62rem; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ seller.roles.join(', ') || 'Usuario activo' }}</em>
+                </span>
+              </label>
+            }
+          </section>
+
+          <section style="background: #fff; border: 1px solid #dbe3ef; border-radius: .9rem; display: grid; gap: .65rem; padding: .85rem;">
+            <h3 style="font-size: .86rem; font-weight: 950; margin: 0;">Vista previa del reparto</h3>
+            @for (item of prospectDistributionPreview(); track item.id) {
+              <article style="align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .78rem; display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr) auto; padding: .68rem;">
+                <div style="min-width: 0;">
+                  <strong style="display: block; font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ item.name }}</strong>
+                  <span style="color: #64748b; display: block; font-size: .66rem; margin-top: .14rem;">{{ item.current }} leads actuales</span>
+                </div>
+                <b style="background: #dcfce7; border-radius: 999px; color: #047857; font-size: .8rem; padding: .32rem .7rem;">+{{ item.assigned }}</b>
+              </article>
+            } @empty {
+              <div style="border: 1px dashed #cbd5e1; border-radius: .78rem; color: #64748b; font-size: .75rem; padding: 1.25rem; text-align: center;">Selecciona vendedores para ver la distribucion.</div>
+            }
+          </section>
+        </div>
+
+        <footer style="align-items: center; border-top: 1px solid #e2e8f0; display: flex; gap: .65rem; justify-content: flex-end; padding-top: .85rem;">
+          <button type="button" (click)="prospectDistributionDialogOpen.set(false)" style="background: #fff; border: 1px solid #cbd5e1; border-radius: .7rem; color: #475569; cursor: pointer; font-weight: 900; min-height: 2.45rem; padding: 0 1rem;">Cancelar</button>
+          <button type="button" [disabled]="saving() || !prospectDistributionSelectedSellerIds().length" (click)="distributeProspects()" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: 0; border-radius: .7rem; color: #fff; cursor: pointer; font-weight: 950; min-height: 2.45rem; padding: 0 1rem;">
+            <i class="pi pi-check"></i>
+            Repartir ahora
+          </button>
+        </footer>
+      </section>
+    </p-dialog>
+
     @if (activeTab() === 'captacion' && false) {
       <section class="table-panel flat-panel">
         <div class="table-head">
@@ -184,14 +299,20 @@
     }
 
     <ng-template #prospectActions let-item>
-      <div class="row-actions">
-        <button type="button" pButton class="p-button-text p-button-rounded" icon="pi pi-pencil" title="Editar prospecto" aria-label="Editar prospecto" (click)="openEditProspect(item)"></button>
-        <button type="button" pButton class="p-button-text p-button-rounded transition-action" icon="pi pi-arrow-right" title="Enviar a seguimiento" aria-label="Enviar a seguimiento" [disabled]="item.estado !== 'NUEVO'" [loading]="actionId() === item.id" (click)="moveProspectToFollowUp(item)"></button>
-        <button type="button" pButton class="p-button-text p-button-rounded" icon="pi pi-calendar-plus" title="Agendar actividad" aria-label="Agendar actividad" (click)="openCreateActivity(item)"></button>
-        <button type="button" pButton class="p-button-text p-button-rounded" icon="pi pi-check-circle" title="Confirmar interes" aria-label="Confirmar interes" [loading]="actionId() === item.id" (click)="confirmProspectInterest(item)"></button>
-        @if (canConvertCrmProspects()) {
-          <button type="button" pButton class="p-button-text p-button-rounded success-action" icon="pi pi-user-check" title="Convertir a cliente" aria-label="Convertir a cliente" [disabled]="item.estado === 'CONVERTIDO'" [loading]="actionId() === item.id" (click)="convertProspect(item)"></button>
-        }
+      <div class="prospect-modern-actions prospect-modern-actions--template">
+        <button type="button" class="prospect-edit-action" title="Editar prospecto" aria-label="Editar prospecto" (click)="openEditProspect(item)">
+          <i class="pi pi-pencil"></i>
+        </button>
+        <button
+          type="button"
+          class="prospect-follow-action"
+          title="Pasar a seguimiento"
+          aria-label="Pasar a seguimiento"
+          [disabled]="!prospectCanMoveToFollowUp(item) || actionId() === item.id"
+          (click)="moveProspectToFollowUp(item)"
+        >
+          <i class="pi pi-arrow-right"></i>
+        </button>
       </div>
     </ng-template>
 
@@ -218,155 +339,294 @@
     </ng-template>
 
     @if (activeTab() === 'dashboard') {
-      <section class="crm-dashboard-board">
-        <article class="crm-dashboard-welcome">
+      <section class="crm-dashboard-board crm-executive-dashboard">
+        <header class="executive-head">
           <div>
-            <span>Dashboard CRM</span>
-            <h2>Bienvenido, {{ dashboardUserName() }}</h2>
-            <p>Aqui tienes el pulso comercial del dia: captacion, pipeline, actividades y conversiones del equipo.</p>
+            <h2>Resumen Ejecutivo</h2>
+            <p>{{ dashboardNow | date: 'MMMM yyyy' }} · Actualizado hace 4 min</p>
           </div>
-          <div class="crm-dashboard-welcome__meta">
-            <strong>{{ dashboardNow | date: 'dd MMM yyyy' }}</strong>
-            <span>{{ dashboardCompanyName() }}</span>
+          <div class="executive-actions">
+            <button type="button" class="executive-action" (click)="exportOpportunitiesCsv()">
+              <i class="pi pi-download"></i>
+              <span>Exportar</span>
+            </button>
+            <button type="button" class="executive-action executive-action--primary" (click)="openCreateOpportunity()">
+              <i class="pi pi-plus"></i>
+              <span>Nuevo deal</span>
+            </button>
           </div>
-        </article>
+        </header>
 
-        <section class="crm-process-board" aria-label="Proceso comercial">
-          <div class="crm-process-board__head">
-            <div>
-              <h2>Proceso comercial</h2>
-              <p>Resumen general del flujo de ventas desde captacion hasta cierre ganado.</p>
-            </div>
-            <article class="crm-process-total">
-              <span>Total pipeline</span>
-              <strong>S/ {{ metrics().pipeline | number: '1.0-0' }}</strong>
-              <em>{{ metrics().oportunidades }} oportunidad(es)</em>
+        <section class="executive-kpi-grid" aria-label="Indicadores ejecutivos">
+          @for (kpi of executiveKpis(); track kpi.label) {
+            <article [class]="'executive-kpi executive-kpi--' + kpi.tone">
+              <div>
+                <span>{{ kpi.label }}</span>
+                <strong>{{ kpi.value }}</strong>
+                <p>{{ kpi.detail }}</p>
+              </div>
+              <i [class]="kpi.icon"></i>
+              <em [class]="'executive-trend executive-trend--' + kpi.trendTone">
+                <i [class]="kpi.trendTone === 'up' ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'"></i>
+                {{ kpi.trend }}
+              </em>
             </article>
-          </div>
-          <div class="crm-process-flow">
-            @for (step of commercialProcess(); track step.label) {
-              <button type="button" class="crm-process-card" [class]="'crm-process-card crm-process-card--' + step.tone" (click)="setTab(step.tab)">
-                <span class="crm-process-card__icon"><i [class]="step.icon"></i></span>
-                <span class="crm-process-card__content">
-                  <strong>{{ step.label }}</strong>
-                  <em>{{ step.count }}</em>
-                  <small>{{ step.detail }}</small>
-                  <b>S/ {{ step.amount | number: '1.0-0' }}</b>
-                  <i>{{ step.conversion }}% conversion</i>
-                </span>
-              </button>
-            }
-          </div>
+          }
         </section>
 
-        <section class="crm-dashboard-layout crm-dashboard-layout--clean">
-          <article class="dashboard-panel">
-            <div class="dashboard-panel__head">
+        <section class="executive-main-grid">
+          <article class="executive-panel executive-chart-panel">
+            <div class="executive-panel__head">
               <div>
-                <h2>Actividades proximas</h2>
-                <p>Llamadas, visitas y tareas que el equipo debe atender primero.</p>
+                <h3>Ingresos vs Meta</h3>
+                <p>Ene - Dic {{ dashboardNow | date: 'yyyy' }}</p>
+              </div>
+              <div class="executive-legend">
+                <span><i class="legend-dot legend-dot--real"></i>Real</span>
+                <span><i class="legend-dot legend-dot--target"></i>Meta</span>
               </div>
             </div>
-            <div class="crm-rail-list crm-rail-list--wide">
-              @for (item of upcomingActivities(); track item.id) {
-                <article class="crm-rail-card">
-                  <i class="pi pi-calendar"></i>
-                  <div>
-                    <strong>{{ item.asunto }}</strong>
-                    <span>{{ item.oportunidadTitulo || item.prospectoNombre || item.clienteNombre || 'Sin relacion' }}</span>
-                  </div>
-                  <em>{{ item.fechaProgramada | date: 'dd MMM HH:mm' }}</em>
-                </article>
-              } @empty {
-                <div class="dashboard-empty">No hay actividades pendientes por ahora.</div>
-              }
+
+            <div class="executive-chart">
+              <svg viewBox="0 0 1000 300" role="img" aria-label="Grafico de ingresos contra meta">
+                @for (guide of executiveRevenueChart().guides; track guide.label) {
+                  <text class="chart-guide-label" x="8" [attr.y]="guide.y + 4">{{ guide.label }}</text>
+                  <line class="chart-guide-line" x1="72" x2="944" [attr.y1]="guide.y" [attr.y2]="guide.y"></line>
+                }
+                <polygon class="chart-area" [attr.points]="executiveRevenueChart().areaPoints"></polygon>
+                <polyline class="chart-target-line" [attr.points]="executiveRevenueChart().targetPoints"></polyline>
+                <polyline class="chart-real-line" [attr.points]="executiveRevenueChart().realPoints"></polyline>
+              </svg>
+              <div class="executive-chart-labels">
+                @for (label of executiveRevenueChart().labels; track label) {
+                  <span>{{ label }}</span>
+                }
+              </div>
             </div>
           </article>
 
-          <article class="dashboard-panel">
-            <div class="dashboard-panel__head">
+          <article class="executive-panel executive-pipeline-panel">
+            <div class="executive-panel__head">
               <div>
-                <h2>Oportunidades destacadas</h2>
-                <p>Negocios con mayor monto o mejor avance para priorizar cierre.</p>
+                <h3>Pipeline</h3>
               </div>
+              <button type="button" class="executive-more" title="Ver pipeline" aria-label="Ver pipeline" (click)="setTab('embudo')">
+                <i class="pi pi-ellipsis-h"></i>
+              </button>
             </div>
-            <div class="crm-highlight-list">
-              @for (item of featuredOpportunities(); track item.id) {
-                <button type="button" class="crm-highlight-card" (click)="openEditOpportunity(item)">
-                  <div>
-                    <strong>{{ item.titulo }}</strong>
-                    <span>{{ item.clienteNombre || item.prospectoNombre || 'Sin contacto' }}</span>
-                  </div>
-                  <div>
-                    <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
-                    <em [style.color]="stageColor(item.etapa)">{{ stageName(item.etapa) }}</em>
-                  </div>
+
+            <div class="executive-pipeline-list">
+              @for (row of executivePipelineRows(); track row.label) {
+                <button type="button" class="executive-pipeline-row" (click)="setTab('embudo')">
+                  <span>
+                    <strong>{{ row.label }}</strong>
+                    <em>{{ row.amount }}</em>
+                  </span>
+                  <b>{{ row.count }}</b>
+                  <i class="executive-pipeline-track">
+                    <i [style.width.%]="row.percent" [style.background]="row.color"></i>
+                  </i>
                 </button>
-              } @empty {
-                <div class="dashboard-empty">Todavia no hay oportunidades destacadas.</div>
               }
             </div>
+
+            <footer class="executive-pipeline-total">
+              <span>Total pipeline</span>
+              <strong>{{ executivePipelineTotalLabel() }}</strong>
+            </footer>
           </article>
         </section>
       </section>
     }
 
     @if (activeTab() === 'captacion') {
-      <section class="prospect-dashboard-card">
-        <header class="prospect-hero">
-          <div class="prospect-hero__icon">
-            <i class="pi pi-user"></i>
-          </div>
+      <section class="prospect-workspace">
+        <header class="prospect-titlebar">
           <div>
-            <span>1</span>
-            <h2>Prospectos</h2>
-            <p><i class="pi pi-circle-fill"></i> Entradas nuevas</p>
+            <h2>Leads nuevos</h2>
+            <p>Entradas recientes de landing, WhatsApp, Instagram, Facebook y otros canales conectados.</p>
           </div>
-          <strong>{{ newProspects().length }}</strong>
+          <div class="prospect-titlebar-actions">
+            @if (canAssignCrmProspects()) {
+              <button type="button" class="prospect-primary-button" (click)="openProspectDistributionDialog()">
+                <i class="pi pi-users"></i>
+                Repartir leads
+              </button>
+            }
+            <button type="button" class="prospect-primary-button" (click)="load()">
+              <i class="pi pi-refresh"></i>
+              Actualizar
+            </button>
+          </div>
         </header>
 
-        <section class="prospect-metrics" aria-label="Metricas de prospectos">
-          @for (metric of prospectMetricCards(); track metric.label) {
-            <article>
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
-              <p><b>{{ metric.delta }}</b> {{ metric.detail }}</p>
+        <section class="prospect-summary-grid" aria-label="Resumen de prospectos">
+          @for (card of prospectSummaryCards(); track card.label) {
+            <article [class]="'prospect-summary-card prospect-summary-card--' + card.tone">
+              <div>
+                <span>{{ card.label }}</span>
+                <strong>{{ card.value }}</strong>
+              </div>
+              <i [class]="card.icon"></i>
             </article>
           }
         </section>
 
-        <section class="prospect-recent-panel">
-          <div class="prospect-panel-head">
-            <h3>Prospectos recientes</h3>
-            <button type="button" (click)="query.set('')">Ver todos</button>
+        @if (showProspectFilters()) {
+          <section class="followup-filter-panel prospect-filter-panel" aria-label="Filtros de leads nuevos">
+            <label>
+              <span>Origen</span>
+              <p-select [options]="prospectOrigenFilterOptions()" [ngModel]="prospectOrigenFilter()" (ngModelChange)="prospectOrigenFilter.set($event); prospectPage.set(0)" appendTo="body" />
+            </label>
+            <label>
+              <span>Campania</span>
+              <p-select [options]="prospectCampaniaFilterOptions()" [ngModel]="prospectCampaniaFilter()" (ngModelChange)="prospectCampaniaFilter.set($event); prospectPage.set(0)" appendTo="body" />
+            </label>
+            <label>
+              <span>Asesor</span>
+              <p-select [options]="prospectAsesorFilterOptions()" [ngModel]="prospectAsesorFilter()" (ngModelChange)="prospectAsesorFilter.set($event); prospectPage.set(0)" appendTo="body" />
+            </label>
+            <label class="prospect-date-filter">
+              <span>Desde</span>
+              <input type="date" [ngModel]="prospectDateFrom()" (ngModelChange)="prospectDateFrom.set($event); prospectPage.set(0)" />
+            </label>
+            <label class="prospect-date-filter">
+              <span>Hasta</span>
+              <input type="date" [ngModel]="prospectDateTo()" (ngModelChange)="prospectDateTo.set($event); prospectPage.set(0)" />
+            </label>
+            <button type="button" class="followup-clear-button" (click)="resetProspectFilters()">Limpiar</button>
+            <button type="button" class="followup-apply-button" (click)="applyProspectFilters(); showProspectFilters.set(false)">Aplicar filtros</button>
+          </section>
+        }
+
+        <section class="prospect-table-panel">
+          <div class="prospect-filter-bar prospect-filter-bar--search">
+            <label class="prospect-search">
+              <input
+                pInputText
+                type="search"
+                [ngModel]="query()"
+                (ngModelChange)="query.set($event); prospectPage.set(0)"
+                placeholder="Buscar lead por nombre, telefono o correo..."
+              />
+              <i class="pi pi-search"></i>
+            </label>
+            <button type="button" class="prospect-filter-button" [class.active]="showProspectFilters()" (click)="showProspectFilters.set(!showProspectFilters())">
+              <i class="pi pi-filter"></i>
+              Filtros
+            </button>
           </div>
 
-          <div class="prospect-list">
-            @for (item of recentProspects(); track item.id; let index = $index) {
-              <article class="prospect-row">
-                <button type="button" [class]="'prospect-avatar prospect-avatar--' + prospectAvatarTone(index)" (click)="openEditProspect(item)">
-                  {{ prospectInitials(item) }}
-                </button>
-                <button type="button" class="prospect-identity" (click)="openEditProspect(item)">
-                  <strong>{{ item.nombre }}</strong>
-                  <span>{{ item.correo ? maskedContact(item.correo) : (item.telefono || 'Sin contacto') }}</span>
-                </button>
-                <span class="prospect-status">{{ humanize(item.estado) }}</span>
-                <em>{{ relativePastLabel(item.createdAt || item.updatedAt) }}</em>
-                <div class="prospect-row-actions">
-                  <ng-container *ngTemplateOutlet="prospectActions; context: { $implicit: item }" />
-                </div>
-              </article>
-            } @empty {
-              <div class="pipeline-empty">No hay prospectos nuevos por atender.</div>
-            }
+          <div class="prospect-table-scroll">
+            <table class="prospect-modern-table">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" aria-label="Seleccionar todos los prospectos visibles" [checked]="arePagedProspectsSelected()" (change)="togglePagedProspectSelection($event)" /></th>
+                  <th>Nombre</th>
+                  <th>Contacto</th>
+                  <th>Oferta / interes</th>
+                  <th>Origen</th>
+                  <th>Campania</th>
+                  <th>Estado</th>
+                  <th>Asesor</th>
+                  <th>Fecha de registro</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of pagedProspectTable(); track item.id; let index = $index) {
+                  <tr>
+                    <td><input type="checkbox" [attr.aria-label]="'Seleccionar ' + item.nombre" [checked]="isProspectSelected(item.id)" (change)="toggleProspectSelection(item.id, $event)" /></td>
+                    <td>
+                      <div class="prospect-name-cell">
+                        <button type="button" [class]="'prospect-avatar prospect-avatar--' + prospectAvatarTone(index)" (click)="openEditProspect(item)">
+                          {{ prospectInitials(item) }}
+                        </button>
+                        <button type="button" class="prospect-identity" (click)="openEditProspect(item)">
+                          <strong>{{ item.nombre }}</strong>
+                          <span>{{ prospectCompanyLabel(item) }}</span>
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="prospect-contact-cell">
+                        <strong>{{ item.telefono || 'Sin telefono' }}</strong>
+                        <span>{{ item.correo || 'Sin correo' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="prospect-product-cell">
+                        <strong>{{ prospectProductName(item) }}</strong>
+                        <span>{{ prospectProductType(item) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="prospect-origin-cell">
+                        <span><i [class]="prospectOriginIcon(item)"></i> {{ prospectOriginLabel(item) }}</span>
+                        <em>{{ prospectOriginTag(item) }}</em>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="prospect-campaign-cell">
+                        <strong>{{ prospectCampaignLabel(item) }}</strong>
+                        <span>{{ item.mensaje || item.interesDetalle || 'Sin detalle' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span [class]="'prospect-modern-status prospect-modern-status--' + prospectStatusClass(item.estado)">
+                        {{ humanize(item.estado) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="prospect-advisor-cell">
+                        <span>{{ responsibleName(item.responsableId) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <time>{{ (item.createdAt || item.fechaInteres || item.updatedAt) | date: 'dd/MM/yyyy' }}</time>
+                      <small>{{ (item.createdAt || item.updatedAt) | date: 'hh:mm a' }}</small>
+                    </td>
+                    <td>
+                      <div class="prospect-modern-actions">
+                        <button type="button" class="prospect-edit-action" title="Editar prospecto" aria-label="Editar prospecto" (click)="openEditProspect(item)">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="prospect-follow-action"
+                          title="Pasar a seguimiento"
+                          aria-label="Pasar a seguimiento"
+                          [disabled]="!prospectCanMoveToFollowUp(item) || actionId() === item.id"
+                          (click)="moveProspectToFollowUp(item)"
+                        >
+                          <i class="pi pi-arrow-right"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="10">
+                      <div class="prospect-table-empty">No hay leads nuevos que coincidan con los filtros.</div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
+          <footer class="prospect-pagination">
+            <span>{{ prospectPageRangeLabel() }}</span>
+            <div>
+              <button type="button" [disabled]="prospectPage() === 0" (click)="prospectPage.set(prospectPage() - 1)">
+                <i class="pi pi-chevron-left"></i>
+              </button>
+              <strong>{{ prospectPage() + 1 }} / {{ prospectTotalPages() }}</strong>
+              <button type="button" [disabled]="prospectPage() >= prospectTotalPages() - 1" (click)="prospectPage.set(prospectPage() + 1)">
+                <i class="pi pi-chevron-right"></i>
+              </button>
+            </div>
+          </footer>
         </section>
-
-        <button type="button" class="prospect-create-button" (click)="openCreateProspect()">
-          <i class="pi pi-plus"></i>
-          Nuevo prospecto
-        </button>
       </section>
     }
 
@@ -591,6 +851,119 @@
           }
         </section>
 
+        <section class="crm-integration-admin-card">
+          <header>
+            <div>
+              <span>Captacion e integraciones</span>
+              <h3>Tokens por canal</h3>
+              <p>Configura las credenciales que usan landings, WhatsApp, Instagram y Facebook para enviar leads al CRM.</p>
+            </div>
+            <strong>{{ crmIntegraciones().length }} canal(es)</strong>
+          </header>
+
+          <div class="crm-integration-grid">
+            @for (integration of crmIntegraciones(); track integration.canal) {
+              <article class="crm-integration-card" [class.crm-integration-card--active]="integration.activo">
+                <div class="crm-integration-card__head">
+                  <i [class]="crmIntegrationIcon(integration.canal)"></i>
+                  <div>
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationName' + integration.canal"
+                      [ngModel]="integration.nombre"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'nombre', $event)"
+                      [disabled]="!canManageCrmConfig()" />
+                    <span>{{ crmIntegrationDescription(integration.canal) }}</span>
+                  </div>
+                  <label class="crm-integration-switch">
+                    <input
+                      type="checkbox"
+                      [name]="'crmIntegrationActive' + integration.canal"
+                      [ngModel]="integration.activo"
+                      (ngModelChange)="toggleCrmIntegration(integration.canal, $event)"
+                      [disabled]="!canManageCrmConfig()" />
+                    <b>{{ integration.activo ? 'Activo' : 'Inactivo' }}</b>
+                  </label>
+                </div>
+
+                <div class="crm-integration-fields">
+                  <label>
+                    Access token
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationAccess' + integration.canal"
+                      [ngModel]="integration.accessToken || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'accessToken', $event)"
+                      placeholder="Token de acceso"
+                      [disabled]="!canManageCrmConfig()" />
+                  </label>
+                  <label>
+                    Verify token
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationVerify' + integration.canal"
+                      [ngModel]="integration.verifyToken || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'verifyToken', $event)"
+                      placeholder="Token de verificacion"
+                      [disabled]="!canManageCrmConfig()" />
+                  </label>
+                  <label class="wide-field">
+                    Webhook URL
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationWebhook' + integration.canal"
+                      [ngModel]="integration.webhookUrl || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'webhookUrl', $event)"
+                      placeholder="https://..."
+                      [disabled]="!canManageCrmConfig()" />
+                  </label>
+                  <label>
+                    App ID
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationApp' + integration.canal"
+                      [ngModel]="integration.appId || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appId', $event)"
+                      placeholder="ID de app"
+                      [disabled]="!canManageCrmConfig()" />
+                  </label>
+                  <label>
+                    Phone number ID
+                    <input
+                      pInputText
+                      [name]="'crmIntegrationPhone' + integration.canal"
+                      [ngModel]="integration.phoneNumberId || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)"
+                      placeholder="Solo WhatsApp si aplica"
+                      [disabled]="!canManageCrmConfig()" />
+                  </label>
+                  <label class="wide-field">
+                    Metadata JSON
+                    <textarea
+                      pTextarea
+                      rows="3"
+                      [name]="'crmIntegrationMetadata' + integration.canal"
+                      [ngModel]="integration.metadataJson || ''"
+                      (ngModelChange)="updateCrmIntegrationField(integration.canal, 'metadataJson', $event)"
+                      placeholder='{"utm_source":"landing"}'
+                      [disabled]="!canManageCrmConfig()"></textarea>
+                  </label>
+                </div>
+
+                <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal" (click)="saveCrmIntegration(integration)">
+                  <i class="pi pi-save"></i>
+                  Guardar canal
+                </button>
+              </article>
+            } @empty {
+              <div class="crm-integration-empty">
+                <i class="pi pi-link"></i>
+                <span>No se pudieron cargar las integraciones CRM.</span>
+              </div>
+            }
+          </div>
+        </section>
+
         <section class="crm-promotion-admin-card">
           <header>
             <div>
@@ -663,18 +1036,6 @@
 
     @if (activeTab() === 'oportunidades') {
       <section class="opportunity-list-page">
-        <header class="opportunity-list-head">
-          <div>
-            <h2>Oportunidades</h2>
-            <p>Gestiona todas las oportunidades de negocio de tu empresa.</p>
-          </div>
-          <div class="opportunity-list-actions">
-            <button type="button" (click)="exportOpportunitiesCsv()"><i class="pi pi-download"></i> Exportar</button>
-            <button type="button" (click)="openCreateActivity()"><i class="pi pi-bell"></i> Acciones</button>
-            <button type="button" class="primary" (click)="openCreateOpportunity()"><i class="pi pi-plus"></i> Nueva oportunidad</button>
-          </div>
-        </header>
-
         <section class="opportunity-summary-grid" aria-label="Resumen de oportunidades">
           @for (card of opportunitySummaryCards(); track card.label) {
             <article [class]="'opportunity-summary-card opportunity-summary-card--' + card.tone">
@@ -688,22 +1049,20 @@
           }
         </section>
 
-        <section class="opportunity-filters-panel">
-          <label class="opportunity-search">
-            <i class="pi pi-search"></i>
-            <input pInputText [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Buscar oportunidades..." />
-          </label>
-          <p-select [options]="opportunityStageFilterOptions()" [ngModel]="opportunityStageFilter()" (ngModelChange)="opportunityStageFilter.set($event)" appendTo="body" />
-          <p-select [options]="opportunityResponsibleFilterOptions()" [ngModel]="opportunityResponsibleFilter()" (ngModelChange)="opportunityResponsibleFilter.set($event)" appendTo="body" />
-          <p-select [options]="opportunityStatusFilterOptions" [ngModel]="opportunityStatusFilter()" (ngModelChange)="opportunityStatusFilter.set($event)" appendTo="body" />
-          <button type="button" (click)="opportunityStageFilter.set(null); opportunityResponsibleFilter.set(null); opportunityStatusFilter.set('ABIERTA')">
-            <i class="pi pi-filter-slash"></i>
-            Limpiar
-          </button>
-        </section>
+        @if (showOpportunityFilters()) {
+          <section class="opportunity-filters-panel">
+            <p-select [options]="opportunityStageFilterOptions()" [ngModel]="opportunityStageFilter()" (ngModelChange)="opportunityStageFilter.set($event)" appendTo="body" />
+            <p-select [options]="opportunityResponsibleFilterOptions()" [ngModel]="opportunityResponsibleFilter()" (ngModelChange)="opportunityResponsibleFilter.set($event)" appendTo="body" />
+            <p-select [options]="opportunityStatusFilterOptions" [ngModel]="opportunityStatusFilter()" (ngModelChange)="opportunityStatusFilter.set($event)" appendTo="body" />
+            <button type="button" (click)="opportunityStageFilter.set(null); opportunityResponsibleFilter.set(null); opportunityStatusFilter.set('ABIERTA')">
+              <i class="pi pi-filter-slash"></i>
+              Limpiar
+            </button>
+          </section>
+        }
 
         <section class="opportunity-table-card">
-          <p-table [value]="opportunityListItems()" [loading]="loading()" [paginator]="opportunityListItems().length > 10" [rows]="10" responsiveLayout="scroll" styleClass="crm-table opportunity-list-table">
+          <p-table [value]="opportunityListItems()" [loading]="loading()" [paginator]="opportunityListItems().length > 20" [rows]="20" responsiveLayout="scroll" styleClass="crm-table opportunity-list-table followup-modern-table">
             <ng-template pTemplate="header">
               <tr>
                 <th><input type="checkbox" aria-label="Seleccionar oportunidades" /></th>
@@ -995,7 +1354,7 @@
 
             <div class="negotiation-list">
               @for (item of negotiationDashboardItems().slice(0, 6); track item.id) {
-                <article class="negotiation-row" role="button" tabindex="0" (click)="openOpportunityDetail(item)">
+                <article class="negotiation-row" role="button" tabindex="0" (click)="openPipelineOpportunityDetail(item, 'NEGOCIACION')">
                   <div>
                     <strong>{{ item.titulo }}</strong>
                     <span>{{ opportunityContactName(item) }}</span>
@@ -1003,6 +1362,12 @@
                   <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
                   <em>{{ opportunityProgress(item) }}%</em>
                   <span class="negotiation-pill">Negociacion</span>
+                  <nav class="opportunity-row-actions" aria-label="Acciones de negociacion">
+                    <button type="button" title="Ver detalle" aria-label="Ver detalle" (click)="$event.stopPropagation(); openPipelineOpportunityDetail(item, 'NEGOCIACION')"><i class="pi pi-eye"></i></button>
+                    <button type="button" title="Registrar negociacion" aria-label="Registrar negociacion" (click)="$event.stopPropagation(); openOpportunityNegotiationDialog(item)"><i class="pi pi-handshake"></i></button>
+                    <button type="button" title="Registrar acuerdo final" aria-label="Registrar acuerdo final" (click)="$event.stopPropagation(); openOpportunityAgreementDialog(item)"><i class="pi pi-file-check"></i></button>
+                    <button type="button" title="Marcar perdido" aria-label="Marcar perdido" (click)="$event.stopPropagation(); openOpportunityLostDialog(item)"><i class="pi pi-times"></i></button>
+                  </nav>
                 </article>
               } @empty {
                 <div class="quotes-empty">Todavia no hay negociaciones activas.</div>
@@ -1028,9 +1393,9 @@
           </article>
         </section>
 
-        <button type="button" class="quotes-create-button negotiation-create-button" (click)="openCreateOpportunity()">
-          <i class="pi pi-plus"></i>
-          Nueva negociacion
+        <button type="button" class="quotes-create-button negotiation-create-button" (click)="setTab('cotizaciones')">
+          <i class="pi pi-file-edit"></i>
+          Revisar cotizaciones
         </button>
       </section>
     }
@@ -1044,10 +1409,20 @@
           <div>
             <span>6</span>
             <h2>Clientes</h2>
-            <p><i class="pi pi-circle-fill"></i> Ganados</p>
+            <p><i class="pi pi-circle-fill"></i> Ventas cerradas y expedientes validados</p>
           </div>
           <strong>{{ clientsDashboardItems().length }}</strong>
         </header>
+
+        @if (showClientFilters()) {
+          <section class="opportunity-filters-panel">
+            <p-select [options]="clientOutcomeFilterOptions" [ngModel]="clientOutcomeFilter()" (ngModelChange)="clientOutcomeFilter.set($event); clientPage.set(0)" appendTo="body" />
+            <button type="button" (click)="clientOutcomeFilter.set('TODOS'); clientPage.set(0)">
+              <i class="pi pi-filter-slash"></i>
+              Limpiar
+            </button>
+          </section>
+        }
 
         <section class="quotes-metrics clients-metrics" aria-label="Resumen de clientes">
           @for (metric of clientsDashboardMetrics(); track metric.label) {
@@ -1062,25 +1437,40 @@
         <section class="quotes-content clients-content">
           <article class="quotes-list-card clients-list-card">
             <div class="quotes-card-head">
-              <h3>Clientes recientes</h3>
+              <h3>Clientes con venta cerrada</h3>
               <button type="button" (click)="query.set('')">Ver todas</button>
             </div>
 
             <div class="clients-list">
-              @for (item of clientsDashboardItems().slice(0, 6); track item.id) {
-                <article class="client-row" role="button" tabindex="0" (click)="openOpportunityDetail(item)">
+              @for (item of pagedClientsDashboardItems(); track item.id) {
+                <article class="client-row client-row--won" role="button" tabindex="0" (click)="openPipelineOpportunityDetail(item, 'GANADO')">
                   <i>{{ ownerInitials(opportunityContactName(item)) }}</i>
                   <div>
                     <strong>{{ opportunityContactName(item) }}</strong>
+                    <span>{{ quoteOfferName(item) }} - Compra S/ {{ (item.montoReal || item.montoEstimado) | number: '1.2-2' }}</span>
                     <span>{{ opportunityCompanyLabel(item) }}</span>
                   </div>
-                  <time>{{ (item.fechaCierreEstimada || item.updatedAt || item.createdAt) ? ((item.fechaCierreEstimada || item.updatedAt || item.createdAt) | date: 'dd/MM/yyyy') : 'Sin fecha' }}</time>
-                  <b>S/ {{ (item.montoReal || item.montoEstimado) | number: '1.0-0' }}</b>
+                  <em class="client-status-badge client-status-badge--won">{{ clientDocumentCount(item) }} doc(s)</em>
+                  <time>{{ clientClosureDate(item) | date: 'dd/MM/yyyy' }}</time>
+                  <b>
+                    @if (clientDebt(item) <= 0) {
+                      Pago completo
+                    } @else {
+                      Debe S/ {{ clientDebt(item) | number: '1.2-2' }}
+                    }
+                  </b>
                 </article>
               } @empty {
-                <div class="quotes-empty">Todavia no hay clientes ganados.</div>
+                <div class="quotes-empty">Todavia no hay ventas cerradas con documentacion validada.</div>
               }
             </div>
+            <footer class="prospect-pagination">
+              <span>{{ clientPageRangeLabel() }}</span>
+              <div>
+                <button type="button" [disabled]="clientPage() === 0" (click)="clientPage.set(clientPage() - 1)"><i class="pi pi-angle-left"></i></button>
+                <button type="button" [disabled]="clientPage() >= clientTotalPages() - 1" (click)="clientPage.set(clientPage() + 1)"><i class="pi pi-angle-right"></i></button>
+              </div>
+            </footer>
           </article>
 
           <article class="quotes-chart-card clients-chart-card">
@@ -1112,10 +1502,203 @@
           </article>
         </section>
 
-        <button type="button" class="quotes-create-button clients-create-button" (click)="openCreateProspect()">
-          <i class="pi pi-plus"></i>
-          Nuevo cliente
-        </button>
+      </section>
+    }
+
+    @if (activeTab() === 'seguimientoPagos') {
+      <section style="display: grid; gap: 1rem; padding: 1rem 1.25rem 1.25rem; background: #fff; border: 1px solid #dbe5f3; border-radius: 14px;">
+        <header style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <div>
+            <h2 style="margin: 0; font-size: 1.35rem; font-weight: 900; color: #0f172a;">Seguimiento de pagos</h2>
+            <p style="margin: .25rem 0 0; color: #64748b; font-size: .82rem;">Gestiona saldos pendientes, cuotas vencidas y proximos cobros de clientes.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;">
+            <button type="button" class="soft-button inline-action" style="height: 2.45rem; padding: 0 .85rem; font-size: .82rem;" (click)="exportClientsCsv()">
+              <i class="pi pi-download"></i>
+              Exportar
+            </button>
+            <button type="button" class="soft-button inline-action" style="height: 2.45rem; padding: 0 .85rem; font-size: .82rem;" (click)="successMessage.set('Recordatorios listos para configurar por canal.')">
+              <i class="pi pi-bell"></i>
+              Recordatorios
+            </button>
+            <button type="button" class="primary-action" style="height: 2.45rem; padding: 0 1rem; font-size: .84rem;" [disabled]="!paymentFollowUpRows().length" (click)="openOpportunityPaymentDialog(paymentFollowUpRows()[0])">
+              <i class="pi pi-plus"></i>
+              Registrar pago
+            </button>
+          </div>
+        </header>
+
+        <section style="display: grid; grid-template-columns: repeat(4, minmax(10.5rem, 1fr)) minmax(14rem, .9fr); gap: .75rem; align-items: stretch;">
+          @for (card of paymentFollowUpSummaryCards(); track card.label) {
+            <article style="min-height: 5.8rem; display: grid; grid-template-columns: 1fr auto; gap: .45rem; align-content: center; padding: .9rem; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+              <span style="font-size: .68rem; font-weight: 800; color: #64748b;">{{ card.label }}</span>
+              <i [class]="card.icon" [style.background]="card.soft" [style.color]="card.color" style="grid-row: span 3; width: 2.35rem; height: 2.35rem; display: inline-grid; place-items: center; border-radius: 12px; font-size: .98rem;"></i>
+              <strong [style.color]="card.color" style="font-size: 1.15rem; line-height: 1; color: #0f172a;">{{ card.value }}</strong>
+              <small style="font-size: .68rem; font-weight: 700; color: #64748b;">{{ card.detail }}</small>
+            </article>
+          }
+
+          <aside style="grid-row: span 2; display: grid; gap: .7rem; padding: .9rem; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+            <strong style="font-size: .82rem; color: #0f172a;">Resumen de cobranza</strong>
+            <div style="display: grid; grid-template-columns: 5.4rem 1fr; align-items: center; gap: .75rem;">
+              <div [style.background]="paymentCollectionRingBackground()" style="width: 5.4rem; height: 5.4rem; border-radius: 50%; position: relative;">
+                <span style="position: absolute; inset: 1rem; display: grid; place-items: center; background: #fff; border-radius: 50%; font-size: .7rem; font-weight: 900; color: #0f172a;">Total</span>
+              </div>
+              <div style="display: grid; gap: .45rem;">
+                @for (row of paymentCollectionSummary(); track row.label) {
+                  <span style="display: grid; grid-template-columns: auto 1fr auto; gap: .35rem; align-items: center; color: #475569; font-size: .68rem;">
+                    <i [style.background]="row.color" style="width: .45rem; height: .45rem; border-radius: 50%;"></i>
+                    {{ row.label }} ({{ row.count }})
+                    <b style="color: #0f172a;">S/ {{ row.amount | number: '1.2-2' }}</b>
+                  </span>
+                }
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section style="display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: .85rem; align-items: start;">
+          <div style="display: grid; gap: .75rem; min-width: 0;">
+            <div style="display: grid; grid-template-columns: minmax(13rem, 1.3fr) repeat(4, minmax(8rem, .8fr)) auto; gap: .55rem; padding: .85rem; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+              <label style="display: grid; gap: .25rem; font-size: .68rem; font-weight: 800; color: #475569;">
+                Busqueda
+                <span style="display: flex; align-items: center; gap: .45rem; height: 2.25rem; padding: 0 .65rem; border: 1px solid #d5e0ee; border-radius: 6px;">
+                  <input [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Cliente, oportunidad, cuota..." style="width: 100%; border: 0; outline: 0; font-size: .78rem; color: #334155;">
+                  <i class="pi pi-search" style="color: #64748b; font-size: .75rem;"></i>
+                </span>
+              </label>
+              <label style="display: grid; gap: .25rem; font-size: .68rem; font-weight: 800; color: #475569;">Estado
+                <select style="height: 2.25rem; border: 1px solid #d5e0ee; border-radius: 6px; padding: 0 .55rem; font-size: .76rem; color: #334155;"><option>Todos</option><option>Vencido</option><option>Por vencer</option><option>Pagado</option></select>
+              </label>
+              <label style="display: grid; gap: .25rem; font-size: .68rem; font-weight: 800; color: #475569;">Estado de cuotas
+                <select style="height: 2.25rem; border: 1px solid #d5e0ee; border-radius: 6px; padding: 0 .55rem; font-size: .76rem; color: #334155;"><option>Todos</option><option>Pendientes</option><option>Vencidas</option><option>Pagadas</option></select>
+              </label>
+              <label style="display: grid; gap: .25rem; font-size: .68rem; font-weight: 800; color: #475569;">Fecha vencimiento
+                <input type="date" style="height: 2.25rem; border: 1px solid #d5e0ee; border-radius: 6px; padding: 0 .55rem; font-size: .76rem; color: #334155;">
+              </label>
+              <label style="display: grid; gap: .25rem; font-size: .68rem; font-weight: 800; color: #475569;">Responsable
+                <select style="height: 2.25rem; border: 1px solid #d5e0ee; border-radius: 6px; padding: 0 .55rem; font-size: .76rem; color: #334155;"><option>Todos</option></select>
+              </label>
+              <button type="button" class="primary-action" style="align-self: end; height: 2.25rem; padding: 0 .95rem; font-size: .74rem;">Aplicar filtros</button>
+            </div>
+
+            <div style="overflow: auto; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+              <div style="display: flex; align-items: center; gap: .35rem; padding: .6rem .75rem; border-bottom: 1px solid #e5edf7; font-size: .72rem; font-weight: 800;">
+                <span style="padding: .35rem .55rem; color: #2563eb; border-bottom: 2px solid #2563eb;">Todas las cuentas {{ paymentFollowUpRows().length }}</span>
+                <span style="padding: .35rem .55rem; color: #64748b;">Vencidas {{ paymentCollectionSummary()[0].count }}</span>
+                <span style="padding: .35rem .55rem; color: #64748b;">Por vencer {{ paymentCollectionSummary()[1].count }}</span>
+                <span style="padding: .35rem .55rem; color: #64748b;">Pagadas {{ paymentCollectionSummary()[2].count }}</span>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; min-width: 58rem;">
+                <thead>
+                  <tr style="background: #f8fafc; color: #64748b; font-size: .66rem; text-align: left;">
+                    <th style="padding: .65rem .75rem;">Cliente / Oportunidad</th>
+                    <th style="padding: .65rem .75rem;">Saldo pendiente</th>
+                    <th style="padding: .65rem .75rem;">Cuotas</th>
+                    <th style="padding: .65rem .75rem;">Proximo vencimiento</th>
+                    <th style="padding: .65rem .75rem;">Estado</th>
+                    <th style="padding: .65rem .75rem;">Responsable</th>
+                    <th style="padding: .65rem .75rem;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of paymentFollowUpRows(); track item.id) {
+                    @if (opportunityPaymentPlan(item); as plan) {
+                      <tr style="border-top: 1px solid #e5edf7; color: #0f172a; font-size: .72rem;">
+                        <td style="padding: .7rem .75rem;">
+                          <div style="display: grid; grid-template-columns: 2rem 1fr; gap: .55rem; align-items: center;">
+                            <span style="width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; background: #dcfce7; color: #059669; font-weight: 900; font-size: .62rem;">{{ contactInitials(opportunityContactName(item)) }}</span>
+                            <span style="display: grid; gap: .12rem;">
+                              <b>{{ opportunityContactName(item) }}</b>
+                              <small style="color: #64748b;">{{ quoteOfferName(item) }}</small>
+                              <small style="color: #94a3b8;">Oportunidad #OP-{{ item.id }}</small>
+                            </span>
+                          </div>
+                        </td>
+                        <td style="padding: .7rem .75rem; color: #dc2626; font-weight: 900;">S/ {{ plan.pendingAmount | number: '1.2-2' }}</td>
+                        <td style="padding: .7rem .75rem;">
+                          <b>{{ paymentInstallmentProgress(item) }}</b>
+                          <small style="display: block; color: #64748b;">{{ plan.pendingInstallments.length }} pendiente(s)</small>
+                        </td>
+                        <td style="padding: .7rem .75rem;">
+                          @if (paymentNextInstallment(item); as nextPayment) {
+                            <b>{{ nextPayment.fecha | date: 'dd/MM/yyyy' }}</b>
+                            <small [style.color]="paymentDueTone(item).color" style="display: block; font-weight: 800;">{{ paymentDaysLabel(nextPayment.fecha) }}</small>
+                          } @else {
+                            <b>-</b>
+                            <small style="display: block; color: #64748b;">Sin cuota</small>
+                          }
+                        </td>
+                        <td style="padding: .7rem .75rem;">
+                          <span [style.background]="paymentDueTone(item).bg" [style.color]="paymentDueTone(item).color" style="display: inline-flex; padding: .28rem .5rem; border-radius: 999px; font-size: .65rem; font-weight: 900;">{{ paymentDueTone(item).label }}</span>
+                        </td>
+                        <td style="padding: .7rem .75rem;">
+                          <b>{{ responsibleName(item.responsableId) }}</b>
+                          <small style="display: block; color: #64748b;">Asesor comercial</small>
+                        </td>
+                        <td style="padding: .7rem .75rem;">
+                          <div style="display: flex; gap: .35rem;">
+                            <button type="button" class="soft-button inline-action" style="width: 2rem; height: 2rem; padding: 0;" title="Ver pagos" (click)="openPaymentFollowUpDetail(item)"><i class="pi pi-eye"></i></button>
+                            <button type="button" class="soft-button inline-action" style="width: 2rem; height: 2rem; padding: 0;" title="Registrar pago" (click)="openOpportunityPaymentDialog(item)"><i class="pi pi-credit-card"></i></button>
+                            @if (plan.isCredit) {
+                              <button type="button" class="soft-button inline-action" style="width: 2rem; height: 2rem; padding: 0;" title="Programar cuotas" [disabled]="plan.remainingProgrammed" (click)="scheduleRemainingInstallments(item)"><i class="pi pi-calendar-plus"></i></button>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  } @empty {
+                    <tr>
+                      <td colspan="7" style="padding: 2rem; text-align: center; color: #64748b; font-size: .85rem;">No hay clientes con deuda ni cuotas pendientes.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <aside style="display: grid; gap: .75rem;">
+            <section style="padding: .85rem; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+              <strong style="display: block; margin-bottom: .65rem; font-size: .82rem;">Proximos vencimientos</strong>
+              <div style="display: grid; gap: .55rem;">
+                @for (entry of paymentFollowUpUpcoming(); track entry.id) {
+                  <article style="display: grid; grid-template-columns: 2rem 1fr auto; gap: .5rem; align-items: center;">
+                    <span style="width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 50%; background: #dcfce7; color: #059669; font-size: .6rem; font-weight: 900;">{{ contactInitials(opportunityContactName(entry.item)) }}</span>
+                    <span style="display: grid; gap: .1rem; font-size: .68rem;">
+                      <b>{{ opportunityContactName(entry.item) }}</b>
+                      <small style="color: #64748b;">Cuota pendiente</small>
+                    </span>
+                    <span style="text-align: right; font-size: .68rem;">
+                      <b>S/ {{ entry.payment.monto | number: '1.2-2' }}</b>
+                      <small [style.color]="paymentDaysUntil(entry.payment.fecha) < 0 ? '#dc2626' : '#f97316'" style="display: block; font-weight: 800;">{{ paymentDaysLabel(entry.payment.fecha) }}</small>
+                    </span>
+                  </article>
+                } @empty {
+                  <p style="margin: 0; color: #64748b; font-size: .75rem;">Sin vencimientos programados.</p>
+                }
+              </div>
+            </section>
+
+            <section style="padding: .85rem; border: 1px solid #dbe5f3; border-radius: 8px; background: #fff;">
+              <strong style="display: block; margin-bottom: .65rem; font-size: .82rem;">Acciones rapidas</strong>
+              <div style="display: grid; gap: .45rem;">
+                <button type="button" class="soft-button inline-action" style="justify-content: space-between; height: 2.2rem; font-size: .72rem;" (click)="successMessage.set('Recordatorios generados para cuentas pendientes.')">
+                  <span><i class="pi pi-bell"></i> Enviar recordatorios</span>
+                  <i class="pi pi-chevron-right"></i>
+                </button>
+                <button type="button" class="soft-button inline-action" style="justify-content: space-between; height: 2.2rem; font-size: .72rem;" (click)="query.set('vencido')">
+                  <span><i class="pi pi-exclamation-triangle"></i> Ver clientes vencidos</span>
+                  <i class="pi pi-chevron-right"></i>
+                </button>
+                <button type="button" class="soft-button inline-action" style="justify-content: space-between; height: 2.2rem; font-size: .72rem;" [disabled]="!paymentFollowUpRows().length" (click)="scheduleRemainingInstallments(paymentFollowUpRows()[0])">
+                  <span><i class="pi pi-calendar-plus"></i> Programar cuotas</span>
+                  <i class="pi pi-chevron-right"></i>
+                </button>
+              </div>
+            </section>
+          </aside>
+        </section>
       </section>
     }
 
@@ -1298,8 +1881,8 @@
           <p-table
             [value]="filteredCommercialInbox()"
             [loading]="loading()"
-            [paginator]="filteredCommercialInbox().length > 10"
-            [rows]="10"
+            [paginator]="filteredCommercialInbox().length > 20"
+            [rows]="20"
             responsiveLayout="scroll"
             styleClass="crm-table followup-table followup-modern-table"
           >
@@ -1311,14 +1894,14 @@
                 <th>Nivel de interes</th>
                 <th>Ultima actividad</th>
                 <th>Proxima accion</th>
-                <th>Acciones</th>
+                <th>Actividades</th>
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-card>
               <tr [class.followup-row--selected]="isSelectedFollowUpCard(card)" [class.followup-row--opportunity]="card.hasActiveOpportunity">
                 <td>
                   <div class="followup-prospect-cell followup-prospect-cell--rich">
-                    <span [class]="'prospect-avatar prospect-avatar--' + prospectAvatarTone(card.prospecto.id)">{{ prospectInitials(card.prospecto) }}</span>
+                    <span [class]="'followup-avatar prospect-avatar prospect-avatar--' + prospectAvatarTone(card.prospecto.id)">{{ prospectInitials(card.prospecto) }}</span>
                     <div>
                       <strong>{{ card.prospecto.nombre }}</strong>
                       <span>{{ card.prospecto.telefono || card.prospecto.correo || 'Sin telefono/correo' }}</span>
@@ -1495,7 +2078,7 @@
             <tr [class.followup-row--selected]="isSelectedFollowUpCard(card)" [class.followup-row--opportunity]="card.hasActiveOpportunity">
               <td>
                 <div class="followup-prospect-cell">
-                  <span [class]="'prospect-avatar prospect-avatar--' + prospectAvatarTone(card.prospecto.id)">{{ prospectInitials(card.prospecto) }}</span>
+                  <span [class]="'followup-avatar prospect-avatar prospect-avatar--' + prospectAvatarTone(card.prospecto.id)">{{ prospectInitials(card.prospecto) }}</span>
                   <div>
                     <strong>{{ card.prospecto.nombre }}</strong>
                     <span>{{ card.prospecto.telefono || card.prospecto.correo || 'Sin telefono/correo' }}</span>
@@ -1955,18 +2538,17 @@
         <section class="pipeline-board pipeline-board--salesforce pipeline-board--compact" aria-label="Pipeline de oportunidades">
           <div class="pipeline-scroll pipeline-scroll--salesforce pipeline-scroll--compact">
             @for (column of pipelineBoardColumns(); track column.value) {
-              <article class="pipeline-column pipeline-column--salesforce" [style.--stage-color]="column.color">
+              <article class="pipeline-column pipeline-column--salesforce" [style.--stage-color]="pipelineStageColor(column.value)">
                 <header class="pipeline-stage-header">
                   <div>
                     <span>{{ column.label }} ({{ column.items.length }})</span>
                     <strong>S/ {{ column.total | number: '1.0-0' }}</strong>
                   </div>
-                  <nav>
-                    <button type="button" title="Nueva oportunidad" aria-label="Nueva oportunidad" (click)="openCreateOpportunity()"><i class="pi pi-plus"></i></button>
-                    @if (canManageCrmConfig()) {
+                  @if (canManageCrmConfig()) {
+                    <nav>
                       <button type="button" title="Configurar etapa" aria-label="Configurar etapa" (click)="openCreateStage()"><i class="pi pi-ellipsis-h"></i></button>
-                    }
-                  </nav>
+                    </nav>
+                  }
                 </header>
                 <div class="pipeline-stack pipeline-stack--salesforce">
                   @for (item of column.items; track item.id) {
@@ -1976,7 +2558,7 @@
                       [class.deal-card--lost]="item.estado === 'PERDIDA' || item.etapa === 'PERDIDO'"
                       role="button"
                       tabindex="0"
-                      (click)="openPipelineOpportunityDetail(item)"
+                      (click)="openPipelineOpportunityDetail(item, column.value)"
                     >
                       <div class="deal-card__top">
                         <strong>{{ item.titulo }}</strong>
@@ -1985,7 +2567,9 @@
                         </button>
                       </div>
                       <span class="deal-card__amount">S/ {{ item.montoEstimado | number: '1.0-0' }}</span>
-                      <em>{{ opportunityCompanyLabel(item) }}</em>
+                      <em class="deal-card__client">{{ opportunityCompanyLabel(item) }}</em>
+                      <span class="deal-card__campaign"><i class="pi pi-megaphone"></i>{{ opportunityCampaignLabel(item) }}</span>
+                      <em>{{ opportunityOriginLabel(item) }}</em>
                       <div class="deal-card__bottom">
                         <span [class]="'deal-temperature deal-temperature--' + opportunityTemperatureTone(item)">
                           {{ opportunityTemperatureLabel(item) }}
@@ -2001,10 +2585,6 @@
                     <div class="pipeline-empty">Sin oportunidades en esta etapa</div>
                   }
                 </div>
-                <button type="button" class="pipeline-column-add" (click)="openCreateOpportunity()">
-                  <i class="pi pi-plus"></i>
-                  Nueva oportunidad
-                </button>
               </article>
             }
           </div>
@@ -2077,7 +2657,7 @@
         <article>
           <span>Estado</span>
           <strong [class]="'financial-status financial-status--' + opportunityFinancialStatusTone(detail)">
-            {{ opportunityFinancialStatusLabel(detail) }}
+            {{ isSaleClosed(detail) ? 'Venta cerrada' : opportunityFinancialStatusLabel(detail) }}
           </strong>
         </article>
       </section>
@@ -2097,6 +2677,172 @@
         }
       </section>
 
+      @if (isInterestedOpportunity(detail) && opportunityDetailTab() === 'resumen') {
+        <section class="opportunity-interest-board">
+          <div class="opportunity-interest-main">
+            <article class="interest-requirement-card">
+              <header class="interest-card-head">
+                <span><i class="pi pi-clipboard"></i></span>
+                <div>
+                  <h3>Requerimiento del cliente</h3>
+                  <small>{{ selectedOpportunityRequirements().length }} item(s) para cotizar</small>
+                </div>
+                <button type="button" class="soft-button compact-action" (click)="openOpportunityRequirementDialog(detail)">
+                  <i class="pi pi-plus"></i>
+                  Anadir requerimiento
+                </button>
+              </header>
+              <div class="interest-requirements">
+                @for (requirement of selectedOpportunityRequirements(); track requirement.id) {
+                  <section class="interest-requirement-row">
+                    <div class="requirement-fields">
+                      <p><span>Curso / Producto:</span><b>{{ requirement.nombre }}</b></p>
+                      <p><span>Vacantes / Cantidad:</span><b>{{ requirement.cantidad }} participante(s)</b></p>
+                      <p><span>Precio unitario referencial:</span><b>S/ {{ requirement.precioUnitario | number: '1.2-2' }}</b></p>
+                      <p><span>Total estimado:</span><b class="amount">S/ {{ requirementTotal(requirement) | number: '1.2-2' }}</b></p>
+                      <p class="requirement-note"><span>Observacion:</span><em>{{ requirement.observacion || 'Sin observacion registrada.' }}</em></p>
+                    </div>
+                    <nav>
+                      <button type="button" (click)="openOpportunityRequirementDialog(detail, requirement)" aria-label="Editar requerimiento"><i class="pi pi-pencil"></i></button>
+                      <button type="button" class="danger-action" [disabled]="requirement.id.startsWith('default-')" (click)="deleteOpportunityRequirement(requirement.id)" aria-label="Eliminar requerimiento"><i class="pi pi-trash"></i></button>
+                    </nav>
+                  </section>
+                }
+              </div>
+            </article>
+
+            <article class="interest-quote-panel">
+              <header class="interest-card-head">
+                <span><i class="pi pi-file-edit"></i></span>
+                <div>
+                  <h3>Cotizaciones de la oportunidad</h3>
+                  <small>{{ selectedOpportunityQuotes().length }} cotizacion(es) vinculada(s)</small>
+                </div>
+                <button type="button" class="soft-button compact-action" (click)="openQuoteFromRequirements(detail)">
+                  <i class="pi pi-plus"></i>
+                  Nueva cotizacion
+                </button>
+              </header>
+              <div class="opportunity-quote-list opportunity-quote-list--interest">
+                @for (quote of selectedOpportunityQuotes(); track quote.id) {
+                  <article>
+                    <header>
+                      <div>
+                        <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                        <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · S/ {{ quote.total | number: '1.2-2' }}</span>
+                      </div>
+                      <em [class]="'quote-status quote-status--' + quoteStatusTone(quote)">{{ quoteStatusLabel(quote) }}</em>
+                    </header>
+                    <p>{{ quoteNextStep(quote) }}</p>
+                    <nav>
+                      <button type="button" [disabled]="actionId() === quote.id" (click)="downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                      @if (quoteWhatsappUrl(quote)) {
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      }
+                      @if (quoteEmailUrl(quote)) {
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByEmail(quote)"><i class="pi pi-envelope"></i> Correo</button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                      }
+                      @if (quoteStatusValue(quote) === 'ENVIADA') {
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
+                      }
+                      @if (quoteStatusValue(quote) === 'ENVIADA' || quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
+                        <button type="button" class="danger-action" [disabled]="actionId() === quote.id" (click)="rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
+                      }
+                    </nav>
+                  </article>
+                } @empty {
+                  <div class="interest-empty-quotes">
+                    <i class="pi pi-file-edit"></i>
+                    <strong>Aun no hay cotizaciones</strong>
+                    <span>Crea una cotizacion con los requerimientos y luego enviala para pasar a Cotizado.</span>
+                    <button type="button" class="primary-button inline-action" (click)="openQuoteFromRequirements(detail)">
+                      <i class="pi pi-plus"></i>
+                      Crear cotizacion
+                    </button>
+                  </div>
+                }
+              </div>
+            </article>
+
+            <section class="interest-secondary-grid">
+              <article class="interest-mini-card interest-next-action">
+                <header>
+                  <span><i class="pi pi-calendar"></i></span>
+                  <h3>Proxima actividad</h3>
+                </header>
+                @if (selectedOpportunityNextActivity(); as nextActivity) {
+                  <div class="interest-activity-box">
+                    <i [class]="followUpActivityIcon(nextActivity.tipoActividad)"></i>
+                    <div>
+                      <strong>{{ nextActivity.asunto || humanize(nextActivity.tipoActividad) }}</strong>
+                      <p>
+                        <span><i class="pi pi-calendar"></i> {{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'dd/MM/yyyy') : 'Sin fecha' }}</span>
+                        <span><i class="pi pi-clock"></i> {{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'hh:mm a') : 'Sin hora' }}</span>
+                      </p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="opportunity-empty-detail">No tiene actividad proxima.</div>
+                }
+                <button type="button" class="link-action" (click)="setOpportunityDetailTab('actividades')"><i class="pi pi-calendar"></i> Ver calendario</button>
+              </article>
+
+              <article class="interest-mini-card interest-notes">
+                <header>
+                  <span><i class="pi pi-file-edit"></i></span>
+                  <h3>Notas comerciales</h3>
+                </header>
+                <ul>
+                  @for (requirement of selectedOpportunityRequirements().slice(0, 3); track requirement.id) {
+                    <li>{{ requirement.observacion || requirement.nombre }}</li>
+                  }
+                  @if (detail.descripcion) {
+                    <li>{{ detail.descripcion }}</li>
+                  }
+                </ul>
+                <button type="button" class="link-action" (click)="setOpportunityDetailTab('historial')">Ver todas las notas <i class="pi pi-angle-right"></i></button>
+              </article>
+            </section>
+          </div>
+
+          <aside class="interest-actions-panel">
+            <header>
+              <i class="pi pi-bolt"></i>
+              <strong>Acciones</strong>
+            </header>
+            <button type="button" class="interest-action interest-action--primary" (click)="openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-calendar-plus"></i> Registrar actividad</button>
+            @if (opportunityWhatsappUrl(detail); as whatsappLink) {
+              <a class="interest-action interest-action--whatsapp" [href]="whatsappLink" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</a>
+            }
+            @if (opportunityEmailUrl(detail); as emailLink) {
+              <a class="interest-action interest-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
+            }
+            <button type="button" class="interest-action interest-action--danger" (click)="markLost(detail)"><i class="pi pi-flag"></i> Marcar perdido</button>
+            <button type="button" class="interest-action interest-action--advance" (click)="advanceInterestedToQuoted(detail)">
+              Crear cotizacion
+              <i class="pi pi-arrow-right"></i>
+            </button>
+
+            <section class="interest-checklist">
+              <h4><i class="pi pi-check-circle"></i> Requisitos para avanzar</h4>
+              @for (check of opportunityRequirementChecklist(detail); track check.label) {
+                <p [class.done]="check.done"><i class="pi pi-check-circle"></i> {{ check.label }}</p>
+              }
+            </section>
+
+            <p class="interest-info-note">
+              <i class="pi pi-info-circle"></i>
+              La oportunidad pasa a Cotizado cuando una cotizacion quede marcada como enviada.
+            </p>
+          </aside>
+        </section>
+      } @else {
       <nav class="opportunity-detail-tabs opportunity-detail-tabs--main" aria-label="Secciones de la oportunidad">
         @for (tab of opportunityDetailTabs(); track tab.tab) {
           <button type="button" [class.active]="opportunityDetailTab() === tab.tab" (click)="setOpportunityDetailTab(tab.tab)">
@@ -2143,7 +2889,7 @@
           </aside>
         }
 
-        <article class="opportunity-activity-card">
+        <article class="opportunity-activity-card" [class.opportunity-activity-card--negotiation]="opportunityDetailTab() === 'negociacion'">
           <div class="opportunity-activity-head">
             <h3>
               @switch (opportunityDetailTab()) {
@@ -2152,6 +2898,7 @@
                 @case ('pipeline') { Pipeline de la oportunidad }
                 @case ('cotizaciones') { Cotizaciones de la oportunidad }
                 @case ('negociacion') { Negociacion }
+                @case ('cierre') { Verificacion de cierre }
                 @case ('pagos') { Pagos y estado financiero }
                 @case ('documentos') { Documentos }
                 @case ('historial') { Historial }
@@ -2297,8 +3044,8 @@
                       <button type="button" [disabled]="actionId() === quote.id" (click)="followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
                     }
                     @if (quoteStatusValue(quote) === 'ENVIADA' || quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
-                      <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Aceptada</button>
-                      <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> Pidio ajuste</button>
+                      <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                      <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
                       <button type="button" class="danger-action" [disabled]="actionId() === quote.id" (click)="rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
                     }
                   </nav>
@@ -2308,66 +3055,187 @@
               }
             </div>
           } @else if (opportunityDetailTab() === 'negociacion') {
-            <section class="opportunity-record-panel">
-              <div class="record-panel-head">
-                <p>Registra acuerdos, objeciones y condiciones finales sin mezclarlo con pagos.</p>
-                <div class="record-panel-actions">
-                  <button type="button" class="soft-button inline-action" (click)="openOpportunityNegotiationDialog(detail)">
-                    <i class="pi pi-handshake"></i>
-                    Registrar negociacion
-                  </button>
-                  <button type="button" class="primary-button inline-action" (click)="openOpportunityAgreementDialog(detail)">
-                    <i class="pi pi-check-circle"></i>
-                    Cliente conforme
-                  </button>
-                </div>
-              </div>
-              @if (selectedOpportunityCurrentQuote(); as quote) {
-                <div class="opportunity-quote-list">
-                  <article>
-                    <header>
-                      <div>
-                        <strong>Cotizacion base · COT-{{ quote.id | number: '3.0-0' }}</strong>
-                        <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · S/ {{ quote.total | number: '1.2-2' }} · {{ quoteStatusLabel(quote) }}</span>
-                      </div>
-                    </header>
-                    <nav>
-                      <button type="button" [disabled]="actionId() === quote.id" (click)="downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
-                      @if (quoteWhatsappUrl(quote)) {
-                        <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
-                      }
-                      @if (quoteEmailUrl(quote)) {
-                        <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByEmail(quote)"><i class="pi pi-envelope"></i> Correo</button>
-                      }
-                      <button type="button" (click)="setOpportunityDetailTab('cotizaciones')">Ver cotizaciones</button>
-                    </nav>
-                  </article>
-                </div>
-              } @else {
-                <div class="opportunity-empty-detail opportunity-empty-detail--notice">
-                  No hay una cotizacion vinculada para negociar. Crea o envia una cotizacion desde esta oportunidad antes de registrar acuerdos.
-                </div>
-              }
-              <div class="opportunity-record-list">
-                @for (record of selectedOpportunityNegotiations(); track record.id) {
-                  <article>
-                    <i class="pi pi-handshake"></i>
-                    <div>
-                      <strong>{{ humanize(record.resultado) }} · S/ {{ record.precioFinal | number: '1.2-2' }}</strong>
-                      <span>{{ record.formaPago || 'Sin forma de pago' }} · {{ record.cuotas }} cuota(s) · Objecion: {{ humanize(record.objecion) }}</span>
-                      @if (record.clienteConforme) {
-                        <em class="agreement-badge"><i class="pi pi-check-circle"></i> Cliente conforme · procede a pago</em>
-                      }
-                      @if (record.observacion) {
-                        <p>{{ record.observacion }}</p>
+            <section class="negotiation-workspace">
+              <div class="negotiation-workspace-main">
+                <section class="negotiation-quotes-panel">
+                  <header class="negotiation-section-title">
+                    <div><i class="pi pi-file-edit"></i><strong>Cotizaciones en negociación</strong></div>
+                    <button type="button" title="Registrar negociación" aria-label="Registrar negociación" (click)="openOpportunityNegotiationDialog(detail)">
+                      <i class="pi pi-plus"></i>
+                    </button>
+                  </header>
+                  @if (selectedOpportunityQuotes().length) {
+                    <div class="negotiation-quote-list">
+                      @for (quote of selectedOpportunityQuotes(); track quote.id) {
+                        @if (negotiationQuoteDecision(quote); as decision) {
+                          <article [class]="'negotiation-quote-card negotiation-quote-card--' + decision.tone">
+                            <div class="negotiation-quote-meta">
+                              <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                              <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }}</span>
+                              <b>S/ {{ quote.total | number: '1.2-2' }}</b>
+                              <em [class]="'negotiation-decision negotiation-decision--' + decision.tone">{{ decision.label }}</em>
+                            </div>
+                            <div class="negotiation-quote-actions">
+                              <button type="button" [disabled]="actionId() === quote.id" (click)="downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                              @if (quoteWhatsappUrl(quote)) {
+                                <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                              }
+                              @if (quoteEmailUrl(quote)) {
+                                <button type="button" [disabled]="actionId() === quote.id" (click)="sendQuoteByEmail(quote)"><i class="pi pi-envelope"></i> Correo</button>
+                              }
+                              <button type="button" (click)="openQuoteAdjustmentDialog(quote)"><i class="pi pi-sliders-h"></i> Crear ajuste</button>
+                            </div>
+                          </article>
+                        }
                       }
                     </div>
-                    <time>{{ record.createdAt | date: 'dd/MM/yyyy, h:mm a' }}</time>
+                  } @else {
+                    <div class="negotiation-empty-state">
+                      <i class="pi pi-file-edit"></i>
+                      <span>No hay cotizaciones vinculadas para negociar.</span>
+                    </div>
+                  }
+                </section>
+
+                <section class="negotiation-latest-panel">
+                  <header><i class="pi pi-comments"></i><strong>Última actividad de negociación</strong></header>
+                  @if (selectedOpportunityNegotiations()[0]; as record) {
+                    <article>
+                      <i class="pi pi-comment"></i>
+                      <div>
+                        <strong>{{ humanize(record.resultado) }} · S/ {{ record.precioFinal | number: '1.2-2' }}</strong>
+                        <span>{{ record.formaPago || 'Sin forma de pago' }} · {{ record.cuotas }} cuota(s) · Objeción: {{ humanize(record.objecion) }}</span>
+                        @if (record.clienteConforme) {
+                          <em><i class="pi pi-check-circle"></i> Acuerdo final registrado · pendiente de cierre</em>
+                        }
+                        <p>{{ record.observacion || 'Sin observación registrada.' }}</p>
+                      </div>
+                      <time>{{ record.createdAt | date: 'dd/MM/yyyy, h:mm a' }}</time>
+                    </article>
+                  } @else {
+                    <div class="negotiation-empty-state">Aún no hay acuerdos u objeciones registradas.</div>
+                  }
+                </section>
+              </div>
+
+              <aside class="negotiation-decision-panel">
+                <header>
+                  <div>
+                    <span>Decisión de cierre</span>
+                    <strong>{{ canCloseWon(detail) ? 'Requisitos completos' : 'Completa los requisitos' }}</strong>
+                  </div>
+                  <em [class.ready]="canCloseWon(detail)">{{ canCloseWon(detail) ? 'Completo' : 'Incompleto' }}</em>
+                </header>
+                <div class="negotiation-decision-checks">
+                  <p [class.done]="hasFinalAgreement(detail)">
+                    <i [class]="hasFinalAgreement(detail) ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                    Acuerdo final registrado
+                  </p>
+                  <p [class.done]="opportunityPaymentPlan(detail).firstPaymentDone && opportunityPaymentPlan(detail).hasPaymentProof">
+                    <i [class]="opportunityPaymentPlan(detail).firstPaymentDone && opportunityPaymentPlan(detail).hasPaymentProof ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                    {{ opportunityPaymentPlan(detail).isCredit ? 'Primera cuota y comprobante registrados' : 'Pago total y comprobante registrados' }}
+                  </p>
+                  @if (opportunityPaymentPlan(detail).isCredit) {
+                    <p [class.done]="opportunityPaymentPlan(detail).remainingProgrammed">
+                      <i [class]="opportunityPaymentPlan(detail).remainingProgrammed ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                      Cuotas restantes programadas
+                    </p>
+                  }
+                </div>
+                <div class="negotiation-decision-help">
+                  <p><strong>Para ganar:</strong> completa los requisitos de cierre.</p>
+                  <p><strong>Para marcar perdido:</strong> registra el motivo.</p>
+                </div>
+                <nav>
+                  <button type="button" [disabled]="hasFinalAgreement(detail)" (click)="openOpportunityAgreementDialog(detail)">
+                    <i [class]="hasFinalAgreement(detail) ? 'pi pi-check-circle' : 'pi pi-file-check'"></i>
+                    {{ hasFinalAgreement(detail) ? 'Acuerdo registrado' : 'Registrar acuerdo final' }}
+                  </button>
+                  <button type="button" [disabled]="isRequiredClosurePaymentRegistered(detail)" (click)="openOpportunityPaymentActivity(detail)">
+                    <i [class]="isRequiredClosurePaymentRegistered(detail) ? 'pi pi-check-circle' : 'pi pi-credit-card'"></i>
+                    {{ isRequiredClosurePaymentRegistered(detail) ? 'Pago registrado' : 'Registrar pago' }}
+                  </button>
+                  <button type="button" class="negotiation-win-action" [disabled]="!canCloseWon(detail) || actionId() === detail.id" (click)="markNegotiationWon(detail)">
+                    <i class="pi pi-trophy"></i> Marcar ganado
+                  </button>
+                  <button type="button" class="negotiation-loss-action" [disabled]="canCloseWon(detail) || actionId() === detail.id" (click)="markLost(detail)">
+                    <i class="pi pi-times"></i> Registrar pérdida
+                  </button>
+                </nav>
+              </aside>
+            </section>
+          } @else if (opportunityDetailTab() === 'cierre') {
+            <section class="opportunity-record-panel">
+              <section class="negotiation-close-panel">
+                <header>
+                  <div>
+                    <span>Venta ganada</span>
+                    <strong>{{ isSaleClosed(detail) ? 'Venta cerrada y documentacion validada' : 'Verifica el expediente antes de cerrar' }}</strong>
+                  </div>
+                  <em [class.ready]="isSaleClosed(detail)">{{ isSaleClosed(detail) ? 'Cerrada' : 'Pendiente' }}</em>
+                </header>
+                <div class="negotiation-close-checks">
+                  @for (check of saleClosureChecklist(detail); track check.label) {
+                    <p [class.done]="check.done">
+                      <i [class]="check.done ? 'pi pi-check-circle' : 'pi pi-clock'"></i>
+                      {{ check.label }}
+                    </p>
+                  }
+                </div>
+                <div class="opportunity-empty-detail opportunity-empty-detail--notice">
+                  Ganado confirma el acuerdo comercial. Venta cerrada confirma que cotizacion, pago y documentos fueron revisados.
+                </div>
+                <nav>
+                  <button type="button" class="soft-button inline-action" (click)="setOpportunityDetailTab('cotizaciones')">
+                    <i class="pi pi-file-edit"></i>
+                    Revisar cotizacion
+                  </button>
+                  <button type="button" class="soft-button inline-action" (click)="setOpportunityDetailTab('pagos')">
+                    <i class="pi pi-credit-card"></i>
+                    Revisar pagos
+                  </button>
+                  @if (opportunityPaymentPlan(detail).isCredit) {
+                    <button type="button" class="soft-button inline-action" [disabled]="opportunityPaymentPlan(detail).remainingProgrammed" (click)="scheduleRemainingInstallments(detail)">
+                      <i class="pi pi-calendar-plus"></i>
+                      Programar cuotas
+                    </button>
+                  }
+                  <button type="button" class="soft-button inline-action" (click)="openOpportunityDocumentDialog(detail)">
+                    <i class="pi pi-upload"></i>
+                    Adjuntar documento
+                  </button>
+                  <button type="button" class="save-button inline-action" [disabled]="!canCloseSale(detail) || isSaleClosed(detail) || actionId() === detail.id" (click)="closeWonSale(detail)">
+                    <i class="pi pi-verified"></i>
+                    {{ isSaleClosed(detail) ? 'Venta cerrada' : 'Marcar venta cerrada' }}
+                  </button>
+                </nav>
+              </section>
+              <section class="opportunity-files-card opportunity-files-card--wide">
+                <div class="record-panel-head">
+                  <p>Documentos del expediente de cierre.</p>
+                  <button type="button" class="document-add-action" (click)="openOpportunityDocumentDialog(detail)">
+                    <i class="pi pi-plus"></i>
+                    Agregar documento
+                  </button>
+                </div>
+                @for (document of selectedOpportunityDocuments(); track document.id) {
+                  <article>
+                    <i class="pi pi-file-check"></i>
+                    <div>
+                      <strong>{{ document.nombre }}</strong>
+                      <span>{{ documentCategoryLabel(document.categoria) }} - {{ document.archivoNombre || 'Sin archivo adjunto' }}</span>
+                    </div>
+                    @if (document.archivoDataUrl) {
+                      <nav>
+                        <button type="button" (click)="previewLocalFile(document.archivoDataUrl)"><i class="pi pi-eye"></i></button>
+                        <button type="button" (click)="downloadLocalFile(document.archivoNombre || document.nombre, document.archivoDataUrl)"><i class="pi pi-download"></i></button>
+                      </nav>
+                    }
                   </article>
                 } @empty {
-                  <div class="opportunity-empty-detail">Aun no hay acuerdos u objeciones registradas.</div>
+                  <div class="opportunity-empty-detail">Falta adjuntar la documentacion de cierre.</div>
                 }
-              </div>
+              </section>
             </section>
           } @else if (opportunityDetailTab() === 'pagos') {
             <section class="opportunity-financial-card opportunity-financial-card--wide">
@@ -2385,6 +3253,12 @@
                 <i class="pi pi-credit-card"></i>
                 Registrar pago
               </button>
+              @if (opportunityPaymentPlan(detail).isCredit) {
+                <button type="button" class="soft-button" [disabled]="opportunityPaymentPlan(detail).remainingProgrammed" (click)="scheduleRemainingInstallments(detail)">
+                  <i class="pi pi-calendar-plus"></i>
+                  Programar cuotas restantes
+                </button>
+              }
               <div class="opportunity-payment-table">
                 @for (payment of selectedOpportunityPayments(); track payment.id) {
                   <article>
@@ -2500,8 +3374,8 @@
                         <button type="button" [disabled]="actionId() === quote.id" (click)="followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
                       }
                       @if (quoteStatusValue(quote) === 'ENVIADA' || quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
-                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Aceptada</button>
-                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> Pidio ajuste</button>
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                        <button type="button" [disabled]="actionId() === quote.id" (click)="acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
                         <button type="button" class="danger-action" [disabled]="actionId() === quote.id" (click)="rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
                       }
                     </nav>
@@ -2572,12 +3446,69 @@
           }
         </footer>
       }
+      }
     </section>
   </p-dialog>
 }
 
 <p-dialog
-  header="Registrar negociacion"
+  header="Requerimiento"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="opportunityRequirementDialogOpen()"
+  (visibleChange)="!$event && opportunityRequirementDialogOpen.set(false)"
+  appendTo="body"
+  [baseZIndex]="7800"
+  styleClass="crm-dialog crm-dialog--form opportunity-register-dialog">
+  @if (selectedOpportunity(); as detail) {
+    <form class="dialog-form opportunity-register-form">
+      <section class="opportunity-register-context">
+        <span><i class="pi pi-clipboard"></i></span>
+        <div>
+          <strong>{{ detail.titulo }}</strong>
+          <p>{{ opportunityContactName(detail) }} · {{ stageName(detail.etapa) }}</p>
+        </div>
+      </section>
+      <div class="dialog-grid">
+        <label class="span-2">
+          Catalogo CRM
+          <p-select
+            name="reqCatalogoItemId"
+            [options]="catalogoOptions()"
+            [ngModel]="requirementForm.catalogoItemId"
+            (ngModelChange)="onRequirementCatalogChange($event)"
+            [showClear]="true"
+            appendTo="body"
+            placeholder="Selecciona una oferta del catalogo" />
+        </label>
+        <label class="span-2">
+          Curso / producto
+          <input pInputText name="reqNombre" [(ngModel)]="requirementForm.nombre" placeholder="Ej. Python intermedio" />
+        </label>
+        <label>
+          Cantidad
+          <input pInputText type="number" min="1" name="reqCantidad" [(ngModel)]="requirementForm.cantidad" />
+        </label>
+        <label>
+          Precio unitario
+          <input pInputText type="number" min="0" name="reqPrecio" [(ngModel)]="requirementForm.precioUnitario" />
+        </label>
+        <label class="wide-field">
+          Observacion
+          <textarea pInputTextarea rows="4" name="reqObservacion" [(ngModel)]="requirementForm.observacion" placeholder="Detalle, consulta o condicion comercial"></textarea>
+        </label>
+      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="soft-button" (click)="opportunityRequirementDialogOpen.set(false)">Cancelar</button>
+        <button type="button" class="primary-button" (click)="saveOpportunityRequirement()">Guardar requerimiento</button>
+      </footer>
+    </form>
+  }
+</p-dialog>
+
+<p-dialog
+  header="Registrar negociación"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
@@ -2585,39 +3516,91 @@
   (visibleChange)="!$event && opportunityNegotiationDialogOpen.set(false)"
   appendTo="body"
   [baseZIndex]="7800"
-  styleClass="crm-dialog crm-dialog--form opportunity-register-dialog">
+  styleClass="crm-dialog crm-dialog--negotiation-modern">
   @if (selectedOpportunity(); as detail) {
-    <form class="dialog-form opportunity-register-form">
-      <section class="opportunity-register-context">
-        <i class="pi pi-handshake"></i>
-        <div>
-          <strong>{{ detail.titulo }}</strong>
-          <span>{{ opportunityContactName(detail) }} · {{ stageName(detail.etapa) }}</span>
-        </div>
-      </section>
-      <div class="dialog-grid">
-        <label>Precio final <span class="required">*</span><input pInputText type="number" min="0" name="negPrecioFinal" [(ngModel)]="negotiationForm.precioFinal" /></label>
-        <label>Descuento<input pInputText type="number" min="0" name="negDescuento" [(ngModel)]="negotiationForm.descuento" /></label>
-        <label>Promocion<input pInputText name="negPromocion" [(ngModel)]="negotiationForm.promocion" placeholder="Promo aplicada o condicion especial" /></label>
-        <label>Forma de pago<input pInputText name="negFormaPago" [(ngModel)]="negotiationForm.formaPago" placeholder="Contado, cuotas, transferencia..." /></label>
-        <label>Cuotas<input pInputText type="number" min="1" name="negCuotas" [(ngModel)]="negotiationForm.cuotas" /></label>
-        <label>Fecha de inicio<input pInputText type="date" name="negFechaInicio" [(ngModel)]="negotiationForm.fechaInicio" /></label>
-        <label>Fecha de entrega<input pInputText type="date" name="negFechaEntrega" [(ngModel)]="negotiationForm.fechaEntrega" /></label>
-        <label>Objecion<p-select name="negObjecion" [options]="negotiationObjectionOptions" [(ngModel)]="negotiationForm.objecion" appendTo="body" /></label>
-        <label>Resultado<p-select name="negResultado" [options]="negotiationResultOptions" [(ngModel)]="negotiationForm.resultado" appendTo="body" /></label>
-        <label class="option-check">
-          <input type="checkbox" name="negClienteConforme" [(ngModel)]="negotiationForm.clienteConforme" />
-          Cliente dio conformidad comercial
-        </label>
-        <label class="option-check">
-          <input type="checkbox" name="negProcedePago" [(ngModel)]="negotiationForm.procedePago" />
-          Habilitar registro de pago
-        </label>
-        <label class="wide-field">Observacion<textarea pTextarea rows="4" name="negObservacion" [(ngModel)]="negotiationForm.observacion" placeholder="Que falta para que el cliente diga si?"></textarea></label>
+    <form class="negotiation-modern-form">
+      <div class="negotiation-modern-layout">
+        <aside class="negotiation-modern-summary">
+          <header>
+            <span class="negotiation-modern-icon"><i class="pi pi-graduation-cap"></i></span>
+            <div>
+              <small>Oportunidad</small>
+              <strong>{{ detail.titulo }}</strong>
+            </div>
+          </header>
+          <dl>
+            <div>
+              <dt><i class="pi pi-user"></i> Cliente</dt>
+              <dd>{{ opportunityContactName(detail) }}</dd>
+            </div>
+            <div>
+              <dt><i class="pi pi-flag"></i> Etapa</dt>
+              <dd>{{ stageName(detail.etapa) }}</dd>
+            </div>
+          </dl>
+          <p class="negotiation-modern-status">Estado <span>Activa</span></p>
+          @if (negotiationFinancialSummary(); as money) {
+            <section class="negotiation-financial-card">
+              <h3>Resumen financiero</h3>
+              <div>
+                <span>Precio base <b>S/ {{ money.base | number: '1.2-2' }}</b></span>
+                <span>Descuento <b>{{ money.discountPercent | number: '1.0-2' }}%</b></span>
+                <span>Total acordado <b>S/ {{ money.agreed | number: '1.2-2' }}</b></span>
+              </div>
+            </section>
+          }
+          <p class="negotiation-modern-note">
+            <i class="pi pi-info-circle"></i>
+            <span>{{ negotiationForm.observacion || 'Registra el acuerdo, la objecion y las condiciones finales para continuar con el cierre.' }}</span>
+          </p>
+        </aside>
+        <section class="negotiation-modern-fields">
+          <div class="negotiation-fields-grid">
+            <label>
+              <span>Precio final <b>*</b></span>
+              <span class="negotiation-input-affix">
+                <input pInputText type="number" min="0" name="negPrecioFinal" [(ngModel)]="negotiationForm.precioFinal" />
+                <em>S/</em>
+              </span>
+            </label>
+            <label>
+              <span>Descuento</span>
+              <span class="negotiation-input-affix">
+                <input pInputText type="number" min="0" max="100" name="negDescuento" [(ngModel)]="negotiationForm.descuento" />
+                <em>%</em>
+              </span>
+            </label>
+            <label><span>Promoción</span><input pInputText name="negPromocion" [(ngModel)]="negotiationForm.promocion" placeholder="Promo aplicada o condición especial" /></label>
+            <label><span>Forma de pago</span><p-select name="negFormaPago" [options]="negotiationPaymentOptions" [(ngModel)]="negotiationForm.formaPago" (ngModelChange)="onNegotiationPaymentModeChange($event)" appendTo="body" /></label>
+            <label>
+              <span>Cuotas</span>
+              <input pInputText type="number" [min]="negotiationForm.formaPago === 'Credito' ? 2 : 1" step="1" name="negCuotas" [(ngModel)]="negotiationForm.cuotas" [disabled]="negotiationForm.formaPago !== 'Credito'" />
+            </label>
+            <label><span>Fecha de inicio</span><input pInputText type="date" name="negFechaInicio" [(ngModel)]="negotiationForm.fechaInicio" /></label>
+            <label><span>Fecha de entrega</span><input pInputText type="date" name="negFechaEntrega" [(ngModel)]="negotiationForm.fechaEntrega" /></label>
+            <label><span>Objeción</span><p-select name="negObjecion" [options]="negotiationObjectionOptions" [(ngModel)]="negotiationForm.objecion" appendTo="body" /></label>
+            <label><span>Resultado</span><p-select name="negResultado" [options]="negotiationResultOptions" [(ngModel)]="negotiationForm.resultado" appendTo="body" /></label>
+            <label class="negotiation-modern-check">
+              <input type="checkbox" name="negClienteConforme" [(ngModel)]="negotiationForm.clienteConforme" />
+              <span>Cliente dio conformidad comercial</span>
+            </label>
+            <label class="negotiation-modern-check">
+              <input type="checkbox" name="negProcedePago" [(ngModel)]="negotiationForm.procedePago" />
+              <span>Habilitar registro de pago</span>
+            </label>
+            <label class="negotiation-modern-observation">
+              <span>Observación</span>
+              <textarea pTextarea rows="3" maxlength="500" name="negObservacion" [(ngModel)]="negotiationForm.observacion" placeholder="¿Qué falta para que el cliente confirme?"></textarea>
+              <small>{{ negotiationForm.observacion.length }}/500</small>
+            </label>
+          </div>
+        </section>
       </div>
-      <footer class="dialog-actions">
+      <footer class="negotiation-modern-actions">
         <button type="button" class="secondary-button" (click)="opportunityNegotiationDialogOpen.set(false)">Cancelar</button>
-        <button type="button" class="primary-button" (click)="saveOpportunityNegotiation()"><i class="pi pi-save"></i> Guardar negociacion</button>
+        <button type="button" class="primary-button" [disabled]="actionId() === detail.id" (click)="saveOpportunityNegotiation()">
+          <i class="pi pi-save"></i> Guardar negociación
+        </button>
       </footer>
     </form>
   }
@@ -2648,12 +3631,14 @@
         <label>Fecha <span class="required">*</span><input pInputText type="date" name="payFecha" [(ngModel)]="paymentForm.fecha" /></label>
         <label>Tipo<p-select name="payTipo" [options]="paymentTypeOptions" [(ngModel)]="paymentForm.tipo" appendTo="body" /></label>
         <label>Monto <span class="required">*</span><input pInputText type="number" min="0" name="payMonto" [(ngModel)]="paymentForm.monto" /></label>
-        <label>Estado<p-select name="payEstado" [options]="paymentStatusOptions" [(ngModel)]="paymentForm.estado" appendTo="body" /></label>
+        <label>Estado<p-select name="payEstado" [options]="paymentStatusOptions" [(ngModel)]="paymentForm.estado" [disabled]="true" appendTo="body" /></label>
         <label>Metodo<input pInputText name="payMetodo" [(ngModel)]="paymentForm.metodo" placeholder="Efectivo, tarjeta, Yape, transferencia..." /></label>
-        <label>Adjuntar voucher / factura
+        <label>Adjuntar voucher / comprobante <span class="required">*</span>
           <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" (change)="onOpportunityPaymentFileSelected($event)" />
           @if (paymentForm.archivoNombre) {
             <small>{{ paymentForm.archivoNombre }}</small>
+          } @else {
+            <small>Obligatorio para confirmar el pago y convertir al prospecto en cliente.</small>
           }
         </label>
         <label class="wide-field">Observacion<textarea pTextarea rows="3" name="payObservacion" [(ngModel)]="paymentForm.observacion" placeholder="Operacion, numero de deposito, referencia o condicion"></textarea></label>
@@ -3102,57 +4087,66 @@
 </p-dialog>
 
 <p-dialog header="Registrar oportunidad" [modal]="true" [draggable]="false" [resizable]="false" [visible]="activeDialog() === 'oportunidad'" (visibleChange)="!$event && activeDialog.set(null)" styleClass="crm-dialog crm-dialog--form crm-dialog--opportunity-register">
-  <form class="dialog-form opportunity-register-form">
-    <header class="opportunity-register-head">
-      <div>
-        <span>{{ opportunityTargetLabel() }}</span>
-        <h3>{{ opportunityForm.titulo || 'Nueva oportunidad comercial' }}</h3>
+  <form class="dialog-form or-form">
+    <p class="or-intro">Crea una nueva oportunidad comercial a partir de un prospecto o cliente.</p>
+    <section class="or-grid">
+      <article class="or-card" style="--c:#10b981;--b:#ecfdf5">
+        <i class="pi pi-bullseye or-ico"></i>
+        <span>Origen</span>
+        <strong>{{ opportunityForm.prospectoId || opportunityForm.clienteId ? opportunityTargetLabel() : 'Nueva oportunidad comercial' }}</strong>
         <p>Cliente e interes vienen del prospecto. Solo confirma monto, responsable y fecha de cierre.</p>
-      </div>
-      <strong>S/ {{ (opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</strong>
-    </header>
-
-    <section class="opportunity-context-grid">
-      <article>
-        <i class="pi pi-user"></i>
+        <b>S/ {{ (opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</b>
+      </article>
+      <article class="or-card" style="--c:#3b82f6;--b:#eff6ff">
+        <i class="pi pi-user or-ico"></i>
         <span>Cliente / Prospecto</span>
         <strong>{{ opportunityPersonName() }}</strong>
         <p>{{ opportunityPersonDetail() }}</p>
       </article>
-      <article>
-        <i class="pi pi-tag"></i>
+      <article class="or-card" style="--c:#8b5cf6;--b:#faf5ff">
+        <i class="pi pi-tag or-ico"></i>
         <span>Interes comercial</span>
         <strong>{{ opportunityInterestLabel() }}</strong>
         <p>{{ opportunityInterestDetail() }}</p>
       </article>
-      <article>
-        <i class="pi pi-calendar"></i>
+      <article class="or-card" style="--c:#f59e0b;--b:#fffbeb">
+        <i class="pi pi-calendar or-ico"></i>
         <span>Cierre sugerido</span>
         <strong>{{ opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong>
         <p>Default: {{ crmLocalConfig().cierreEstimadoDias }} dias configurables por administrador.</p>
       </article>
     </section>
 
-    @if (!opportunityForm.prospectoId && !opportunityForm.clienteId) {
-      <section class="dialog-grid opportunity-register-pickers">
+    <section class="or-layout">
+      <section class="or-panel">
+        <h4><i class="pi pi-users or-ico"></i>Relacion comercial</h4>
         <label>Prospecto nuevo<p-select name="opProspecto" [options]="prospectoOptions()" [ngModel]="opportunityForm.prospectoId" (ngModelChange)="onOpportunityProspectChange($event)" [showClear]="true" appendTo="body" /></label>
         <label>Cliente existente<p-select name="opCliente" [options]="clienteOptions()" [ngModel]="opportunityForm.clienteId" (ngModelChange)="onOpportunityClientChange($event)" [showClear]="true" appendTo="body" /></label>
+        <label>Oferta del catalogo CRM <span class="required">*</span><p-select name="opCatalogoItem" [options]="catalogoOptions()" [ngModel]="opportunityForm.catalogoItemId" (ngModelChange)="onOpportunityCatalogChange($event)" [showClear]="true" appendTo="body" placeholder="Selecciona la oferta registrada" /></label>
       </section>
-    }
 
-    @if (!opportunityForm.catalogoItemId) {
-      <label class="opportunity-register-field">Oferta del catalogo CRM <span class="required">*</span><p-select name="opCatalogoItem" [options]="catalogoOptions()" [ngModel]="opportunityForm.catalogoItemId" (ngModelChange)="onOpportunityCatalogChange($event)" [showClear]="true" appendTo="body" placeholder="Selecciona la oferta registrada" /></label>
-    }
+      <section class="or-panel">
+        <h4><i class="pi pi-list-check or-ico"></i>Datos de la oportunidad</h4>
+        <label class="full-field">Titulo <span class="required">*</span><input pInputText name="opTitulo" [(ngModel)]="opportunityForm.titulo" placeholder="Nombre del negocio" /></label>
+        <div class="or-mini">
+          <label>Monto estimado<input pInputText type="number" min="0" name="opMonto" [(ngModel)]="opportunityForm.montoEstimado" /></label>
+          <label>Interes comercial<p-select name="opTemperatura" [options]="opportunityTemperatureOptions" [ngModel]="opportunityFormTemperature()" (ngModelChange)="setOpportunityFormTemperature($event)" appendTo="body" /></label>
+          <label>Cierre estimado<input pInputText type="date" name="opCierre" [(ngModel)]="opportunityForm.fechaCierreEstimada" /></label>
+        </div>
+        <label>Responsable<p-select name="opResponsable" [options]="responsableOptions()" [(ngModel)]="opportunityForm.responsableId" [showClear]="true" appendTo="body" /></label>
+        <label>Etapa<p-select name="opEtapa" [options]="etapaOptions()" [(ngModel)]="opportunityForm.etapa" appendTo="body" /></label>
+      </section>
 
-    <section class="dialog-grid opportunity-register-fields">
-      <label class="wide-field">Titulo <span class="required">*</span><input pInputText name="opTitulo" [(ngModel)]="opportunityForm.titulo" placeholder="Nombre del negocio" /></label>
-      <label>Monto estimado<input pInputText type="number" min="0" name="opMonto" [(ngModel)]="opportunityForm.montoEstimado" /></label>
-      <label>Interes comercial<p-select name="opTemperatura" [options]="opportunityTemperatureOptions" [ngModel]="opportunityFormTemperature()" (ngModelChange)="setOpportunityFormTemperature($event)" appendTo="body" /></label>
-      <label>Cierre estimado<input pInputText type="date" name="opCierre" [(ngModel)]="opportunityForm.fechaCierreEstimada" /></label>
-      <label>Responsable<p-select name="opResponsable" [options]="responsableOptions()" [(ngModel)]="opportunityForm.responsableId" [showClear]="true" appendTo="body" /></label>
-      <label>Etapa<p-select name="opEtapa" [options]="etapaOptions()" [(ngModel)]="opportunityForm.etapa" appendTo="body" /></label>
-      <label class="wide-field">Descripcion<textarea pTextarea name="opDescripcion" rows="3" [(ngModel)]="opportunityForm.descripcion" placeholder="Necesidad, condiciones o propuesta inicial"></textarea></label>
+      <aside class="or-summary">
+        <h4>Resumen de la oportunidad</h4>
+        <p><i class="pi pi-user or-ico"></i><span>Cliente<strong>{{ opportunityPersonName() }}</strong></span></p>
+        <p><i class="pi pi-tag or-ico"></i><span>Oferta<strong>{{ opportunityInterestLabel() }}</strong></span></p>
+        <p><i class="pi pi-dollar or-ico"></i><span>Monto estimado<strong>S/ {{ (opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</strong></span></p>
+        <p><i class="pi pi-calendar or-ico"></i><span>Cierre estimado<strong>{{ opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong></span></p>
+      </aside>
     </section>
+
+    <label class="or-desc"><span><i class="pi pi-file-edit or-ico"></i>Descripcion</span><textarea pTextarea name="opDescripcion" rows="3" [(ngModel)]="opportunityForm.descripcion" placeholder="Necesidad, condiciones o propuesta inicial"></textarea></label>
     <div class="dialog-actions">
       <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="activeDialog.set(null)" />
       <p-button label="Guardar oportunidad" icon="pi pi-save" [loading]="saving()" (onClick)="saveOpportunity()" />
@@ -3177,16 +4171,37 @@
   </form>
 </p-dialog>
 
-<p-dialog [header]="activityForm.id ? 'Marcar actividad cumplida' : 'Registrar actividad'" [modal]="true" [draggable]="false" [resizable]="false" [visible]="activeDialog() === 'actividad'" (visibleChange)="!$event && closeActivityDialog()" [baseZIndex]="7200" appendTo="body" styleClass="crm-dialog crm-dialog--activity">
-  <form class="dialog-form activity-register-form">
+<p-dialog [header]="activityForm.id ? '' : 'Registrar actividad'" [showHeader]="!activityForm.id" [modal]="true" [draggable]="false" [resizable]="false" [visible]="activeDialog() === 'actividad'" (visibleChange)="!$event && closeActivityDialog()" [baseZIndex]="7200" appendTo="body" styleClass="crm-dialog crm-dialog--activity">
+  @if (activityForm.id) {
+    <div class="activity-complete-head">
+      <div class="activity-complete-title">
+        <span><i class="pi pi-clipboard"></i></span>
+        <strong>Marcar actividad cumplida</strong>
+      </div>
+      <button type="button" class="activity-complete-close" (click)="closeActivityDialog()"><i class="pi pi-times"></i></button>
+    </div>
+  }
+  <form class="dialog-form activity-register-form" [class.activity-register-form--complete]="activityForm.id">
+    @if (activityForm.id) {
+      <div class="activity-complete-topbar">
+        <span></span>
+        <div class="activity-complete-actions">
+          <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="closeActivityDialog()" />
+          <p-button label="Marcar cumplido" icon="pi pi-check-circle" severity="success" [loading]="saving()" (onClick)="saveActivity()" />
+        </div>
+      </div>
+    }
     <section class="activity-register-layout">
       @if (activityContext(); as context) {
         <aside class="activity-context-card">
-          <i [class]="context.icon"></i>
+          <i [class]="activityTypeIcon()"></i>
           <div>
             <span>{{ context.type === 'OPORTUNIDAD' ? 'Oportunidad seleccionada' : 'Prospecto seleccionado' }}</span>
             <strong>{{ context.title }}</strong>
-            <p>{{ context.subtitle }}</p>
+            <hr />
+            <p class="activity-context-meta"><i [class]="activityTypeIcon()"></i><span>Tipo de actividad: <b>{{ humanize(activityForm.tipoActividad) }}</b></span></p>
+            <p class="activity-context-meta"><i class="pi pi-clock"></i><span>{{ activityForm.fechaProgramada ? activityRelativeLabel(activityForm.fechaProgramada) : 'Sin fecha programada' }}</span></p>
+            <hr />
             <small>{{ context.detail }}</small>
           </div>
         </aside>
@@ -3214,35 +4229,36 @@
           </section>
         }
 
-        <section class="activity-field-section">
+        <section class="activity-field-section activity-section--main">
           <h3>Actividad</h3>
           <div class="dialog-grid dialog-grid--activity">
-            <label>Tipo <span class="required">*</span><p-select name="actTipo" [options]="tipoActividadOptions" [(ngModel)]="activityForm.tipoActividad" appendTo="body" /></label>
-            <label>Estado <span class="required">*</span><p-select name="actEstadoActividad" [options]="actividadEstadoOptions" [(ngModel)]="activityForm.estadoActividad" appendTo="body" /></label>
-            <label class="wide-field">Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actFecha" [(ngModel)]="activityForm.fechaProgramada" /></label>
-            <label class="wide-field">Asunto <span class="required">*</span><input pInputText name="actAsunto" [(ngModel)]="activityForm.asunto" placeholder="Ej. Llamar para confirmar interes" /></label>
+            <label>Tipo <span class="required">*</span><p-select name="actTipo" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="tipoActividadOptions" [(ngModel)]="activityForm.tipoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Estado <span class="required">*</span><p-select name="actEstadoActividad" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="actividadEstadoOptions" [(ngModel)]="activityForm.estadoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actFecha" [(ngModel)]="activityForm.fechaProgramada" /></label>
+            <label>Asunto <span class="required">*</span><input pInputText name="actAsunto" [(ngModel)]="activityForm.asunto" placeholder="Ej. Llamar para confirmar interes" /></label>
           </div>
         </section>
 
-          <section class="activity-field-section">
-            <h3>Resultado comercial</h3>
-            <div class="activity-qualification-note">
-              <strong>Regla de seguimiento</strong>
-              <span>Contactado solo prueba contacto. Interesado o solicita propuesta confirma necesidad e interes y puede dejarlo calificado.</span>
-            </div>
-            <div class="dialog-grid dialog-grid--activity">
-            <label>Resultado del contacto<p-select name="actResultado" [options]="activityResultOptions" [ngModel]="activityForm.resultadoContacto" (ngModelChange)="onActivityResultChange($event)" appendTo="body" /></label>
-            <label>Nivel de interes<p-select name="actNivelInteres" [options]="activityInterestOptions" [(ngModel)]="activityForm.nivelInteres" appendTo="body" placeholder="Frio, medio o caliente" /></label>
+        <section class="activity-field-section activity-section--result">
+          <h3>Resultado comercial</h3>
+          <div class="activity-qualification-note">
+            <i class="pi pi-info-circle"></i>
+            <strong>Regla de seguimiento</strong>
+            <span>Contactado solo prueba contacto. Interesado o solicita propuesta confirma necesidad e interes y puede dejarlo calificado.</span>
+          </div>
+          <div class="dialog-grid dialog-grid--activity activity-result-grid">
+            <label>Resultado del contacto<p-select name="actResultado" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="activityResultOptions" [ngModel]="activityForm.resultadoContacto" (ngModelChange)="onActivityResultChange($event)" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Nivel de interes<p-select name="actNivelInteres" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="activityInterestOptions" [(ngModel)]="activityForm.nivelInteres" appendTo="body" placeholder="Frio, medio o caliente"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
             @if (activityForm.prospectoId) {
               <label class="activity-status-field">
                 Estado del prospecto
-                <p-select name="actEstadoProspecto" [options]="activityProspectStatusOptions" [(ngModel)]="activityForm.nuevoEstadoProspecto" appendTo="body" />
+                <p-select name="actEstadoProspecto" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="activityProspectStatusOptions" [(ngModel)]="activityForm.nuevoEstadoProspecto" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select>
               </label>
             }
             <label class="wide-field">Descripcion<textarea pTextarea name="actDescripcion" rows="4" [(ngModel)]="activityForm.descripcion" placeholder="Detalle breve: que respondio, objeciones, acuerdos o siguiente paso"></textarea></label>
           </div>
           @if (activityForm.prospectoId) {
-            <p class="activity-help-note">Si confirmas interes, el prospecto queda listo para crear oportunidad sin duplicar informacion.</p>
+            <p class="activity-help-note"><i class="pi pi-check-circle"></i> Si confirmas interes, el prospecto queda listo para crear oportunidad sin duplicar informacion.</p>
           }
         </section>
 
@@ -3257,18 +4273,22 @@
             </div>
             @if (activityForm.programarSiguiente) {
               <div class="dialog-grid dialog-grid--activity">
-                <label>Tipo siguiente<p-select name="actNextTipo" [options]="tipoActividadOptions" [(ngModel)]="activityForm.siguienteTipoActividad" appendTo="body" /></label>
-                <label class="wide-field">Fecha siguiente <span class="required">*</span><input pInputText type="datetime-local" name="actNextFecha" [(ngModel)]="activityForm.siguienteFechaProgramada" /></label>
-                <label class="wide-field">Asunto siguiente <span class="required">*</span><input pInputText name="actNextAsunto" [(ngModel)]="activityForm.siguienteAsunto" placeholder="Ej. Enviar propuesta actualizada" /></label>
-                <label class="wide-field">Nota interna<textarea pTextarea name="actNextDescripcion" rows="3" [(ngModel)]="activityForm.siguienteDescripcion" placeholder="Que debe hacer el vendedor en el proximo contacto"></textarea></label>
+                <label>Tipo de actividad<p-select name="actNextTipo" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="tipoActividadOptions" [(ngModel)]="activityForm.siguienteTipoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+                <label>Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actNextFecha" [(ngModel)]="activityForm.siguienteFechaProgramada" /></label>
+                <label class="wide-field">Asunto siguiente <span class="required">*</span><input pInputText class="activity-subject-input" name="actNextAsunto" [(ngModel)]="activityForm.siguienteAsunto" placeholder="Ej. Enviar propuesta actualizada" /></label>
+                @if (!activityForm.id) {
+                  <label class="wide-field">Nota interna<textarea pTextarea name="actNextDescripcion" rows="3" [(ngModel)]="activityForm.siguienteDescripcion" placeholder="Que debe hacer el vendedor en el proximo contacto"></textarea></label>
+                }
               </div>
-              <p class="activity-help-note activity-help-note--next">La oportunidad quedara con una tarea pendiente para continuar el ciclo: programar, realizar, registrar resultado y volver a programar.</p>
+              @if (!activityForm.id) {
+                <p class="activity-help-note activity-help-note--next">La oportunidad quedara con una tarea pendiente para continuar el ciclo: programar, realizar, registrar resultado y volver a programar.</p>
+              }
             }
           </section>
         }
       </div>
     </section>
-    <div class="dialog-actions">
+    <div class="dialog-actions" [class.activity-actions--hidden]="activityForm.id">
       <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="closeActivityDialog()" />
       <p-button [label]="activityForm.id ? 'Marcar cumplido' : 'Guardar seguimiento'" icon="pi pi-save" [loading]="saving()" (onClick)="saveActivity()" />
     </div>
@@ -3307,7 +4327,7 @@
         <div>
           <span>Producto de interes</span>
           <strong>{{ quoteOfferName() }}</strong>
-          <p>{{ selectedOpportunity()?.tipoOportunidad || 'Oferta CRM' }} · S/ {{ quoteTotal() | number: '1.2-2' }}</p>
+          <p>{{ selectedOpportunity()?.tipoOportunidad || 'Oferta CRM' }} - S/ {{ quoteTotal() | number: '1.2-2' }}</p>
         </div>
       </article>
       <article class="quote-context-card quote-context-card--seller">
@@ -3342,10 +4362,28 @@
         <b>{{ selectedOpportunity()?.tipoOportunidad || 'CRM' }}</b>
       </div>
       <div class="quote-lines quote-lines--modern">
+        <div class="quote-line quote-line--modern quote-line--header" aria-hidden="true">
+          <span>Producto CRM</span>
+          <span>Cantidad</span>
+          <span>Precio</span>
+          <span>Descuento</span>
+          <span>Promocion</span>
+          <span>Total</span>
+          <span></span>
+        </div>
         @for (line of quoteForm.detalles; track $index) {
           <div class="quote-line quote-line--modern">
-            <input pInputText name="quoteDesc{{ $index }}" [(ngModel)]="line.descripcion" placeholder="Producto, servicio o detalle a cotizar" />
-            <input pInputText type="number" min="0.01" name="quoteCant{{ $index }}" [(ngModel)]="line.cantidad" placeholder="Cant." />
+            <p-select
+              name="quoteCatalogo{{ $index }}"
+              [options]="catalogoOptions()"
+              [ngModel]="line.catalogoItemId"
+              (ngModelChange)="onQuoteCatalogChange(line, $event)"
+              appendTo="body"
+              placeholder="Selecciona un producto CRM"
+              [filter]="true"
+              filterBy="label"
+            />
+            <input pInputText type="number" min="1" step="1" name="quoteCant{{ $index }}" [ngModel]="line.cantidad" (ngModelChange)="line.cantidad = normalizeQuoteQuantity($event)" placeholder="Cant." />
             <input pInputText type="number" min="0" name="quotePrecio{{ $index }}" [(ngModel)]="line.precioUnitario" placeholder="Precio" />
             <input pInputText type="number" min="0" name="quoteDscto{{ $index }}" [(ngModel)]="line.descuento" placeholder="Desc." />
             <p-select name="quotePromo{{ $index }}" [options]="promotionOptions()" [(ngModel)]="line.promocionId" appendTo="body" placeholder="Promocion" [showClear]="true" />
@@ -3371,3 +4409,4 @@
     </div>
   </form>
 </p-dialog>
+
