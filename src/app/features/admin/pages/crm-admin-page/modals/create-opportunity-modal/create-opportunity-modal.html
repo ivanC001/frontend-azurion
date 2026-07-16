@@ -1,0 +1,67 @@
+<p-dialog header="Registrar oportunidad" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().activeDialog() === 'oportunidad'" (visibleChange)="!$event && host().activeDialog.set(null)" styleClass="crm-dialog crm-dialog--form crm-dialog--opportunity-register">
+  <form class="dialog-form or-form">
+    <p class="or-intro">Crea una nueva oportunidad comercial a partir de un prospecto o cliente.</p>
+    <section class="or-grid">
+      <article class="or-card" style="--c:#10b981;--b:#ecfdf5">
+        <i class="pi pi-bullseye or-ico"></i>
+        <span>Origen</span>
+        <strong>{{ host().opportunityForm.prospectoId || host().opportunityForm.clienteId ? host().opportunityTargetLabel() : 'Nueva oportunidad comercial' }}</strong>
+        <p>Cliente e interes vienen del prospecto. Solo confirma monto, responsable y fecha de cierre.</p>
+        <b>S/ {{ (host().opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</b>
+      </article>
+      <article class="or-card" style="--c:#3b82f6;--b:#eff6ff">
+        <i class="pi pi-user or-ico"></i>
+        <span>Cliente / Prospecto</span>
+        <strong>{{ host().opportunityPersonName() }}</strong>
+        <p>{{ host().opportunityPersonDetail() }}</p>
+      </article>
+      <article class="or-card" style="--c:#8b5cf6;--b:#faf5ff">
+        <i class="pi pi-tag or-ico"></i>
+        <span>Interes comercial</span>
+        <strong>{{ host().opportunityInterestLabel() }}</strong>
+        <p>{{ host().opportunityInterestDetail() }}</p>
+      </article>
+      <article class="or-card" style="--c:#f59e0b;--b:#fffbeb">
+        <i class="pi pi-calendar or-ico"></i>
+        <span>Cierre sugerido</span>
+        <strong>{{ host().opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong>
+        <p>Default: {{ host().crmLocalConfig().cierreEstimadoDias }} dias configurables por administrador.</p>
+      </article>
+    </section>
+
+    <section class="or-layout">
+      <section class="or-panel">
+        <h4><i class="pi pi-users or-ico"></i>Relacion comercial</h4>
+        <label>Prospecto nuevo<p-select name="opProspecto" [options]="host().prospectoOptions()" [ngModel]="host().opportunityForm.prospectoId" (ngModelChange)="host().onOpportunityProspectChange($event)" [showClear]="true" appendTo="body" /></label>
+        <label>Cliente existente<p-select name="opCliente" [options]="host().clienteOptions()" [ngModel]="host().opportunityForm.clienteId" (ngModelChange)="host().onOpportunityClientChange($event)" [showClear]="true" appendTo="body" /></label>
+        <label>Oferta del catalogo CRM <span class="required">*</span><p-select name="opCatalogoItem" [options]="host().catalogoOptions()" [ngModel]="host().opportunityForm.catalogoItemId" (ngModelChange)="host().onOpportunityCatalogChange($event)" [showClear]="true" appendTo="body" placeholder="Selecciona la oferta registrada" /></label>
+      </section>
+
+      <section class="or-panel">
+        <h4><i class="pi pi-list-check or-ico"></i>Datos de la oportunidad</h4>
+        <label class="full-field">Titulo <span class="required">*</span><input pInputText name="opTitulo" [(ngModel)]="host().opportunityForm.titulo" placeholder="Nombre del negocio" /></label>
+        <div class="or-mini">
+          <label>Monto estimado<input pInputText type="number" min="0" name="opMonto" [(ngModel)]="host().opportunityForm.montoEstimado" /></label>
+          <label>Interes comercial<p-select name="opTemperatura" [options]="host().opportunityTemperatureOptions" [ngModel]="host().opportunityFormTemperature()" (ngModelChange)="host().setOpportunityFormTemperature($event)" appendTo="body" /></label>
+          <label>Cierre estimado<input pInputText type="date" name="opCierre" [(ngModel)]="host().opportunityForm.fechaCierreEstimada" /></label>
+        </div>
+        <label>Responsable<p-select name="opResponsable" [options]="host().responsableOptions()" [(ngModel)]="host().opportunityForm.responsableId" [showClear]="true" appendTo="body" /></label>
+        <label>Etapa<p-select name="opEtapa" [options]="host().etapaOptions()" [(ngModel)]="host().opportunityForm.etapa" appendTo="body" /></label>
+      </section>
+
+      <aside class="or-summary">
+        <h4>Resumen de la oportunidad</h4>
+        <p><i class="pi pi-user or-ico"></i><span>Cliente<strong>{{ host().opportunityPersonName() }}</strong></span></p>
+        <p><i class="pi pi-tag or-ico"></i><span>Oferta<strong>{{ host().opportunityInterestLabel() }}</strong></span></p>
+        <p><i class="pi pi-dollar or-ico"></i><span>Monto estimado<strong>S/ {{ (host().opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</strong></span></p>
+        <p><i class="pi pi-calendar or-ico"></i><span>Cierre estimado<strong>{{ host().opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong></span></p>
+      </aside>
+    </section>
+
+    <label class="or-desc"><span><i class="pi pi-file-edit or-ico"></i>Descripcion</span><textarea pTextarea name="opDescripcion" rows="3" [(ngModel)]="host().opportunityForm.descripcion" placeholder="Necesidad, condiciones o propuesta inicial"></textarea></label>
+    <div class="dialog-actions">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().activeDialog.set(null)" />
+      <p-button label="Guardar oportunidad" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveOpportunity()" />
+    </div>
+  </form>
+</p-dialog>

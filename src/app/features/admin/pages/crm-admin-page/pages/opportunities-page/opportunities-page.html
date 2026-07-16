@@ -1,0 +1,53 @@
+<section class="opportunity-list-page">
+  <section class="opportunity-summary-grid" aria-label="Resumen de oportunidades">
+    @for (card of summaryCards(); track card.label) {
+      <article [class]="'opportunity-summary-card opportunity-summary-card--' + card.tone">
+        <div><span>{{ card.label }}</span><strong>{{ card.value }}</strong><p><b>{{ card.delta }}</b> {{ card.detail }}</p></div>
+        <i [class]="card.icon"></i>
+      </article>
+    }
+  </section>
+
+  @if (filtersVisible()) {
+    <section class="opportunity-filters-panel">
+      <p-select [options]="stageOptions()" [ngModel]="stageFilter()" (ngModelChange)="stageFilterChange.emit($event)" appendTo="body" />
+      <p-select [options]="responsibleOptions()" [ngModel]="responsibleFilter()" (ngModelChange)="responsibleFilterChange.emit($event)" appendTo="body" />
+      <p-select [options]="statusOptions()" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)" appendTo="body" />
+      <button type="button" (click)="filtersReset.emit()"><i class="pi pi-filter-slash"></i>Limpiar</button>
+    </section>
+  }
+
+  <section class="opportunity-table-card">
+    <p-table [value]="rows()" [loading]="loading()" [paginator]="false" responsiveLayout="scroll" styleClass="crm-table opportunity-list-table followup-modern-table">
+      <ng-template pTemplate="header"><tr>
+        <th><input type="checkbox" aria-label="Seleccionar oportunidades" /></th><th>Oportunidad</th><th>Cliente / Empresa</th><th>Etapa</th><th>Valor estimado</th><th>Interes</th><th>Fecha estimada</th><th>Responsable</th><th>Estado</th><th>Acciones</th>
+      </tr></ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><input type="checkbox" aria-label="Seleccionar oportunidad" /></td>
+          <td><strong>{{ row.opportunity.titulo }}</strong><span>{{ row.typeLabel }}</span></td>
+          <td><strong>{{ row.contactName }}</strong><span>{{ row.companyLabel }}</span></td>
+          <td><span class="opportunity-stage-pill" [style.background]="row.stageBackground" [style.color]="row.stageColor">{{ row.stageName }}</span></td>
+          <td>S/ {{ row.opportunity.montoEstimado | number: '1.2-2' }}</td>
+          <td><span [class]="'opportunity-temperature opportunity-temperature--' + row.temperatureTone">{{ row.temperatureLabel }}</span></td>
+          <td>{{ row.opportunity.fechaCierreEstimada ? (row.opportunity.fechaCierreEstimada | date: 'dd/MM/yyyy') : 'Sin fecha' }}</td>
+          <td><span class="opportunity-owner"><i>{{ row.ownerInitials }}</i>{{ row.ownerName }}</span></td>
+          <td><span [class]="'opportunity-status-pill opportunity-status-pill--' + row.statusTone">{{ row.statusLabel }}</span></td>
+          <td><div class="opportunity-row-actions">
+            <button type="button" title="Ver detalle" aria-label="Ver detalle" (click)="opportunitySelected.emit(row.opportunity)"><i class="pi pi-eye"></i></button>
+            <button type="button" title="Mas acciones" aria-label="Mas acciones" (click)="opportunitySelected.emit(row.opportunity)"><i class="pi pi-ellipsis-v"></i></button>
+          </div></td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="10" class="empty-cell">No hay oportunidades para los filtros seleccionados.</td></tr></ng-template>
+    </p-table>
+    <footer class="opportunity-table-footer">
+      <span>{{ pageMeta().rangeLabel }} oportunidades</span>
+      <div>
+        <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <strong>{{ pageMeta().page + 1 }} / {{ pageMeta().totalPages }}</strong>
+        <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+      </div>
+    </footer>
+  </section>
+</section>

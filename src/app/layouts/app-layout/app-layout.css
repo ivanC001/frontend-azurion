@@ -18,6 +18,7 @@
 
 :host-context(html.dark) .sidebar-brand,
 :host-context(html.dark) .sidebar-meta,
+:host-context(html.dark) .workspace-switcher,
 :host-context(html.dark) .sidebar-footer {
   border-color: var(--az-border);
 }
@@ -41,6 +42,18 @@
 
 :host-context(html.dark) .nav-icon-wrap {
   background: transparent;
+}
+
+:host-context(html.dark) .workspace-button {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(148, 163, 184, 0.12);
+  color: #98a2b3;
+}
+
+:host-context(html.dark) .workspace-button-active {
+  background: rgba(70, 95, 255, 0.16);
+  border-color: rgba(117, 146, 255, 0.34);
+  color: #ffffff;
 }
 
 :host-context(html.dark) .nav-link:hover,
@@ -222,6 +235,70 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.workspace-switcher {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.8rem 0.85rem;
+}
+
+.workspace-switcher-single {
+  grid-template-columns: 1fr;
+}
+
+.workspace-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.75rem;
+  color: #a7b4c6;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.55rem;
+  min-height: 2.55rem;
+  padding: 0.42rem 0.55rem;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.workspace-button:hover {
+  background: rgba(71, 92, 170, 0.18);
+  color: #ffffff;
+}
+
+.workspace-button-active {
+  background: linear-gradient(135deg, rgba(79, 124, 255, 0.3), rgba(49, 91, 210, 0.22));
+  border-color: rgba(143, 176, 255, 0.42);
+  color: #ffffff;
+}
+
+.workspace-button span {
+  align-items: center;
+  background: rgba(79, 124, 255, 0.14);
+  border-radius: 0.5rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.workspace-button i {
+  font-size: 0.9rem;
+}
+
+.workspace-button strong {
+  font-size: 0.82rem;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-nav {
@@ -798,6 +875,20 @@
 
 .sidebar-collapsed .brand-link {
   justify-content: center;
+}
+
+.sidebar-collapsed .workspace-switcher {
+  grid-template-columns: 1fr;
+  padding-inline: 0.72rem;
+}
+
+.sidebar-collapsed .workspace-button {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+.sidebar-collapsed .workspace-button strong {
+  display: none;
 }
 
 .sidebar-collapsed .nav-link,

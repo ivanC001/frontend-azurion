@@ -8,6 +8,10 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { PublicCrmApiService } from '../../data/public-crm-api.service';
 
+const DEFAULT_LANDING_CAMPAIGN = 'municipios';
+const DEFAULT_LANDING_CATALOGO_ITEM_ID = 2;
+const DEFAULT_LANDING_CATALOGO_TOKEN = '17PpDlCo06aCju4Z6iptGGvxzLbMMv9k';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-contact',
@@ -24,6 +28,10 @@ export class ContactComponent {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly form = {
     tenantId: this.route.snapshot.queryParamMap.get('tenant') || '',
+    catalogoItemId: Number(this.route.snapshot.queryParamMap.get('catalogoItemId')) || DEFAULT_LANDING_CATALOGO_ITEM_ID,
+    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || DEFAULT_LANDING_CATALOGO_TOKEN,
+    landingKey: this.route.snapshot.queryParamMap.get('landingKey') || '',
+    campania: this.route.snapshot.queryParamMap.get('campania') || DEFAULT_LANDING_CAMPAIGN,
     name: '',
     company: '',
     email: '',
@@ -48,11 +56,19 @@ export class ContactComponent {
       this.errorMessage.set('Indica tu nombre para contactarte.');
       return;
     }
+    if (!this.form.email.trim() || !this.form.phone.trim()) {
+      this.errorMessage.set('Indica correo y telefono para registrar el lead.');
+      return;
+    }
 
     this.saving.set(true);
     this.crmApi
       .captureLead({
         tenantId: this.form.tenantId.trim(),
+        Ruc_tenant: this.form.tenantId.trim(),
+        landingKey: this.form.landingKey.trim() || null,
+        catalogoItemId: this.form.catalogoItemId,
+        catalogoToken: this.form.catalogoToken.trim(),
         tipoPersona: this.form.company.trim() ? 'JURIDICA' : 'NATURAL',
         nombre: this.form.name.trim(),
         empresa: this.form.company.trim() || null,
@@ -60,9 +76,10 @@ export class ContactComponent {
         telefono: this.form.phone.trim() || null,
         origen: 'WEB',
         canalIngreso: 'LANDING',
-        campania: 'Landing principal',
+        campania: this.form.campania,
         landingUrl: typeof location !== 'undefined' ? location.href : null,
         mensaje: this.form.message.trim() || null,
+        website: '',
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({

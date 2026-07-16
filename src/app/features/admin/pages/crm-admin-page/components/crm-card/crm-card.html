@@ -1,0 +1,8 @@
+<article class="crm-card" [class]="'crm-card crm-card--' + tone()">
+  <span class="crm-card__icon"><i [class]="icon()"></i></span>
+  <span class="crm-card__label">{{ label() }}</span>
+  <strong class="crm-card__value">{{ value() }}</strong>
+  @if (detail()) {
+    <small class="crm-card__detail">{{ detail() }}</small>
+  }
+</article>

@@ -3,11 +3,12 @@
     <div>
       <p class="reports-eyebrow">Reportes</p>
       <h1>Reportes</h1>
-      <p>Filtra rapido y exporta ventas, compras, inventario, caja, notas y guias.</p>
+      <p>Filtra rapido y exporta ventas, compras, inventario, caja, notas, guias y CRM.</p>
     </div>
     <div class="header-actions">
       <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" label="Recargar" [loading]="loading()" (click)="loadReports()"></button>
-      <button pButton type="button" class="az-primary" icon="pi pi-file-excel" label="Exportar Excel" [disabled]="!reportRows().length" (click)="exportExcel()"></button>
+      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-file" label="CSV" [disabled]="!reportRows().length" (click)="exportCsv()"></button>
+      <button pButton type="button" class="az-primary" icon="pi pi-file-excel" label="XLS" [disabled]="!canExportXls()" (click)="exportExcel()"></button>
     </div>
   </header>
 
@@ -105,6 +106,24 @@
   <section class="summary-strip">
     {{ activeFiltersSummary() }}
   </section>
+
+  @if (moduleFilter() === 'crm_pipeline') {
+    <section class="pipeline-report-panel" aria-label="Exportacion de cuadros del pipeline">
+      <div class="pipeline-report-head">
+        <span><i class="pi pi-chart-line"></i> Cuadros del pipeline</span>
+        <small>Se exporta el pipeline completo y una hoja por etapa en XLS.</small>
+      </div>
+      <div class="pipeline-report-grid">
+        @for (card of crmPipelineCards(); track card.codigo) {
+          <article class="pipeline-report-card" [style.--stage-color]="card.color">
+            <span>{{ card.nombre }}</span>
+            <strong>{{ card.cantidad }}</strong>
+            <em>S/ {{ card.monto.toFixed(2) }}</em>
+          </article>
+        }
+      </div>
+    </section>
+  }
 
   <section class="metrics-grid">
     <article>

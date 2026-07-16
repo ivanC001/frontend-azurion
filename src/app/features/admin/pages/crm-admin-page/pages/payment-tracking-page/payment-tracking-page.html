@@ -1,0 +1,229 @@
+<section class="payment-tracking-page">
+  <header class="payment-tracking-page__header">
+    <div>
+      <h2>Seguimiento de pagos</h2>
+      <p>Gestiona saldos pendientes, cuotas vencidas y proximos cobros de clientes.</p>
+    </div>
+    <div class="payment-tracking-page__actions">
+      <button type="button" class="payment-action payment-action--soft" (click)="exportRequested.emit()">
+        <i class="pi pi-download"></i>
+        Exportar
+      </button>
+      <button type="button" class="payment-action payment-action--soft" (click)="remindersRequested.emit()">
+        <i class="pi pi-bell"></i>
+        Recordatorios
+      </button>
+      <button type="button" class="payment-action payment-action--primary" [disabled]="!rows().length" (click)="registerFirstPaymentRequested.emit()">
+        <i class="pi pi-plus"></i>
+        Registrar pago
+      </button>
+    </div>
+  </header>
+
+  <section class="payment-tracking-page__summary">
+    @for (card of summaryCards(); track card.label) {
+      <article class="payment-metric-card">
+        <span>{{ card.label }}</span>
+        <i [class]="card.icon" [style.background]="card.soft" [style.color]="card.color"></i>
+        <strong [style.color]="card.color">{{ card.value }}</strong>
+        <small>{{ card.detail }}</small>
+      </article>
+    }
+
+    <aside class="payment-collection-card">
+      <strong>Resumen de cobranza</strong>
+      <div class="payment-collection-card__body">
+        <div class="payment-collection-ring" [style.background]="collectionRingBackground()">
+          <span>Total</span>
+        </div>
+        <div class="payment-collection-card__legend">
+          @for (row of collectionSummary(); track row.label) {
+            <span>
+              <i [style.background]="row.color"></i>
+              {{ row.label }} ({{ row.count }})
+              <b>S/ {{ row.amount | number: '1.2-2' }}</b>
+            </span>
+          }
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="payment-tracking-page__content">
+    <div class="payment-tracking-page__main">
+      <section class="payment-filters">
+        <label>
+          Busqueda
+          <span>
+            <input [ngModel]="query()" (ngModelChange)="queryChange.emit($event)" placeholder="Cliente, oportunidad, cuota...">
+            <i class="pi pi-search"></i>
+          </span>
+        </label>
+        <label>
+          Estado
+          <select [ngModel]="filters().status" (ngModelChange)="updateFilter('status', $event)">
+            <option value="TODOS">Todos</option>
+            <option value="VENCIDO">Vencido</option>
+            <option value="POR_VENCER">Por vencer</option>
+            <option value="EN_SEGUIMIENTO">En seguimiento</option>
+            <option value="PAGADO">Pagado</option>
+          </select>
+        </label>
+        <label>
+          Estado de cuotas
+          <select [ngModel]="filters().installmentStatus" (ngModelChange)="updateFilter('installmentStatus', $event)">
+            <option value="TODOS">Todos</option>
+            <option value="PENDIENTES">Pendientes</option>
+            <option value="VENCIDAS">Vencidas</option>
+            <option value="PAGADAS">Pagadas</option>
+          </select>
+        </label>
+        <label>
+          Desde vencimiento
+          <input type="date" [ngModel]="filters().dueFrom" (ngModelChange)="updateFilter('dueFrom', $event)">
+        </label>
+        <label>
+          Hasta vencimiento
+          <input type="date" [ngModel]="filters().dueTo" (ngModelChange)="updateFilter('dueTo', $event)">
+        </label>
+        <label>
+          Responsable
+          <select [ngModel]="filters().responsible" (ngModelChange)="updateFilter('responsible', $event)">
+            @for (option of responsibleOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <button type="button" class="payment-action payment-action--soft" (click)="clearFilters()">
+          <i class="pi pi-filter-slash"></i>
+          Limpiar
+        </button>
+      </section>
+
+      <section class="payment-table-card">
+        <nav class="payment-table-tabs">
+          <button type="button" [class.is-active]="filters().status === 'TODOS'" (click)="updateFilter('status', 'TODOS')">Todas las cuentas {{ pageMeta().totalItems }}</button>
+          <button type="button" [class.is-active]="filters().status === 'VENCIDO'" (click)="updateFilter('status', 'VENCIDO')">Vencidas {{ collectionSummary()[0]?.count || 0 }}</button>
+          <button type="button" [class.is-active]="filters().status === 'POR_VENCER'" (click)="updateFilter('status', 'POR_VENCER')">Por vencer {{ collectionSummary()[1]?.count || 0 }}</button>
+          <button type="button" [class.is-active]="filters().status === 'PAGADO'" (click)="updateFilter('status', 'PAGADO')">Pagadas {{ collectionSummary()[2]?.count || 0 }}</button>
+        </nav>
+
+        <div class="payment-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente / Oportunidad</th>
+                <th>Saldo pendiente</th>
+                <th>Cuotas</th>
+                <th>Proximo vencimiento</th>
+                <th>Estado</th>
+                <th>Responsable</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <tr>
+                  <td>
+                    <div class="payment-client-cell">
+                      <span>{{ row.initials }}</span>
+                      <div>
+                        <b>{{ row.contactName }}</b>
+                        <small>{{ row.offerName }}</small>
+                        <small>{{ row.opportunityCode }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="payment-amount-danger">S/ {{ row.pendingAmount | number: '1.2-2' }}</td>
+                  <td>
+                    <b>{{ row.installmentProgress }}</b>
+                    <small>{{ row.pendingInstallmentsCount }} pendiente(s)</small>
+                  </td>
+                  <td>
+                    @if (row.nextPaymentDate) {
+                      <b>{{ row.nextPaymentDate | date: 'dd/MM/yyyy' }}</b>
+                      <small [style.color]="row.dueColor">{{ row.nextPaymentLabel }}</small>
+                    } @else {
+                      <b>-</b>
+                      <small>Sin cuota</small>
+                    }
+                  </td>
+                  <td>
+                    <span class="payment-state-pill" [style.background]="row.dueBg" [style.color]="row.dueColor">{{ row.dueLabel }}</span>
+                  </td>
+                  <td>
+                    <b>{{ row.responsibleName }}</b>
+                    <small>Asesor comercial</small>
+                  </td>
+                  <td>
+                    <div class="payment-row-actions">
+                      <button type="button" title="Ver pagos" (click)="viewPayments.emit(row.id)"><i class="pi pi-eye"></i></button>
+                      <button type="button" title="Registrar pago" (click)="registerPayment.emit(row.id)"><i class="pi pi-credit-card"></i></button>
+                      @if (row.isCredit) {
+                        <button type="button" title="Programar cuotas" [disabled]="row.remainingProgrammed" (click)="scheduleInstallments.emit(row.id)"><i class="pi pi-calendar-plus"></i></button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="payment-empty-row">No hay clientes con deuda ni cuotas pendientes.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="payment-table-footer">
+          <span>{{ pageMeta().rangeLabel }}</span>
+          <div>
+            <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+            <strong>{{ pageMeta().page + 1 }} / {{ pageMeta().totalPages }}</strong>
+            <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
+    <aside class="payment-tracking-page__side">
+      <section>
+        <strong>Proximos vencimientos</strong>
+        <div class="payment-upcoming-list">
+          @for (entry of upcoming(); track entry.id) {
+            <article>
+              <span>{{ entry.initials }}</span>
+              <div>
+                <b>{{ entry.contactName }}</b>
+                <small>Cuota pendiente</small>
+              </div>
+              <p>
+                <b>S/ {{ entry.amount | number: '1.2-2' }}</b>
+                <small [class.is-overdue]="entry.overdue">{{ entry.dayLabel }}</small>
+              </p>
+            </article>
+          } @empty {
+            <p class="payment-side-empty">Sin vencimientos programados.</p>
+          }
+        </div>
+      </section>
+
+      <section>
+        <strong>Acciones rapidas</strong>
+        <div class="payment-quick-actions">
+          <button type="button" (click)="remindersRequested.emit()">
+            <span><i class="pi pi-bell"></i> Enviar recordatorios</span>
+            <i class="pi pi-chevron-right"></i>
+          </button>
+          <button type="button" (click)="showOverdueRequested.emit()">
+            <span><i class="pi pi-exclamation-triangle"></i> Ver clientes vencidos</span>
+            <i class="pi pi-chevron-right"></i>
+          </button>
+          <button type="button" [disabled]="!rows().length" (click)="scheduleInstallments.emit(rows()[0].id)">
+            <span><i class="pi pi-calendar-plus"></i> Programar cuotas</span>
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      </section>
+    </aside>
+  </section>
+</section>

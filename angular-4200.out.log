@@ -1,0 +1,39 @@
+
+> azurion-frontend@0.0.0 start
+> ng serve --port 4200
+
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                        [2m | [22m [36m67.58 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                          [2m | [22m [36m22.11 kB[39m[2m | [22m
+[32mchunk-FN2G6TFP.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m4.84 kB[39m[2m | [22m
+[32mchunk-NTVVCUPG.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.56 kB[39m[2m | [22m
+[32mchunk-GOMI4DH3.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.37 kB[39m[2m | [22m
+[32mchunk-22ECY2S6.js[39m  [2m | [22m[2m-[22m                             [2m | [22m[36m666 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                 [2m | [22m [1m98.13 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mchunk-SIFUYSAO.js[39m  [2m | [22m[2mcrm-admin-page[22m                [2m | [22m  [36m1.98 MB[39m[2m | [22m
+[32mchunk-P23F7IYU.js[39m  [2m | [22m[2mlanding-page[22m                  [2m | [22m[36m156.25 kB[39m[2m | [22m
+[32mchunk-PLNBIVRK.js[39m  [2m | [22m[2msales-admin-page[22m              [2m | [22m[36m147.86 kB[39m[2m | [22m
+[32mchunk-WG4P5H77.js[39m  [2m | [22m[2msales-pos-page[22m                [2m | [22m[36m141.71 kB[39m[2m | [22m
+[32mchunk-VYB5E5R3.js[39m  [2m | [22m[2mcompany-roles-permissions-page[22m[2m | [22m[36m135.53 kB[39m[2m | [22m
+[32mchunk-C72SDW2R.js[39m  [2m | [22m[2minventory-admin-page[22m          [2m | [22m[36m118.01 kB[39m[2m | [22m
+[32mchunk-5HWSTZ3U.js[39m  [2m | [22m[2mapp-layout[22m                    [2m | [22m[36m102.82 kB[39m[2m | [22m
+[32mchunk-P6CLO7LF.js[39m  [2m | [22m[2mproducts-admin-page[22m           [2m | [22m [36m90.39 kB[39m[2m | [22m
+[32mchunk-47AWLSVJ.js[39m  [2m | [22m[2mfacturador-companies-page[22m     [2m | [22m [36m86.30 kB[39m[2m | [22m
+[32mchunk-NOKJB3JN.js[39m  [2m | [22m[2mcash-admin-page[22m               [2m | [22m [36m83.14 kB[39m[2m | [22m
+[32mchunk-OX6W3POT.js[39m  [2m | [22m[2musers-admin-page[22m              [2m | [22m [36m70.23 kB[39m[2m | [22m
+[32mchunk-6AYVYH7D.js[39m  [2m | [22m[2mcustomers-admin-page[22m          [2m | [22m [36m69.68 kB[39m[2m | [22m
+[32mchunk-3C5DM6D4.js[39m  [2m | [22m[2madmin-dashboard-page[22m          [2m | [22m [36m63.10 kB[39m[2m | [22m
+[32mchunk-FI4CYHVG.js[39m  [2m | [22m[2mreports-admin-page[22m            [2m | [22m [36m61.66 kB[39m[2m | [22m
+[32mchunk-OEFOHTDT.js[39m  [2m | [22m[2msales-quotes-page[22m             [2m | [22m [36m57.33 kB[39m[2m | [22m
+[2m...and 25 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [20.034 seconds] - 2026-07-14T05:52:36.653Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m

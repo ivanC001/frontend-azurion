@@ -1,0 +1,77 @@
+<section class="followup-modern-page">
+  @if (filtersVisible()) {
+    <section class="followup-filter-panel" aria-label="Filtros de seguimiento">
+      <label><span>Estado del contacto</span><p-select [options]="contactOptions()" [ngModel]="filters().contact" (ngModelChange)="updateFilter('contact', $event)" appendTo="body" /></label>
+      <label><span>Responsable</span><p-select [options]="responsibleOptions()" [ngModel]="filters().responsible" (ngModelChange)="updateFilter('responsible', $event)" appendTo="body" /></label>
+      <label><span>Origen</span><p-select [options]="originOptions()" [ngModel]="filters().origin" (ngModelChange)="updateFilter('origin', $event)" appendTo="body" /></label>
+      <label><span>Nivel de interes</span><p-select [options]="interestOptions()" [ngModel]="filters().interest" (ngModelChange)="updateFilter('interest', $event)" appendTo="body" /></label>
+      <label><span>Fecha proxima accion</span><p-select [options]="dateOptions()" [ngModel]="filters().date" (ngModelChange)="updateFilter('date', $event)" appendTo="body" /></label>
+      <button type="button" class="followup-clear-button" (click)="filtersReset.emit()">Limpiar</button>
+      <button type="button" class="followup-apply-button" (click)="filtersApplied.emit()">Aplicar filtros</button>
+    </section>
+  }
+
+  <section class="followup-table-card">
+    <div class="followup-table-tools">
+      <div class="followup-table-tabs" role="tablist" aria-label="Estados de seguimiento">
+        @for (tab of tabs(); track tab.value) {
+          <button type="button" role="tab" [class.active]="activeTab() === tab.value" (click)="tabChange.emit(tab.value)">{{ tab.label }} <b>({{ tab.count }})</b></button>
+        }
+      </div>
+      <div class="followup-view-tools">
+        <span>Ordenar por: <strong>Proxima accion</strong> <i class="pi pi-arrow-down"></i></span>
+        <button type="button" class="active" title="Vista lista" aria-label="Vista lista"><i class="pi pi-list"></i></button>
+        <button type="button" title="Vista cuadricula" aria-label="Vista cuadricula"><i class="pi pi-th-large"></i></button>
+      </div>
+    </div>
+
+    <p-table [value]="rows()" [loading]="loading()" [paginator]="false" responsiveLayout="scroll" styleClass="crm-table followup-table followup-modern-table">
+      <ng-template pTemplate="header"><tr><th>Prospecto</th><th>Oferta / Interes</th><th>Estado contacto</th><th>Nivel de interes</th><th>Ultima actividad</th><th>Proxima accion</th><th>Actividades</th></tr></ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr [class.followup-row--selected]="row.selected" [class.followup-row--opportunity]="row.source.hasActiveOpportunity">
+          <td><div class="followup-prospect-cell followup-prospect-cell--rich">
+            <span [class]="'followup-avatar prospect-avatar prospect-avatar--' + row.avatarTone">{{ row.initials }}</span>
+            <div><strong>{{ row.source.prospecto.nombre }}</strong><span>{{ row.contact }}</span><em [class]="'origin-pill origin-pill--' + row.originTone">{{ row.originLabel }}</em></div>
+          </div></td>
+          <td><div class="followup-offer-cell">
+            <strong>{{ row.offer }}</strong><span>S/ {{ row.source.amount | number: '1.0-0' }}</span><em>{{ row.source.interestLabel }}</em>
+            @if (row.source.hasActiveOpportunity) { <span class="opportunity-lock-badge"><i class="pi pi-briefcase"></i>En oportunidad</span> }
+          </div></td>
+          <td><div class="contact-action-stack">
+            <span [class]="'contact-state contact-state--' + row.contactTone">{{ row.contactState }}</span>
+            <div class="contact-owner-mini"><span>{{ row.ownerInitials }}</span><em>{{ row.ownerName }}</em></div>
+            <small [class]="'contact-proof contact-proof--' + row.proofTone">{{ row.proofLabel }}</small>
+          </div></td>
+          <td><div class="qualification-cell">
+            <div class="qualification-score-mini"><strong>{{ row.source.qualification.score }}/100</strong><span [class]="'qualification-temp qualification-temp--' + row.source.qualification.temperatura.toLowerCase()">{{ row.temperatureLabel }}</span></div>
+            <div class="interest-stars">@for (star of stars(); track star) { <i [class]="star <= row.interestScore ? 'pi pi-star-fill' : 'pi pi-star'"></i> }</div>
+            <small [class]="row.source.qualification.canConvert ? 'qualification-state qualification-state--ready' : 'qualification-state'">{{ row.source.qualification.label }}</small>
+          </div></td>
+          <td><div class="activity-summary-cell">
+            <span [class]="'activity-mini-icon activity-mini-icon--' + row.lastActivityTone"><i [class]="row.lastActivityIcon"></i></span>
+            <div><strong>{{ row.lastActivityTitle }}</strong><em>{{ row.lastActivityMeta }}</em></div>
+          </div></td>
+          <td><div class="next-action-cell"><strong>{{ row.nextAction }}</strong><span>{{ row.nextActionDate }}</span><em [class]="'next-action-pill next-action-pill--' + row.nextActionTone">{{ row.nextActionStatus }}</em></div></td>
+          <td><div class="followup-action-cell followup-action-cell--modern">
+            @if (row.phoneUrl; as link) { <a [href]="link" title="Llamar" aria-label="Llamar"><i class="pi pi-phone"></i></a> } @else { <button type="button" disabled title="Sin telefono"><i class="pi pi-phone"></i></button> }
+            @if (row.whatsappUrl; as link) { <a [href]="link" target="_blank" rel="noopener" title="Enviar WhatsApp"><i class="pi pi-whatsapp"></i></a> } @else { <button type="button" disabled title="Sin WhatsApp"><i class="pi pi-whatsapp"></i></button> }
+            @if (row.emailUrl; as link) { <a [href]="link" title="Enviar correo"><i class="pi pi-envelope"></i></a> } @else { <button type="button" disabled title="Sin correo"><i class="pi pi-envelope"></i></button> }
+            <button type="button" title="Programar actividad" (click)="quickActivityRequested.emit(row.source.prospecto)"><i class="pi pi-calendar-plus"></i></button>
+            @if (row.source.nextActivity; as activity) { <button type="button" class="followup-done-button" title="Marcar seguimiento cumplido" (click)="completeActivityRequested.emit({ activity, prospect: row.source.prospecto })"><i class="pi pi-check"></i></button> }
+            <button type="button" [class]="row.source.hasActiveOpportunity ? 'followup-opportunity-button followup-opportunity-button--open' : 'followup-opportunity-button followup-opportunity-button--create'" [disabled]="!row.source.hasActiveOpportunity && !row.source.qualification.canConvert" [title]="row.source.hasActiveOpportunity ? 'Ver oportunidad' : 'Crear oportunidad'" (click)="opportunityRequested.emit(row.source)"><i [class]="row.source.hasActiveOpportunity ? 'pi pi-briefcase' : 'pi pi-arrow-right'"></i></button>
+            <button type="button" class="followup-view-button" title="Ver seguimiento" (click)="detailRequested.emit(row.source)"><i class="pi pi-eye"></i></button>
+          </div></td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage"><tr><td colspan="7" class="empty-cell">No hay prospectos en seguimiento para este filtro.</td></tr></ng-template>
+    </p-table>
+    <footer class="followup-table-footer">
+      <span>{{ pageMeta().rangeLabel }}</span>
+      <div>
+        <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <strong>{{ pageMeta().page + 1 }} / {{ pageMeta().totalPages }}</strong>
+        <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+      </div>
+    </footer>
+  </section>
+</section>

@@ -1,0 +1,300 @@
+::ng-deep .crm-client-completion-dialog {
+  max-height: calc(100vh - 1rem);
+  width: min(58rem, calc(100vw - 1rem));
+}
+
+::ng-deep .crm-client-completion-dialog .p-dialog-header {
+  background: var(--az-surface-solid, #fff);
+  border-bottom: 1px solid var(--az-border, #dbe4f0);
+  padding: 0.72rem 1rem;
+}
+
+::ng-deep .crm-client-completion-dialog .p-dialog-content {
+  background: var(--az-surface-solid, #fff);
+  max-height: calc(100vh - 4.5rem);
+  overflow: auto;
+  padding: 0;
+}
+
+.client-completion-title {
+  align-items: center;
+  color: var(--az-text, #26344a);
+  display: inline-flex;
+  font-size: 0.94rem;
+  font-weight: 900;
+  gap: 0.62rem;
+}
+
+.client-completion-title > span {
+  align-items: center;
+  background: #eaf2ff;
+  border-radius: 50%;
+  color: #2563eb;
+  display: inline-flex;
+  height: 1.9rem;
+  justify-content: center;
+  width: 1.9rem;
+}
+
+.client-completion-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem 0;
+}
+
+.client-completion-alert {
+  align-items: center;
+  background: color-mix(in srgb, #f59e0b 7%, var(--az-surface, #fff));
+  border: 1px solid color-mix(in srgb, #f59e0b 28%, var(--az-border, #dbe4f0));
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 0.58rem 0.72rem;
+}
+
+.client-completion-alert > span {
+  align-items: center;
+  background: #fef3c7;
+  border-radius: 50%;
+  color: #d97706;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.client-completion-alert strong,
+.client-completion-alert p {
+  color: var(--az-text, #26344a);
+}
+
+.client-completion-alert strong {
+  font-size: 0.7rem;
+}
+
+.client-completion-alert p {
+  font-size: 0.6rem;
+  margin: 0.12rem 0 0;
+}
+
+.client-completion-layout {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 14rem minmax(0, 1fr);
+}
+
+.client-completion-context,
+.client-completion-fields {
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border, #dbe4f0);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: 0.8rem;
+}
+
+.client-completion-context {
+  align-content: start;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.client-avatar {
+  align-items: center;
+  background: #eaf2ff;
+  border-radius: 50%;
+  color: #2563eb;
+  display: inline-flex;
+  height: 2.6rem;
+  justify-content: center;
+  margin-bottom: 0.45rem;
+  width: 2.6rem;
+}
+
+.client-completion-context small {
+  color: var(--az-text-soft, #64748b);
+  font-size: 0.56rem;
+}
+
+.client-completion-context strong,
+.client-completion-context b {
+  color: var(--az-text, #26344a);
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.client-completion-context > div {
+  border-top: 1px solid var(--az-border, #dbe4f0);
+  margin: 0.62rem 0;
+}
+
+.client-completion-context ul {
+  border-top: 1px solid var(--az-border, #dbe4f0);
+  display: grid;
+  gap: 0.42rem;
+  list-style: none;
+  margin: 0.72rem 0 0;
+  padding: 0.7rem 0 0;
+}
+
+.client-completion-context li {
+  align-items: flex-start;
+  color: var(--az-text-soft, #64748b);
+  display: flex;
+  font-size: 0.56rem;
+  gap: 0.35rem;
+  line-height: 1.35;
+}
+
+.client-completion-context li i {
+  color: #10b981;
+  margin-top: 0.08rem;
+}
+
+.client-completion-fields > header {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border, #dbe4f0);
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.55rem;
+}
+
+.client-completion-fields > header > i {
+  color: #2563eb;
+}
+
+.client-completion-fields > header div {
+  display: grid;
+  gap: 0.06rem;
+}
+
+.client-completion-fields > header strong {
+  color: var(--az-text, #26344a);
+  font-size: 0.68rem;
+}
+
+.client-completion-fields > header small {
+  color: var(--az-text-soft, #64748b);
+  font-size: 0.54rem;
+}
+
+.client-completion-grid {
+  display: grid;
+  gap: 0.62rem 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.client-completion-grid label {
+  color: var(--az-text, #26344a);
+  display: grid;
+  font-size: 0.58rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.client-completion-grid label b {
+  color: #ef4444;
+}
+
+.client-completion-grid .span-2 {
+  grid-column: span 2;
+}
+
+.client-completion-grid .span-3 {
+  grid-column: 1 / -1;
+}
+
+::ng-deep .crm-client-completion-dialog .p-inputtext,
+::ng-deep .crm-client-completion-dialog .p-select {
+  border-color: var(--az-border, #dbe4f0);
+  border-radius: 0.35rem;
+  min-height: 2rem;
+  width: 100%;
+}
+
+::ng-deep .crm-client-completion-dialog .p-inputtext,
+::ng-deep .crm-client-completion-dialog .p-select-label {
+  color: var(--az-text, #344258);
+  font-size: 0.64rem;
+  padding: 0.46rem 0.55rem;
+}
+
+.client-completion-grid label > small {
+  color: var(--az-text-soft, #64748b);
+  font-size: 0.5rem;
+  font-weight: 500;
+}
+
+.client-contact-note {
+  align-items: center;
+  background: color-mix(in srgb, #2563eb 5%, var(--az-surface, #fff));
+  border-radius: 0.35rem;
+  color: #2563eb;
+  display: flex;
+  font-size: 0.54rem;
+  gap: 0.35rem;
+  margin: 0.65rem 0 0;
+  padding: 0.4rem 0.5rem;
+}
+
+.client-completion-actions {
+  align-items: center;
+  background: var(--az-surface-solid, #fff);
+  border-top: 1px solid var(--az-border, #dbe4f0);
+  bottom: 0;
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin: 0 -1rem;
+  padding: 0.65rem 1rem;
+  position: sticky;
+}
+
+.client-completion-actions button {
+  align-items: center;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.65rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  justify-content: center;
+  min-height: 2.05rem;
+  padding: 0.4rem 0.9rem;
+}
+
+.client-completion-cancel {
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border, #cbd5e1);
+  color: var(--az-text, #344258);
+}
+
+.client-completion-save {
+  background: #2563eb;
+  border: 1px solid #2563eb;
+  color: #fff;
+  min-width: 11rem;
+}
+
+.client-completion-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 760px) {
+  .client-completion-layout,
+  .client-completion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-completion-grid .span-2,
+  .client-completion-grid .span-3 {
+    grid-column: auto;
+  }
+
+  .client-completion-context ul {
+    display: none;
+  }
+}

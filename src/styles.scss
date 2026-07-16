@@ -2317,3 +2317,56 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
     }
   }
 }
+
+/* Dark pipeline theme crosses the extracted component boundary from here. */
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-scroll--compact,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-board--compact {
+  background: #151d2b !important;
+  border-color: #344054 !important;
+  box-shadow: 0 0.55rem 1.4rem rgba(0, 0, 0, 0.28) !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-column {
+  background: #151d2b !important;
+  border-color: #344054 !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-stage-header {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--stage-color, #465fff) 18%, #202939), #182230 86%) !important;
+  box-shadow: inset 0 -1px 0 #344054 !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-stage-header span,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__top strong {
+  color: #f2f4f7 !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-stage-header strong,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-stage-header nav button,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__amount {
+  color: color-mix(in srgb, var(--stage-color, #84adff) 55%, #d1e9ff) !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card {
+  background: color-mix(in srgb, var(--stage-color, #465fff) 8%, #202939) !important;
+  border-color: color-mix(in srgb, var(--stage-color, #465fff) 30%, #344054) !important;
+  box-shadow: 0 0.35rem 0.85rem rgba(0, 0, 0, 0.22) !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__client,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card > em,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__bottom small,
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__top button {
+  color: #b3bfd0 !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .deal-card__campaign {
+  background: color-mix(in srgb, #465fff 18%, #202939) !important;
+  color: #b2ccff !important;
+}
+
+html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-empty {
+  background: rgba(16, 24, 40, 0.7) !important;
+  border-color: #475467 !important;
+  color: #98a2b3 !important;
+}

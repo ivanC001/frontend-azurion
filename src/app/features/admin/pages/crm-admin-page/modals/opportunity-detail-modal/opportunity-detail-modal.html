@@ -1,0 +1,866 @@
+@if (host().selectedOpportunity(); as detail) {
+  <p-dialog
+    header="Oportunidad"
+    [closable]="true"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="host().opportunityDetailOpen()"
+    (visibleChange)="!$event && host().closeOpportunityDetail()"
+    [baseZIndex]="7000"
+    appendTo="body"
+    styleClass="crm-dialog crm-dialog--opportunity-detail">
+    <section class="opportunity-detail-view">
+      <header class="opportunity-detail-head">
+        <div>
+          <span class="opportunity-breadcrumb">Oportunidades / Detalle</span>
+          <h2>{{ detail.titulo }} <b [class]="'opportunity-status-pill opportunity-status-pill--' + host().opportunityStatusTone(detail)">{{ host().humanize(detail.estado) }}</b></h2>
+          <p>
+            <span><i class="pi pi-user"></i> Cliente: {{ host().opportunityContactName(detail) }}</span>
+            <span><i class="pi pi-building"></i> Empresa: {{ host().opportunityCompanyLabel(detail) }}</span>
+            <span>Creada el {{ detail.createdAt ? (detail.createdAt | date: 'dd/MM/yyyy') : 'Sin fecha' }}</span>
+            <span>por {{ host().responsibleName(detail.responsableId) }}</span>
+          </p>
+        </div>
+        <div class="opportunity-detail-actions">
+          <button type="button" class="soft-button" (click)="host().closeOpportunityDetail()"><i class="pi pi-arrow-left"></i> Volver</button>
+          <button type="button" class="soft-button" (click)="host().openOpportunityContactEditor(detail)">
+            <i class="pi pi-id-card"></i> {{ host().opportunityContactEditLabel(detail) }}
+          </button>
+          <button type="button" class="soft-button" (click)="host().openEditOpportunity(detail)"><i class="pi pi-pencil"></i> Editar</button>
+          <button type="button" class="primary-button" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-plus"></i> Accion</button>
+        </div>
+      </header>
+
+      <section class="opportunity-kpi-strip" aria-label="Resumen comercial de oportunidad">
+        <article>
+          <span>Valor estimado</span>
+          <strong>S/ {{ detail.montoEstimado | number: '1.2-2' }}</strong>
+        </article>
+        <article>
+          <span>Probabilidad de cierre</span>
+          <strong class="opportunity-percent-pill">{{ host().opportunityProgress(detail) }}%</strong>
+        </article>
+        <article>
+          <span>Etapa actual</span>
+          <strong class="opportunity-stage-pill" [style.border-color]="host().stageColor(detail.etapa)" [style.color]="host().stageColor(detail.etapa)">
+            {{ host().stageName(detail.etapa) }}
+          </strong>
+        </article>
+        <article>
+          <span>Responsable</span>
+          <strong><i class="pi pi-user"></i> {{ host().responsibleName(detail.responsableId) }}</strong>
+        </article>
+        <article>
+          <span>Cierre estimado</span>
+          <strong><i class="pi pi-calendar"></i> {{ detail.fechaCierreEstimada ? (detail.fechaCierreEstimada | date: 'dd/MM/yyyy') : 'Sin fecha' }}</strong>
+        </article>
+        <article>
+          <span>Estado</span>
+          <strong [class]="'financial-status financial-status--' + host().opportunityFinancialStatusTone(detail)">
+            {{ host().isSaleClosed(detail) ? 'Venta cerrada' : host().opportunityFinancialStatusLabel(detail) }}
+          </strong>
+        </article>
+      </section>
+
+      <section class="opportunity-stage-line" aria-label="Progreso de oportunidad">
+        @for (stage of host().etapaOptions(); track stage.value) {
+          @let stepState = host().opportunityStageStepState(detail, stage.value);
+          <article
+            [class]="'opportunity-step opportunity-step--' + stepState"
+            [class.opportunity-step--lost]="stage.value === 'PERDIDO' && stepState === 'done'"
+            [attr.aria-current]="stepState === 'current' ? 'step' : null"
+          >
+            <i>
+              @if (stepState === 'done') {
+                <span class="pi pi-check"></span>
+              } @else {
+                {{ $index + 1 }}
+              }
+            </i>
+            <strong>{{ stage.label }}</strong>
+          </article>
+        }
+      </section>
+
+      @if (host().isInterestedOpportunity(detail) && host().opportunityDetailTab() === 'resumen') {
+        <section class="opportunity-interest-board">
+          <div class="opportunity-interest-main">
+            <article class="interest-requirement-card">
+              <header class="interest-card-head">
+                <span><i class="pi pi-clipboard"></i></span>
+                <div>
+                  <h3>Requerimiento del cliente</h3>
+                  <small>{{ host().selectedOpportunityRequirements().length }} item(s) para cotizar</small>
+                </div>
+                <button type="button" class="soft-button compact-action" (click)="host().openOpportunityRequirementDialog(detail)">
+                  <i class="pi pi-plus"></i>
+                  Anadir requerimiento
+                </button>
+              </header>
+              <div class="interest-requirements">
+                @for (requirement of host().selectedOpportunityRequirements(); track requirement.id) {
+                  <section class="interest-requirement-row">
+                    <div class="requirement-fields">
+                      <p><span>Curso / Producto:</span><b>{{ requirement.nombre }}</b></p>
+                      <p><span>Vacantes / Cantidad:</span><b>{{ requirement.cantidad }} participante(s)</b></p>
+                      <p><span>Precio unitario referencial:</span><b>S/ {{ requirement.precioUnitario | number: '1.2-2' }}</b></p>
+                      <p><span>Total estimado:</span><b class="amount">S/ {{ host().requirementTotal(requirement) | number: '1.2-2' }}</b></p>
+                      <p class="requirement-note"><span>Observacion:</span><em>{{ requirement.observacion || 'Sin observacion registrada.' }}</em></p>
+                    </div>
+                    <nav>
+                      <button type="button" (click)="host().openOpportunityRequirementDialog(detail, requirement)" aria-label="Editar requerimiento"><i class="pi pi-pencil"></i></button>
+                      <button type="button" class="danger-action" [disabled]="requirement.id.startsWith('default-')" (click)="host().deleteOpportunityRequirement(requirement.id)" aria-label="Eliminar requerimiento"><i class="pi pi-trash"></i></button>
+                    </nav>
+                  </section>
+                }
+              </div>
+            </article>
+
+            <article class="interest-quote-panel">
+              <header class="interest-card-head">
+                <span><i class="pi pi-file-edit"></i></span>
+                <div>
+                  <h3>Cotizaciones de la oportunidad</h3>
+                  <small>{{ host().selectedOpportunityQuotes().length }} cotizacion(es) vinculada(s)</small>
+                </div>
+                <button type="button" class="soft-button compact-action" (click)="host().openQuoteFromRequirements(detail)">
+                  <i class="pi pi-plus"></i>
+                  Nueva cotizacion
+                </button>
+              </header>
+              <div class="opportunity-quote-list opportunity-quote-list--interest">
+                @for (quote of host().selectedOpportunityQuotes(); track quote.id) {
+                  <article>
+                    <header>
+                      <div>
+                        <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                        <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · S/ {{ quote.total | number: '1.2-2' }}</span>
+                      </div>
+                      <em [class]="'quote-status quote-status--' + host().quoteStatusTone(quote)">{{ host().quoteStatusLabel(quote) }}</em>
+                    </header>
+                    <p>{{ host().quoteNextStep(quote) }}</p>
+                    <nav>
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                      @if (host().quoteWhatsappUrl(quote)) {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      }
+                      @if (host().canSendQuoteByEmail(quote)) {
+                        <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
+                          <i [class]="host().isQuoteEmailSending(quote.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+                          {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
+                        </button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                      }
+                      @if (host().quoteStatusValue(quote) === 'ENVIADA') {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
+                      }
+                      @if (host().quoteStatusValue(quote) === 'ENVIADA' || host().quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
+                        <button type="button" class="danger-action" [disabled]="host().actionId() === quote.id" (click)="host().rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
+                      }
+                    </nav>
+                  </article>
+                } @empty {
+                  <div class="interest-empty-quotes">
+                    <i class="pi pi-file-edit"></i>
+                    <strong>Aun no hay cotizaciones</strong>
+                    <span>Crea una cotizacion con los requerimientos y luego enviala para pasar a Cotizado.</span>
+                  </div>
+                }
+              </div>
+            </article>
+
+            <section class="interest-secondary-grid">
+              <article class="interest-mini-card interest-next-action">
+                <header>
+                  <span><i class="pi pi-calendar"></i></span>
+                  <h3>Proxima actividad</h3>
+                </header>
+                @if (host().selectedOpportunityNextActivity(); as nextActivity) {
+                  <div class="interest-activity-box">
+                    <i [class]="host().followUpActivityIcon(nextActivity.tipoActividad)"></i>
+                    <div>
+                      <strong>{{ nextActivity.asunto || host().humanize(nextActivity.tipoActividad) }}</strong>
+                      <p>
+                        <span><i class="pi pi-calendar"></i> {{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'dd/MM/yyyy') : 'Sin fecha' }}</span>
+                        <span><i class="pi pi-clock"></i> {{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'hh:mm a') : 'Sin hora' }}</span>
+                      </p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="opportunity-empty-detail">No tiene actividad proxima.</div>
+                }
+                <button type="button" class="link-action" (click)="host().setOpportunityDetailTab('actividades')"><i class="pi pi-calendar"></i> Ver calendario</button>
+              </article>
+
+              <article class="interest-mini-card interest-notes">
+                <header>
+                  <span><i class="pi pi-file-edit"></i></span>
+                  <h3>Notas comerciales</h3>
+                </header>
+                <ul>
+                  @for (requirement of host().selectedOpportunityRequirements().slice(0, 3); track requirement.id) {
+                    <li>{{ requirement.observacion || requirement.nombre }}</li>
+                  }
+                  @if (detail.descripcion) {
+                    <li>{{ detail.descripcion }}</li>
+                  }
+                </ul>
+                <button type="button" class="link-action" (click)="host().setOpportunityDetailTab('historial')">Ver todas las notas <i class="pi pi-angle-right"></i></button>
+              </article>
+            </section>
+          </div>
+
+          <aside class="interest-actions-panel">
+            <header>
+              <i class="pi pi-bolt"></i>
+              <strong>Acciones</strong>
+            </header>
+            <button type="button" class="interest-action interest-action--primary" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-calendar-plus"></i> Registrar actividad</button>
+            @if (host().opportunityWhatsappUrl(detail); as whatsappLink) {
+              <a class="interest-action interest-action--whatsapp" [href]="whatsappLink" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</a>
+            }
+            @if (host().opportunityEmailUrl(detail); as emailLink) {
+              <a class="interest-action interest-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
+            }
+            <button type="button" class="interest-action interest-action--danger" (click)="host().markLost(detail)"><i class="pi pi-flag"></i> Marcar perdido</button>
+            <button type="button" class="interest-action interest-action--advance" (click)="host().advanceInterestedToQuoted(detail)">
+              Crear cotizacion
+              <i class="pi pi-arrow-right"></i>
+            </button>
+
+            <section class="interest-checklist">
+              <h4><i class="pi pi-check-circle"></i> Requisitos para avanzar</h4>
+              @for (check of host().opportunityRequirementChecklist(detail); track check.label) {
+                <p [class.done]="check.done"><i class="pi pi-check-circle"></i> {{ check.label }}</p>
+              }
+            </section>
+
+            <p class="interest-info-note">
+              <i class="pi pi-info-circle"></i>
+              La oportunidad pasa a Cotizado cuando una cotizacion quede marcada como enviada.
+            </p>
+          </aside>
+        </section>
+      } @else {
+      <nav class="opportunity-detail-tabs opportunity-detail-tabs--main" aria-label="Secciones de la oportunidad">
+        @for (tab of host().opportunityDetailTabs(); track tab.tab) {
+          <button type="button" [class.active]="host().opportunityDetailTab() === tab.tab" (click)="host().setOpportunityDetailTab(tab.tab)">
+            <i [class]="tab.icon"></i>
+            {{ tab.label }}
+            @if (tab.count !== null) {
+              <b>{{ tab.count }}</b>
+            }
+          </button>
+        }
+      </nav>
+
+      <section class="opportunity-detail-grid" [class.opportunity-detail-grid--focused]="host().opportunityDetailTab() !== 'resumen'">
+        @if (host().opportunityDetailTab() === 'resumen') {
+          <aside class="opportunity-info-card">
+            <h3>Informacion general</h3>
+            <dl>
+              <dt>Cliente</dt>
+              <dd>{{ host().opportunityContactName(detail) }}</dd>
+              <dt>Empresa</dt>
+              <dd>{{ host().opportunityCompanyLabel(detail) }}</dd>
+              <dt>Producto / Servicio</dt>
+              <dd>{{ detail.descripcion || host().opportunityTypeLabel(detail.tipoOportunidad) }}</dd>
+              <dt>Valor estimado</dt>
+              <dd>S/ {{ detail.montoEstimado | number: '1.2-2' }}</dd>
+              <dt>Interes</dt>
+              <dd>
+                <span [class]="'opportunity-temperature opportunity-temperature--' + host().opportunityTemperatureTone(detail)">
+                  {{ host().opportunityTemperatureLabel(detail) }}
+                </span>
+              </dd>
+              <dt>Fecha estimada de cierre</dt>
+              <dd>{{ detail.fechaCierreEstimada ? (detail.fechaCierreEstimada | date: 'dd/MM/yyyy') : 'Sin fecha' }}</dd>
+              <dt>Responsable</dt>
+              <dd>{{ host().responsibleName(detail.responsableId) }}</dd>
+              <dt>Origen</dt>
+              <dd>{{ host().relationshipLabel(detail) }}</dd>
+            </dl>
+            <div class="opportunity-tags">
+              @for (tag of host().opportunityTags(detail); track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+          </aside>
+        }
+
+        <article class="opportunity-activity-card" [class.opportunity-activity-card--negotiation]="host().opportunityDetailTab() === 'negociacion'">
+          <div class="opportunity-activity-head">
+            <h3>
+              @switch (host().opportunityDetailTab()) {
+                @case ('resumen') { Resumen operativo }
+                @case ('actividades') { Actividades de la oportunidad }
+                @case ('pipeline') { Pipeline de la oportunidad }
+                @case ('cotizaciones') { Cotizaciones de la oportunidad }
+                @case ('negociacion') { Negociacion }
+                @case ('cierre') { Verificacion de cierre }
+                @case ('pagos') { Pagos y estado financiero }
+                @case ('documentos') { Documentos }
+                @case ('historial') { Historial }
+              }
+            </h3>
+            <nav class="opportunity-tab-actions">
+              @if (host().opportunityDetailTab() === 'resumen') {
+                <button type="button" (click)="host().openEditOpportunity(detail)"><i class="pi pi-pencil"></i> Editar</button>
+              }
+              @if (host().opportunityDetailTab() === 'actividades') {
+                <button type="button" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-plus"></i> Nueva actividad</button>
+              }
+              @if (host().opportunityDetailTab() === 'pipeline' && host().canMoveCrmOpportunities()) {
+                <button type="button" (click)="host().moveOpportunityStage($event, detail, 1)"><i class="pi pi-arrow-right"></i> Mover etapa</button>
+              }
+              @if (host().opportunityDetailTab() === 'cotizaciones') {
+                <button type="button" (click)="host().openQuoteDialog(detail)"><i class="pi pi-file-edit"></i> Nueva cotizacion</button>
+              }
+            </nav>
+          </div>
+
+          @if (host().opportunityDetailTab() === 'resumen') {
+            <section class="opportunity-center-stack">
+              <article class="opportunity-next-card opportunity-next-card--main">
+                <h3><i class="pi pi-calendar"></i> Actividad proxima</h3>
+                @if (host().selectedOpportunityNextActivity(); as nextActivity) {
+                  <div class="opportunity-next-main">
+                    <time>{{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'dd/MM/yyyy - h:mm a') : 'Sin fecha' }}</time>
+                    <strong>{{ nextActivity.asunto || host().humanize(nextActivity.tipoActividad) }}</strong>
+                    <span [class]="'activity-chip activity-chip--' + host().followUpActivityTone(nextActivity)">
+                      <i [class]="host().followUpActivityIcon(nextActivity.tipoActividad)"></i>
+                      {{ host().humanize(nextActivity.tipoActividad) }}
+                    </span>
+                    <b>{{ host().humanize(nextActivity.estado) }}</b>
+                  </div>
+                  <button type="button" class="soft-button compact-action" (click)="host().setOpportunityDetailTab('actividades')">Ver todas las actividades</button>
+                } @else {
+                  <div class="opportunity-empty-detail">No tiene actividad proxima.</div>
+                }
+              </article>
+
+              <article class="opportunity-timeline-card">
+                <h3>Timeline reciente</h3>
+                <div class="opportunity-mini-timeline">
+                  @for (event of host().selectedOpportunityHistory().slice(0, 3); track event.id) {
+                    <article [class]="host().historyToneClass(event.tone)">
+                      <i [class]="event.icon"></i>
+                      <div>
+                        <strong>{{ event.title }}</strong>
+                        <span>{{ event.detail }}</span>
+                      </div>
+                      <time>{{ event.date | date: 'dd/MM/yyyy h:mm a' }}</time>
+                    </article>
+                  } @empty {
+                    <div class="opportunity-empty-detail">No tiene historial reciente.</div>
+                  }
+                </div>
+                <button type="button" class="soft-button compact-action" (click)="host().setOpportunityDetailTab('historial')">Ver historial completo</button>
+              </article>
+            </section>
+          } @else if (host().opportunityDetailTab() === 'actividades') {
+            <div class="opportunity-activity-list">
+              @for (activity of host().selectedOpportunityActivities(); track activity.id) {
+                <article [class]="'opportunity-activity-item opportunity-activity-item--' + host().followUpActivityTone(activity)">
+                  <i [class]="host().followUpActivityIcon(activity.tipoActividad)"></i>
+                  <div>
+                    <strong>{{ activity.asunto || host().humanize(activity.tipoActividad) }}</strong>
+                    <p>{{ activity.descripcion || 'Sin descripcion registrada.' }}</p>
+                    @if (activity.resultadoContacto || activity.nivelInteres) {
+                      <em class="activity-result-line">
+                        {{ activity.resultadoContacto ? host().activityResultText(activity.resultadoContacto) : 'Sin resultado' }}
+                        @if (activity.nivelInteres) {
+                          <span>Interes {{ host().humanize(activity.nivelInteres) }}</span>
+                        }
+                      </em>
+                    }
+                    <span>por {{ host().responsibleName(activity.usuarioId || detail.responsableId) }}</span>
+                  </div>
+                  <aside>
+                    <time>{{ host().activityEffectiveDate(activity) ? (host().activityEffectiveDate(activity) | date: 'dd/MM/yyyy, h:mm a') : 'Sin fecha' }}</time>
+                    <b>{{ host().humanize(activity.estado) }}</b>
+                    @if (activity.estado === 'PENDIENTE') {
+                      <button type="button" class="opportunity-complete-activity" (click)="host().openCompleteActivity(activity)">
+                        <i class="pi pi-check"></i>
+                        Cumplir
+                      </button>
+                    }
+                  </aside>
+                </article>
+              } @empty {
+                <div class="opportunity-empty-detail">Aun no hay actividades registradas para esta oportunidad.</div>
+              }
+            </div>
+          } @else if (host().opportunityDetailTab() === 'pipeline') {
+            <div class="opportunity-pipeline-panel">
+              <p>El pipeline indica en que etapa esta este negocio. Los pagos viven aparte porque una venta ganada puede seguir cobrando cuotas.</p>
+              <section class="opportunity-stage-line opportunity-stage-line--compact" aria-label="Pipeline de la oportunidad">
+                @for (stage of host().etapaOptions(); track stage.value) {
+                  <article [class]="'opportunity-step opportunity-step--' + host().opportunityStageStepState(detail, stage.value)">
+                    <i [style.background]="host().opportunityStageStepState(detail, stage.value) === 'pending' ? '#eef2f7' : host().stageColor(stage.value)">
+                      @if (host().opportunityStageStepState(detail, stage.value) === 'done') {
+                        <span class="pi pi-check"></span>
+                      } @else {
+                        {{ $index + 1 }}
+                      }
+                    </i>
+                    <strong>{{ stage.label }}</strong>
+                  </article>
+                }
+              </section>
+              @if (host().canMoveCrmOpportunities()) {
+                <button type="button" class="primary-button inline-action" (click)="host().moveOpportunityStage($event, detail, 1)">
+                  <i class="pi pi-arrow-right"></i>
+                  Mover etapa
+                </button>
+              }
+            </div>
+          } @else if (host().opportunityDetailTab() === 'cotizaciones') {
+            <div class="opportunity-quote-list opportunity-quote-list--wide">
+              @for (quote of host().selectedOpportunityQuotes(); track quote.id) {
+                <article>
+                  <header>
+                    <div>
+                      <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                      <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · S/ {{ quote.total | number: '1.2-2' }}</span>
+                    </div>
+                    <em [class]="'quote-status quote-status--' + host().quoteStatusTone(quote)">{{ host().quoteStatusLabel(quote) }}</em>
+                  </header>
+                  <p>{{ host().quoteNextStep(quote) }}</p>
+                  <nav>
+                    <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                    @if (host().quoteWhatsappUrl(quote)) {
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                    } @else {
+                      <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                    }
+                    @if (host().canSendQuoteByEmail(quote)) {
+                      <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
+                        <i [class]="host().isQuoteEmailSending(quote.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+                        {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
+                      </button>
+                    } @else {
+                      <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                    }
+                    @if (host().quoteStatusValue(quote) === 'ENVIADA') {
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
+                    }
+                    @if (host().quoteStatusValue(quote) === 'ENVIADA' || host().quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
+                      <button type="button" class="danger-action" [disabled]="host().actionId() === quote.id" (click)="host().rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
+                    }
+                  </nav>
+                </article>
+              } @empty {
+                <div class="opportunity-empty-detail">Esta oportunidad aun no tiene cotizaciones.</div>
+              }
+            </div>
+          } @else if (host().opportunityDetailTab() === 'negociacion') {
+            <section class="negotiation-workspace">
+              <div class="negotiation-workspace-main">
+                <section class="negotiation-quotes-panel">
+                  <header class="negotiation-section-title">
+                    <div><i class="pi pi-file-edit"></i><strong>Cotizaciones en negociación</strong></div>
+                    <button type="button" title="Registrar negociación" aria-label="Registrar negociación" (click)="host().openOpportunityNegotiationDialog(detail)">
+                      <i class="pi pi-plus"></i>
+                    </button>
+                  </header>
+                  @if (host().selectedOpportunityQuotes().length) {
+                    <div class="negotiation-quote-list">
+                      @for (quote of host().selectedOpportunityQuotes(); track quote.id) {
+                        @if (host().negotiationQuoteDecision(quote); as decision) {
+                          <article [class]="'negotiation-quote-card negotiation-quote-card--' + decision.tone">
+                            <div class="negotiation-quote-meta">
+                              <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                              <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }}</span>
+                              <b>S/ {{ quote.total | number: '1.2-2' }}</b>
+                              <em [class]="'negotiation-decision negotiation-decision--' + decision.tone">{{ decision.label }}</em>
+                            </div>
+                            <div class="negotiation-quote-actions">
+                              <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                              @if (host().quoteWhatsappUrl(quote)) {
+                                <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                              }
+                              @if (host().canSendQuoteByEmail(quote)) {
+                                <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
+                                  <i [class]="host().isQuoteEmailSending(quote.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+                                  {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
+                                </button>
+                              }
+                              <button type="button" (click)="host().openQuoteAdjustmentDialog(quote)"><i class="pi pi-sliders-h"></i> Crear ajuste</button>
+                            </div>
+                          </article>
+                        }
+                      }
+                    </div>
+                  } @else {
+                    <div class="negotiation-empty-state">
+                      <i class="pi pi-file-edit"></i>
+                      <span>No hay cotizaciones vinculadas para negociar.</span>
+                    </div>
+                  }
+                </section>
+
+                <section class="negotiation-latest-panel">
+                  <header><i class="pi pi-comments"></i><strong>Última actividad de negociación</strong></header>
+                  @if (host().selectedOpportunityNegotiations()[0]; as record) {
+                    <article>
+                      <i class="pi pi-comment"></i>
+                      <div>
+                        <strong>{{ host().humanize(record.resultado) }} · S/ {{ record.precioFinal | number: '1.2-2' }}</strong>
+                        <span>{{ record.formaPago || 'Sin forma de pago' }} · {{ record.cuotas }} cuota(s) · Objeción: {{ host().humanize(record.objecion) }}</span>
+                        @if (record.clienteConforme) {
+                          <em><i class="pi pi-check-circle"></i> Acuerdo final registrado · pendiente de cierre</em>
+                        }
+                        <p>{{ record.observacion || 'Sin observación registrada.' }}</p>
+                      </div>
+                      <time>{{ record.createdAt | date: 'dd/MM/yyyy, h:mm a' }}</time>
+                    </article>
+                  } @else {
+                    <div class="negotiation-empty-state">Aún no hay acuerdos u objeciones registradas.</div>
+                  }
+                </section>
+              </div>
+
+              <aside class="negotiation-decision-panel">
+                <header>
+                  <div>
+                    <span>Decisión de cierre</span>
+                    <strong>{{ host().canCloseWon(detail) ? 'Requisitos completos' : 'Completa los requisitos' }}</strong>
+                  </div>
+                  <em [class.ready]="host().canCloseWon(detail)">{{ host().canCloseWon(detail) ? 'Completo' : 'Incompleto' }}</em>
+                </header>
+                <div class="negotiation-decision-checks">
+                  <p [class.done]="host().hasFinalAgreement(detail)">
+                    <i [class]="host().hasFinalAgreement(detail) ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                    Acuerdo final registrado
+                  </p>
+                  <p [class.done]="host().opportunityPaymentPlan(detail).firstPaymentDone && host().opportunityPaymentPlan(detail).hasPaymentProof">
+                    <i [class]="host().opportunityPaymentPlan(detail).firstPaymentDone && host().opportunityPaymentPlan(detail).hasPaymentProof ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                    {{ host().opportunityPaymentPlan(detail).isCredit ? 'Primera cuota y comprobante registrados' : 'Pago total y comprobante registrados' }}
+                  </p>
+                  @if (host().opportunityPaymentPlan(detail).isCredit) {
+                    <p [class.done]="host().opportunityPaymentPlan(detail).remainingProgrammed">
+                      <i [class]="host().opportunityPaymentPlan(detail).remainingProgrammed ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+                      Cuotas restantes programadas
+                    </p>
+                  }
+                </div>
+                <div class="negotiation-decision-help">
+                  <p><strong>Para ganar:</strong> completa los requisitos de cierre.</p>
+                  <p><strong>Para marcar perdido:</strong> registra el motivo.</p>
+                </div>
+                <nav>
+                  <button type="button" [disabled]="host().hasFinalAgreement(detail)" (click)="host().openOpportunityAgreementDialog(detail)">
+                    <i [class]="host().hasFinalAgreement(detail) ? 'pi pi-check-circle' : 'pi pi-file-check'"></i>
+                    {{ host().hasFinalAgreement(detail) ? 'Acuerdo registrado' : 'Registrar acuerdo final' }}
+                  </button>
+                  <button type="button" [disabled]="host().isRequiredClosurePaymentRegistered(detail)" (click)="host().openOpportunityPaymentActivity(detail)">
+                    <i [class]="host().isRequiredClosurePaymentRegistered(detail) ? 'pi pi-check-circle' : 'pi pi-credit-card'"></i>
+                    {{ host().isRequiredClosurePaymentRegistered(detail) ? 'Pago registrado' : 'Registrar pago' }}
+                  </button>
+                  <button type="button" class="negotiation-win-action" [disabled]="!host().canCloseWon(detail) || host().actionId() === detail.id" (click)="host().markNegotiationWon(detail)">
+                    <i class="pi pi-trophy"></i> Marcar ganado
+                  </button>
+                  <button type="button" class="negotiation-loss-action" [disabled]="host().canCloseWon(detail) || host().actionId() === detail.id" (click)="host().markLost(detail)">
+                    <i class="pi pi-times"></i> Registrar pérdida
+                  </button>
+                </nav>
+              </aside>
+            </section>
+          } @else if (host().opportunityDetailTab() === 'cierre') {
+            <section class="opportunity-record-panel">
+              <section class="negotiation-close-panel">
+                <header>
+                  <div>
+                    <span>Venta ganada</span>
+                    <strong>{{ host().isSaleClosed(detail) ? 'Venta cerrada y documentacion validada' : 'Verifica el expediente antes de cerrar' }}</strong>
+                  </div>
+                  <em [class.ready]="host().isSaleClosed(detail)">{{ host().isSaleClosed(detail) ? 'Cerrada' : 'Pendiente' }}</em>
+                </header>
+                <div class="negotiation-close-checks">
+                  @for (check of host().saleClosureChecklist(detail); track check.label) {
+                    <p [class.done]="check.done">
+                      <i [class]="check.done ? 'pi pi-check-circle' : 'pi pi-clock'"></i>
+                      {{ check.label }}
+                    </p>
+                  }
+                </div>
+                <div class="opportunity-empty-detail opportunity-empty-detail--notice">
+                  Ganado confirma el acuerdo comercial. Venta cerrada confirma que cotizacion, pago y documentos fueron revisados.
+                </div>
+                <nav>
+                  <button type="button" class="soft-button inline-action" (click)="host().setOpportunityDetailTab('cotizaciones')">
+                    <i class="pi pi-file-edit"></i>
+                    Revisar cotizacion
+                  </button>
+                  <button type="button" class="soft-button inline-action" (click)="host().setOpportunityDetailTab('pagos')">
+                    <i class="pi pi-credit-card"></i>
+                    Revisar pagos
+                  </button>
+                  @if (host().opportunityPaymentPlan(detail).isCredit) {
+                    <button type="button" class="soft-button inline-action" [disabled]="host().opportunityPaymentPlan(detail).remainingProgrammed" (click)="host().scheduleRemainingInstallments(detail)">
+                      <i class="pi pi-calendar-plus"></i>
+                      Programar cuotas
+                    </button>
+                  }
+                  <button type="button" class="soft-button inline-action" (click)="host().openOpportunityDocumentDialog(detail)">
+                    <i class="pi pi-upload"></i>
+                    Adjuntar documento
+                  </button>
+                  <button type="button" class="save-button inline-action" [disabled]="!host().canCloseSale(detail) || host().isSaleClosed(detail) || host().actionId() === detail.id" (click)="host().closeWonSale(detail)">
+                    <i class="pi pi-verified"></i>
+                    {{ host().isSaleClosed(detail) ? 'Venta cerrada' : 'Marcar venta cerrada' }}
+                  </button>
+                </nav>
+              </section>
+              <section class="opportunity-files-card opportunity-files-card--wide">
+                <div class="record-panel-head">
+                  <p>Documentos del expediente de cierre.</p>
+                  <button type="button" class="document-add-action" (click)="host().openOpportunityDocumentDialog(detail)">
+                    <i class="pi pi-plus"></i>
+                    Agregar documento
+                  </button>
+                </div>
+                @for (document of host().selectedOpportunityDocuments(); track document.id) {
+                  <article>
+                    <i class="pi pi-file-check"></i>
+                    <div>
+                      <strong>{{ document.nombre }}</strong>
+                      <span>{{ host().documentCategoryLabel(document.categoria) }} - {{ document.archivoNombre || 'Sin archivo adjunto' }}</span>
+                    </div>
+                    @if (document.archivoDataUrl) {
+                      <nav>
+                        <button type="button" (click)="host().previewLocalFile(document.archivoDataUrl)"><i class="pi pi-eye"></i></button>
+                        <button type="button" (click)="host().downloadLocalFile(document.archivoNombre || document.nombre, document.archivoDataUrl)"><i class="pi pi-download"></i></button>
+                      </nav>
+                    }
+                  </article>
+                } @empty {
+                  <div class="opportunity-empty-detail">Falta adjuntar la documentacion de cierre.</div>
+                }
+              </section>
+            </section>
+          } @else if (host().opportunityDetailTab() === 'pagos') {
+            <section class="opportunity-financial-card opportunity-financial-card--wide">
+              @if (host().opportunityFinancialSummary(detail); as money) {
+                <div class="financial-lines">
+                  <p><span>Valor total</span><b>S/ {{ money.total | number: '1.2-2' }}</b></p>
+                  <p><span>Monto pagado</span><b class="is-paid">S/ {{ money.paid | number: '1.2-2' }}</b></p>
+                  <p><span>Saldo pendiente</span><b class="is-pending">S/ {{ money.pending | number: '1.2-2' }}</b></p>
+                  <p><span>Estado</span><b [class]="'financial-status financial-status--' + host().opportunityFinancialStatusTone(detail)">{{ host().opportunityFinancialStatusLabel(detail) }}</b></p>
+                </div>
+                <div class="financial-progress"><span [style.width.%]="money.percent"></span></div>
+                <small>{{ money.percent }}% pagado</small>
+              }
+              <button type="button" class="soft-button" (click)="host().openOpportunityPaymentActivity(detail)">
+                <i class="pi pi-credit-card"></i>
+                Registrar pago
+              </button>
+              @if (host().opportunityPaymentPlan(detail).isCredit) {
+                <button type="button" class="soft-button" [disabled]="host().opportunityPaymentPlan(detail).remainingProgrammed" (click)="host().scheduleRemainingInstallments(detail)">
+                  <i class="pi pi-calendar-plus"></i>
+                  Programar cuotas restantes
+                </button>
+              }
+              <div class="opportunity-payment-table">
+                @for (payment of host().selectedOpportunityPayments(); track payment.id) {
+                  <article>
+                    <span>{{ payment.fecha | date: 'dd/MM/yyyy' }}</span>
+                    <strong>{{ host().humanize(payment.tipo) }}</strong>
+                    <b>S/ {{ payment.monto | number: '1.2-2' }}</b>
+                    <em [class]="'financial-status financial-status--' + host().paymentStatusTone(payment.estado)">{{ host().paymentStatusLabel(payment.estado) }}</em>
+                    <nav>
+                      @if (payment.archivoDataUrl) {
+                        <button type="button" (click)="host().downloadLocalFile(payment.archivoNombre, payment.archivoDataUrl)"><i class="pi pi-download"></i></button>
+                      }
+                      <button type="button" class="danger-action" (click)="host().deleteOpportunityPayment(payment.id)"><i class="pi pi-trash"></i></button>
+                    </nav>
+                  </article>
+                } @empty {
+                  <div class="opportunity-empty-detail">Aun no hay pagos registrados.</div>
+                }
+              </div>
+            </section>
+          } @else if (host().opportunityDetailTab() === 'documentos') {
+            <section class="opportunity-files-card opportunity-files-card--wide">
+              <div class="record-panel-head">
+                <p>Contratos, propuestas, vouchers, imagenes y anexos relacionados a este negocio.</p>
+                <button type="button" class="primary-button inline-action" (click)="host().openOpportunityDocumentDialog(detail)">
+                  <i class="pi pi-upload"></i>
+                  Subir documento
+                </button>
+              </div>
+              @for (document of host().selectedOpportunityDocuments(); track document.id) {
+                <article>
+                  <i class="pi pi-file"></i>
+                  <div>
+                    <strong>{{ document.nombre }}</strong>
+                    <span>{{ host().documentCategoryLabel(document.categoria) }} · {{ document.archivoNombre || 'Sin archivo adjunto' }}</span>
+                    @if (document.descripcion) {
+                      <p>{{ document.descripcion }}</p>
+                    }
+                  </div>
+                  <nav>
+                    @if (document.archivoDataUrl) {
+                      <button type="button" (click)="host().previewLocalFile(document.archivoDataUrl)"><i class="pi pi-eye"></i></button>
+                      <button type="button" (click)="host().downloadLocalFile(document.archivoNombre || document.nombre, document.archivoDataUrl)"><i class="pi pi-download"></i></button>
+                    }
+                    <button type="button" class="danger-action" (click)="host().deleteOpportunityDocument(document.id)"><i class="pi pi-trash"></i></button>
+                  </nav>
+                </article>
+              } @empty {
+                <div class="opportunity-empty-detail">Aun no hay documentos registrados.</div>
+              }
+            </section>
+          } @else if (host().opportunityDetailTab() === 'historial') {
+            <div class="opportunity-history-list">
+              @for (event of host().selectedOpportunityHistory(); track event.id) {
+                <article [class]="host().historyToneClass(event.tone)">
+                  <i [class]="event.icon"></i>
+                  <div>
+                    <strong>{{ event.title }}</strong>
+                    <span>{{ event.detail }}</span>
+                  </div>
+                  <time>{{ event.date | date: 'dd/MM/yyyy, h:mm a' }}</time>
+                </article>
+              } @empty {
+                <div class="opportunity-empty-detail">Aun no hay historial para esta oportunidad.</div>
+              }
+            </div>
+          }
+        </article>
+
+        @if (host().opportunityDetailTab() === 'resumen') {
+          <aside class="opportunity-side-stack">
+            <section class="opportunity-financial-card">
+              <h3><i class="pi pi-wallet"></i> Estado financiero</h3>
+              @if (host().opportunityFinancialSummary(detail); as money) {
+                <div class="financial-lines">
+                  <p><span>Valor total</span><b>S/ {{ money.total | number: '1.2-2' }}</b></p>
+                  <p><span>Monto pagado</span><b class="is-paid">S/ {{ money.paid | number: '1.2-2' }}</b></p>
+                  <p><span>Saldo pendiente</span><b class="is-pending">S/ {{ money.pending | number: '1.2-2' }}</b></p>
+                  <p><span>Estado de pago</span><b [class]="'financial-status financial-status--' + host().opportunityFinancialStatusTone(detail)">{{ host().opportunityFinancialStatusLabel(detail) }}</b></p>
+                </div>
+                <div class="financial-progress"><span [style.width.%]="money.percent"></span></div>
+                <button type="button" class="link-action" (click)="host().setOpportunityDetailTab('pagos')">Ver detalle de pagos</button>
+              }
+            </section>
+
+            <section class="opportunity-quotes-card">
+              <div class="opportunity-card-title">
+                <h3><i class="pi pi-file-edit"></i> Cotizacion actual</h3>
+              </div>
+              <div class="opportunity-quote-list">
+                @if (host().selectedOpportunityCurrentQuote(); as quote) {
+                  <article>
+                    <header>
+                      <div>
+                        <strong>COT-{{ quote.id | number: '3.0-0' }}</strong>
+                        <span>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · S/ {{ quote.total | number: '1.2-2' }}</span>
+                      </div>
+                      <em [class]="'quote-status quote-status--' + host().quoteStatusTone(quote)">{{ host().quoteStatusLabel(quote) }}</em>
+                    </header>
+                    <p>{{ host().quoteNextStep(quote) }}</p>
+                    <nav>
+                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
+                      @if (host().quoteWhatsappUrl(quote)) {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      }
+                      @if (host().canSendQuoteByEmail(quote)) {
+                        <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
+                          <i [class]="host().isQuoteEmailSending(quote.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+                          {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
+                        </button>
+                      } @else {
+                        <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                      }
+                      @if (host().quoteStatusValue(quote) === 'ENVIADA') {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
+                      }
+                      @if (host().quoteStatusValue(quote) === 'ENVIADA' || host().quoteStatusValue(quote) === 'EN_SEGUIMIENTO') {
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToSale(quote)"><i class="pi pi-check"></i> Acepta condiciones</button>
+                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().acceptQuoteToNegotiation(quote)"><i class="pi pi-sliders-h"></i> No acepta / ajustar</button>
+                        <button type="button" class="danger-action" [disabled]="host().actionId() === quote.id" (click)="host().rejectQuote(quote)"><i class="pi pi-times"></i> Rechazar</button>
+                      }
+                    </nav>
+                  </article>
+                  <button type="button" class="link-action" (click)="host().setOpportunityDetailTab('cotizaciones')">Ver todas las cotizaciones</button>
+                } @else {
+                  <div class="opportunity-empty-detail">No tiene cotizacion actual.</div>
+                }
+              </div>
+            </section>
+
+            <section class="opportunity-next-card">
+              <h3><i class="pi pi-calendar-clock"></i> Proxima actividad</h3>
+              @if (host().selectedOpportunityNextActivity(); as nextActivity) {
+                <article>
+                  <i [class]="host().followUpActivityIcon(nextActivity.tipoActividad)"></i>
+                  <div>
+                    <strong>{{ nextActivity.asunto }}</strong>
+                    <span>{{ nextActivity.fechaProgramada ? (nextActivity.fechaProgramada | date: 'dd/MM/yyyy, h:mm a') : 'Sin fecha' }}</span>
+                  </div>
+                  <div class="opportunity-next-actions">
+                    <b>{{ host().humanize(nextActivity.estado) }}</b>
+                    <button type="button" (click)="host().openCompleteActivity(nextActivity)">Marcar como completada</button>
+                  </div>
+                </article>
+              } @else {
+                <div class="opportunity-empty-detail">No tiene proxima actividad.</div>
+              }
+            </section>
+
+            <section class="opportunity-files-card">
+              <h3><i class="pi pi-file"></i> Documentos</h3>
+              @for (document of host().selectedOpportunityDocuments().slice(0, 2); track document.id) {
+                <article>
+                  <i class="pi pi-file"></i>
+                  <div>
+                    <strong>{{ document.nombre }}</strong>
+                    <span>{{ host().documentCategoryLabel(document.categoria) }} · {{ document.createdAt | date: 'dd/MM/yyyy' }}</span>
+                  </div>
+                  @if (document.archivoDataUrl) {
+                    <button type="button" (click)="host().downloadLocalFile(document.archivoNombre || document.nombre, document.archivoDataUrl)">
+                      <i class="pi pi-download"></i>
+                    </button>
+                  }
+                </article>
+              } @empty {
+                <div class="opportunity-empty-detail">No tiene documentos.</div>
+              }
+            </section>
+          </aside>
+        }
+      </section>
+
+      @if (host().opportunityDetailTab() === 'resumen') {
+        <footer class="opportunity-quick-actions">
+          <button type="button" class="quick-action quick-action--success" (click)="host().openQuoteDialog(detail)"><i class="pi pi-file-edit"></i> Nueva cotizacion</button>
+          <button type="button" class="quick-action" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-plus"></i> Nueva actividad</button>
+          <button type="button" class="quick-action quick-action--violet" (click)="host().openOpportunityActivity(detail, 'REUNION')"><i class="pi pi-calendar"></i> Programar reunion</button>
+          @if (host().opportunityWhatsappUrl(detail); as whatsappLink) {
+            <a class="quick-action quick-action--whatsapp" [href]="whatsappLink" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</a>
+          }
+          @if (host().opportunityEmailUrl(detail); as emailLink) {
+            <a class="quick-action quick-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
+          }
+          <button type="button" class="quick-action quick-action--warning" (click)="host().openOpportunityPaymentActivity(detail)"><i class="pi pi-credit-card"></i> Registrar pago</button>
+          @if (host().canMoveCrmOpportunities()) {
+            <button type="button" class="quick-action quick-action--danger" (click)="host().markLost(detail)"><i class="pi pi-times"></i> Marcar como perdido</button>
+          }
+        </footer>
+      }
+      }
+    </section>
+  </p-dialog>
+}

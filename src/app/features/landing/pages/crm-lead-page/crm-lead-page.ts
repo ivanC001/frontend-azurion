@@ -39,6 +39,7 @@ export class CrmLeadPage implements OnInit {
       || DEFAULT_LANDING_TENANT_RUC,
     catalogoItemId: this.parseNumberParam('catalogoItemId') || DEFAULT_LANDING_CATALOGO_ITEM_ID,
     catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || DEFAULT_LANDING_CATALOGO_TOKEN,
+    landingKey: this.route.snapshot.queryParamMap.get('landingKey') || '',
     tipoInteres: this.route.snapshot.queryParamMap.get('tipoInteres') || 'PRODUCTO',
     interesPrincipal: this.route.snapshot.queryParamMap.get('interes') || '',
     presupuestoEstimado: this.parseNumberParam('precio') || this.parseNumberParam('presupuesto') || 0,
@@ -116,8 +117,8 @@ export class CrmLeadPage implements OnInit {
   protected submit(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    if (!this.form.tenantId.trim() || !this.form.nombre.trim()) {
-      this.errorMessage.set('Completa nombre para registrar el lead.');
+    if (!this.form.tenantId.trim() || !this.form.nombre.trim() || !this.form.correo.trim() || !this.form.telefono.trim() || !this.campaignLabel.trim()) {
+      this.errorMessage.set('Completa tenant, nombre, correo, telefono y campania para registrar el lead.');
       return;
     }
     if (!this.hasValidLandingContext()) {
@@ -130,6 +131,7 @@ export class CrmLeadPage implements OnInit {
       .captureLead({
         tenantId: this.form.tenantId.trim(),
         Ruc_tenant: this.form.tenantId.trim(),
+        landingKey: this.form.landingKey.trim() || null,
         tipoPersona: this.form.tipoPersona,
         tipoDocumento: this.form.tipoDocumento || null,
         numeroDocumento: this.form.numeroDocumento.trim() || null,

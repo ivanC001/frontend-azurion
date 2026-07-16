@@ -1,0 +1,40 @@
+.crm-header-shell {
+  align-items: center;
+  background: #f8fbff;
+  border: 1px solid #dbe5f3;
+  border-radius: 12px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: .95rem 1.15rem;
+}
+
+.crm-header-shell p {
+  color: #047f75;
+  font-size: .75rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  margin: 0 0 .2rem;
+  text-transform: uppercase;
+}
+
+.crm-header-shell h1 {
+  color: #0f172a;
+  font-size: 1.35rem;
+  font-weight: 950;
+  margin: 0;
+}
+
+.crm-header-shell span {
+  color: #64748b;
+  display: block;
+  font-size: .82rem;
+  margin-top: .25rem;
+}
+
+.crm-header-shell nav {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}

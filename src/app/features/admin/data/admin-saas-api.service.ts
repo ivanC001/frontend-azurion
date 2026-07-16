@@ -961,9 +961,56 @@ export interface CotizacionPdfResponse {
   readonly base64: string;
 }
 
+export interface SendCotizacionEmailResponse {
+  readonly cotizacion: Cotizacion;
+  readonly destinatario: string;
+}
+
 export interface ConvertCotizacionVentaResponse {
   readonly cotizacion: Cotizacion;
   readonly venta: RegistrarVentaCajaResponse;
+}
+
+export interface PageResponse<T> {
+  readonly content: T[];
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+  readonly first: boolean;
+  readonly last: boolean;
+}
+
+export interface CrmPageRequest {
+  readonly query?: string | null;
+  readonly estado?: string | null;
+  readonly responsableId?: string | null;
+  readonly page?: number | null;
+  readonly size?: number | null;
+}
+
+export interface CrmProspectoPageRequest extends CrmPageRequest {
+  readonly origen?: string | null;
+  readonly canalIngreso?: string | null;
+  readonly campania?: string | null;
+  readonly fechaDesde?: string | null;
+  readonly fechaHasta?: string | null;
+}
+
+export interface CrmOportunidadPageRequest extends CrmPageRequest {
+  readonly etapaId?: number | null;
+  readonly etapa?: string | null;
+  readonly cierreDesde?: string | null;
+  readonly cierreHasta?: string | null;
+}
+
+export interface CrmActividadPageRequest extends CrmPageRequest {
+  readonly tipoActividad?: string | null;
+  readonly usuarioId?: string | null;
+  readonly prospectoId?: number | null;
+  readonly oportunidadId?: number | null;
+  readonly fechaDesde?: string | null;
+  readonly fechaHasta?: string | null;
 }
 
 export interface CrmProspecto {
@@ -981,6 +1028,7 @@ export interface CrmProspecto {
   readonly canalIngreso?: string | null;
   readonly campania?: string | null;
   readonly landingUrl?: string | null;
+  readonly landingKey?: string | null;
   readonly mensaje?: string | null;
   readonly tipoInteres?: string | null;
   readonly interesPrincipal?: string | null;
@@ -988,6 +1036,7 @@ export interface CrmProspecto {
   readonly presupuestoEstimado?: number | null;
   readonly fechaInteres?: string | null;
   readonly catalogoItemId?: number | null;
+  readonly productoPendiente?: boolean | null;
   readonly metadataJson?: string | null;
   readonly estado: string;
   readonly nivelInteres?: string | null;
@@ -1328,6 +1377,26 @@ export interface UpdateCrmCanalTokenConfigRequest {
   readonly phoneNumberId?: string | null;
   readonly activo?: boolean | null;
   readonly metadataJson?: string | null;
+}
+
+export interface CrmCurrencyConfig {
+  readonly id?: number | null;
+  readonly moneda: 'USD' | 'EUR' | string;
+  readonly nombre: string;
+  readonly simbolo: string;
+  readonly tipoCambioBase: number;
+  readonly margenConversionPorcentaje: number;
+  readonly tipoCambioVenta: number;
+  readonly activo: boolean;
+}
+
+export interface UpdateCrmCurrencyConfigRequest {
+  readonly moneda: string;
+  readonly nombre?: string | null;
+  readonly simbolo?: string | null;
+  readonly tipoCambioBase?: number | null;
+  readonly margenConversionPorcentaje?: number | null;
+  readonly activo?: boolean | null;
 }
 
 export interface GenerarCotizacionDesdeOportunidadRequest extends CreateCotizacionRequest {
@@ -2267,6 +2336,18 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  sendCotizacionEmail(id: number) {
+    return this.http
+      .post<ApiResponse<SendCotizacionEmailResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/cotizaciones/${id}/enviar-correo`),
+        null,
+        {
+          headers: this.session.apiHeaders(),
+        },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   convertCotizacionVenta(id: number, request: ConvertCotizacionVentaRequest) {
     return this.http
       .post<
@@ -2300,6 +2381,22 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmCurrencyConfig() {
+    return this.http
+      .get<ApiResponse<CrmCurrencyConfig[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/monedas'), {
+        headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  saveCrmCurrencyConfig(request: UpdateCrmCurrencyConfigRequest) {
+    return this.http
+      .put<ApiResponse<CrmCurrencyConfig>>(this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/monedas'), request, {
+        headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
   createCrmCatalogoItem(request: CreateCrmCatalogoItemRequest) {
     return this.http
       .post<ApiResponse<CrmCatalogoItem>>(this.apiUrl.url('saasCore', '/v1/saas/crm/catalogo'), request, {
@@ -2320,6 +2417,15 @@ export class AdminSaasApiService {
     return this.http
       .get<ApiResponse<CrmProspecto[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos'), {
         headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmProspectosPage(request: CrmProspectoPageRequest = {}) {
+    return this.http
+      .get<ApiResponse<PageResponse<CrmProspecto>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/page'), {
+        headers: this.session.apiHeaders(),
+        params: this.buildQueryParams(request),
       })
       .pipe(map((response) => response.data));
   }
@@ -2405,6 +2511,24 @@ export class AdminSaasApiService {
     return this.http
       .get<ApiResponse<CrmOportunidad[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/oportunidades'), {
         headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmOportunidadesPage(request: CrmOportunidadPageRequest = {}) {
+    return this.http
+      .get<ApiResponse<PageResponse<CrmOportunidad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/oportunidades/page'), {
+        headers: this.session.apiHeaders(),
+        params: this.buildQueryParams(request),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmSeguimientoPagosPage(request: CrmOportunidadPageRequest = {}) {
+    return this.http
+      .get<ApiResponse<PageResponse<CrmOportunidad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/pagos/seguimiento/page'), {
+        headers: this.session.apiHeaders(),
+        params: this.buildQueryParams(request),
       })
       .pipe(map((response) => response.data));
   }
@@ -2501,6 +2625,15 @@ export class AdminSaasApiService {
     return this.http
       .get<ApiResponse<CrmActividad[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/actividades'), {
         headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmActividadesPage(request: CrmActividadPageRequest = {}) {
+    return this.http
+      .get<ApiResponse<PageResponse<CrmActividad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/actividades/page'), {
+        headers: this.session.apiHeaders(),
+        params: this.buildQueryParams(request),
       })
       .pipe(map((response) => response.data));
   }
@@ -2751,6 +2884,19 @@ export class AdminSaasApiService {
         map((response) => response.data),
         tap(() => this.invalidateCache('permisos', 'roles')),
       );
+  }
+
+  private buildQueryParams(values: object): HttpParams | undefined {
+    let params = new HttpParams();
+    Object.entries(values as Record<string, unknown>).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        params = params.set(key, String(value));
+      }
+    });
+    return params.keys().length ? params : undefined;
   }
 
   private cached<T>(

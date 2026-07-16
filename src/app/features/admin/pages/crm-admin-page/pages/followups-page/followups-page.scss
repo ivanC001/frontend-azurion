@@ -1,0 +1,39 @@
+.crm-feature-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.followup-table-footer {
+  align-items: center;
+  border-top: 1px solid var(--az-border, #dbe5f3);
+  color: var(--az-text-soft, #64748b);
+  display: flex;
+  font-size: .76rem;
+  font-weight: 800;
+  justify-content: space-between;
+  padding: .65rem .85rem;
+}
+
+.followup-table-footer div {
+  align-items: center;
+  display: flex;
+  gap: .45rem;
+}
+
+.followup-table-footer button {
+  align-items: center;
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border, #dbe5f3);
+  border-radius: 8px;
+  color: var(--az-text, #0f172a);
+  cursor: pointer;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.followup-table-footer button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}

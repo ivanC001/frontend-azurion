@@ -1,0 +1,91 @@
+<section class="prospect-workspace">
+  <header class="prospect-titlebar">
+    <div>
+      <h2>Leads nuevos</h2>
+      <p>Entradas recientes de landing, WhatsApp, Instagram, Facebook y otros canales conectados.</p>
+    </div>
+    <div class="prospect-titlebar-actions">
+      @if (canAssign()) {
+        <button type="button" class="prospect-primary-button prospect-primary-button--distribute" [disabled]="loading()" (click)="distributeRequested.emit()">
+          <i class="pi pi-users"></i><span>Repartir leads</span>
+        </button>
+      }
+      <button type="button" class="prospect-primary-button prospect-primary-button--refresh" [disabled]="loading()" (click)="refreshRequested.emit()">
+        <i [class]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+        <span>{{ loading() ? 'Actualizando...' : 'Actualizar' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="prospect-summary-grid" aria-label="Resumen de prospectos">
+    @for (card of summaryCards(); track card.label) {
+      <article [class]="'prospect-summary-card prospect-summary-card--' + card.tone">
+        <div><span>{{ card.label }}</span><strong>{{ card.value }}</strong></div>
+        <i [class]="card.icon"></i>
+      </article>
+    }
+  </section>
+
+  @if (filtersVisible()) {
+    <section class="followup-filter-panel prospect-filter-panel" aria-label="Filtros de leads nuevos">
+      <label><span>Origen</span><p-select [options]="originOptions()" [ngModel]="filters().origin" (ngModelChange)="updateFilter('origin', $event)" appendTo="body" /></label>
+      <label><span>Campania</span><p-select [options]="campaignOptions()" [ngModel]="filters().campaign" (ngModelChange)="updateFilter('campaign', $event)" appendTo="body" /></label>
+      <label><span>Asesor</span><p-select [options]="advisorOptions()" [ngModel]="filters().advisor" (ngModelChange)="updateFilter('advisor', $event)" appendTo="body" /></label>
+      <label class="prospect-date-filter"><span>Desde</span><input type="date" [ngModel]="filters().dateFrom" (ngModelChange)="updateFilter('dateFrom', $event)" /></label>
+      <label class="prospect-date-filter"><span>Hasta</span><input type="date" [ngModel]="filters().dateTo" (ngModelChange)="updateFilter('dateTo', $event)" /></label>
+      <button type="button" class="followup-clear-button" (click)="filtersReset.emit()">Limpiar</button>
+      <button type="button" class="followup-apply-button" (click)="filtersApplied.emit()">Aplicar filtros</button>
+    </section>
+  }
+
+  <section class="prospect-table-panel">
+    <div class="prospect-filter-bar prospect-filter-bar--search">
+      <label class="prospect-search">
+        <input pInputText type="search" [ngModel]="query()" (ngModelChange)="queryChange.emit($event)" placeholder="Buscar lead por nombre, telefono o correo..." />
+        <i class="pi pi-search"></i>
+      </label>
+      <button type="button" class="prospect-filter-button" [class.active]="filtersVisible()" (click)="filtersVisibleChange.emit(!filtersVisible())"><i class="pi pi-filter"></i>Filtros</button>
+    </div>
+
+    <div class="prospect-table-scroll">
+      <table class="prospect-modern-table">
+        <thead><tr>
+          <th><input type="checkbox" aria-label="Seleccionar todos los prospectos visibles" [checked]="allPageSelected()" (change)="pageSelectionChange.emit(checkboxValue($event))" /></th>
+          <th>Nombre</th><th>Contacto</th><th>Oferta / interes</th><th>Origen</th><th>Campania</th><th>Estado</th><th>Asesor</th><th>Fecha de registro</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>
+          @for (row of rows(); track row.prospect.id) {
+            <tr>
+              <td><input type="checkbox" [attr.aria-label]="'Seleccionar ' + row.prospect.nombre" [checked]="row.selected" (change)="prospectSelectionChange.emit({ id: row.prospect.id, selected: checkboxValue($event) })" /></td>
+              <td><div class="prospect-name-cell">
+                <button type="button" [class]="'prospect-avatar prospect-avatar--' + row.avatarTone" (click)="editRequested.emit(row.prospect)">{{ row.initials }}</button>
+                <button type="button" class="prospect-identity" (click)="editRequested.emit(row.prospect)"><strong>{{ row.prospect.nombre }}</strong><span>{{ row.company }}</span></button>
+              </div></td>
+              <td><div class="prospect-contact-cell"><strong>{{ row.prospect.telefono || 'Sin telefono' }}</strong><span>{{ row.prospect.correo || 'Sin correo' }}</span></div></td>
+              <td><div class="prospect-product-cell"><strong>{{ row.productName }}</strong><span>{{ row.productType }}</span></div></td>
+              <td><div class="prospect-origin-cell"><span><i [class]="row.originIcon"></i> {{ row.originLabel }}</span><em>{{ row.originTag }}</em></div></td>
+              <td><div class="prospect-campaign-cell"><strong>{{ row.campaign }}</strong><span>{{ row.campaignDetail }}</span></div></td>
+              <td><span [class]="'prospect-modern-status prospect-modern-status--' + row.statusClass">{{ row.statusLabel }}</span></td>
+              <td><div class="prospect-advisor-cell"><span>{{ row.advisor }}</span></div></td>
+              <td><time>{{ row.registrationDate | date: 'dd/MM/yyyy' }}</time><small>{{ row.registrationTime | date: 'hh:mm a' }}</small></td>
+              <td><div class="prospect-modern-actions">
+                <button type="button" class="prospect-edit-action" title="Editar prospecto" aria-label="Editar prospecto" (click)="editRequested.emit(row.prospect)"><i class="pi pi-pencil"></i></button>
+                <button type="button" class="prospect-follow-action" title="Pasar a seguimiento" aria-label="Pasar a seguimiento" [disabled]="!row.canMoveToFollowUp || actionId() === row.prospect.id" (click)="moveToFollowUpRequested.emit(row.prospect)"><i class="pi pi-arrow-right"></i></button>
+              </div></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="10"><div class="prospect-table-empty">No hay leads nuevos que coincidan con los filtros.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="prospect-pagination">
+      <span>{{ pageRangeLabel() }}</span>
+      <div>
+        <button type="button" [disabled]="currentPage() === 0" (click)="pageChange.emit(currentPage() - 1)"><i class="pi pi-chevron-left"></i></button>
+        <strong>{{ currentPage() + 1 }} / {{ totalPages() }}</strong>
+        <button type="button" [disabled]="currentPage() >= totalPages() - 1" (click)="pageChange.emit(currentPage() + 1)"><i class="pi pi-chevron-right"></i></button>
+      </div>
+    </footer>
+  </section>
+</section>

@@ -168,7 +168,7 @@ export class LoginPage implements OnInit {
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const httpError = error as { status?: number; error?: unknown };
       if (httpError.status === 0) {
-        return `No se pudo conectar con la API. Verifica que el backend este activo en ${this.apiUrl.baseUrl('saasCore')}.`;
+        return `No se pudo conectar con el servidor. Verifica que el backend este activo en ${this.apiUrl.baseUrl('saasCore')}.`;
       }
 
       const backendMessage = this.extractBackendMessage(httpError.error);

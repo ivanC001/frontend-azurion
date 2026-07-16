@@ -1,0 +1,98 @@
+<p-dialog
+  header="Registrar negociación"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().opportunityNegotiationDialogOpen()"
+  (visibleChange)="!$event && host().opportunityNegotiationDialogOpen.set(false)"
+  appendTo="body"
+  [baseZIndex]="7800"
+  styleClass="crm-dialog crm-dialog--negotiation-modern">
+  @if (host().selectedOpportunity(); as detail) {
+    <form class="negotiation-modern-form">
+      <div class="negotiation-modern-layout">
+        <aside class="negotiation-modern-summary">
+          <header>
+            <span class="negotiation-modern-icon"><i class="pi pi-graduation-cap"></i></span>
+            <div>
+              <small>Oportunidad</small>
+              <strong>{{ detail.titulo }}</strong>
+            </div>
+          </header>
+          <dl>
+            <div>
+              <dt><i class="pi pi-user"></i> Cliente</dt>
+              <dd>{{ host().opportunityContactName(detail) }}</dd>
+            </div>
+            <div>
+              <dt><i class="pi pi-flag"></i> Etapa</dt>
+              <dd>{{ host().stageName(detail.etapa) }}</dd>
+            </div>
+          </dl>
+          <p class="negotiation-modern-status">Estado <span>Activa</span></p>
+          @if (host().negotiationFinancialSummary(); as money) {
+            <section class="negotiation-financial-card">
+              <h3>Resumen financiero</h3>
+              <div>
+                <span>Precio base <b>S/ {{ money.base | number: '1.2-2' }}</b></span>
+                <span>Descuento <b>{{ money.discountPercent | number: '1.0-2' }}%</b></span>
+                <span>Total acordado <b>S/ {{ money.agreed | number: '1.2-2' }}</b></span>
+              </div>
+            </section>
+          }
+          <p class="negotiation-modern-note">
+            <i class="pi pi-info-circle"></i>
+            <span>{{ host().negotiationForm.observacion || 'Registra el acuerdo, la objecion y las condiciones finales para continuar con el cierre.' }}</span>
+          </p>
+        </aside>
+        <section class="negotiation-modern-fields">
+          <div class="negotiation-fields-grid">
+            <label>
+              <span>Precio final <b>*</b></span>
+              <span class="negotiation-input-affix">
+                <input pInputText type="number" min="0" name="negPrecioFinal" [(ngModel)]="host().negotiationForm.precioFinal" />
+                <em>S/</em>
+              </span>
+            </label>
+            <label>
+              <span>Descuento</span>
+              <span class="negotiation-input-affix">
+                <input pInputText type="number" min="0" max="100" name="negDescuento" [(ngModel)]="host().negotiationForm.descuento" />
+                <em>%</em>
+              </span>
+            </label>
+            <label><span>Promoción</span><input pInputText name="negPromocion" [(ngModel)]="host().negotiationForm.promocion" placeholder="Promo aplicada o condición especial" /></label>
+            <label><span>Forma de pago</span><p-select name="negFormaPago" [options]="host().negotiationPaymentOptions" [(ngModel)]="host().negotiationForm.formaPago" (ngModelChange)="host().onNegotiationPaymentModeChange($event)" appendTo="body" /></label>
+            <label>
+              <span>Cuotas</span>
+              <input pInputText type="number" [min]="host().negotiationForm.formaPago === 'Credito' ? 2 : 1" step="1" name="negCuotas" [(ngModel)]="host().negotiationForm.cuotas" [disabled]="host().negotiationForm.formaPago !== 'Credito'" />
+            </label>
+            <label><span>Fecha de inicio</span><input pInputText type="date" name="negFechaInicio" [(ngModel)]="host().negotiationForm.fechaInicio" /></label>
+            <label><span>Fecha de entrega</span><input pInputText type="date" name="negFechaEntrega" [(ngModel)]="host().negotiationForm.fechaEntrega" /></label>
+            <label><span>Objeción</span><p-select name="negObjecion" [options]="host().negotiationObjectionOptions" [(ngModel)]="host().negotiationForm.objecion" appendTo="body" /></label>
+            <label><span>Resultado</span><p-select name="negResultado" [options]="host().negotiationResultOptions" [(ngModel)]="host().negotiationForm.resultado" appendTo="body" /></label>
+            <label class="negotiation-modern-check">
+              <input type="checkbox" name="negClienteConforme" [(ngModel)]="host().negotiationForm.clienteConforme" />
+              <span>Cliente dio conformidad comercial</span>
+            </label>
+            <label class="negotiation-modern-check">
+              <input type="checkbox" name="negProcedePago" [(ngModel)]="host().negotiationForm.procedePago" />
+              <span>Habilitar registro de pago</span>
+            </label>
+            <label class="negotiation-modern-observation">
+              <span>Observación</span>
+              <textarea pTextarea rows="3" maxlength="500" name="negObservacion" [(ngModel)]="host().negotiationForm.observacion" placeholder="¿Qué falta para que el cliente confirme?"></textarea>
+              <small>{{ host().negotiationForm.observacion.length }}/500</small>
+            </label>
+          </div>
+        </section>
+      </div>
+      <footer class="negotiation-modern-actions">
+        <button type="button" class="secondary-button" (click)="host().opportunityNegotiationDialogOpen.set(false)">Cancelar</button>
+        <button type="button" class="primary-button" [disabled]="host().actionId() === detail.id" (click)="host().saveOpportunityNegotiation()">
+          <i class="pi pi-save"></i> Guardar negociación
+        </button>
+      </footer>
+    </form>
+  }
+</p-dialog>

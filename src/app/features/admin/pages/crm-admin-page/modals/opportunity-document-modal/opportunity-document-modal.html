@@ -1,0 +1,37 @@
+<p-dialog
+  header="Subir documento"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().opportunityDocumentDialogOpen()"
+  (visibleChange)="!$event && host().opportunityDocumentDialogOpen.set(false)"
+  appendTo="body"
+  [baseZIndex]="7800"
+  styleClass="crm-dialog crm-dialog--form opportunity-register-dialog">
+  @if (host().selectedOpportunity(); as detail) {
+    <form class="dialog-form opportunity-register-form">
+      <section class="opportunity-register-context">
+        <i class="pi pi-file"></i>
+        <div>
+          <strong>{{ detail.titulo }}</strong>
+          <span>Contrato, propuesta, voucher, imagen, anexo o documento legal.</span>
+        </div>
+      </section>
+      <div class="dialog-grid">
+        <label>Categoria<p-select name="docCategoria" [options]="host().documentCategoryOptions" [(ngModel)]="host().documentForm.categoria" appendTo="body" /></label>
+        <label class="span-2">Nombre <span class="required">*</span><input pInputText name="docNombre" [(ngModel)]="host().documentForm.nombre" placeholder="Ej. Contrato firmado, voucher anticipo..." /></label>
+        <label class="wide-field">Archivo
+          <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp" (change)="host().onOpportunityDocumentFileSelected($event)" />
+          @if (host().documentForm.archivoNombre) {
+            <small>{{ host().documentForm.archivoNombre }}</small>
+          }
+        </label>
+        <label class="wide-field">Descripcion<textarea pTextarea rows="3" name="docDescripcion" [(ngModel)]="host().documentForm.descripcion" placeholder="Contexto breve del documento"></textarea></label>
+      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="secondary-button" (click)="host().opportunityDocumentDialogOpen.set(false)">Cancelar</button>
+        <button type="button" class="primary-button" (click)="host().saveOpportunityDocument()"><i class="pi pi-upload"></i> Guardar documento</button>
+      </footer>
+    </form>
+  }
+</p-dialog>

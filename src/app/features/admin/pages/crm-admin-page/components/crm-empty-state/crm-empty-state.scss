@@ -1,0 +1,27 @@
+.crm-empty-state {
+  align-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  display: grid;
+  gap: .35rem;
+  justify-items: center;
+  min-height: 8rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.crm-empty-state i {
+  color: #2563eb;
+  font-size: 1.35rem;
+}
+
+.crm-empty-state strong {
+  color: #0f172a;
+  font-size: .9rem;
+}
+
+.crm-empty-state p {
+  font-size: .78rem;
+  margin: 0;
+}

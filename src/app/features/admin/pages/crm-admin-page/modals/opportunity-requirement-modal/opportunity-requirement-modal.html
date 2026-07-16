@@ -1,0 +1,55 @@
+<p-dialog
+  header="Requerimiento"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().opportunityRequirementDialogOpen()"
+  (visibleChange)="!$event && host().opportunityRequirementDialogOpen.set(false)"
+  appendTo="body"
+  [baseZIndex]="7800"
+  styleClass="crm-dialog crm-dialog--form opportunity-register-dialog">
+  @if (host().selectedOpportunity(); as detail) {
+    <form class="dialog-form opportunity-register-form">
+      <section class="opportunity-register-context">
+        <span><i class="pi pi-clipboard"></i></span>
+        <div>
+          <strong>{{ detail.titulo }}</strong>
+          <p>{{ host().opportunityContactName(detail) }} · {{ host().stageName(detail.etapa) }}</p>
+        </div>
+      </section>
+      <div class="dialog-grid">
+        <label class="span-2">
+          Catalogo CRM
+          <p-select
+            name="reqCatalogoItemId"
+            [options]="host().catalogoOptions()"
+            [ngModel]="host().requirementForm.catalogoItemId"
+            (ngModelChange)="host().onRequirementCatalogChange($event)"
+            [showClear]="true"
+            appendTo="body"
+            placeholder="Selecciona una oferta del catalogo" />
+        </label>
+        <label class="span-2">
+          Curso / producto
+          <input pInputText name="reqNombre" [(ngModel)]="host().requirementForm.nombre" placeholder="Ej. Python intermedio" />
+        </label>
+        <label>
+          Cantidad
+          <input pInputText type="number" min="1" name="reqCantidad" [(ngModel)]="host().requirementForm.cantidad" />
+        </label>
+        <label>
+          Precio unitario
+          <input pInputText type="number" min="0" name="reqPrecio" [(ngModel)]="host().requirementForm.precioUnitario" />
+        </label>
+        <label class="wide-field">
+          Observacion
+          <textarea pInputTextarea rows="4" name="reqObservacion" [(ngModel)]="host().requirementForm.observacion" placeholder="Detalle, consulta o condicion comercial"></textarea>
+        </label>
+      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="soft-button" (click)="host().opportunityRequirementDialogOpen.set(false)">Cancelar</button>
+        <button type="button" class="primary-button" (click)="host().saveOpportunityRequirement()">Guardar requerimiento</button>
+      </footer>
+    </form>
+  }
+</p-dialog>

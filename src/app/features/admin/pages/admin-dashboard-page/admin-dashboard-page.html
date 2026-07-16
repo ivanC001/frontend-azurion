@@ -87,7 +87,7 @@
       </header>
 
       <div class="bars-wrap">
-        @for (bar of barSeries(); track bar.label) {
+        @for (bar of barSeries(); track $index) {
           <div class="bar-item">
             <div class="bar-rail">
               <span class="bar-fill" [style.height]="barHeight(bar)"></span>

@@ -1,0 +1,30 @@
+.crm-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.crm-menu button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #dbe5f3;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: .78rem;
+  font-weight: 850;
+  gap: .45rem;
+  min-height: 2.35rem;
+  padding: 0 .75rem;
+}
+
+.crm-menu button.is-active {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.crm-menu b {
+  color: inherit;
+  font-size: .72rem;
+}

@@ -1,11 +1,11 @@
 import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
@@ -13,6 +13,37 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { CompleteClientDataModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, PipelineStageModal, ActivityFormModal, QuoteFormModal } from './modals';
+import {
+  CrmClientCompletionAction,
+  CrmClientCompletionDraft,
+  CrmPaymentDialogSummary,
+  CrmPaymentDraft,
+  CrmPaymentInstallment,
+} from './models';
+import {
+  CrmDashboardPage,
+  CustomersPage,
+  FollowupFilterState,
+  FollowupsPage,
+  OpportunitiesPage,
+  PaymentTrackingFilterState,
+  PaymentTrackingPage,
+  PaymentTrackingRow,
+  PaymentTrackingUpcomingItem,
+  PipelinePage,
+  ProspectFilterState,
+  ProspectsPage,
+} from './pages';
+import {
+  CrmFollowupService,
+  CrmLiveUpdateService,
+  CrmLocalStorageService,
+  CrmOpportunityService,
+  CrmProspectService,
+  CrmStorageCompanyIdentity,
+} from './services';
+import { EmailSettings } from './settings/email-settings/email-settings';
 import {
   AdminSaasApiService,
   Cliente,
@@ -21,6 +52,7 @@ import {
   CrmActividad,
   CrmCanalTokenConfig,
   CrmCatalogoItem,
+  CrmCurrencyConfig,
   CrmDashboard,
   CrmEtapaPipeline,
   CrmNegociacion,
@@ -31,6 +63,7 @@ import {
   Producto,
   Sucursal,
   UpdateCrmCanalTokenConfigRequest,
+  UpdateCrmCurrencyConfigRequest,
   UsuarioTenant,
 } from '../../data/admin-saas-api.service';
 
@@ -45,7 +78,12 @@ type CrmTab =
   | 'clientes'
   | 'seguimientoPagos'
   | 'catalogo'
-  | 'administracion';
+  | 'administracion'
+  | 'administracionGeneral'
+  | 'administracionCanales'
+  | 'administracionCorreo'
+  | 'administracionMonedas'
+  | 'administracionPromociones';
 type OpportunityDetailTab =
   | 'resumen'
   | 'actividades'
@@ -60,7 +98,20 @@ type DialogType = 'prospecto' | 'oportunidad' | 'actividad' | 'cotizacion' | 'et
 type CatalogStep = 'select' | 'form';
 type OpportunityView = 'ABIERTAS' | 'COTIZADAS' | 'NEGOCIACION' | 'GANADAS';
 type CrmIntegrationField = 'nombre' | 'accessToken' | 'verifyToken' | 'webhookUrl' | 'appId' | 'phoneNumberId' | 'metadataJson';
+type CrmCurrencyField = 'nombre' | 'simbolo' | 'tipoCambioBase' | 'margenConversionPorcentaje';
+const DEFAULT_CRM_INTEGRATIONS: readonly CrmCanalTokenConfig[] = [
+  { canal: 'WEB', nombre: 'Landing web', activo: false },
+  { canal: 'WHATSAPP', nombre: 'WhatsApp Business', activo: false },
+  { canal: 'INSTAGRAM', nombre: 'Instagram', activo: false },
+  { canal: 'FACEBOOK', nombre: 'Facebook Lead Ads', activo: false },
+];
+const DEFAULT_CRM_CURRENCIES: readonly CrmCurrencyConfig[] = [
+  { moneda: 'USD', nombre: 'Dolar americano', simbolo: '$', tipoCambioBase: 3.8, margenConversionPorcentaje: 0, tipoCambioVenta: 3.8, activo: true },
+  { moneda: 'EUR', nombre: 'Euro', simbolo: '€', tipoCambioBase: 4.1, margenConversionPorcentaje: 0, tipoCambioVenta: 4.1, activo: true },
+];
 const CRM_OPPORTUNITY_FLOW_STAGES = ['INTERESADO', 'COTIZADO', 'NEGOCIACION', 'GANADO', 'PERDIDO'] as const;
+const CRM_ACTIVE_PIPELINE_STAGES = new Set<string>(['INTERESADO', 'COTIZADO', 'NEGOCIACION']);
+const CRM_INITIAL_PAGE_SIZE = 100;
 type FollowUpFilter =
   | 'TODAS'
   | 'MIS'
@@ -277,17 +328,7 @@ interface OpportunityPaymentRecord {
   createdAt: string;
 }
 
-interface OpportunityPaymentForm {
-  id: string | null;
-  fecha: string;
-  tipo: 'FACTURA' | 'BOLETA' | 'TICKET' | 'VOUCHER' | 'CUOTA' | 'OTRO';
-  monto: number;
-  estado: 'PENDIENTE' | 'PARCIAL' | 'PAGADO' | 'VENCIDO';
-  metodo: string;
-  observacion: string;
-  archivoNombre: string;
-  archivoDataUrl: string;
-}
+type OpportunityPaymentForm = CrmPaymentDraft;
 
 interface OpportunityDocumentRecord {
   id: string;
@@ -604,6 +645,7 @@ interface QuoteForm {
   oportunidadId: number | null;
   clienteId: number | null;
   sucursalId: number | null;
+  moneda: string;
   fechaVencimiento: string;
   observacion: string;
   detalles: QuoteLineForm[];
@@ -629,21 +671,54 @@ interface PromotionForm {
     RouterLink,
     FormsModule,
     ButtonModule,
-    DialogModule,
     InputTextModule,
     SelectModule,
     TableModule,
     TagModule,
     TextareaModule,
+    CrmDashboardPage,
+    CustomersPage,
+    FollowupsPage,
+    OpportunitiesPage,
+    PaymentTrackingPage,
+    PipelinePage,
+    ProspectsPage,
+    CompleteClientDataModal,
+    FollowupDetailModal,
+    OpportunityDetailModal,
+    OpportunityRequirementModal,
+    RegisterNegotiationModal,
+    OpportunityDocumentModal,
+    StageMoveReviewModal,
+    MarkLostModal,
+    CatalogProductModal,
+    ProspectFormModal,
+    CreateOpportunityModal,
+    PipelineStageModal,
+    ActivityFormModal,
+    QuoteFormModal,
+    ProspectDistributionModal,
+    RegisterPaymentModal,
+    EmailSettings,
   ],
   templateUrl: './crm-admin-page.html',
   styleUrl: './crm-admin-page.scss',
+  // The CRM stylesheet is shared during the incremental page extraction. Each page
+  // will absorb its own rules in the final styling phase.
+  encapsulation: ViewEncapsulation.None,
 })
 export class CrmAdminPage {
+  readonly modalContext = this;
   private readonly api = inject(AdminSaasApiService);
+  private readonly crmProspects = inject(CrmProspectService);
+  private readonly crmFollowups = inject(CrmFollowupService);
+  private readonly crmLiveUpdates = inject(CrmLiveUpdateService);
+  private readonly crmOpportunities = inject(CrmOpportunityService);
   private readonly auth = inject(AuthSessionService);
+  private readonly crmLocalStorage = inject(CrmLocalStorageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly prospectos = signal<CrmProspecto[]>([]);
   protected readonly oportunidades = signal<CrmOportunidad[]>([]);
@@ -656,16 +731,27 @@ export class CrmAdminPage {
   protected readonly usuarios = signal<UsuarioTenant[]>([]);
   protected readonly cotizaciones = signal<Cotizacion[]>([]);
   protected readonly promocionesCotizacion = signal<PromocionCotizacion[]>([]);
-  protected readonly crmIntegraciones = signal<CrmCanalTokenConfig[]>([]);
+  protected readonly crmIntegraciones = signal<CrmCanalTokenConfig[]>(
+    DEFAULT_CRM_INTEGRATIONS.map((integration) => ({ ...integration })),
+  );
+  protected readonly crmCurrencyConfigs = signal<CrmCurrencyConfig[]>(
+    DEFAULT_CRM_CURRENCIES.map((currency) => ({ ...currency })),
+  );
+  protected readonly selectedCrmIntegrationCanal = signal<string | null>(null);
+  protected readonly selectedCrmIntegration = computed(() => {
+    const integrations = this.crmIntegraciones();
+    return integrations.find((item) => item.canal === this.selectedCrmIntegrationCanal()) ?? integrations[0] ?? null;
+  });
   protected readonly dashboard = signal<CrmDashboard | null>(null);
   protected readonly loading = signal(false);
-  protected readonly saving = signal(false);
+  public readonly saving = signal(false);
   protected readonly integrationSaving = signal<string | null>(null);
+  protected readonly currencySaving = signal<string | null>(null);
   protected readonly activeTab = signal<CrmTab>('dashboard');
   protected readonly opportunityView = signal<OpportunityView>('ABIERTAS');
-  protected readonly activeDialog = signal<DialogType>(null);
-  protected readonly catalogDrawerOpen = signal(false);
-  protected readonly catalogStep = signal<CatalogStep>('select');
+  public readonly activeDialog = signal<DialogType>(null);
+  public readonly catalogDrawerOpen = signal(false);
+  public readonly catalogStep = signal<CatalogStep>('select');
   protected readonly query = signal('');
   protected readonly prospectEstadoFilter = signal('TODOS');
   protected readonly prospectOrigenFilter = signal('TODOS');
@@ -679,15 +765,23 @@ export class CrmAdminPage {
   protected readonly selectedProspectIds = signal<Set<number>>(new Set());
   protected readonly prospectPage = signal(0);
   protected readonly clientPage = signal(0);
+  protected readonly followUpPage = signal(0);
+  protected readonly opportunityPage = signal(0);
+  protected readonly paymentTrackingPage = signal(0);
+  protected readonly paymentTrackingStatusFilter = signal('TODOS');
+  protected readonly paymentTrackingInstallmentFilter = signal('TODOS');
+  protected readonly paymentTrackingDueFrom = signal('');
+  protected readonly paymentTrackingDueTo = signal('');
+  protected readonly paymentTrackingResponsible = signal('TODOS');
   protected readonly opportunityStageFilter = signal<string | null>(null);
   protected readonly opportunityResponsibleFilter = signal<string | null>(null);
   protected readonly opportunityStatusFilter = signal<string | null>('ABIERTA');
   protected readonly showOpportunityFilters = signal(false);
   protected readonly showClientFilters = signal(false);
   protected readonly clientOutcomeFilter = signal('TODOS');
-  protected readonly opportunityDetailOpen = signal(false);
-  protected readonly stageMoveReview = signal<StageMoveReview | null>(null);
-  protected readonly stageMoveComment = signal('');
+  public readonly opportunityDetailOpen = signal(false);
+  public readonly stageMoveReview = signal<StageMoveReview | null>(null);
+  public readonly stageMoveComment = signal('');
   protected readonly followUpFilter = signal<FollowUpFilter>('TODAS');
   protected readonly followUpContactFilter = signal('TODOS');
   protected readonly followUpResponsibleFilter = signal('TODOS');
@@ -696,69 +790,75 @@ export class CrmAdminPage {
   protected readonly followUpDateFilter = signal('TODOS');
   protected readonly showFollowUpFilters = signal(false);
   protected readonly selectedFollowUpProspectId = signal<number | null>(null);
-  protected readonly errorMessage = signal<string | null>(null);
+  public readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
-  protected readonly selectedOpportunity = signal<CrmOportunidad | null>(null);
-  protected readonly opportunityDetailTab = signal<OpportunityDetailTab>('resumen');
+  public readonly selectedOpportunity = signal<CrmOportunidad | null>(null);
+  public readonly opportunityDetailTab = signal<OpportunityDetailTab>('resumen');
   protected readonly opportunityMessageTemplates = signal<OpportunityMessageTemplate[]>(this.loadOpportunityMessageTemplates());
   protected readonly opportunityRequirementRecords = signal<OpportunityRequirementRecord[]>(this.loadOpportunityRecords<OpportunityRequirementRecord>(this.opportunityRequirementStorageKey()));
   protected readonly opportunityNegotiationRecords = signal<OpportunityNegotiationRecord[]>(this.loadOpportunityRecords<OpportunityNegotiationRecord>(this.opportunityNegotiationStorageKey()));
   protected readonly opportunityPaymentRecords = signal<OpportunityPaymentRecord[]>(this.loadOpportunityRecords<OpportunityPaymentRecord>(this.opportunityPaymentStorageKey()));
   protected readonly opportunityDocumentRecords = signal<OpportunityDocumentRecord[]>(this.loadOpportunityRecords<OpportunityDocumentRecord>(this.opportunityDocumentStorageKey()));
   protected readonly opportunityClosureRecords = signal<OpportunityClosureRecord[]>(this.loadOpportunityRecords<OpportunityClosureRecord>(this.opportunityClosureStorageKey()));
-  protected readonly opportunityRequirementDialogOpen = signal(false);
-  protected readonly opportunityNegotiationDialogOpen = signal(false);
+  public readonly opportunityRequirementDialogOpen = signal(false);
+  public readonly opportunityNegotiationDialogOpen = signal(false);
   protected readonly opportunityPaymentDialogOpen = signal(false);
-  protected readonly opportunityDocumentDialogOpen = signal(false);
-  protected readonly activityContext = signal<ActivityContext | null>(null);
-  protected readonly lossDialog = signal<LossDialogState | null>(null);
-  protected readonly lossReason = signal('');
-  protected readonly lossObservation = signal('');
-  protected readonly actionId = signal<number | null>(null);
-  protected readonly crmLocalConfig = signal<CrmLocalConfig>(this.loadCrmLocalConfig());
+  protected readonly clientCompletionDialogOpen = signal(false);
+  protected readonly clientCompletionAction = signal<CrmClientCompletionAction>('WON');
+  protected readonly clientCompletionOpportunityId = signal<number | null>(null);
+  protected readonly clientCompletionEditTarget = signal<'PROSPECT' | 'CLIENT'>('PROSPECT');
+  public readonly opportunityDocumentDialogOpen = signal(false);
+  public readonly activityContext = signal<ActivityContext | null>(null);
+  public readonly lossDialog = signal<LossDialogState | null>(null);
+  public readonly lossReason = signal('');
+  public readonly lossObservation = signal('');
+  public readonly actionId = signal<number | null>(null);
+  public readonly sendingQuoteEmailIds = signal<ReadonlySet<number>>(new Set<number>());
+  public readonly crmLocalConfig = signal<CrmLocalConfig>(this.loadCrmLocalConfig());
   protected readonly canManageCrmConfig = computed(() => this.hasCrmPermission('CRM_CONFIG_MANAGE', 'CRM_PIPELINE_MANAGE'));
   protected readonly canManageCrmCatalog = computed(() => this.hasCrmPermission('CRM_CATALOG_MANAGE', 'CRM_CONFIG_MANAGE'));
-  protected readonly canMoveCrmOpportunities = computed(() => this.hasCrmPermission('CRM_OPPORTUNITIES_STAGE', 'CRM_PIPELINE_WRITE', 'CRM_OPPORTUNITY_MOVE_STAGE'));
+  public readonly canMoveCrmOpportunities = computed(() => this.hasCrmPermission('CRM_OPPORTUNITIES_STAGE', 'CRM_PIPELINE_WRITE', 'CRM_OPPORTUNITY_MOVE_STAGE'));
   protected readonly canCloseCrmOpportunities = computed(() => this.hasCrmPermission('CRM_OPPORTUNITIES_CLOSE', 'CRM_CONVERT_SALE', 'CRM_OPPORTUNITY_MARK_WON', 'CRM_OPPORTUNITY_MARK_LOST'));
   protected readonly canCreateCrmQuotes = computed(() => this.hasCrmPermission('CRM_QUOTES_CREATE', 'CRM_CONVERT_SALE'));
   protected readonly canConvertCrmProspects = computed(() => this.hasCrmPermission('CRM_PROSPECTS_CONVERT', 'CRM_CONVERT_CLIENT'));
   protected readonly canAssignCrmProspects = computed(() => this.hasCrmPermission('CRM_ASSIGN', 'CRM_VIEW_ALL'));
   protected readonly dashboardNow = new Date();
 
-  protected prospectForm: ProspectForm = this.emptyProspectForm();
-  protected opportunityForm: OpportunityForm = this.emptyOpportunityForm();
-  protected catalogoForm: CatalogoForm = this.emptyCatalogoForm();
-  protected activityForm: ActivityForm = this.emptyActivityForm();
-  protected quoteForm: QuoteForm = this.emptyQuoteForm();
+  public prospectForm: ProspectForm = this.emptyProspectForm();
+  public opportunityForm: OpportunityForm = this.emptyOpportunityForm();
+  public catalogoForm: CatalogoForm = this.emptyCatalogoForm();
+  public activityForm: ActivityForm = this.emptyActivityForm();
+  public quoteForm: QuoteForm = this.emptyQuoteForm();
   protected promotionForm: PromotionForm = this.emptyPromotionForm();
-  protected stageForm: StageForm = this.emptyStageForm();
+  public stageForm: StageForm = this.emptyStageForm();
   protected messageTemplateForm: OpportunityMessageTemplateForm = this.emptyMessageTemplateForm();
-  protected requirementForm: OpportunityRequirementForm = this.emptyOpportunityRequirementForm();
-  protected negotiationForm: OpportunityNegotiationForm = this.emptyOpportunityNegotiationForm();
+  public requirementForm: OpportunityRequirementForm = this.emptyOpportunityRequirementForm();
+  public negotiationForm: OpportunityNegotiationForm = this.emptyOpportunityNegotiationForm();
   protected paymentForm: OpportunityPaymentForm = this.emptyOpportunityPaymentForm();
-  protected documentForm: OpportunityDocumentForm = this.emptyOpportunityDocumentForm();
+  protected clientCompletionForm: CrmClientCompletionDraft = this.emptyClientCompletionForm();
+  public documentForm: OpportunityDocumentForm = this.emptyOpportunityDocumentForm();
 
-  protected readonly tipoPersonaOptions = [
+  public readonly tipoPersonaOptions = [
     { label: 'Persona natural', value: 'NATURAL' },
     { label: 'Empresa', value: 'JURIDICA' },
   ];
 
-  protected readonly documentoOptions = [
+  public readonly documentoOptions = [
     { label: 'DNI', value: '1' },
     { label: 'RUC', value: '6' },
   ];
 
-  protected readonly origenOptions = ['WHATSAPP', 'FACEBOOK', 'INSTAGRAM', 'WEB', 'REFERIDO', 'LLAMADA', 'VISITA', 'OTRO'].map((value) => ({
+  public readonly origenOptions = ['WHATSAPP', 'FACEBOOK', 'INSTAGRAM', 'WEB', 'REFERIDO', 'LLAMADA', 'VISITA', 'OTRO'].map((value) => ({
     label: this.humanize(value),
     value,
   }));
 
-  protected readonly prospectoEstadoOptions = ['NUEVO', 'CONTACTADO', 'EN_ESPERA', 'CALIFICADO', 'PERDIDO', 'CONVERTIDO'].map((value) => ({
+  public readonly prospectoEstadoOptions = ['NUEVO', 'CONTACTADO', 'EN_ESPERA', 'CALIFICADO', 'PERDIDO', 'CONVERTIDO'].map((value) => ({
     label: this.humanize(value),
     value,
   }));
 
-  protected readonly canalIngresoOptions = [
+  public readonly canalIngresoOptions = [
     { label: 'Ingreso manual', value: 'MANUAL' },
     { label: 'Landing web', value: 'LANDING' },
     { label: 'Webhook', value: 'WEBHOOK' },
@@ -767,18 +867,18 @@ export class CrmAdminPage {
     { label: 'Importado', value: 'IMPORTADO' },
   ];
 
-  protected readonly negotiationResultOptions = [
+  public readonly negotiationResultOptions = [
     { label: 'Acuerdo final / proceder a cierre', value: 'ACEPTA' },
     { label: 'No acepta / pide ajuste', value: 'PENDIENTE' },
     { label: 'Rechaza propuesta', value: 'RECHAZA' },
   ];
 
-  protected readonly negotiationObjectionOptions = ['MEJOR_PRECIO', 'PROMOCION', 'PLAZO', 'FORMA_PAGO', 'CONDICIONES', 'OTRO'].map((value) => ({
+  public readonly negotiationObjectionOptions = ['MEJOR_PRECIO', 'PROMOCION', 'PLAZO', 'FORMA_PAGO', 'CONDICIONES', 'OTRO'].map((value) => ({
     label: this.humanize(value),
     value,
   }));
 
-  protected readonly negotiationPaymentOptions = [
+  public readonly negotiationPaymentOptions = [
     { label: 'Contado', value: 'Contado' },
     { label: 'Credito', value: 'Credito' },
   ];
@@ -793,7 +893,16 @@ export class CrmAdminPage {
     value,
   }));
 
-  protected readonly documentCategoryOptions = [
+  protected readonly paymentMethodOptions = [
+    { label: 'Efectivo', value: 'Efectivo' },
+    { label: 'Transferencia bancaria', value: 'Transferencia bancaria' },
+    { label: 'Yape', value: 'Yape' },
+    { label: 'Plin', value: 'Plin' },
+    { label: 'Tarjeta', value: 'Tarjeta' },
+    { label: 'Deposito', value: 'Deposito' },
+  ];
+
+  public readonly documentCategoryOptions = [
     { label: 'Contrato', value: 'CONTRATO' },
     { label: 'Propuesta', value: 'PROPUESTA' },
     { label: 'Pago / voucher', value: 'PAGO' },
@@ -1056,7 +1165,7 @@ export class CrmAdminPage {
     },
   ];
 
-  protected readonly catalogTypeCards = this.opportunityTypeOptions;
+  public readonly catalogTypeCards = this.opportunityTypeOptions;
 
   private readonly catalogFieldMap: Partial<Record<OpportunityType, CatalogField[]>> = {
     PRODUCTO: [
@@ -1175,7 +1284,7 @@ export class CrmAdminPage {
     ],
   };
 
-  protected readonly etapaOptions = computed<PipelineStageOption[]>(() =>
+  public readonly etapaOptions = computed<PipelineStageOption[]>(() =>
     this.normalizedOpportunityStages().length
       ? this.normalizedOpportunityStages().map((item) => ({
           label: item.nombre,
@@ -1201,7 +1310,11 @@ export class CrmAdminPage {
         })),
   );
 
-  protected readonly tipoActividadOptions = [
+  public readonly activePipelineStageOptions = computed(() =>
+    this.etapaOptions().filter((stage) => CRM_ACTIVE_PIPELINE_STAGES.has(stage.value)),
+  );
+
+  public readonly tipoActividadOptions = [
     { label: 'Llamada', value: 'LLAMADA', icon: 'pi pi-phone' },
     { label: 'Whatsapp', value: 'WHATSAPP', icon: 'pi pi-whatsapp' },
     { label: 'Correo', value: 'CORREO', icon: 'pi pi-envelope' },
@@ -1216,12 +1329,12 @@ export class CrmAdminPage {
     { label: 'Porcentaje', value: 'PORCENTAJE' },
   ];
 
-  protected readonly actividadEstadoOptions = [
+  public readonly actividadEstadoOptions = [
     { label: 'Programada / pendiente', value: 'PENDIENTE', icon: 'pi pi-clock' },
     { label: 'Realizada ahora', value: 'REALIZADA', icon: 'pi pi-circle-fill' },
   ];
 
-  protected readonly activityResultOptions = [
+  public readonly activityResultOptions = [
     { label: 'Sin resultado aun', value: '', icon: 'pi pi-users' },
     { label: 'Contactado', value: 'CONTACTADO', icon: 'pi pi-check-circle' },
     { label: 'Interes medio confirmado', value: 'INTERESADO', icon: 'pi pi-star' },
@@ -1235,13 +1348,13 @@ export class CrmAdminPage {
     { label: 'Perdido / descartar', value: 'PERDIDO', icon: 'pi pi-trash' },
   ];
 
-  protected readonly activityInterestOptions = [
+  public readonly activityInterestOptions = [
     { label: 'Bajo', value: 'BAJO', icon: 'pi pi-chart-bar' },
     { label: 'Medio', value: 'MEDIO', icon: 'pi pi-chart-line' },
     { label: 'Alto', value: 'ALTO', icon: 'pi pi-bolt' },
   ];
 
-  protected readonly activityProspectStatusOptions = [
+  public readonly activityProspectStatusOptions = [
     { label: 'Mantener estado actual', value: '', icon: 'pi pi-flag' },
     { label: 'Contactado', value: 'CONTACTADO', icon: 'pi pi-phone' },
     { label: 'En espera', value: 'EN_ESPERA', icon: 'pi pi-clock' },
@@ -1270,7 +1383,7 @@ export class CrmAdminPage {
     { label: 'Otro', value: 'OTRO' },
   ];
 
-  protected readonly opportunityTemperatureOptions = [
+  public readonly opportunityTemperatureOptions = [
     { label: 'Frio', value: 'FRIO' },
     { label: 'Medio', value: 'MEDIO' },
     { label: 'Caliente', value: 'CALIENTE' },
@@ -1353,8 +1466,8 @@ export class CrmAdminPage {
   ]);
 
   protected readonly pipelineColumns = computed(() =>
-    this.etapaOptions().map((stage) => {
-      const items = this.oportunidades().filter((item) => item.etapa === stage.value && !this.isSaleClosed(item));
+    this.activePipelineStageOptions().map((stage) => {
+      const items = this.oportunidades().filter((item) => item.etapa === stage.value && this.isActiveOpportunity(item));
       return {
         ...stage,
         items,
@@ -1401,9 +1514,10 @@ export class CrmAdminPage {
     ),
   );
 
-  protected readonly pipelineConversionRate = computed(() =>
-    this.toRate(this.wonOpportunities().length, Math.max(this.pipelineBoardCount(), 1)),
-  );
+  protected readonly pipelineConversionRate = computed(() => {
+    const closedCount = this.oportunidades().filter((item) => ['GANADA', 'PERDIDA'].includes(item.estado)).length;
+    return this.toRate(this.wonOpportunities().length, Math.max(closedCount, 1));
+  });
 
   protected readonly pipelineSummaryCards = computed(() => [
     {
@@ -1734,8 +1848,33 @@ export class CrmAdminPage {
       },
       administracion: {
         eyebrow: 'Administracion CRM',
-        title: 'Panel administrativo',
-        description: 'Configura etapas, roles, permisos y reglas de trabajo del CRM.',
+        title: 'Configuracion general',
+        description: 'Ajusta reglas operativas del CRM, etapas, roles y parametros base.',
+      },
+      administracionGeneral: {
+        eyebrow: 'Configuracion CRM',
+        title: 'Configuracion general',
+        description: 'Ajusta reglas operativas del CRM, etapas, roles y parametros base.',
+      },
+      administracionCanales: {
+        eyebrow: 'Captacion e integraciones',
+        title: 'Canales de entrada',
+        description: 'Configura landing web, WhatsApp, Instagram y Facebook para recibir leads.',
+      },
+      administracionCorreo: {
+        eyebrow: 'Comunicacion CRM',
+        title: 'Correo saliente',
+        description: 'Configura el remitente y el SMTP del tenant para enviar mensajes desde CRM.',
+      },
+      administracionMonedas: {
+        eyebrow: 'Finanzas CRM',
+        title: 'Monedas y conversion',
+        description: 'Configura dolar, euro y margen aplicado al tipo de cambio comercial.',
+      },
+      administracionPromociones: {
+        eyebrow: 'Comercial CRM',
+        title: 'Promociones',
+        description: 'Administra descuentos y campanas que el equipo puede aplicar en cotizaciones.',
       },
     };
     return meta[this.activeTab()];
@@ -2126,6 +2265,37 @@ export class CrmAdminPage {
     return this.filteredProspectTable().slice(start, start + this.prospectPageSize);
   });
 
+  protected readonly prospectPageRows = computed(() =>
+    this.pagedProspectTable().map((item, index) => ({
+      prospect: item,
+      avatarTone: this.prospectAvatarTone(index),
+      initials: this.prospectInitials(item),
+      company: this.prospectCompanyLabel(item),
+      productName: this.prospectProductName(item),
+      productType: this.prospectProductType(item),
+      originIcon: this.prospectOriginIcon(item),
+      originLabel: this.prospectOriginLabel(item),
+      originTag: this.prospectOriginTag(item),
+      campaign: this.prospectCampaignLabel(item),
+      campaignDetail: item.mensaje || item.interesDetalle || 'Sin detalle',
+      statusLabel: this.humanize(item.estado),
+      statusClass: this.prospectStatusClass(item.estado),
+      advisor: this.responsibleName(item.responsableId),
+      registrationDate: item.createdAt || item.fechaInteres || item.updatedAt || null,
+      registrationTime: item.createdAt || item.updatedAt || null,
+      selected: this.isProspectSelected(item.id),
+      canMoveToFollowUp: this.prospectCanMoveToFollowUp(item),
+    })),
+  );
+
+  protected readonly prospectFilterState = computed<ProspectFilterState>(() => ({
+    origin: this.prospectOrigenFilter(),
+    campaign: this.prospectCampaniaFilter(),
+    advisor: this.prospectAsesorFilter(),
+    dateFrom: this.prospectDateFrom(),
+    dateTo: this.prospectDateTo(),
+  }));
+
   protected readonly prospectTotalPages = computed(() =>
     Math.max(1, Math.ceil(this.filteredProspectTable().length / this.prospectPageSize)),
   );
@@ -2163,6 +2333,8 @@ export class CrmAdminPage {
     const end = Math.min(start + this.clientPageSize - 1, total);
     return `${start}-${end} de ${total}`;
   });
+
+  protected readonly crmLargeListPageSize = 20;
 
   protected readonly prospectMetricCards = computed<ProspectMetricCard[]>(() => {
     const prospects = this.prospectos();
@@ -2288,7 +2460,7 @@ export class CrmAdminPage {
     return `conic-gradient(${stops})`;
   });
 
-  protected readonly selectedOpportunityQuotes = computed(() => {
+  public readonly selectedOpportunityQuotes = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2298,9 +2470,9 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(b.fechaEmision || '') - Date.parse(a.fechaEmision || '') || Number(b.id) - Number(a.id));
   });
 
-  protected readonly selectedOpportunityCurrentQuote = computed(() => this.selectedOpportunityQuotes()[0] ?? null);
+  public readonly selectedOpportunityCurrentQuote = computed(() => this.selectedOpportunityQuotes()[0] ?? null);
 
-  protected readonly selectedOpportunityRequirements = computed(() => {
+  public readonly selectedOpportunityRequirements = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2309,7 +2481,7 @@ export class CrmAdminPage {
     return saved.length ? saved : [this.defaultRequirementForOpportunity(opportunity)];
   });
 
-  protected readonly selectedOpportunityNegotiations = computed(() => {
+  public readonly selectedOpportunityNegotiations = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2329,7 +2501,7 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0] ?? null;
   }
 
-  protected negotiationQuoteDecision(quote: Cotizacion): {
+  public negotiationQuoteDecision(quote: Cotizacion): {
     label: string;
     tone: 'accepted' | 'adjustment' | 'rejected' | 'waiting';
   } {
@@ -2360,7 +2532,7 @@ export class CrmAdminPage {
     return { label: 'Esperando respuesta', tone: 'waiting' };
   }
 
-  protected readonly selectedOpportunityPayments = computed(() => {
+  public readonly selectedOpportunityPayments = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2370,7 +2542,7 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(b.fecha || b.createdAt) - Date.parse(a.fecha || a.createdAt));
   });
 
-  protected readonly selectedOpportunityDocuments = computed(() => {
+  public readonly selectedOpportunityDocuments = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2380,7 +2552,7 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   });
 
-  protected readonly promotionOptions = computed(() =>
+  public readonly promotionOptions = computed(() =>
     this.promocionesCotizacion()
       .filter((item) => item.estado === 'ACTIVA')
       .map((item) => ({
@@ -2456,9 +2628,41 @@ export class CrmAdminPage {
         byId.set(item.id, item);
       }
     }
+
+    for (const item of this.oportunidades()) {
+      const prospectClientId = this.prospectForOpportunity(item)?.clienteId;
+      const isWon = item.estado === 'GANADA' || item.etapa === 'GANADO';
+      const hasLinkedClient = Boolean(item.clienteId || prospectClientId);
+      if (isWon && hasLinkedClient) {
+        byId.set(item.id, item);
+      }
+    }
+
     return Array.from(byId.values())
       .sort((a, b) => Date.parse(this.clientClosureDate(b)) - Date.parse(this.clientClosureDate(a)));
   });
+
+  protected readonly pipelinePageColumns = computed(() =>
+    this.pipelineBoardColumns().map((column) => ({
+      label: column.label,
+      value: column.value,
+      total: column.total,
+      color: this.pipelineStageColor(column.value),
+      items: column.items.map((item) => ({
+        opportunity: item,
+        title: item.titulo,
+        amount: Number(item.montoEstimado || 0),
+        company: this.opportunityCompanyLabel(item),
+        campaign: this.opportunityCampaignLabel(item),
+        origin: this.opportunityOriginLabel(item),
+        temperatureLabel: this.opportunityTemperatureLabel(item),
+        temperatureTone: this.opportunityTemperatureTone(item),
+        closingDate: item.fechaCierreEstimada || null,
+        won: item.estado === 'GANADA' || item.etapa === 'GANADO',
+        lost: item.estado === 'PERDIDA' || item.etapa === 'PERDIDO',
+      })),
+    })),
+  );
 
   protected readonly paymentFollowUpCandidates = computed(() => {
     const byId = new Map<number, CrmOportunidad>();
@@ -2498,6 +2702,22 @@ export class CrmAdminPage {
       { label: 'Cuentas por cobrar', value: `S/ ${this.formatCompactAmount(debt)}`, delta: String(documents), detail: 'documentos asociados' },
     ];
   });
+
+  protected readonly customerPageRows = computed(() =>
+    this.pagedClientsDashboardItems().map((item) => {
+      const contactName = this.opportunityContactName(item);
+      return {
+        opportunity: item,
+        initials: this.ownerInitials(contactName),
+        contactName,
+        purchaseLabel: `${this.quoteOfferName(item)} - Compra S/ ${Number(item.montoReal || item.montoEstimado || 0).toFixed(2)}`,
+        companyLabel: this.opportunityCompanyLabel(item),
+        documentCount: this.clientDocumentCount(item),
+        closureDate: this.clientClosureDate(item),
+        debt: this.clientDebt(item),
+      };
+    }),
+  );
 
   protected readonly clientsProductSummary = computed(() => {
     const items = this.clientsDashboardItems();
@@ -2627,7 +2847,7 @@ export class CrmAdminPage {
     ];
   });
 
-  protected readonly responsableOptions = computed(() => {
+  public readonly responsableOptions = computed(() => {
     const current = this.currentUserKey();
     const users = this.usuarios().map((user) => ({
       label: this.userDisplayName(user),
@@ -2682,7 +2902,54 @@ export class CrmAdminPage {
       .filter((item) => !status || (status === 'ABIERTA' ? this.isActiveOpportunity(item) : item.estado === status));
   });
 
-  protected readonly selectedOpportunityActivities = computed(() => {
+  protected readonly pagedOpportunityListItems = computed(() => {
+    const page = Math.min(this.opportunityPage(), Math.max(this.opportunityTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize;
+    return this.opportunityListItems().slice(start, start + this.crmLargeListPageSize);
+  });
+
+  protected readonly opportunityTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.opportunityListItems().length / this.crmLargeListPageSize)),
+  );
+
+  protected readonly opportunityPageRangeLabel = computed(() => {
+    const total = this.opportunityListItems().length;
+    if (!total) {
+      return '0 de 0';
+    }
+    const page = Math.min(this.opportunityPage(), Math.max(this.opportunityTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize + 1;
+    const end = Math.min(start + this.crmLargeListPageSize - 1, total);
+    return `${start}-${end} de ${total}`;
+  });
+
+  protected readonly opportunityPageMeta = computed(() => ({
+    page: Math.min(this.opportunityPage(), Math.max(this.opportunityTotalPages() - 1, 0)),
+    pageSize: this.crmLargeListPageSize,
+    totalItems: this.opportunityListItems().length,
+    totalPages: this.opportunityTotalPages(),
+    rangeLabel: this.opportunityPageRangeLabel(),
+  }));
+
+  protected readonly opportunityPageRows = computed(() =>
+    this.pagedOpportunityListItems().map((item) => ({
+      opportunity: item,
+      typeLabel: this.opportunityTypeLabel(item.tipoOportunidad),
+      contactName: this.opportunityContactName(item),
+      companyLabel: this.opportunityCompanyLabel(item),
+      stageName: this.stageName(item.etapa),
+      stageBackground: this.stageSoftColor(item.etapa),
+      stageColor: this.stageColor(item.etapa),
+      temperatureLabel: this.opportunityTemperatureLabel(item),
+      temperatureTone: this.opportunityTemperatureTone(item),
+      ownerInitials: this.ownerInitials(item.responsableId),
+      ownerName: this.responsibleName(item.responsableId),
+      statusLabel: this.humanize(item.estado),
+      statusTone: this.opportunityStatusTone(item),
+    })),
+  );
+
+  public readonly selectedOpportunityActivities = computed(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2692,7 +2959,7 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(this.activityEffectiveDate(b)) - Date.parse(this.activityEffectiveDate(a)));
   });
 
-  protected readonly selectedOpportunityNextActivity = computed(() =>
+  public readonly selectedOpportunityNextActivity = computed(() =>
     this.selectedOpportunityActivities()
       .filter((item) => item.estado === 'PENDIENTE')
       .sort((a, b) => Date.parse(a.fechaProgramada || '') - Date.parse(b.fechaProgramada || ''))[0] ?? null,
@@ -2700,7 +2967,7 @@ export class CrmAdminPage {
 
   protected readonly selectedOpportunityLastActivity = computed(() => this.selectedOpportunityActivities()[0] ?? null);
 
-  protected readonly selectedOpportunityHistory = computed<OpportunityHistoryEvent[]>(() => {
+  public readonly selectedOpportunityHistory = computed<OpportunityHistoryEvent[]>(() => {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return [];
@@ -2770,7 +3037,7 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
   });
 
-  protected readonly opportunityDetailTabs = computed(() => {
+  public readonly opportunityDetailTabs = computed(() => {
     const opportunity = this.selectedOpportunity();
     const negotiationTabs = opportunity && this.hasNegotiationContext(opportunity)
       ? [{ tab: 'negociacion' as OpportunityDetailTab, label: 'Negociacion', icon: 'pi pi-handshake', count: this.selectedOpportunityNegotiations().length }]
@@ -3176,6 +3443,79 @@ export class CrmAdminPage {
       );
   });
 
+  protected readonly followupFilterState = computed<FollowupFilterState>(() => ({
+    contact: this.followUpContactFilter(),
+    responsible: this.followUpResponsibleFilter(),
+    origin: this.followUpOriginFilter(),
+    interest: this.followUpInterestFilter(),
+    date: this.followUpDateFilter(),
+  }));
+
+  protected readonly pagedCommercialInbox = computed(() => {
+    const page = Math.min(this.followUpPage(), Math.max(this.followUpTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize;
+    return this.filteredCommercialInbox().slice(start, start + this.crmLargeListPageSize);
+  });
+
+  protected readonly followUpTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredCommercialInbox().length / this.crmLargeListPageSize)),
+  );
+
+  protected readonly followUpPageRangeLabel = computed(() => {
+    const total = this.filteredCommercialInbox().length;
+    if (!total) {
+      return '0 de 0';
+    }
+    const page = Math.min(this.followUpPage(), Math.max(this.followUpTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize + 1;
+    const end = Math.min(start + this.crmLargeListPageSize - 1, total);
+    return `${start}-${end} de ${total}`;
+  });
+
+  protected readonly followUpPageMeta = computed(() => ({
+    page: Math.min(this.followUpPage(), Math.max(this.followUpTotalPages() - 1, 0)),
+    pageSize: this.crmLargeListPageSize,
+    totalItems: this.filteredCommercialInbox().length,
+    totalPages: this.followUpTotalPages(),
+    rangeLabel: this.followUpPageRangeLabel(),
+  }));
+
+  protected readonly followupPageRows = computed(() =>
+    this.pagedCommercialInbox().map((card) => {
+      const responsibleId = this.followUpResponsibleId(card);
+      const origin = this.followUpOrigin(card);
+      return {
+        source: card,
+        selected: this.isSelectedFollowUpCard(card),
+        avatarTone: this.prospectAvatarTone(card.prospecto.id),
+        initials: this.prospectInitials(card.prospecto),
+        contact: card.prospecto.telefono || card.prospecto.correo || 'Sin telefono/correo',
+        originLabel: this.humanize(origin),
+        originTone: origin.toLowerCase(),
+        offer: card.prospecto.interesPrincipal || card.oportunidad?.titulo || this.opportunityTypeLabel(card.prospecto.tipoInteres),
+        contactState: this.followUpContactLabel(card),
+        contactTone: this.followUpContactTone(card),
+        ownerInitials: this.ownerInitials(responsibleId),
+        ownerName: this.responsibleName(responsibleId),
+        proofLabel: this.followUpContactProofLabel(card),
+        proofTone: this.followUpContactProofTone(card),
+        temperatureLabel: this.qualificationTemperatureLabel(card.qualification.temperatura),
+        interestScore: this.followUpInterestScore(card),
+        lastActivityTitle: this.followUpLastActivityTitle(card),
+        lastActivityMeta: this.followUpLastActivityMeta(card),
+        lastActivityTone: card.lastActivity ? this.followUpActivityTone(card.lastActivity) : 'neutral',
+        lastActivityIcon: card.lastActivity ? this.followUpActivityIcon(card.lastActivity.tipoActividad) : 'pi pi-minus',
+        nextAction: this.followUpNextAction(card),
+        nextActionDate: this.followUpNextActionDate(card),
+        nextActionStatus: this.followUpNextActionStatus(card),
+        nextActionTone: this.followUpNextActionTone(card),
+        phoneUrl: this.phoneUrl(card.prospecto),
+        whatsappUrl: this.whatsappUrl(card.prospecto),
+        emailUrl: this.emailUrl(card.prospecto),
+      };
+    }),
+  );
+
   protected readonly followUpTimeline = computed<FollowUpTimelineEvent[]>(() =>
     [...this.actividades()]
       .sort((a, b) => Date.parse(this.activityEffectiveDate(b)) - Date.parse(this.activityEffectiveDate(a)))
@@ -3189,7 +3529,7 @@ export class CrmAdminPage {
       })),
   );
 
-  protected readonly selectedFollowUpCard = computed(() => {
+  public readonly selectedFollowUpCard = computed(() => {
     const selectedId = this.selectedFollowUpProspectId();
     if (!selectedId) {
       return null;
@@ -3208,11 +3548,11 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(this.activityEffectiveDate(b)) - Date.parse(this.activityEffectiveDate(a)));
   });
 
-  protected readonly selectedFollowUpHistory = computed(() =>
+  public readonly selectedFollowUpHistory = computed(() =>
     this.selectedFollowUpActivities().filter((item) => item.estado !== 'PENDIENTE').slice(0, 8),
   );
 
-  protected readonly selectedFollowUpUpcoming = computed(() =>
+  public readonly selectedFollowUpUpcoming = computed(() =>
     this.selectedFollowUpActivities()
       .filter((item) => item.estado === 'PENDIENTE')
       .sort((a, b) => Date.parse(a.fechaProgramada) - Date.parse(b.fechaProgramada))
@@ -3227,7 +3567,7 @@ export class CrmAdminPage {
     return this.oportunidades().filter((item) => item.prospectoId === prospectId);
   });
 
-  protected readonly prospectoOptions = computed(() =>
+  public readonly prospectoOptions = computed(() =>
     this.prospectos()
       .filter((item) => item.estado !== 'DESCARTADO')
       .map((item) => ({
@@ -3236,7 +3576,7 @@ export class CrmAdminPage {
       })),
   );
 
-  protected readonly oportunidadOptions = computed(() =>
+  public readonly oportunidadOptions = computed(() =>
     this.oportunidades()
       .filter((item) => this.isActiveOpportunity(item))
       .map((item) => ({
@@ -3245,7 +3585,7 @@ export class CrmAdminPage {
       })),
   );
 
-  protected readonly clienteOptions = computed(() =>
+  public readonly clienteOptions = computed(() =>
     this.clientes().map((item) => ({
       label: `${item.numeroDocumento} - ${item.nombre}`,
       value: item.id,
@@ -3268,7 +3608,7 @@ export class CrmAdminPage {
     })),
   );
 
-  protected readonly catalogoOptions = computed(() =>
+  public readonly catalogoOptions = computed(() =>
     this.catalogoItems()
       .filter((item) => item.estado === 'ACTIVO')
       .map((item) => ({
@@ -3278,7 +3618,7 @@ export class CrmAdminPage {
       })),
   );
 
-  protected selectedProspectCatalogItem(): CrmCatalogoItem | null {
+  public selectedProspectCatalogItem(): CrmCatalogoItem | null {
     return this.catalogoItems().find((item) => item.id === this.prospectForm.catalogoItemId) ?? null;
   }
 
@@ -3288,17 +3628,39 @@ export class CrmAdminPage {
       this.setTab(initialTab, false);
     }
     this.load();
+    this.startLiveUpdates();
+  }
+
+  private startLiveUpdates(): void {
+    const liveTabs: readonly CrmTab[] = ['captacion', 'seguimiento', 'embudo', 'oportunidades'];
+    this.crmLiveUpdates.watch(12_000, () => liveTabs.includes(this.activeTab()) && !this.loading())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((snapshot) => {
+        this.prospectos.set(snapshot.prospectos);
+        this.reconcileProspectSelection(snapshot.prospectos);
+        this.oportunidades.set(snapshot.oportunidades);
+        this.reconcileLocalOpportunityRecords(snapshot.oportunidades);
+        this.actividades.set(snapshot.actividades);
+
+        const selectedId = this.selectedOpportunity()?.id;
+        if (selectedId) {
+          const updated = snapshot.oportunidades.find((item) => Number(item.id) === Number(selectedId));
+          if (updated) {
+            this.selectedOpportunity.set(updated);
+          }
+        }
+      });
   }
 
   protected load(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
     forkJoin({
-      prospectos: this.api.listCrmProspectos(),
-      oportunidades: this.api.listCrmOportunidades(),
-      etapas: this.api.listCrmEtapas().pipe(catchError(() => of([] as CrmEtapaPipeline[]))),
+      prospectos: this.crmProspects.page({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).pipe(map((page) => page.content)),
+      oportunidades: this.crmOpportunities.page({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).pipe(map((page) => page.content)),
+      etapas: this.crmOpportunities.listStages().pipe(catchError(() => of([] as CrmEtapaPipeline[]))),
       catalogo: this.api.listCrmCatalogo().pipe(catchError(() => of([] as CrmCatalogoItem[]))),
-      actividades: this.api.listCrmActividades(),
+      actividades: this.crmFollowups.pageActivities({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).pipe(map((page) => page.content)),
       clientes: this.api.listClientes().pipe(catchError(() => of([] as Cliente[]))),
       productos: this.api.listProductos().pipe(catchError(() => of([] as Producto[]))),
       sucursales: this.api.listSucursales().pipe(catchError(() => of([] as Sucursal[]))),
@@ -3306,11 +3668,12 @@ export class CrmAdminPage {
       cotizaciones: this.api.listCotizaciones().pipe(catchError(() => of([] as Cotizacion[]))),
       promociones: this.api.listPromocionesCotizacion().pipe(catchError(() => of([] as PromocionCotizacion[]))),
       integraciones: this.api.listCrmIntegraciones().pipe(catchError(() => of([] as CrmCanalTokenConfig[]))),
+      monedas: this.api.listCrmCurrencyConfig().pipe(catchError(() => of([] as CrmCurrencyConfig[]))),
       dashboard: this.api.getCrmDashboard().pipe(catchError(() => of(null))),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, dashboard }) => {
+        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, monedas, dashboard }) => {
           this.prospectos.set(prospectos);
           this.reconcileProspectSelection(prospectos);
           this.oportunidades.set(oportunidades);
@@ -3324,7 +3687,8 @@ export class CrmAdminPage {
           this.usuarios.set(usuarios);
           this.cotizaciones.set(cotizaciones);
           this.promocionesCotizacion.set(promociones);
-          this.crmIntegraciones.set(integraciones);
+          this.crmIntegraciones.set(this.withDefaultCrmIntegrations(integraciones));
+          this.crmCurrencyConfigs.set(this.withDefaultCrmCurrencies(monedas));
           this.dashboard.set(dashboard);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -3357,9 +3721,25 @@ export class CrmAdminPage {
       clientes: '/admin/crm/clientes',
       seguimientoPagos: '/admin/crm/seguimiento-pagos',
       catalogo: '/admin/crm/productos',
-      administracion: '/admin/crm/administracion',
+      administracion: '/admin/crm/administracion/general',
+      administracionGeneral: '/admin/crm/administracion/general',
+      administracionCanales: '/admin/crm/administracion/canales',
+      administracionCorreo: '/admin/crm/administracion/correo',
+      administracionMonedas: '/admin/crm/administracion/monedas',
+      administracionPromociones: '/admin/crm/administracion/promociones',
     };
     return routes[tab];
+  }
+
+  protected isCrmConfigTab(tab: CrmTab = this.activeTab()): boolean {
+    return [
+      'administracion',
+      'administracionGeneral',
+      'administracionCanales',
+      'administracionCorreo',
+      'administracionMonedas',
+      'administracionPromociones',
+    ].includes(tab);
   }
 
   protected isOpportunityTab(tab: CrmTab = this.activeTab()): boolean {
@@ -3454,7 +3834,7 @@ export class CrmAdminPage {
       return of(null as CrmOportunidad | null);
     }
     const observation = `Avance automatico por actividad ${this.humanize(activity.tipoActividad)}: ${this.humanize(activity.resultadoContacto)}`;
-    return this.api.moverCrmOportunidadEtapa(opportunity.id, Number(target.id), observation).pipe(
+    return this.crmOpportunities.moveStage(opportunity.id, Number(target.id), observation).pipe(
       map((saved) => {
         this.upsertOpportunity(saved);
         return saved;
@@ -3580,11 +3960,15 @@ export class CrmAdminPage {
   }
 
   protected openCreateProspect(): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
     this.prospectForm = this.emptyProspectForm();
     this.activeDialog.set('prospecto');
   }
 
-  protected openEditProspect(item: CrmProspecto): void {
+  public openEditProspect(item: CrmProspecto): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
     this.prospectForm = {
       id: item.id,
       tipoPersona: item.tipoPersona || 'NATURAL',
@@ -3615,7 +3999,10 @@ export class CrmAdminPage {
     this.activeDialog.set('prospecto');
   }
 
-  protected saveProspect(): void {
+  public saveProspect(): void {
+    if (this.saving()) {
+      return;
+    }
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.prospectForm.nombre.trim()) {
@@ -3655,14 +4042,32 @@ export class CrmAdminPage {
     };
 
     this.saving.set(true);
+    const creatingManualProspect = !this.prospectForm.id && this.isManualProspect();
     const operation = this.prospectForm.id
-      ? this.api.updateCrmProspecto(this.prospectForm.id, request)
-      : this.api.createCrmProspecto(request);
-    operation.pipe(finalize(() => this.saving.set(false))).subscribe({
-      next: (saved) => {
+      ? this.crmProspects.update(this.prospectForm.id, request)
+      : this.crmProspects.create(request);
+    operation.pipe(
+      switchMap((saved) => {
+        if (!creatingManualProspect) {
+          return of({ saved, actividades: [] as CrmActividad[] });
+        }
+        return this.createInitialFollowUpActivities(saved).pipe(
+          switchMap((actividades) => this.crmProspects.update(saved.id, { estado: 'EN_ESPERA' }).pipe(
+            map((updated) => ({ saved: updated, actividades })),
+          )),
+        );
+      }),
+      finalize(() => this.saving.set(false)),
+    ).subscribe({
+      next: ({ saved, actividades }) => {
         this.upsertProspect(saved);
+        actividades.forEach((activity) => this.upsertActivity(activity));
         this.activeDialog.set(null);
-        this.successMessage.set('Prospecto guardado correctamente.');
+        this.successMessage.set(
+          creatingManualProspect
+            ? 'Prospecto manual registrado y enviado a Seguimiento con sus actividades iniciales.'
+            : 'Prospecto guardado correctamente.',
+        );
       },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
     });
@@ -3694,7 +4099,7 @@ export class CrmAdminPage {
     (existingActivities ? of([] as CrmActividad[]) : this.createInitialFollowUpActivities(item))
       .pipe(
         switchMap((actividades) =>
-          this.api.updateCrmProspecto(item.id, { estado: 'EN_ESPERA' }).pipe(
+          this.crmProspects.update(item.id, { estado: 'EN_ESPERA' }).pipe(
             map((saved) => ({ actividades, saved })),
           ),
         ),
@@ -3714,11 +4119,11 @@ export class CrmAdminPage {
       });
   }
 
-  protected isManualProspect(): boolean {
+  public isManualProspect(): boolean {
     return (this.prospectForm.canalIngreso || 'MANUAL').toUpperCase() === 'MANUAL';
   }
 
-  protected openCreateCatalogo(): void {
+  public openCreateCatalogo(): void {
     if (!this.canManageCrmCatalog()) {
       this.errorMessage.set('No tienes permisos para administrar el catalogo CRM.');
       return;
@@ -3749,7 +4154,7 @@ export class CrmAdminPage {
     this.catalogDrawerOpen.set(true);
   }
 
-  protected saveCatalogo(): void {
+  public saveCatalogo(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.canManageCrmCatalog()) {
@@ -3789,7 +4194,7 @@ export class CrmAdminPage {
     });
   }
 
-  protected onProspectCatalogChange(value: number | null): void {
+  public onProspectCatalogChange(value: number | null): void {
     this.prospectForm.catalogoItemId = value;
     const item = this.catalogoItems().find((catalogo) => catalogo.id === value);
     if (!item) {
@@ -3802,28 +4207,28 @@ export class CrmAdminPage {
     this.prospectForm.metadataJson = this.catalogSnapshot(item);
   }
 
-  protected selectCatalogType(type: OpportunityType): void {
+  public selectCatalogType(type: OpportunityType): void {
     this.catalogoForm.tipoItem = type;
     this.catalogoForm.atributos = {};
     this.catalogStep.set('form');
   }
 
-  protected backToCatalogTypeSelection(): void {
+  public backToCatalogTypeSelection(): void {
     if (this.catalogoForm.id) {
       return;
     }
     this.catalogStep.set('select');
   }
 
-  protected catalogFields(): CatalogField[] {
+  public catalogFields(): CatalogField[] {
     return this.catalogFieldMap[this.catalogoForm.tipoItem] ?? this.catalogFieldMap.OTRO ?? [];
   }
 
-  protected catalogAttribute(key: string): string | number | null {
+  public catalogAttribute(key: string): string | number | null {
     return this.catalogoForm.atributos[key] ?? null;
   }
 
-  protected setCatalogAttribute(field: CatalogField, value: string | number | null): void {
+  public setCatalogAttribute(field: CatalogField, value: string | number | null): void {
     const normalized = field.type === 'number' ? Number(value || 0) || null : String(value ?? '').trim();
     this.catalogoForm.atributos = {
       ...this.catalogoForm.atributos,
@@ -3831,7 +4236,7 @@ export class CrmAdminPage {
     };
   }
 
-  protected catalogNamePlaceholder(): string {
+  public catalogNamePlaceholder(): string {
     const examples: Partial<Record<OpportunityType, string>> = {
       CURSO: 'Ej. Curso Excel avanzado',
       VEHICULO: 'Ej. Toyota Hilux 2021',
@@ -3844,7 +4249,7 @@ export class CrmAdminPage {
     return examples[this.catalogoForm.tipoItem] || 'Ej. Oferta comercial para landing';
   }
 
-  protected catalogDescriptionPlaceholder(): string {
+  public catalogDescriptionPlaceholder(): string {
     return `Resumen para ventas: ${this.opportunityTypeMeta(this.catalogoForm.tipoItem).secondaryLabel.toLowerCase()}`;
   }
 
@@ -3859,7 +4264,7 @@ export class CrmAdminPage {
     return `/crm-lead?${params.toString()}`;
   }
 
-  protected onOpportunityCatalogChange(value: number | null): void {
+  public onOpportunityCatalogChange(value: number | null): void {
     this.opportunityForm.catalogoItemId = value;
     const item = this.catalogoItems().find((catalogo) => catalogo.id === value);
     if (!item) {
@@ -3901,7 +4306,7 @@ export class CrmAdminPage {
     this.successMessage.set(message);
   }
 
-  protected onOpportunityProspectChange(value: number | null): void {
+  public onOpportunityProspectChange(value: number | null): void {
     this.opportunityForm.prospectoId = value;
     if (value) {
       this.opportunityForm.clienteId = null;
@@ -3912,14 +4317,14 @@ export class CrmAdminPage {
     }
   }
 
-  protected onOpportunityClientChange(value: number | null): void {
+  public onOpportunityClientChange(value: number | null): void {
     this.opportunityForm.clienteId = value;
     if (value) {
       this.opportunityForm.prospectoId = null;
     }
   }
 
-  protected opportunityTargetLabel(): string {
+  public opportunityTargetLabel(): string {
     if (this.opportunityForm.prospectoId) {
       return 'Prospecto nuevo';
     }
@@ -3941,7 +4346,7 @@ export class CrmAdminPage {
     return this.catalogoItems().find((item) => item.id === this.opportunityForm.catalogoItemId) ?? null;
   }
 
-  protected opportunityPersonName(): string {
+  public opportunityPersonName(): string {
     const prospecto = this.selectedOpportunityProspect();
     if (prospecto) {
       return prospecto.nombre || prospecto.razonSocial || 'Prospecto sin nombre';
@@ -3950,7 +4355,7 @@ export class CrmAdminPage {
     return cliente?.nombre || 'Cliente no seleccionado';
   }
 
-  protected opportunityPersonDetail(): string {
+  public opportunityPersonDetail(): string {
     const prospecto = this.selectedOpportunityProspect();
     if (prospecto) {
       return [
@@ -3963,7 +4368,7 @@ export class CrmAdminPage {
     return cliente ? `${cliente.tipoDocumento || 'Doc.'} ${cliente.numeroDocumento || ''}`.trim() : 'Selecciona un prospecto o cliente.';
   }
 
-  protected opportunityInterestLabel(): string {
+  public opportunityInterestLabel(): string {
     const catalogo = this.selectedOpportunityCatalogItem();
     if (catalogo) {
       return catalogo.nombre;
@@ -3972,7 +4377,7 @@ export class CrmAdminPage {
     return prospecto?.interesPrincipal || this.opportunityForm.detallePrincipal || 'Oferta sin definir';
   }
 
-  protected opportunityInterestDetail(): string {
+  public opportunityInterestDetail(): string {
     const catalogo = this.selectedOpportunityCatalogItem();
     const prospecto = this.selectedOpportunityProspect();
     return catalogo?.descripcion || prospecto?.interesDetalle || this.opportunityForm.detalleSecundario || 'Sin detalle registrado.';
@@ -4005,11 +4410,27 @@ export class CrmAdminPage {
 
   protected crmIntegrationDescription(canal: string): string {
     return {
-      WEB: 'Token publico para landings, formularios web y UTM.',
+      WEB: 'Recepcion de leads desde formularios web y UTM.',
       WHATSAPP: 'Credenciales de WhatsApp Business para mensajes y webhooks.',
       INSTAGRAM: 'Conexion para leads y mensajes captados desde Instagram.',
       FACEBOOK: 'Configuracion para Facebook Lead Ads y formularios.',
     }[canal] ?? 'Canal externo conectado al CRM.';
+  }
+
+  protected landingLeadJsonExample(): string {
+    const ruc = this.auth.currentSession()?.empresa?.ruc || '20000000012';
+    const item = this.catalogoItems().find((catalogo) => catalogo.publicEnabled && catalogo.estado === 'ACTIVO') ?? this.catalogoItems()[0];
+    const payload = {
+      Ruc_tenant: ruc,
+      catalogoItemId: item?.id ?? 2,
+      catalogoToken: item?.publicToken || 'TOKEN_DEL_CURSO',
+      nombre: 'Juan Perez',
+      emai: 'juan@perez.com',
+      telefono: '999999999',
+      campania: 'municipios',
+      website: '',
+    };
+    return JSON.stringify(payload, null, 2);
   }
 
   protected updateCrmIntegrationField(canal: string, field: CrmIntegrationField, value: string): void {
@@ -4029,14 +4450,15 @@ export class CrmAdminPage {
       this.errorMessage.set('No tienes permisos para administrar integraciones CRM.');
       return;
     }
+    const isWeb = integration.canal === 'WEB';
     const request: UpdateCrmCanalTokenConfigRequest = {
       canal: integration.canal,
       nombre: integration.nombre?.trim() || integration.canal,
-      accessToken: integration.accessToken?.trim() || null,
-      verifyToken: integration.verifyToken?.trim() || null,
-      webhookUrl: integration.webhookUrl?.trim() || null,
-      appId: integration.appId?.trim() || null,
-      phoneNumberId: integration.phoneNumberId?.trim() || null,
+      accessToken: isWeb ? null : integration.accessToken?.trim() || null,
+      verifyToken: isWeb ? null : integration.verifyToken?.trim() || null,
+      webhookUrl: isWeb ? null : integration.webhookUrl?.trim() || null,
+      appId: isWeb ? null : integration.appId?.trim() || null,
+      phoneNumberId: isWeb ? null : integration.phoneNumberId?.trim() || null,
       activo: integration.activo,
       metadataJson: integration.metadataJson?.trim() || null,
     };
@@ -4053,7 +4475,64 @@ export class CrmAdminPage {
       });
   }
 
-  protected opportunityTypeMeta(type = this.opportunityForm.tipoOportunidad) {
+  protected updateCrmCurrencyField(moneda: string, field: CrmCurrencyField, value: string | number): void {
+    this.crmCurrencyConfigs.update((items) =>
+      items.map((item) => {
+        if (item.moneda !== moneda) {
+          return item;
+        }
+        const nextValue = field === 'tipoCambioBase' || field === 'margenConversionPorcentaje'
+          ? Number(value || 0)
+          : String(value ?? '');
+        const updated = { ...item, [field]: nextValue } as CrmCurrencyConfig;
+        return {
+          ...updated,
+          tipoCambioVenta: this.calculateCurrencySaleRate(updated.tipoCambioBase, updated.margenConversionPorcentaje),
+        };
+      }),
+    );
+  }
+
+  protected toggleCrmCurrency(moneda: string, activo: boolean): void {
+    this.crmCurrencyConfigs.update((items) =>
+      items.map((item) => item.moneda === moneda ? { ...item, activo } : item),
+    );
+  }
+
+  protected saveCrmCurrency(currency: CrmCurrencyConfig): void {
+    if (!this.canManageCrmConfig()) {
+      this.errorMessage.set('No tienes permisos para administrar monedas CRM.');
+      return;
+    }
+    const request: UpdateCrmCurrencyConfigRequest = {
+      moneda: currency.moneda,
+      nombre: currency.nombre?.trim() || currency.moneda,
+      simbolo: currency.simbolo?.trim() || currency.moneda,
+      tipoCambioBase: Number(currency.tipoCambioBase || 0),
+      margenConversionPorcentaje: Number(currency.margenConversionPorcentaje || 0),
+      activo: currency.activo,
+    };
+    this.currencySaving.set(currency.moneda);
+    this.api
+      .saveCrmCurrencyConfig(request)
+      .pipe(finalize(() => this.currencySaving.set(null)))
+      .subscribe({
+        next: (saved) => {
+          this.crmCurrencyConfigs.update((items) => this.withDefaultCrmCurrencies(
+            items.map((item) => item.moneda === saved.moneda ? saved : item),
+          ));
+          this.successMessage.set(`Moneda ${saved.moneda} guardada. Tipo final: ${saved.tipoCambioVenta}.`);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected calculateCurrencySaleRate(base: number, margin: number): number {
+    const rate = Number(base || 0) * (1 + Number(margin || 0) / 100);
+    return Math.round(rate * 1_000_000) / 1_000_000;
+  }
+
+  public opportunityTypeMeta(type = this.opportunityForm.tipoOportunidad) {
     return this.opportunityTypeOptions.find((item) => item.value === type) ?? this.opportunityTypeOptions[0];
   }
 
@@ -4062,7 +4541,7 @@ export class CrmAdminPage {
     this.activeDialog.set('etapa');
   }
 
-  protected saveStage(): void {
+  public saveStage(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.stageForm.codigo.trim() || !this.stageForm.nombre.trim()) {
@@ -4091,7 +4570,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected openEditOpportunity(item: CrmOportunidad): void {
+  public openEditOpportunity(item: CrmOportunidad): void {
     this.opportunityForm = {
       id: item.id,
       prospectoId: item.prospectoId ?? null,
@@ -4114,7 +4593,58 @@ export class CrmAdminPage {
     this.activeDialog.set('oportunidad');
   }
 
-  protected saveOpportunity(): void {
+  public opportunityContactEditLabel(item: CrmOportunidad): string {
+    return this.clientForOpportunity(item) ? 'Datos cliente' : 'Datos prospecto';
+  }
+
+  public openOpportunityContactEditor(item: CrmOportunidad): void {
+    const client = this.clientForOpportunity(item);
+    const prospect = this.prospectForOpportunity(item);
+    this.selectedOpportunity.set(item);
+    this.clientCompletionOpportunityId.set(item.id);
+    this.clientCompletionAction.set('EDIT');
+    this.errorMessage.set(null);
+
+    if (client) {
+      this.clientCompletionEditTarget.set('CLIENT');
+      const tipoPersona = this.normalizeClientDocumentType(client.tipoDocumento) === '6' ? 'JURIDICA' : 'NATURAL';
+      this.clientCompletionForm = {
+        tipoPersona,
+        tipoDocumento: this.normalizeClientDocumentType(client.tipoDocumento) || (tipoPersona === 'JURIDICA' ? '6' : '1'),
+        numeroDocumento: client.numeroDocumento || '',
+        nombre: tipoPersona === 'JURIDICA' ? '' : client.nombre || '',
+        razonSocial: tipoPersona === 'JURIDICA' ? client.nombre || '' : '',
+        nombreComercial: '',
+        telefono: client.telefono || '',
+        correo: client.email || '',
+        direccion: client.direccion || '',
+      };
+      this.clientCompletionDialogOpen.set(true);
+      return;
+    }
+
+    if (prospect) {
+      this.clientCompletionEditTarget.set('PROSPECT');
+      const tipoPersona = prospect.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
+      this.clientCompletionForm = {
+        tipoPersona,
+        tipoDocumento: this.normalizeClientDocumentType(prospect.tipoDocumento) || (tipoPersona === 'JURIDICA' ? '6' : '1'),
+        numeroDocumento: prospect.numeroDocumento || '',
+        nombre: prospect.nombre || '',
+        razonSocial: prospect.razonSocial || '',
+        nombreComercial: prospect.nombreComercial || '',
+        telefono: prospect.telefono || '',
+        correo: prospect.correo || '',
+        direccion: prospect.direccion || '',
+      };
+      this.clientCompletionDialogOpen.set(true);
+      return;
+    }
+
+    this.errorMessage.set('La oportunidad no tiene prospecto o cliente asociado para editar.');
+  }
+
+  public saveOpportunity(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.opportunityForm.titulo.trim()) {
@@ -4145,8 +4675,8 @@ export class CrmAdminPage {
 
     this.saving.set(true);
     const operation = this.opportunityForm.id
-      ? this.api.updateCrmOportunidad(this.opportunityForm.id, request)
-      : this.api.createCrmOportunidad(request);
+      ? this.crmOpportunities.update(this.opportunityForm.id, request)
+      : this.crmOpportunities.create(request);
     operation.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: (saved) => {
         this.upsertOpportunity(saved);
@@ -4155,6 +4685,194 @@ export class CrmAdminPage {
       },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
     });
+  }
+
+  private requireClientCompletion(item: CrmOportunidad, action: CrmClientCompletionAction): boolean {
+    const prospect = this.prospectForOpportunity(item);
+    if (item.clienteId || prospect?.clienteId || !prospect || this.hasCompleteClientIdentity(prospect)) {
+      return false;
+    }
+
+    const tipoPersona = prospect.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
+    this.selectedOpportunity.set(item);
+    this.clientCompletionOpportunityId.set(item.id);
+    this.clientCompletionAction.set(action);
+    this.clientCompletionForm = {
+      tipoPersona,
+      tipoDocumento: this.normalizeClientDocumentType(prospect.tipoDocumento) || (tipoPersona === 'JURIDICA' ? '6' : '1'),
+      numeroDocumento: prospect.numeroDocumento || '',
+      nombre: prospect.nombre || '',
+      razonSocial: prospect.razonSocial || '',
+      nombreComercial: prospect.nombreComercial || '',
+      telefono: prospect.telefono || '',
+      correo: prospect.correo || '',
+      direccion: prospect.direccion || '',
+    };
+    this.errorMessage.set(null);
+    this.clientCompletionDialogOpen.set(true);
+    return true;
+  }
+
+  private withDefaultCrmIntegrations(integrations: CrmCanalTokenConfig[]): CrmCanalTokenConfig[] {
+    const configuredByChannel = new Map(integrations.map((integration) => [integration.canal, integration]));
+    const standardChannels = DEFAULT_CRM_INTEGRATIONS.map((fallback) => ({
+      ...fallback,
+      ...configuredByChannel.get(fallback.canal),
+    }));
+    const customChannels = integrations.filter(
+      (integration) => !DEFAULT_CRM_INTEGRATIONS.some((fallback) => fallback.canal === integration.canal),
+    );
+    return [...standardChannels, ...customChannels];
+  }
+
+  private withDefaultCrmCurrencies(currencies: CrmCurrencyConfig[]): CrmCurrencyConfig[] {
+    const configuredByCurrency = new Map(currencies.map((currency) => [currency.moneda, currency]));
+    return DEFAULT_CRM_CURRENCIES.map((fallback) => {
+      const currency = {
+        ...fallback,
+        ...configuredByCurrency.get(fallback.moneda),
+      };
+      return {
+        ...currency,
+        tipoCambioVenta: this.calculateCurrencySaleRate(currency.tipoCambioBase, currency.margenConversionPorcentaje),
+      };
+    });
+  }
+
+  protected closeClientCompletion(): void {
+    this.clientCompletionDialogOpen.set(false);
+    this.clientCompletionOpportunityId.set(null);
+    this.clientCompletionEditTarget.set('PROSPECT');
+  }
+
+  protected clientCompletionProspectName(): string {
+    const opportunity = this.selectedOpportunity();
+    const client = opportunity ? this.clientForOpportunity(opportunity) : null;
+    if (client) {
+      return client.nombre || opportunity?.clienteNombre || 'Cliente';
+    }
+    const prospect = opportunity ? this.prospectForOpportunity(opportunity) : null;
+    return prospect?.razonSocial || prospect?.nombre || opportunity?.prospectoNombre || 'Prospecto';
+  }
+
+  protected saveClientCompletion(): void {
+    const opportunityId = this.clientCompletionOpportunityId();
+    const opportunity = this.oportunidades().find((item) => item.id === opportunityId) || this.selectedOpportunity();
+    const prospect = opportunity ? this.prospectForOpportunity(opportunity) : null;
+    const client = opportunity ? this.clientForOpportunity(opportunity) : null;
+    if (!opportunity || (!prospect && !(this.clientCompletionAction() === 'EDIT' && client))) {
+      this.errorMessage.set('No se encontro el contacto asociado a la oportunidad.');
+      return;
+    }
+
+    const form = this.clientCompletionForm;
+    const documentType = this.normalizeClientDocumentType(form.tipoDocumento);
+    const documentNumber = form.numeroDocumento.replace(/\D/g, '');
+    if (!documentType) {
+      this.errorMessage.set('Selecciona DNI o RUC para crear el cliente.');
+      return;
+    }
+    const expectedLength = documentType === '6' ? 11 : 8;
+    if (documentNumber.length !== expectedLength) {
+      this.errorMessage.set(`El ${documentType === '6' ? 'RUC' : 'DNI'} debe tener ${expectedLength} digitos.`);
+      return;
+    }
+    if (form.tipoPersona === 'JURIDICA' ? !form.razonSocial.trim() : !form.nombre.trim()) {
+      this.errorMessage.set(form.tipoPersona === 'JURIDICA' ? 'La razon social es obligatoria.' : 'El nombre completo es obligatorio.');
+      return;
+    }
+    if (!form.telefono.trim() && !form.correo.trim()) {
+      this.errorMessage.set('Registra al menos un medio de contacto: telefono o correo.');
+      return;
+    }
+    if (form.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo.trim())) {
+      this.errorMessage.set('Ingresa un correo electronico valido.');
+      return;
+    }
+
+    const continuation = this.clientCompletionAction();
+    this.saving.set(true);
+    if (continuation === 'EDIT' && this.clientCompletionEditTarget() === 'CLIENT' && client) {
+      this.api.updateCliente(client.id, {
+        tipoDocumento: documentType,
+        numeroDocumento: documentNumber,
+        nombre: (form.tipoPersona === 'JURIDICA' ? form.razonSocial : form.nombre).trim(),
+        email: form.correo.trim() || null,
+        direccion: form.direccion.trim() || null,
+        ubigeo: client.ubigeo || null,
+        telefono: form.telefono.trim() || null,
+        limiteCredito: Number(client.limiteCredito || 0),
+        diasCredito: Number(client.diasCredito || 0),
+        activo: client.activo,
+      }).pipe(finalize(() => this.saving.set(false))).subscribe({
+        next: (saved) => {
+          this.clientes.set([saved, ...this.clientes().filter((item) => item.id !== saved.id)]);
+          this.clientCompletionDialogOpen.set(false);
+          this.clientCompletionOpportunityId.set(null);
+          this.clientCompletionEditTarget.set('PROSPECT');
+          this.successMessage.set('Datos del cliente actualizados correctamente.');
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+      return;
+    }
+
+    if (!prospect) {
+      this.saving.set(false);
+      this.errorMessage.set('No se encontro el prospecto asociado a la oportunidad.');
+      return;
+    }
+
+    this.crmProspects.update(prospect.id, {
+      tipoPersona: form.tipoPersona,
+      tipoDocumento: documentType,
+      numeroDocumento: documentNumber,
+      nombre: form.nombre.trim() || form.razonSocial.trim(),
+      razonSocial: form.razonSocial.trim() || null,
+      nombreComercial: form.nombreComercial.trim() || null,
+      telefono: form.telefono.trim() || null,
+      correo: form.correo.trim() || null,
+      direccion: form.direccion.trim() || null,
+    }).pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: (saved) => {
+        this.upsertProspect(saved);
+        this.clientCompletionDialogOpen.set(false);
+        this.clientCompletionOpportunityId.set(null);
+        this.clientCompletionEditTarget.set('PROSPECT');
+        if (continuation === 'EDIT') {
+          this.successMessage.set('Datos del prospecto actualizados correctamente.');
+          return;
+        }
+        const currentOpportunity = this.oportunidades().find((item) => item.id === opportunity.id) || opportunity;
+        if (continuation === 'PAYMENT') {
+          this.openOpportunityPaymentDialog(currentOpportunity);
+        } else {
+          this.markWon(currentOpportunity);
+        }
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
+  }
+
+  private hasCompleteClientIdentity(prospect: CrmProspecto): boolean {
+    const documentType = this.normalizeClientDocumentType(prospect.tipoDocumento);
+    const documentNumber = String(prospect.numeroDocumento || '').replace(/\D/g, '');
+    const validDocument = documentType === '6' ? documentNumber.length === 11 : documentType === '1' && documentNumber.length === 8;
+    const validName = prospect.tipoPersona === 'JURIDICA'
+      ? Boolean(prospect.razonSocial?.trim() || prospect.nombreComercial?.trim() || prospect.nombre?.trim())
+      : Boolean(prospect.nombre?.trim());
+    return validDocument && validName && Boolean(prospect.telefono?.trim() || prospect.correo?.trim());
+  }
+
+  private normalizeClientDocumentType(value: string | null | undefined): string {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized === '1' || normalized === 'DNI') {
+      return '1';
+    }
+    if (normalized === '6' || normalized === 'RUC') {
+      return '6';
+    }
+    return '';
   }
 
   protected markWon(item: CrmOportunidad): void {
@@ -4170,6 +4888,9 @@ export class CrmAdminPage {
       this.errorMessage.set(plan.isCredit
         ? 'Antes de cerrar registra la primera cuota con su comprobante; las cuotas restantes se programaran automaticamente.'
         : 'Antes de cerrar registra el pago completo de contado y adjunta obligatoriamente el comprobante.');
+      return;
+    }
+    if (this.requireClientCompletion(item, 'WON')) {
       return;
     }
     this.actionId.set(item.id);
@@ -4189,7 +4910,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected hasFinalAgreement(item: CrmOportunidad): boolean {
+  public hasFinalAgreement(item: CrmOportunidad): boolean {
     return this.opportunityNegotiationRecords().some((record) =>
       record.oportunidadId === item.id &&
       (record.clienteConforme || record.estado === 'CLIENTE_CONFORME' || record.estado === 'GANADA' || record.resultado === 'ACEPTA'),
@@ -4228,7 +4949,7 @@ export class CrmAdminPage {
     );
   }
 
-  protected canCloseWon(item: CrmOportunidad): boolean {
+  public canCloseWon(item: CrmOportunidad): boolean {
     if (!this.hasFinalAgreement(item)) {
       return false;
     }
@@ -4239,7 +4960,7 @@ export class CrmAdminPage {
       : money.total > 0 && money.pending <= 0 && plan.hasPaymentProof;
   }
 
-  protected isRequiredClosurePaymentRegistered(item: CrmOportunidad): boolean {
+  public isRequiredClosurePaymentRegistered(item: CrmOportunidad): boolean {
     const money = this.opportunityFinancialSummary(item);
     const plan = this.opportunityPaymentPlan(item);
     return plan.isCredit
@@ -4247,7 +4968,7 @@ export class CrmAdminPage {
       : money.total > 0 && money.pending <= 0 && plan.hasPaymentProof;
   }
 
-  protected saleClosureChecklist(item: CrmOportunidad) {
+  public saleClosureChecklist(item: CrmOportunidad) {
     const quotes = this.cotizaciones().filter((quote) => Number(quote.crmOportunidadId) === Number(item.id));
     const hasFinalQuote = quotes.some((quote) =>
       ['ACEPTADA', 'CONVERTIDA'].includes(this.quoteStatusValue(quote)),
@@ -4274,15 +4995,15 @@ export class CrmAdminPage {
     ];
   }
 
-  protected canCloseSale(item: CrmOportunidad): boolean {
+  public canCloseSale(item: CrmOportunidad): boolean {
     return this.saleClosureChecklist(item).every((check) => check.done);
   }
 
-  protected isSaleClosed(item: CrmOportunidad): boolean {
+  public isSaleClosed(item: CrmOportunidad): boolean {
     return this.opportunityClosureRecords().some((record) => record.oportunidadId === item.id);
   }
 
-  protected closeWonSale(item: CrmOportunidad): void {
+  public closeWonSale(item: CrmOportunidad): void {
     if (!this.canCloseSale(item)) {
       this.errorMessage.set('Completa el acuerdo, cotizacion final, pago requerido, cuotas si aplica y documento adjunto antes de cerrar la venta.');
       return;
@@ -4319,7 +5040,7 @@ export class CrmAdminPage {
       return;
     }
     this.actionId.set(item.id);
-    this.api.convertirCrmProspectoCliente(item.prospectoId)
+    this.crmProspects.convertToCustomer(item.prospectoId)
       .pipe(finalize(() => this.actionId.set(null)))
       .subscribe({
         next: () => {
@@ -4371,11 +5092,11 @@ export class CrmAdminPage {
     return hasRecord || hasQuoteInNegotiation || ['NEGOCIACION', 'GANADO', 'PERDIDO'].includes(item.etapa);
   }
 
-  protected markNegotiationWon(item: CrmOportunidad): void {
+  public markNegotiationWon(item: CrmOportunidad): void {
     this.markWon(item);
   }
 
-  protected markLost(item: CrmOportunidad): void {
+  public markLost(item: CrmOportunidad): void {
     if (this.canCloseWon(item)) {
       this.errorMessage.set('La venta ya tiene acuerdo y pago confirmados. Debe marcarse como ganada.');
       return;
@@ -4397,19 +5118,19 @@ export class CrmAdminPage {
     this.lossObservation.set('');
   }
 
-  protected closeLossDialog(): void {
+  public closeLossDialog(): void {
     this.lossDialog.set(null);
     this.lossReason.set('');
     this.lossObservation.set('');
   }
 
-  protected lossReasonOptions() {
+  public lossReasonOptions() {
     return this.lossDialog()?.type === 'OPORTUNIDAD'
       ? this.opportunityLossReasonOptions
       : this.prospectLossReasonOptions;
   }
 
-  protected saveLoss(): void {
+  public saveLoss(): void {
     const context = this.lossDialog();
     const reason = this.lossReason();
     const observation = this.lossObservation().trim();
@@ -4433,7 +5154,7 @@ export class CrmAdminPage {
     }
   }
 
-  protected moveOpportunityStage(event: Event, item: CrmOportunidad, direction: -1 | 1): void {
+  public moveOpportunityStage(event: Event, item: CrmOportunidad, direction: -1 | 1): void {
     event.stopPropagation();
     const stages = this.etapaOptions().filter((stage) => stage.id);
     const currentIndex = stages.findIndex((stage) => stage.value === item.etapa);
@@ -4450,16 +5171,16 @@ export class CrmAdminPage {
     this.performOpportunityStageMove(item, target);
   }
 
-  protected closeStageMoveReview(): void {
+  public closeStageMoveReview(): void {
     this.stageMoveReview.set(null);
     this.stageMoveComment.set('');
   }
 
-  protected canContinueStageMove(review: StageMoveReview): boolean {
+  public canContinueStageMove(review: StageMoveReview): boolean {
     return review.canContinue || (review.target.value === 'PERDIDO' && !!this.stageMoveComment().trim());
   }
 
-  protected continueStageMove(): void {
+  public continueStageMove(): void {
     const review = this.stageMoveReview();
     if (!review || !this.canContinueStageMove(review)) {
       return;
@@ -4474,7 +5195,7 @@ export class CrmAdminPage {
     );
   }
 
-  protected runStageRequirementAction(action: StageRequirementAction, review: StageMoveReview): void {
+  public runStageRequirementAction(action: StageRequirementAction, review: StageMoveReview): void {
     if (!action) {
       return;
     }
@@ -4491,6 +5212,18 @@ export class CrmAdminPage {
   }
 
   private performOpportunityStageMove(item: CrmOportunidad, target: PipelineStageOption, observacion?: string): void {
+    if (target.value === 'GANADO') {
+      this.markWon(item);
+      return;
+    }
+    if (target.value === 'PERDIDO') {
+      if (observacion?.trim()) {
+        this.saveOpportunityLoss(item, observacion.trim());
+      } else {
+        this.openOpportunityLostDialog(item);
+      }
+      return;
+    }
     const targetId = Number(target.id || 0);
     if (!targetId) {
       return;
@@ -4505,7 +5238,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected openCreateActivity(source?: CrmProspecto | CrmOportunidad): void {
+  public openCreateActivity(source?: CrmProspecto | CrmOportunidad): void {
     this.activityForm = this.emptyActivityForm();
     this.activityContext.set(null);
     if (source && 'titulo' in source) {
@@ -4533,18 +5266,18 @@ export class CrmAdminPage {
     this.activeDialog.set('actividad');
   }
 
-  protected closeActivityDialog(): void {
+  public closeActivityDialog(): void {
     this.activeDialog.set(null);
     this.activityContext.set(null);
   }
 
-  protected openQuickActivity(source: CrmProspecto | CrmOportunidad | undefined, tipoActividad: string, asunto: string): void {
+  public openQuickActivity(source: CrmProspecto | CrmOportunidad | undefined, tipoActividad: string, asunto: string): void {
     this.openCreateActivity(source);
     this.activityForm.tipoActividad = tipoActividad;
     this.activityForm.asunto = asunto;
   }
 
-  protected openCompleteActivity(item: CrmActividad, prospecto?: CrmProspecto): void {
+  public openCompleteActivity(item: CrmActividad, prospecto?: CrmProspecto): void {
     const resolvedProspect = prospecto ?? this.prospectos().find((current) => current.id === item.prospectoId);
     const resolvedOpportunity = item.oportunidadId
       ? this.oportunidades().find((current) => current.id === item.oportunidadId)
@@ -4577,7 +5310,7 @@ export class CrmAdminPage {
     this.activeDialog.set('actividad');
   }
 
-  protected onActivityResultChange(value: string): void {
+  public onActivityResultChange(value: string): void {
     this.activityForm.resultadoContacto = value;
     if (value) {
       this.activityForm.estadoActividad = 'REALIZADA';
@@ -4611,7 +5344,7 @@ export class CrmAdminPage {
     this.activityForm.nivelInteres = interestByResult[value] ?? this.activityForm.nivelInteres;
   }
 
-  protected onScheduleNextToggle(): void {
+  public onScheduleNextToggle(): void {
     if (this.activityForm.programarSiguiente && !this.activityForm.siguienteAsunto.trim()) {
       this.prepareNextActivityDefaults();
     }
@@ -4619,6 +5352,7 @@ export class CrmAdminPage {
 
   protected setFollowUpFilter(filter: FollowUpFilter): void {
     this.followUpFilter.set(filter);
+    this.followUpPage.set(0);
   }
 
   protected resetProspectFilters(): void {
@@ -4654,6 +5388,12 @@ export class CrmAdminPage {
     this.selectedProspectIds.set(selected);
   }
 
+  protected setProspectSelection(id: number, checked: boolean): void {
+    const selected = new Set(this.selectedProspectIds());
+    checked ? selected.add(id) : selected.delete(id);
+    this.selectedProspectIds.set(selected);
+  }
+
   protected togglePagedProspectSelection(event: Event): void {
     const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
     const selected = new Set(this.selectedProspectIds());
@@ -4665,6 +5405,23 @@ export class CrmAdminPage {
       }
     }
     this.selectedProspectIds.set(selected);
+  }
+
+  protected setPagedProspectSelection(checked: boolean): void {
+    const selected = new Set(this.selectedProspectIds());
+    for (const item of this.pagedProspectTable()) {
+      checked ? selected.add(item.id) : selected.delete(item.id);
+    }
+    this.selectedProspectIds.set(selected);
+  }
+
+  protected updateProspectFilters(filters: ProspectFilterState): void {
+    this.prospectOrigenFilter.set(filters.origin);
+    this.prospectCampaniaFilter.set(filters.campaign);
+    this.prospectAsesorFilter.set(filters.advisor);
+    this.prospectDateFrom.set(filters.dateFrom);
+    this.prospectDateTo.set(filters.dateTo);
+    this.prospectPage.set(0);
   }
 
   protected openProspectDistributionDialog(): void {
@@ -4694,6 +5451,11 @@ export class CrmAdminPage {
 
   protected toggleDistributionSeller(id: number | string, event: Event): void {
     const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
+    this.updateDistributionSellerSelection({ id, checked });
+  }
+
+  protected updateDistributionSellerSelection(event: { id: number | string; checked: boolean }): void {
+    const { id, checked } = event;
     const key = String(id);
     const selected = new Set(this.prospectDistributionSelectedSellerIds());
     if (checked) {
@@ -4738,17 +5500,19 @@ export class CrmAdminPage {
     this.followUpOriginFilter.set('TODOS');
     this.followUpInterestFilter.set('TODOS');
     this.followUpDateFilter.set('TODOS');
+    this.followUpPage.set(0);
   }
 
   protected applyFollowUpFilters(): void {
     this.selectedFollowUpProspectId.set(null);
+    this.followUpPage.set(0);
   }
 
   protected selectFollowUpProspect(card: CommercialInboxCard): void {
     this.selectedFollowUpProspectId.set(card.prospecto.id);
   }
 
-  protected closeFollowUpDetail(): void {
+  public closeFollowUpDetail(): void {
     this.selectedFollowUpProspectId.set(null);
   }
 
@@ -4772,7 +5536,7 @@ export class CrmAdminPage {
     return 'Confirmar interes';
   }
 
-  protected openFollowUpOpportunity(card: CommercialInboxCard, event?: Event): void {
+  public openFollowUpOpportunity(card: CommercialInboxCard, event?: Event): void {
     event?.stopPropagation();
     if (card.hasActiveOpportunity && card.oportunidad) {
       this.openExistingOpportunity(card.oportunidad, 'Este prospecto ya esta en oportunidad.');
@@ -4827,7 +5591,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected activityRelativeLabel(dateValue: string | null | undefined): string {
+  public activityRelativeLabel(dateValue: string | null | undefined): string {
     const timestamp = Date.parse(dateValue || '');
     if (!Number.isFinite(timestamp)) {
       return 'Sin fecha';
@@ -4860,11 +5624,11 @@ export class CrmAdminPage {
     }
   }
 
-  protected followUpActivityIcon(type: string | null | undefined): string {
+  public followUpActivityIcon(type: string | null | undefined): string {
     return this.activityIcon(type);
   }
 
-  protected followUpActivityTone(item: CrmActividad): 'done' | 'pending' | 'overdue' | 'neutral' {
+  public followUpActivityTone(item: CrmActividad): 'done' | 'pending' | 'overdue' | 'neutral' {
     if (item.estado === 'REALIZADA') {
       return 'done';
     }
@@ -4927,12 +5691,12 @@ export class CrmAdminPage {
     return this.followUpWasContacted(card) ? 'success' : 'warning';
   }
 
-  protected activityResultText(value = this.activityForm.resultadoContacto): string {
+  public activityResultText(value = this.activityForm.resultadoContacto): string {
     const option = this.activityResultOptions.find((item) => item.value === value);
     return value ? option?.label ?? this.humanize(value) : '';
   }
 
-  protected activityTypeIcon(value = this.activityForm.tipoActividad): string {
+  public activityTypeIcon(value = this.activityForm.tipoActividad): string {
     return this.tipoActividadOptions.find((item) => item.value === value)?.icon || 'pi pi-calendar-plus';
   }
 
@@ -5140,7 +5904,7 @@ export class CrmAdminPage {
     return `Hace ${diffDays} dia(s)`;
   }
 
-  protected saveActivity(): void {
+  public saveActivity(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.activityForm.asunto.trim()) {
@@ -5191,7 +5955,7 @@ export class CrmAdminPage {
       if (!shouldProgramNext) {
         return of({ activity, nextActivity: null as CrmActividad | null });
       }
-      return this.api.createCrmActividad({
+      return this.crmFollowups.createActivity({
         prospectoId: this.activityForm.prospectoId,
         oportunidadId: this.activityForm.oportunidadId,
         clienteId: this.activityForm.clienteId,
@@ -5203,15 +5967,15 @@ export class CrmAdminPage {
       }).pipe(map((nextActivity) => ({ activity, nextActivity })));
     };
     const refreshProspect$ = (result: { activity: CrmActividad; nextActivity: CrmActividad | null }) => this.activityForm.prospectoId
-      ? this.api.getCrmProspecto(Number(this.activityForm.prospectoId)).pipe(map((prospect) => ({ ...result, prospect })))
+      ? this.crmProspects.get(Number(this.activityForm.prospectoId)).pipe(map((prospect) => ({ ...result, prospect })))
       : of({ ...result, prospect: null });
     this.saving.set(true);
     const save$ = this.activityForm.id
-      ? this.api.realizarCrmActividad(this.activityForm.id, completionRequest).pipe(
+      ? this.crmFollowups.completeActivity(this.activityForm.id, completionRequest).pipe(
         switchMap(maybeScheduleNext$),
         switchMap(refreshProspect$),
       )
-      : this.api.createCrmActividad({
+      : this.crmFollowups.createActivity({
         prospectoId: this.activityForm.prospectoId,
         oportunidadId: this.activityForm.oportunidadId,
         clienteId: this.activityForm.clienteId,
@@ -5222,7 +5986,7 @@ export class CrmAdminPage {
         usuarioId: this.activityForm.usuarioId.trim() || null,
       }).pipe(
         switchMap((created) => this.activityForm.estadoActividad === 'REALIZADA'
-          ? this.api.realizarCrmActividad(created.id, completionRequest).pipe(switchMap(maybeScheduleNext$), switchMap(refreshProspect$))
+          ? this.crmFollowups.completeActivity(created.id, completionRequest).pipe(switchMap(maybeScheduleNext$), switchMap(refreshProspect$))
           : of({ activity: created, nextActivity: null as CrmActividad | null, prospect: null })),
       );
 
@@ -5292,14 +6056,14 @@ export class CrmAdminPage {
     const pending = this.actividades().filter((activity) => activity.prospectoId === item.id && activity.estado === 'PENDIENTE');
     this.saving.set(true);
     this.actionId.set(item.id);
-    this.api.updateCrmProspecto(item.id, {
+    this.crmProspects.update(item.id, {
       estado: 'PERDIDO',
       motivoPerdida: motivo,
       observacionPerdida: `Prospecto perdido: ${motivo}`,
       observacion: `Perdido: ${motivo}`,
     }).pipe(
       switchMap((saved) => pending.length
-        ? forkJoin(pending.map((activity) => this.api.cancelarCrmActividad(activity.id, `Prospecto perdido: ${motivo}`))).pipe(
+        ? forkJoin(pending.map((activity) => this.crmFollowups.cancelActivity(activity.id, `Prospecto perdido: ${motivo}`))).pipe(
           map((activities) => ({ saved, activities })),
         )
         : of({ saved, activities: [] as CrmActividad[] })),
@@ -5322,9 +6086,9 @@ export class CrmAdminPage {
     const pending = this.actividades().filter((activity) => activity.oportunidadId === item.id && activity.estado === 'PENDIENTE');
     this.saving.set(true);
     this.actionId.set(item.id);
-    this.api.marcarCrmOportunidadPerdida(item.id, motivo).pipe(
+    this.crmOpportunities.markLost(item.id, motivo).pipe(
       switchMap((saved) => pending.length
-        ? forkJoin(pending.map((activity) => this.api.cancelarCrmActividad(activity.id, `Oportunidad perdida: ${motivo}`))).pipe(
+        ? forkJoin(pending.map((activity) => this.crmFollowups.cancelActivity(activity.id, `Oportunidad perdida: ${motivo}`))).pipe(
           map((activities) => ({ saved, activities })),
         )
         : of({ saved, activities: [] as CrmActividad[] })),
@@ -5343,7 +6107,7 @@ export class CrmAdminPage {
     });
   }
 
-  protected openQuoteDialog(item: CrmOportunidad): void {
+  public openQuoteDialog(item: CrmOportunidad): void {
     this.selectedOpportunity.set(item);
     this.quoteForm = this.emptyQuoteForm();
     this.quoteForm.oportunidadId = item.id;
@@ -5354,7 +6118,7 @@ export class CrmAdminPage {
     this.activeDialog.set('cotizacion');
   }
 
-  protected openQuoteFromRequirements(item: CrmOportunidad): void {
+  public openQuoteFromRequirements(item: CrmOportunidad): void {
     if (!this.opportunityRequirementRows(item).length) {
       this.addDefaultRequirement(item);
     }
@@ -5362,7 +6126,7 @@ export class CrmAdminPage {
     this.quoteForm.observacion = `Cotizacion por requerimientos registrados en ${item.titulo}.`;
   }
 
-  protected openQuoteAdjustmentDialog(quote: Cotizacion): void {
+  public openQuoteAdjustmentDialog(quote: Cotizacion): void {
     const opportunity = this.opportunityForQuote(quote) || this.selectedOpportunity();
     if (!opportunity) {
       this.errorMessage.set('No se encontro la oportunidad para ajustar la cotizacion.');
@@ -5395,11 +6159,11 @@ export class CrmAdminPage {
     this.refreshOpportunityNegotiations(item.id);
   }
 
-  protected closeOpportunityDetail(): void {
+  public closeOpportunityDetail(): void {
     this.opportunityDetailOpen.set(false);
   }
 
-  protected setOpportunityDetailTab(tab: OpportunityDetailTab): void {
+  public setOpportunityDetailTab(tab: OpportunityDetailTab): void {
     this.opportunityDetailTab.set(tab);
     const opportunity = this.selectedOpportunity();
     if (opportunity && ['resumen', 'cotizaciones', 'negociacion'].includes(tab)) {
@@ -5425,11 +6189,11 @@ export class CrmAdminPage {
     }
   }
 
-  protected openOpportunityActivity(item: CrmOportunidad, tipoActividad = 'LLAMADA'): void {
+  public openOpportunityActivity(item: CrmOportunidad, tipoActividad = 'LLAMADA'): void {
     this.openQuickActivity(item, tipoActividad, this.defaultOpportunityActivitySubject(item, tipoActividad));
   }
 
-  protected isInterestedOpportunity(item: CrmOportunidad): boolean {
+  public isInterestedOpportunity(item: CrmOportunidad): boolean {
     return item.etapa === 'INTERESADO' && item.estado === 'ABIERTA';
   }
 
@@ -5439,11 +6203,11 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
   }
 
-  protected requirementTotal(item: OpportunityRequirementRecord): number {
+  public requirementTotal(item: OpportunityRequirementRecord): number {
     return Math.max(0, Number(item.cantidad || 0) * Number(item.precioUnitario || 0));
   }
 
-  protected opportunityRequirementChecklist(item: CrmOportunidad) {
+  public opportunityRequirementChecklist(item: CrmOportunidad) {
     const requirements = this.selectedOpportunityRequirements();
     const quotes = this.selectedOpportunityQuotes();
     const hasContact = !!this.opportunityContactName(item) && this.opportunityContactName(item) !== 'Sin contacto';
@@ -5461,7 +6225,7 @@ export class CrmAdminPage {
     ];
   }
 
-  protected openOpportunityRequirementDialog(item: CrmOportunidad, requirement?: OpportunityRequirementRecord): void {
+  public openOpportunityRequirementDialog(item: CrmOportunidad, requirement?: OpportunityRequirementRecord): void {
     this.selectedOpportunity.set(item);
     this.requirementForm = requirement
       ? {
@@ -5476,7 +6240,7 @@ export class CrmAdminPage {
     this.opportunityRequirementDialogOpen.set(true);
   }
 
-  protected onRequirementCatalogChange(value: number | null): void {
+  public onRequirementCatalogChange(value: number | null): void {
     this.requirementForm.catalogoItemId = value;
     const item = this.catalogoItems().find((current) => current.id === value);
     if (!item) {
@@ -5487,7 +6251,7 @@ export class CrmAdminPage {
     this.requirementForm.observacion = item.descripcion || this.requirementForm.observacion;
   }
 
-  protected saveOpportunityRequirement(): void {
+  public saveOpportunityRequirement(): void {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       this.errorMessage.set('Selecciona una oportunidad para agregar requerimientos.');
@@ -5522,21 +6286,21 @@ export class CrmAdminPage {
     this.successMessage.set('Requerimiento agregado a la oportunidad.');
   }
 
-  protected deleteOpportunityRequirement(id: string): void {
+  public deleteOpportunityRequirement(id: string): void {
     const next = this.opportunityRequirementRecords().filter((item) => item.id !== id);
     this.opportunityRequirementRecords.set(next);
     this.persistOpportunityRecords(this.opportunityRequirementStorageKey(), next);
   }
 
-  protected advanceInterestedToQuoted(item: CrmOportunidad): void {
+  public advanceInterestedToQuoted(item: CrmOportunidad): void {
     this.openQuoteFromRequirements(item);
   }
 
-  protected openOpportunityPaymentActivity(item: CrmOportunidad): void {
+  public openOpportunityPaymentActivity(item: CrmOportunidad): void {
     this.openOpportunityPaymentDialog(item);
   }
 
-  protected openOpportunityNegotiationDialog(item: CrmOportunidad): void {
+  public openOpportunityNegotiationDialog(item: CrmOportunidad): void {
     this.selectedOpportunity.set(item);
     this.negotiationForm = this.emptyOpportunityNegotiationForm();
     const quote = this.selectedOpportunityCurrentQuote();
@@ -5560,7 +6324,7 @@ export class CrmAdminPage {
     this.opportunityNegotiationDialogOpen.set(true);
   }
 
-  protected negotiationFinancialSummary(): { base: number; discountPercent: number; agreed: number } {
+  public negotiationFinancialSummary(): { base: number; discountPercent: number; agreed: number } {
     const base = Math.max(0, Number(this.negotiationForm.precioOriginal || 0));
     const agreed = Math.max(0, Number(this.negotiationForm.precioFinal || 0));
     const discountPercent = base > 0
@@ -5569,14 +6333,14 @@ export class CrmAdminPage {
     return { base, discountPercent, agreed };
   }
 
-  protected onNegotiationPaymentModeChange(value: string): void {
+  public onNegotiationPaymentModeChange(value: string): void {
     this.negotiationForm.formaPago = value;
     this.negotiationForm.cuotas = value === 'Credito'
       ? Math.max(2, Number(this.negotiationForm.cuotas || 2))
       : 1;
   }
 
-  protected openOpportunityAgreementDialog(item: CrmOportunidad): void {
+  public openOpportunityAgreementDialog(item: CrmOportunidad): void {
     if (this.hasFinalAgreement(item)) {
       this.successMessage.set('El acuerdo final ya fue registrado.');
       return;
@@ -5590,7 +6354,7 @@ export class CrmAdminPage {
     this.negotiationForm.observacion = 'Acuerdo final registrado: cliente acepta condiciones finales. Pendiente registrar evidencia de cierre.';
   }
 
-  protected saveOpportunityNegotiation(): void {
+  public saveOpportunityNegotiation(): void {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       this.errorMessage.set('Selecciona una oportunidad para registrar la negociacion.');
@@ -5628,8 +6392,8 @@ export class CrmAdminPage {
       resultado: this.negotiationForm.resultado,
     };
     this.actionId.set(opportunity.id);
-    this.api.createCrmNegociacion(opportunity.id, payload).pipe(
-      switchMap((saved) => this.api.getCrmOportunidad(opportunity.id).pipe(map((fresh) => ({ saved, fresh })))),
+    this.crmOpportunities.createNegotiation(opportunity.id, payload).pipe(
+      switchMap((saved) => this.crmOpportunities.get(opportunity.id).pipe(map((fresh) => ({ saved, fresh })))),
       finalize(() => this.actionId.set(null)),
     ).subscribe({
       next: ({ saved, fresh }) => {
@@ -5647,13 +6411,16 @@ export class CrmAdminPage {
   }
 
   protected openOpportunityPaymentDialog(item: CrmOportunidad): void {
-    if (this.isRequiredClosurePaymentRegistered(item)) {
+    if (this.requireClientCompletion(item, 'PAYMENT')) {
+      return;
+    }
+    const plan = this.opportunityPaymentPlan(item);
+    if (this.isRequiredClosurePaymentRegistered(item) && plan.pendingAmount <= 0) {
       this.successMessage.set('El pago requerido y su comprobante ya fueron registrados.');
       return;
     }
     this.selectedOpportunity.set(item);
     this.paymentForm = this.emptyOpportunityPaymentForm();
-    const plan = this.opportunityPaymentPlan(item);
     const pending = this.opportunityFinancialSummary(item).pending || Number(item.montoReal || item.montoEstimado || 0);
     if (plan.isCredit) {
       this.paymentForm.tipo = 'CUOTA';
@@ -5662,7 +6429,128 @@ export class CrmAdminPage {
     } else {
       this.paymentForm.monto = pending;
     }
+    const firstPendingInstallment = this.paymentDialogInstallments(item).find((installment) => installment.selectable);
+    if (firstPendingInstallment) {
+      this.selectOpportunityPaymentInstallment(item, firstPendingInstallment.key);
+    }
     this.opportunityPaymentDialogOpen.set(true);
+  }
+
+  protected updateFollowupFilters(filters: FollowupFilterState): void {
+    this.followUpContactFilter.set(filters.contact);
+    this.followUpResponsibleFilter.set(filters.responsible);
+    this.followUpOriginFilter.set(filters.origin);
+    this.followUpInterestFilter.set(filters.interest);
+    this.followUpDateFilter.set(filters.date);
+    this.followUpPage.set(0);
+  }
+
+  protected updatePaymentTrackingFilters(filters: PaymentTrackingFilterState): void {
+    this.paymentTrackingStatusFilter.set(filters.status);
+    this.paymentTrackingInstallmentFilter.set(filters.installmentStatus);
+    this.paymentTrackingDueFrom.set(filters.dueFrom);
+    this.paymentTrackingDueTo.set(filters.dueTo);
+    this.paymentTrackingResponsible.set(filters.responsible);
+    this.paymentTrackingPage.set(0);
+  }
+
+  protected setOpportunityStageFilter(value: string | null): void {
+    this.opportunityStageFilter.set(value);
+    this.opportunityPage.set(0);
+  }
+
+  protected setOpportunityResponsibleFilter(value: string | null): void {
+    this.opportunityResponsibleFilter.set(value);
+    this.opportunityPage.set(0);
+  }
+
+  protected setOpportunityStatusFilter(value: string | null): void {
+    this.opportunityStatusFilter.set(value);
+    this.opportunityPage.set(0);
+  }
+
+  protected openClosedOpportunityList(status: 'GANADA' | 'PERDIDA'): void {
+    this.opportunityStageFilter.set(null);
+    this.opportunityStatusFilter.set(status);
+    this.opportunityPage.set(0);
+    this.setTab('oportunidades');
+  }
+
+  protected resetOpportunityFilters(): void {
+    this.opportunityStageFilter.set(null);
+    this.opportunityResponsibleFilter.set(null);
+    this.opportunityStatusFilter.set('ABIERTA');
+    this.opportunityPage.set(0);
+  }
+
+  protected updateCrmQuery(value: string): void {
+    this.query.set(value);
+    this.prospectPage.set(0);
+    this.followUpPage.set(0);
+    this.opportunityPage.set(0);
+    this.paymentTrackingPage.set(0);
+  }
+
+  protected paymentDialogInstallments(item: CrmOportunidad): CrmPaymentInstallment[] {
+    const plan = this.opportunityPaymentPlan(item);
+    const money = this.opportunityFinancialSummary(item);
+    const agreement = this.latestFinalNegotiationRecord(item);
+    const baseDate = this.toValidDate(agreement?.fechaInicio) || new Date();
+    const records = [...new Map(
+      [...plan.paidPayments, ...plan.pendingInstallments].map((payment) => [payment.id, payment]),
+    ).values()].sort((a, b) => Date.parse(a.fecha || '') - Date.parse(b.fecha || ''));
+    const installmentCount = Math.max(plan.isCredit ? plan.cuotas : 1, records.length, 1);
+    const regularAmount = Math.round((money.total / installmentCount) * 100) / 100;
+
+    return Array.from({ length: installmentCount }, (_, index): CrmPaymentInstallment => {
+      const record = records[index] || null;
+      const dueDate = record?.fecha || this.toInputDate(this.addMonths(baseDate, index));
+      const amount = record?.monto ?? (index === installmentCount - 1
+        ? Math.max(0, Math.round((money.total - regularAmount * (installmentCount - 1)) * 100) / 100)
+        : regularAmount);
+      const status = record?.estado || (this.isOverdue(dueDate) ? 'VENCIDO' : 'PENDIENTE');
+      return {
+        key: record?.id || `planned-${item.id}-${index + 1}`,
+        recordId: record && !['PAGADO'].includes(record.estado) ? record.id : null,
+        number: index + 1,
+        dueDate,
+        amount: Math.max(0, Number(amount || 0)),
+        status,
+        selectable: !['PAGADO'].includes(status),
+      };
+    });
+  }
+
+  protected paymentDialogSummary(item: CrmOportunidad): CrmPaymentDialogSummary {
+    const money = this.opportunityFinancialSummary(item);
+    const installments = this.paymentDialogInstallments(item);
+    return {
+      total: money.total,
+      paid: money.paid,
+      pending: money.pending,
+      paidInstallments: installments.filter((installment) => installment.status === 'PAGADO').length,
+      pendingInstallments: installments.filter((installment) => installment.status !== 'PAGADO').length,
+      overdueInstallments: installments.filter((installment) => installment.status === 'VENCIDO').length,
+    };
+  }
+
+  protected selectOpportunityPaymentInstallment(item: CrmOportunidad, key: string): void {
+    const installment = this.paymentDialogInstallments(item).find((candidate) => candidate.key === key);
+    if (!installment?.selectable) {
+      return;
+    }
+    const automaticObservation = /^Pago de cuota \d+ de \d+$/.test(this.paymentForm.observacion.trim());
+    this.paymentForm = {
+      ...this.paymentForm,
+      id: installment.recordId,
+      cuotaKey: installment.key,
+      tipo: 'CUOTA',
+      monto: installment.amount,
+      estado: 'PAGADO',
+      observacion: !this.paymentForm.observacion || automaticObservation
+        ? `Pago de cuota ${installment.number} de ${this.opportunityPaymentPlan(item).cuotas}`
+        : this.paymentForm.observacion,
+    };
   }
 
   protected saveOpportunityPayment(): void {
@@ -5689,6 +6577,12 @@ export class CrmAdminPage {
     }
     const currentPlan = this.opportunityPaymentPlan(opportunity);
     const paymentAmount = Number(this.paymentForm.monto || 0);
+    const selectedInstallment = this.paymentDialogInstallments(opportunity)
+      .find((installment) => installment.key === this.paymentForm.cuotaKey);
+    if (currentPlan.isCredit && selectedInstallment && paymentAmount + 0.01 < selectedInstallment.amount) {
+      this.errorMessage.set(`La cuota seleccionada requiere un pago de S/ ${selectedInstallment.amount.toFixed(2)}.`);
+      return;
+    }
     if (currentPlan.isCredit && !currentPlan.firstPaymentDone && paymentAmount + 0.01 < currentPlan.requiredInitialAmount) {
       this.errorMessage.set(`La primera cuota debe ser como minimo S/ ${currentPlan.requiredInitialAmount.toFixed(2)}.`);
       return;
@@ -5714,7 +6608,7 @@ export class CrmAdminPage {
     this.opportunityPaymentRecords.set(next);
     this.persistOpportunityRecords(this.opportunityPaymentStorageKey(), next);
     this.opportunityPaymentDialogOpen.set(false);
-    if (currentPlan.isCredit) {
+    if (currentPlan.isCredit && !currentPlan.firstPaymentDone) {
       this.scheduleRemainingInstallments(opportunity);
     }
     if (this.canCloseWon(opportunity)) {
@@ -5725,7 +6619,7 @@ export class CrmAdminPage {
     this.successMessage.set('Pago y comprobante registrados en la oportunidad.');
   }
 
-  protected deleteOpportunityPayment(id: string): void {
+  public deleteOpportunityPayment(id: string): void {
     const next = this.opportunityPaymentRecords().filter((item) => item.id !== id);
     this.opportunityPaymentRecords.set(next);
     this.persistOpportunityRecords(this.opportunityPaymentStorageKey(), next);
@@ -5738,14 +6632,14 @@ export class CrmAdminPage {
     });
   }
 
-  protected openOpportunityDocumentDialog(item: CrmOportunidad): void {
+  public openOpportunityDocumentDialog(item: CrmOportunidad): void {
     this.selectedOpportunity.set(item);
     this.documentForm = this.emptyOpportunityDocumentForm();
     this.documentForm.nombre = `Documento ${this.quoteOfferName(item)}`;
     this.opportunityDocumentDialogOpen.set(true);
   }
 
-  protected saveOpportunityDocument(): void {
+  public saveOpportunityDocument(): void {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       this.errorMessage.set('Selecciona una oportunidad para subir el documento.');
@@ -5775,13 +6669,13 @@ export class CrmAdminPage {
     this.successMessage.set('Documento agregado a la oportunidad.');
   }
 
-  protected deleteOpportunityDocument(id: string): void {
+  public deleteOpportunityDocument(id: string): void {
     const next = this.opportunityDocumentRecords().filter((item) => item.id !== id);
     this.opportunityDocumentRecords.set(next);
     this.persistOpportunityRecords(this.opportunityDocumentStorageKey(), next);
   }
 
-  protected onOpportunityDocumentFileSelected(event: Event): void {
+  public onOpportunityDocumentFileSelected(event: Event): void {
     this.readSmallFile(event, 8_000_000, (file, dataUrl) => {
       this.documentForm.archivoNombre = file.name;
       this.documentForm.archivoDataUrl = dataUrl;
@@ -5792,7 +6686,7 @@ export class CrmAdminPage {
     });
   }
 
-  protected downloadLocalFile(name: string, dataUrl: string): void {
+  public downloadLocalFile(name: string, dataUrl: string): void {
     if (!dataUrl || typeof document === 'undefined') {
       return;
     }
@@ -5802,7 +6696,7 @@ export class CrmAdminPage {
     anchor.click();
   }
 
-  protected previewLocalFile(dataUrl: string): void {
+  public previewLocalFile(dataUrl: string): void {
     if (!dataUrl || typeof window === 'undefined') {
       return;
     }
@@ -5883,7 +6777,7 @@ export class CrmAdminPage {
     }
   }
 
-  protected addQuoteLine(): void {
+  public addQuoteLine(): void {
     this.quoteForm.detalles.push({
       catalogoItemId: null,
       productoId: null,
@@ -5895,35 +6789,76 @@ export class CrmAdminPage {
     });
   }
 
-  protected removeQuoteLine(index: number): void {
+  public quoteCurrencyOptions(): { label: string; value: string }[] {
+    const foreign = this.crmCurrencyConfigs()
+      .filter((currency) => currency.activo)
+      .map((currency) => ({
+        label: `${currency.moneda} - ${currency.nombre}`,
+        value: currency.moneda,
+      }));
+    return [{ label: 'PEN - Soles', value: 'PEN' }, ...foreign];
+  }
+
+  public quoteCurrencyPrefix(moneda: string = this.quoteForm.moneda): string {
+    if (moneda === 'PEN') {
+      return 'S/';
+    }
+    return this.crmCurrencyConfigs().find((currency) => currency.moneda === moneda)?.simbolo || moneda;
+  }
+
+  public quoteCurrencyInfo(moneda: string = this.quoteForm.moneda): CrmCurrencyConfig | null {
+    if (moneda === 'PEN') {
+      return null;
+    }
+    return this.crmCurrencyConfigs().find((currency) => currency.moneda === moneda) ?? null;
+  }
+
+  public onQuoteCurrencyChange(moneda: string): void {
+    const nextCurrency = moneda || 'PEN';
+    const currentCurrency = this.quoteForm.moneda || 'PEN';
+    if (nextCurrency === currentCurrency) {
+      return;
+    }
+    const currentRate = this.quoteExchangeRate(currentCurrency);
+    const nextRate = this.quoteExchangeRate(nextCurrency);
+    this.quoteForm.detalles.forEach((line) => {
+      const priceInPen = Number(line.precioUnitario || 0) * currentRate;
+      const discountInPen = Number(line.descuento || 0) * currentRate;
+      line.precioUnitario = this.roundMoney(priceInPen / nextRate);
+      line.descuento = this.roundMoney(discountInPen / nextRate);
+    });
+    this.quoteForm.moneda = nextCurrency;
+  }
+
+  public removeQuoteLine(index: number): void {
     if (this.quoteForm.detalles.length <= 1) {
       return;
     }
     this.quoteForm.detalles.splice(index, 1);
   }
 
-  protected onQuoteCatalogChange(line: QuoteLineForm, value: number | null): void {
+  public onQuoteCatalogChange(line: QuoteLineForm, value: number | null): void {
     line.catalogoItemId = value;
     const catalogo = this.catalogoItems().find((item) => item.id === value);
     if (!catalogo) {
       return;
     }
     line.descripcion = catalogo.nombre;
-    line.precioUnitario = Number(catalogo.precioReferencial || 0);
+    line.precioUnitario = this.roundMoney(Number(catalogo.precioReferencial || 0) / this.quoteExchangeRate(this.quoteForm.moneda));
   }
 
-  protected lineTotal(line: QuoteLineForm): number {
+  public lineTotal(line: QuoteLineForm): number {
     return Math.max(
       0,
       Number(line.cantidad || 0) * Number(line.precioUnitario || 0) - Number(line.descuento || 0) - this.linePromotionDiscount(line),
     );
   }
 
-  protected normalizeQuoteQuantity(value: number | string | null): number {
+  public normalizeQuoteQuantity(value: number | string | null): number {
     return Math.max(1, Math.trunc(Number(value) || 1));
   }
 
-  protected linePromotionDiscount(line: QuoteLineForm): number {
+  public linePromotionDiscount(line: QuoteLineForm): number {
     if (!line.promocionId) {
       return 0;
     }
@@ -5938,11 +6873,22 @@ export class CrmAdminPage {
     return Math.min(base, Number(promotion.valor || 0));
   }
 
-  protected quoteTotal(): number {
+  public quoteTotal(): number {
     return this.quoteForm.detalles.reduce((sum, line) => sum + this.lineTotal(line), 0);
   }
 
-  protected quoteOfferName(item: CrmOportunidad | null | undefined = this.selectedOpportunity()): string {
+  private quoteExchangeRate(moneda: string): number {
+    if (!moneda || moneda === 'PEN') {
+      return 1;
+    }
+    return Number(this.quoteCurrencyInfo(moneda)?.tipoCambioVenta || 1) || 1;
+  }
+
+  private roundMoney(value: number): number {
+    return Math.round(Number(value || 0) * 100) / 100;
+  }
+
+  public quoteOfferName(item: CrmOportunidad | null | undefined = this.selectedOpportunity()): string {
     if (!item) {
       return 'Oferta CRM';
     }
@@ -5950,7 +6896,7 @@ export class CrmAdminPage {
     return catalogo?.nombre || item.descripcion || item.titulo || 'Oferta CRM';
   }
 
-  protected quoteOfferDescription(item: CrmOportunidad | null | undefined = this.selectedOpportunity()): string {
+  public quoteOfferDescription(item: CrmOportunidad | null | undefined = this.selectedOpportunity()): string {
     if (!item) {
       return 'Cotizacion generada desde CRM.';
     }
@@ -5958,22 +6904,22 @@ export class CrmAdminPage {
     return catalogo?.descripcion || item.descripcion || 'Oferta registrada desde CRM para seguimiento comercial.';
   }
 
-  protected quoteCompanyLogoUrl(): string | null {
+  public quoteCompanyLogoUrl(): string | null {
     const empresa = this.auth.currentSession()?.empresa as { logoPanelUrl?: string | null } | undefined;
     return empresa?.logoPanelUrl || null;
   }
 
-  protected quoteCompanyName(): string {
+  public quoteCompanyName(): string {
     const empresa = this.auth.currentSession()?.empresa as { razonSocial?: string | null } | undefined;
     return empresa?.razonSocial || 'AZURION';
   }
 
-  protected quoteOpportunityContactName(): string {
+  public quoteOpportunityContactName(): string {
     const opportunity = this.selectedOpportunity();
     return opportunity ? this.opportunityContactName(opportunity) : 'Solicitante CRM';
   }
 
-  protected quoteOpportunityContactDetail(): string {
+  public quoteOpportunityContactDetail(): string {
     const opportunity = this.selectedOpportunity();
     if (!opportunity) {
       return 'La cotizacion se genera desde una oportunidad CRM.';
@@ -5986,12 +6932,12 @@ export class CrmAdminPage {
     return `${document} · ${phone} · ${email}`;
   }
 
-  protected quoteResponsibleName(): string {
+  public quoteResponsibleName(): string {
     const opportunity = this.selectedOpportunity();
     return this.responsibleName(opportunity?.responsableId || this.currentUserKey());
   }
 
-  protected saveQuote(): void {
+  public saveQuote(): void {
     const oportunidadId = this.quoteForm.oportunidadId;
     if (!oportunidadId) {
       this.errorMessage.set('No se encontro la oportunidad para generar la cotizacion.');
@@ -6027,7 +6973,7 @@ export class CrmAdminPage {
             usuarioNombre: this.auth.currentSession()?.nombres || this.auth.currentSession()?.username || 'Usuario',
             sucursalId,
             fechaVencimiento: this.quoteForm.fechaVencimiento || null,
-            moneda: 'PEN',
+            moneda: this.quoteForm.moneda || 'PEN',
             observacion: this.quoteForm.observacion.trim() || null,
             crmOportunidadId: oportunidadId,
             detalles,
@@ -6039,7 +6985,7 @@ export class CrmAdminPage {
         next: (saved) => {
           this.upsertQuote(this.withQuoteOpportunity(saved, oportunidadId));
           this.refreshOpportunityQuotes(oportunidadId);
-          this.api.listCrmOportunidades().subscribe({
+          this.crmOpportunities.list().subscribe({
             next: (oportunidades) => {
               this.oportunidades.set(oportunidades);
               const current = oportunidades.find((item) => item.id === oportunidadId);
@@ -6056,7 +7002,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected humanize(value: string | null | undefined): string {
+  public humanize(value: string | null | undefined): string {
     return (value || '')
       .toLowerCase()
       .replaceAll('_', ' ')
@@ -6072,7 +7018,7 @@ export class CrmAdminPage {
     return Math.round((index / (stages.length - 1)) * 100);
   }
 
-  protected stageColor(etapa: string | null | undefined): string {
+  public stageColor(etapa: string | null | undefined): string {
     return this.etapaOptions().find((stage) => stage.value === etapa)?.color || '#2563eb';
   }
 
@@ -6091,7 +7037,7 @@ export class CrmAdminPage {
     return `color-mix(in srgb, ${this.stageColor(etapa)} 13%, white)`;
   }
 
-  protected stageName(etapa: string | null | undefined): string {
+  public stageName(etapa: string | null | undefined): string {
     return this.etapaOptions().find((stage) => stage.value === etapa)?.label || this.humanize(etapa);
   }
 
@@ -6131,7 +7077,7 @@ export class CrmAdminPage {
     return badges.slice(0, 2);
   }
 
-  protected opportunityStageStepState(item: CrmOportunidad, etapa: string | null | undefined): 'done' | 'current' | 'pending' {
+  public opportunityStageStepState(item: CrmOportunidad, etapa: string | null | undefined): 'done' | 'current' | 'pending' {
     if ((item.etapa === 'GANADO' && etapa === 'PERDIDO') || (item.etapa === 'PERDIDO' && etapa === 'GANADO')) {
       return 'pending';
     }
@@ -6150,7 +7096,7 @@ export class CrmAdminPage {
     return stageIndex === currentIndex ? 'current' : 'pending';
   }
 
-  protected relationshipLabel(item: CrmOportunidad): string {
+  public relationshipLabel(item: CrmOportunidad): string {
     if (item.clienteNombre) {
       return 'Cliente existente';
     }
@@ -6160,7 +7106,7 @@ export class CrmAdminPage {
     return 'Sin contacto';
   }
 
-  protected opportunityProgress(item: CrmOportunidad): number {
+  public opportunityProgress(item: CrmOportunidad): number {
     return Math.max(0, Math.min(100, Number(item.probabilidad || 0)));
   }
 
@@ -6177,11 +7123,11 @@ export class CrmAdminPage {
     return 'FRIO';
   }
 
-  protected opportunityTemperatureLabel(itemOrProbability: CrmOportunidad | number | null | undefined): string {
+  public opportunityTemperatureLabel(itemOrProbability: CrmOportunidad | number | null | undefined): string {
     return this.humanize(this.opportunityTemperatureValue(itemOrProbability));
   }
 
-  protected opportunityTemperatureTone(itemOrProbability: CrmOportunidad | number | null | undefined): 'cold' | 'warm' | 'hot' {
+  public opportunityTemperatureTone(itemOrProbability: CrmOportunidad | number | null | undefined): 'cold' | 'warm' | 'hot' {
     const value = this.opportunityTemperatureValue(itemOrProbability);
     if (value === 'CALIENTE') {
       return 'hot';
@@ -6192,11 +7138,11 @@ export class CrmAdminPage {
     return 'cold';
   }
 
-  protected opportunityFormTemperature(): 'FRIO' | 'MEDIO' | 'CALIENTE' {
+  public opportunityFormTemperature(): 'FRIO' | 'MEDIO' | 'CALIENTE' {
     return this.opportunityTemperatureValue(this.opportunityForm.probabilidad);
   }
 
-  protected setOpportunityFormTemperature(value: string | null): void {
+  public setOpportunityFormTemperature(value: string | null): void {
     const temperature = value === 'CALIENTE' || value === 'MEDIO' || value === 'FRIO' ? value : 'MEDIO';
     this.opportunityForm.probabilidad = temperature === 'CALIENTE' ? 85 : temperature === 'MEDIO' ? 60 : 25;
   }
@@ -6206,7 +7152,7 @@ export class CrmAdminPage {
     return `conic-gradient(${this.stageColor(item.etapa)} 0 ${progress}%, #e5e7eb ${progress}% 100%)`;
   }
 
-  protected opportunityFinancialSummary(item: CrmOportunidad): {
+  public opportunityFinancialSummary(item: CrmOportunidad): {
     total: number;
     paid: number;
     pending: number;
@@ -6230,11 +7176,11 @@ export class CrmAdminPage {
     return { total, paid, pending, percent, status };
   }
 
-  protected opportunityFinancialStatusLabel(item: CrmOportunidad): string {
+  public opportunityFinancialStatusLabel(item: CrmOportunidad): string {
     return this.humanize(this.opportunityFinancialSummary(item).status);
   }
 
-  protected opportunityFinancialStatusTone(item: CrmOportunidad): 'pending' | 'partial' | 'paid' | 'overdue' {
+  public opportunityFinancialStatusTone(item: CrmOportunidad): 'pending' | 'partial' | 'paid' | 'overdue' {
     const status = this.opportunityFinancialSummary(item).status;
     if (status === 'PAGADO') {
       return 'paid';
@@ -6248,11 +7194,11 @@ export class CrmAdminPage {
     return 'pending';
   }
 
-  protected paymentStatusLabel(value: string | null | undefined): string {
+  public paymentStatusLabel(value: string | null | undefined): string {
     return this.humanize(value || 'PENDIENTE');
   }
 
-  protected paymentStatusTone(value: string | null | undefined): 'pending' | 'partial' | 'paid' | 'overdue' {
+  public paymentStatusTone(value: string | null | undefined): 'pending' | 'partial' | 'paid' | 'overdue' {
     const status = String(value || 'PENDIENTE').toUpperCase();
     if (status === 'PAGADO') {
       return 'paid';
@@ -6266,7 +7212,7 @@ export class CrmAdminPage {
     return 'pending';
   }
 
-  protected opportunityPaymentPlan(item: CrmOportunidad): {
+  public opportunityPaymentPlan(item: CrmOportunidad): {
     isCredit: boolean;
     cuotas: number;
     paidPayments: OpportunityPaymentRecord[];
@@ -6330,12 +7276,74 @@ export class CrmAdminPage {
         const plan = this.opportunityPaymentPlan(item);
         return plan.isCredit && plan.paidAmount > 0 && (plan.pendingAmount > 0 || plan.pendingInstallments.length > 0);
       })
-      .filter((item) => this.matchesOpportunityQuery(item, this.query().trim().toLowerCase()))
-      .sort((a, b) => this.paymentFollowUpPriority(b) - this.paymentFollowUpPriority(a)),
   );
 
+  protected readonly paymentTrackingFilterState = computed<PaymentTrackingFilterState>(() => ({
+    status: this.paymentTrackingStatusFilter(),
+    installmentStatus: this.paymentTrackingInstallmentFilter(),
+    dueFrom: this.paymentTrackingDueFrom(),
+    dueTo: this.paymentTrackingDueTo(),
+    responsible: this.paymentTrackingResponsible(),
+  }));
+
+  protected readonly paymentTrackingResponsibleOptions = computed(() => {
+    const values = Array.from(new Set(this.paymentFollowUpItems().map((item) => item.responsableId).filter(Boolean))).sort((a, b) =>
+      this.responsibleName(a).localeCompare(this.responsibleName(b)),
+    );
+    return [
+      { label: 'Todos', value: 'TODOS' },
+      ...values.map((value) => ({ label: this.responsibleName(value), value })),
+    ];
+  });
+
+  protected readonly filteredPaymentFollowUpItems = computed(() => {
+    const query = this.query().trim().toLowerCase();
+    const status = this.paymentTrackingStatusFilter();
+    const installmentStatus = this.paymentTrackingInstallmentFilter();
+    const dueFrom = this.toValidDate(this.paymentTrackingDueFrom());
+    const dueTo = this.toValidDate(this.paymentTrackingDueTo());
+    const responsible = this.paymentTrackingResponsible();
+
+    return this.paymentFollowUpItems()
+      .filter((item) => this.matchesOpportunityQuery(item, query))
+      .filter((item) => responsible === 'TODOS' || item.responsableId === responsible)
+      .filter((item) => {
+        if (status === 'TODOS') {
+          return true;
+        }
+        const tone = this.paymentDueTone(item).label.toUpperCase().replace(/\s+/g, '_');
+        return tone === status;
+      })
+      .filter((item) => {
+        if (installmentStatus === 'TODOS') {
+          return true;
+        }
+        const plan = this.opportunityPaymentPlan(item);
+        if (installmentStatus === 'PAGADAS') {
+          return plan.pendingAmount <= 0;
+        }
+        if (installmentStatus === 'VENCIDAS') {
+          return plan.overdueInstallments.length > 0;
+        }
+        return plan.pendingInstallments.length > 0;
+      })
+      .filter((item) => {
+        if (!dueFrom && !dueTo) {
+          return true;
+        }
+        const nextDate = this.toValidDate(this.paymentNextInstallment(item)?.fecha);
+        if (!nextDate) {
+          return false;
+        }
+        const fromOk = !dueFrom || nextDate >= dueFrom;
+        const toOk = !dueTo || nextDate <= dueTo;
+        return fromOk && toOk;
+      })
+      .sort((a, b) => this.paymentFollowUpPriority(b) - this.paymentFollowUpPriority(a));
+  });
+
   protected readonly paymentFollowUpMetrics = computed(() => {
-    const items = this.paymentFollowUpItems();
+    const items = this.filteredPaymentFollowUpItems();
     const pendingAmount = items.reduce((sum, item) => sum + this.opportunityPaymentPlan(item).pendingAmount, 0);
     const overdue = items.filter((item) => this.opportunityPaymentPlan(item).overdueInstallments.length > 0).length;
     const installments = items.reduce((sum, item) => sum + this.opportunityPaymentPlan(item).pendingInstallments.length, 0);
@@ -6347,10 +7355,37 @@ export class CrmAdminPage {
     ];
   });
 
-  protected readonly paymentFollowUpRows = computed(() => this.paymentFollowUpItems());
+  protected readonly paymentFollowUpRows = computed(() => {
+    const page = Math.min(this.paymentTrackingPage(), Math.max(this.paymentTrackingTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize;
+    return this.filteredPaymentFollowUpItems().slice(start, start + this.crmLargeListPageSize);
+  });
+
+  protected readonly paymentTrackingTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredPaymentFollowUpItems().length / this.crmLargeListPageSize)),
+  );
+
+  protected readonly paymentTrackingPageRangeLabel = computed(() => {
+    const total = this.filteredPaymentFollowUpItems().length;
+    if (!total) {
+      return '0 de 0';
+    }
+    const page = Math.min(this.paymentTrackingPage(), Math.max(this.paymentTrackingTotalPages() - 1, 0));
+    const start = page * this.crmLargeListPageSize + 1;
+    const end = Math.min(start + this.crmLargeListPageSize - 1, total);
+    return `${start}-${end} de ${total}`;
+  });
+
+  protected readonly paymentTrackingPageMeta = computed(() => ({
+    page: Math.min(this.paymentTrackingPage(), Math.max(this.paymentTrackingTotalPages() - 1, 0)),
+    pageSize: this.crmLargeListPageSize,
+    totalItems: this.filteredPaymentFollowUpItems().length,
+    totalPages: this.paymentTrackingTotalPages(),
+    rangeLabel: this.paymentTrackingPageRangeLabel(),
+  }));
 
   protected readonly paymentFollowUpSummaryCards = computed(() => {
-    const rows = this.paymentFollowUpRows();
+    const rows = this.filteredPaymentFollowUpItems();
     const pendingAmount = rows.reduce((sum, item) => sum + this.opportunityPaymentPlan(item).pendingAmount, 0);
     const pendingInstallments = rows.flatMap((item) => this.opportunityPaymentPlan(item).pendingInstallments);
     const overdueInstallments = rows.flatMap((item) => this.opportunityPaymentPlan(item).overdueInstallments);
@@ -6395,7 +7430,7 @@ export class CrmAdminPage {
   });
 
   protected readonly paymentFollowUpUpcoming = computed(() =>
-    this.paymentFollowUpRows()
+    this.filteredPaymentFollowUpItems()
       .flatMap((item) =>
         this.opportunityPaymentPlan(item).pendingInstallments.map((payment) => ({
           id: `${item.id}-${payment.id}`,
@@ -6408,14 +7443,16 @@ export class CrmAdminPage {
   );
 
   protected readonly paymentCollectionSummary = computed(() => {
-    const rows = this.paymentFollowUpRows();
+    const rows = this.filteredPaymentFollowUpItems();
     const overdue = rows.filter((item) => this.opportunityPaymentPlan(item).overdueInstallments.length > 0);
     const soon = rows.filter((item) => {
       const next = this.paymentNextInstallment(item);
       const days = this.paymentDaysUntil(next?.fecha);
       return !this.opportunityPaymentPlan(item).overdueInstallments.length && days >= 0 && days <= 7;
     });
-    const paid = this.paymentFollowUpCandidates().filter((item) => this.opportunityFinancialSummary(item).pending <= 0);
+    const paid = this.paymentFollowUpCandidates()
+      .filter((item) => this.opportunityFinancialSummary(item).pending <= 0)
+      .filter((item) => this.matchesOpportunityQuery(item, this.query().trim().toLowerCase()));
     return [
       {
         label: 'Vencidas',
@@ -6454,6 +7491,81 @@ export class CrmAdminPage {
       .join(', ');
     return `conic-gradient(${stops})`;
   });
+
+  protected readonly paymentTrackingRows = computed<PaymentTrackingRow[]>(() =>
+    this.paymentFollowUpRows().map((item) => {
+      const plan = this.opportunityPaymentPlan(item);
+      const nextPayment = this.paymentNextInstallment(item);
+      const tone = this.paymentDueTone(item);
+      return {
+        id: item.id,
+        initials: this.contactInitials(this.opportunityContactName(item)),
+        contactName: this.opportunityContactName(item),
+        offerName: this.quoteOfferName(item),
+        opportunityCode: `Oportunidad #OP-${item.id}`,
+        pendingAmount: plan.pendingAmount,
+        installmentProgress: this.paymentInstallmentProgress(item),
+        pendingInstallmentsCount: plan.pendingInstallments.length,
+        nextPaymentDate: nextPayment?.fecha || null,
+        nextPaymentLabel: nextPayment ? this.paymentDaysLabel(nextPayment.fecha) : 'Sin cuota',
+        dueLabel: tone.label,
+        dueColor: tone.color,
+        dueBg: tone.bg,
+        responsibleName: this.responsibleName(item.responsableId),
+        isCredit: plan.isCredit,
+        remainingProgrammed: plan.remainingProgrammed,
+      };
+    }),
+  );
+
+  protected readonly paymentTrackingUpcoming = computed<PaymentTrackingUpcomingItem[]>(() =>
+    this.paymentFollowUpUpcoming().map((entry) => ({
+      id: entry.id,
+      opportunityId: entry.item.id,
+      initials: this.contactInitials(this.opportunityContactName(entry.item)),
+      contactName: this.opportunityContactName(entry.item),
+      amount: Number(entry.payment.monto || 0),
+      date: entry.payment.fecha,
+      dayLabel: this.paymentDaysLabel(entry.payment.fecha),
+      overdue: this.paymentDaysUntil(entry.payment.fecha) < 0,
+    })),
+  );
+
+  protected registerFirstPaymentFromTracking(): void {
+    const first = this.paymentFollowUpRows()[0];
+    if (first) {
+      this.openOpportunityPaymentDialog(first);
+    }
+  }
+
+  protected openPaymentTrackingDetail(id: number): void {
+    const item = this.paymentTrackingOpportunityById(id);
+    if (item) {
+      this.openPaymentFollowUpDetail(item);
+    }
+  }
+
+  protected openPaymentTrackingPaymentDialog(id: number): void {
+    const item = this.paymentTrackingOpportunityById(id);
+    if (item) {
+      this.openOpportunityPaymentDialog(item);
+    }
+  }
+
+  protected schedulePaymentTrackingInstallments(id: number): void {
+    const item = this.paymentTrackingOpportunityById(id);
+    if (item) {
+      this.scheduleRemainingInstallments(item);
+    }
+  }
+
+  protected showPaymentTrackingOverdue(): void {
+    this.query.set('vencido');
+  }
+
+  private paymentTrackingOpportunityById(id: number): CrmOportunidad | null {
+    return this.paymentFollowUpCandidates().find((item) => item.id === id) ?? null;
+  }
 
   protected paymentNextInstallment(item: CrmOportunidad): OpportunityPaymentRecord | null {
     return [...this.opportunityPaymentPlan(item).pendingInstallments]
@@ -6508,7 +7620,7 @@ export class CrmAdminPage {
     return Math.round((date.getTime() - today.getTime()) / 86_400_000);
   }
 
-  protected scheduleRemainingInstallments(item: CrmOportunidad): void {
+  public scheduleRemainingInstallments(item: CrmOportunidad): void {
     const plan = this.opportunityPaymentPlan(item);
     if (!plan.isCredit) {
       this.errorMessage.set('Esta venta esta registrada como contado. No requiere cuotas pendientes.');
@@ -6560,11 +7672,11 @@ export class CrmAdminPage {
     this.opportunityDetailTab.set('pagos');
   }
 
-  protected documentCategoryLabel(value: string | null | undefined): string {
+  public documentCategoryLabel(value: string | null | undefined): string {
     return this.documentCategoryOptions.find((item) => item.value === value)?.label || this.humanize(value || 'OTRO');
   }
 
-  protected historyToneClass(value: OpportunityHistoryEvent['tone']): string {
+  public historyToneClass(value: OpportunityHistoryEvent['tone']): string {
     return `opportunity-history-item--${value}`;
   }
 
@@ -6582,7 +7694,7 @@ export class CrmAdminPage {
     return letters.toUpperCase();
   }
 
-  protected responsibleName(value: string | null | undefined): string {
+  public responsibleName(value: string | null | undefined): string {
     const key = String(value || '').trim();
     if (!key) {
       return 'Sin responsable';
@@ -6602,7 +7714,7 @@ export class CrmAdminPage {
     return user.nombres ? `${user.nombres} (${user.username})` : user.username;
   }
 
-  protected opportunityStatusTone(item: CrmOportunidad): 'active' | 'won' | 'lost' | 'neutral' {
+  public opportunityStatusTone(item: CrmOportunidad): 'active' | 'won' | 'lost' | 'neutral' {
     if (item.estado === 'GANADA' || item.etapa === 'GANADO') {
       return 'won';
     }
@@ -6615,11 +7727,11 @@ export class CrmAdminPage {
     return 'neutral';
   }
 
-  protected quoteStatusValue(item: Cotizacion): string {
+  public quoteStatusValue(item: Cotizacion): string {
     return (item.estado || 'BORRADOR').toUpperCase();
   }
 
-  protected quoteStatusLabel(item: Cotizacion): string {
+  public quoteStatusLabel(item: Cotizacion): string {
     const labels: Record<string, string> = {
       BORRADOR: 'Borrador',
       ENVIADA: 'Enviada',
@@ -6633,7 +7745,7 @@ export class CrmAdminPage {
     return labels[this.quoteStatusValue(item)] || this.humanize(item.estado);
   }
 
-  protected quoteStatusTone(item: Cotizacion): 'pending' | 'accepted' | 'rejected' {
+  public quoteStatusTone(item: Cotizacion): 'pending' | 'accepted' | 'rejected' {
     const status = this.quoteStatusValue(item);
     if (status === 'ACEPTADA' || status === 'NEGOCIACION' || status === 'CONVERTIDA') {
       return 'accepted';
@@ -6657,7 +7769,7 @@ export class CrmAdminPage {
     return opportunity?.titulo || item.detalles?.[0]?.descripcion || 'Cotizacion comercial';
   }
 
-  protected quoteNextStep(item: Cotizacion): string {
+  public quoteNextStep(item: Cotizacion): string {
     const status = this.quoteStatusValue(item);
     if (status === 'BORRADOR') {
       return 'Enviar cotizacion';
@@ -6680,7 +7792,7 @@ export class CrmAdminPage {
     return this.quoteStatusLabel(item);
   }
 
-  protected downloadQuotePdf(item: Cotizacion, successMessage = 'Documento PDF generado.'): void {
+  public downloadQuotePdf(item: Cotizacion, successMessage = 'Documento PDF generado.'): void {
     this.actionId.set(item.id);
     this.api
       .getCotizacionPdf(item.id)
@@ -6698,7 +7810,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected quoteWhatsappUrl(item: Cotizacion): string | null {
+  public quoteWhatsappUrl(item: Cotizacion): string | null {
     const phone = this.onlyDigits(this.quoteContactPhone(item));
     if (!phone) {
       return null;
@@ -6706,17 +7818,7 @@ export class CrmAdminPage {
     return `https://wa.me/${phone}?text=${encodeURIComponent(this.quoteShareMessage(item))}`;
   }
 
-  protected quoteEmailUrl(item: Cotizacion): string | null {
-    const email = this.quoteContactEmail(item);
-    if (!email) {
-      return null;
-    }
-    const subject = encodeURIComponent(`Cotizacion COT-${String(item.id).padStart(3, '0')} - ${this.quoteOpportunityTitle(item)}`);
-    const body = encodeURIComponent(this.quoteShareMessage(item));
-    return `mailto:${email}?subject=${subject}&body=${body}`;
-  }
-
-  protected sendQuoteByWhatsapp(item: Cotizacion): void {
+  public sendQuoteByWhatsapp(item: Cotizacion): void {
     const url = this.quoteWhatsappUrl(item);
     if (!url) {
       this.errorMessage.set('El contacto no tiene telefono para enviar la cotizacion por WhatsApp.');
@@ -6727,15 +7829,64 @@ export class CrmAdminPage {
     this.sendQuote(item, 'WHATSAPP');
   }
 
-  protected sendQuoteByEmail(item: Cotizacion): void {
-    const url = this.quoteEmailUrl(item);
-    if (!url) {
+  public canSendQuoteByEmail(item: Cotizacion): boolean {
+    return Boolean(this.quoteContactEmail(item));
+  }
+
+  public isQuoteEmailSending(id: number): boolean {
+    return this.sendingQuoteEmailIds().has(id);
+  }
+
+  private setQuoteEmailSending(id: number, sending: boolean): void {
+    this.sendingQuoteEmailIds.update((current) => {
+      const next = new Set(current);
+      if (sending) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  public sendQuoteByEmail(item: Cotizacion): void {
+    if (this.isQuoteEmailSending(item.id)) {
+      return;
+    }
+    if (!this.quoteContactEmail(item)) {
       this.errorMessage.set('El contacto no tiene correo para enviar la cotizacion.');
       return;
     }
-    this.downloadQuotePdf(item, 'PDF generado. Adjuntalo al correo antes de enviar.');
-    globalThis.location.href = url;
-    this.sendQuote(item, 'CORREO');
+    const opportunityId = Number(item.crmOportunidadId ?? this.selectedOpportunity()?.id ?? 0) || null;
+    this.errorMessage.set(null);
+    this.setQuoteEmailSending(item.id, true);
+    this.api
+      .sendCotizacionEmail(item.id)
+      .pipe(finalize(() => this.setQuoteEmailSending(item.id, false)))
+      .subscribe({
+        next: ({ cotizacion, destinatario }) => {
+          const saved = opportunityId ? this.withQuoteOpportunity(cotizacion, opportunityId) : cotizacion;
+          this.upsertQuote(saved);
+          if (saved.crmOportunidadId) {
+            this.refreshOpportunityQuotes(Number(saved.crmOportunidadId));
+          }
+          this.successMessage.set(`Cotizacion enviada correctamente a ${destinatario}.`);
+          this.crmOpportunities.list().subscribe({
+            next: (oportunidades) => {
+              this.oportunidades.set(oportunidades);
+              const currentId = this.selectedOpportunity()?.id;
+              const updated = currentId
+                ? oportunidades.find((opportunity) => Number(opportunity.id) === Number(currentId))
+                : null;
+              if (updated) {
+                this.selectedOpportunity.set(updated);
+              }
+            },
+            error: () => undefined,
+          });
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected sendQuote(item: Cotizacion, canalEnvio = 'WHATSAPP'): void {
@@ -6745,7 +7896,7 @@ export class CrmAdminPage {
     }, 'Cotizacion marcada como enviada.');
   }
 
-  protected followQuote(item: Cotizacion): void {
+  public followQuote(item: Cotizacion): void {
     const next = new Date();
     next.setDate(next.getDate() + 1);
     next.setHours(10, 0, 0, 0);
@@ -6756,21 +7907,21 @@ export class CrmAdminPage {
     }, 'Cotizacion en seguimiento.');
   }
 
-  protected acceptQuoteToNegotiation(item: Cotizacion): void {
+  public acceptQuoteToNegotiation(item: Cotizacion): void {
     this.updateQuoteFlow(item, {
       estado: 'NEGOCIACION',
       decisionSiguiente: 'NEGOCIACION',
     }, 'Cliente no acepto la propuesta tal como esta. Oportunidad enviada a negociacion.', 'NEGOCIACION');
   }
 
-  protected acceptQuoteToSale(item: Cotizacion): void {
+  public acceptQuoteToSale(item: Cotizacion): void {
     this.updateQuoteFlow(item, {
       estado: 'ACEPTADA',
       decisionSiguiente: 'VENTA',
     }, 'Cliente acepto condiciones. Oportunidad enviada a negociacion para confirmar cierre.', 'NEGOCIACION');
   }
 
-  protected rejectQuote(item: Cotizacion): void {
+  public rejectQuote(item: Cotizacion): void {
     this.updateQuoteFlow(item, {
       estado: 'RECHAZADA',
       motivoRechazo: 'Rechazada desde CRM',
@@ -6908,11 +8059,11 @@ export class CrmAdminPage {
     URL.revokeObjectURL(url);
   }
 
-  protected opportunityContactName(item: CrmOportunidad): string {
+  public opportunityContactName(item: CrmOportunidad): string {
     return item.clienteNombre || item.prospectoNombre || 'Sin contacto';
   }
 
-  protected opportunityCompanyLabel(item: CrmOportunidad): string {
+  public opportunityCompanyLabel(item: CrmOportunidad): string {
     const prospect = this.prospectForOpportunity(item);
     const cliente = this.clientForOpportunity(item);
     return prospect?.razonSocial || prospect?.nombreComercial || cliente?.nombre || this.opportunityContactName(item);
@@ -6939,7 +8090,7 @@ export class CrmAdminPage {
     return this.prospectForOpportunity(item)?.correo || this.clientForOpportunity(item)?.email || '';
   }
 
-  protected opportunityTags(item: CrmOportunidad): string[] {
+  public opportunityTags(item: CrmOportunidad): string[] {
     const tags = [this.opportunityTypeLabel(item.tipoOportunidad), this.stageName(item.etapa)];
     const catalogo = this.catalogoItems().find((catalog) => catalog.id === item.catalogoItemId);
     if (catalogo?.nombre) {
@@ -7182,7 +8333,7 @@ export class CrmAdminPage {
     };
   }
 
-  protected opportunityWhatsappUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
+  public opportunityWhatsappUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
     const phone = this.onlyDigits(this.opportunityContactPhone(item));
     if (!phone) {
       return null;
@@ -7191,7 +8342,7 @@ export class CrmAdminPage {
     return `https://wa.me/${phone}?text=${message}`;
   }
 
-  protected opportunityEmailUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
+  public opportunityEmailUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
     const email = this.opportunityContactEmail(item);
     if (!email) {
       return null;
@@ -7430,7 +8581,7 @@ export class CrmAdminPage {
           }
           this.successMessage.set(successMessage);
           if (saved.crmOportunidadId && !opportunity) {
-            this.api.listCrmOportunidades().subscribe({
+            this.crmOpportunities.list().subscribe({
               next: (oportunidades) => {
                 this.oportunidades.set(oportunidades);
                 const current = this.selectedOpportunity();
@@ -7449,7 +8600,7 @@ export class CrmAdminPage {
       });
   }
 
-  protected opportunityTypeLabel(type: string | null | undefined): string {
+  public opportunityTypeLabel(type: string | null | undefined): string {
     return this.opportunityTypeMeta(this.normalizeOpportunityType(type)).label;
   }
 
@@ -7554,7 +8705,7 @@ export class CrmAdminPage {
     return 'low';
   }
 
-  protected activityEffectiveDate(item: CrmActividad): string {
+  public activityEffectiveDate(item: CrmActividad): string {
     return item.fechaRealizada || item.updatedAt || item.fechaProgramada || item.createdAt || '';
   }
 
@@ -7849,15 +9000,15 @@ export class CrmAdminPage {
     return this.prospectQualification(prospecto).canConvert && !this.activeOpportunityForProspect(prospecto.id);
   }
 
-  protected qualificationTemperatureLabel(value: number | string | null | undefined): string {
+  public qualificationTemperatureLabel(value: number | string | null | undefined): string {
     return this.humanize(this.qualificationTemperature(value));
   }
 
-  protected qualificationNeedLabel(prospecto: CrmProspecto): string {
+  public qualificationNeedLabel(prospecto: CrmProspecto): string {
     return prospecto.necesidadIdentificada ? 'Si' : 'Pendiente';
   }
 
-  protected qualificationInterestLabel(prospecto: CrmProspecto): string {
+  public qualificationInterestLabel(prospecto: CrmProspecto): string {
     const value = String(prospecto.interesReal || prospecto.nivelInteres || '').toUpperCase();
     if (value === 'ALTO' || value === 'CALIENTE') {
       return 'Alto';
@@ -8054,24 +9205,11 @@ export class CrmAdminPage {
   }
 
   private loadCrmLocalConfig(): CrmLocalConfig {
-    if (typeof localStorage === 'undefined') {
-      return { cierreEstimadoDias: 15 };
-    }
-    try {
-      const raw = localStorage.getItem(this.crmLocalConfigStorageKey());
-      const parsed = raw ? JSON.parse(raw) as Partial<CrmLocalConfig> : {};
-      const days = Number(parsed.cierreEstimadoDias || 15);
-      return { cierreEstimadoDias: Math.min(365, Math.max(1, days)) };
-    } catch {
-      return { cierreEstimadoDias: 15 };
-    }
+    return this.crmLocalStorage.loadCrmLocalConfig(this.crmLocalConfigStorageKey());
   }
 
   private persistCrmLocalConfig(config: CrmLocalConfig): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(this.crmLocalConfigStorageKey(), JSON.stringify(config));
+    this.crmLocalStorage.persistCrmLocalConfig(this.crmLocalConfigStorageKey(), config);
   }
 
   private crmLocalConfigStorageKey(): string {
@@ -8158,6 +9296,7 @@ export class CrmAdminPage {
       oportunidadId: null,
       clienteId: null,
       sucursalId: null,
+      moneda: 'PEN',
       fechaVencimiento: '',
       observacion: '',
       detalles: [
@@ -8245,6 +9384,7 @@ export class CrmAdminPage {
   private emptyOpportunityPaymentForm(): OpportunityPaymentForm {
     return {
       id: null,
+      cuotaKey: '',
       fecha: new Date().toISOString().slice(0, 10),
       tipo: 'CUOTA',
       monto: 0,
@@ -8253,6 +9393,20 @@ export class CrmAdminPage {
       observacion: '',
       archivoNombre: '',
       archivoDataUrl: '',
+    };
+  }
+
+  private emptyClientCompletionForm(): CrmClientCompletionDraft {
+    return {
+      tipoPersona: 'NATURAL',
+      tipoDocumento: '1',
+      numeroDocumento: '',
+      nombre: '',
+      razonSocial: '',
+      nombreComercial: '',
+      telefono: '',
+      correo: '',
+      direccion: '',
     };
   }
 
@@ -8269,23 +9423,11 @@ export class CrmAdminPage {
   }
 
   private loadOpportunityRecords<T>(key: string): T[] {
-    if (typeof localStorage === 'undefined') {
-      return [];
-    }
-    try {
-      const raw = localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) as T[] : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+    return this.crmLocalStorage.loadRecords<T>(key);
   }
 
   private persistOpportunityRecords<T>(key: string, items: T[]): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(key, JSON.stringify(items));
+    this.crmLocalStorage.persistRecords(key, items);
   }
 
   private reconcileLocalOpportunityRecords(opportunities: CrmOportunidad[]): void {
@@ -8351,9 +9493,7 @@ export class CrmAdminPage {
   }
 
   private opportunityStoragePrefix(): string {
-    const empresa = this.auth.currentSession()?.empresa as { tenantId?: string; ruc?: string } | undefined;
-    const tenant = empresa?.tenantId || empresa?.ruc || 'default';
-    return `azurion.crm.opportunity.${tenant}`;
+    return this.crmLocalStorage.opportunityStoragePrefix(this.crmStorageCompany());
   }
 
   private createLocalId(prefix: string): string {
@@ -8377,29 +9517,22 @@ export class CrmAdminPage {
   }
 
   private loadOpportunityMessageTemplates(): OpportunityMessageTemplate[] {
-    if (typeof localStorage === 'undefined') {
-      return this.defaultOpportunityMessageTemplates();
-    }
-    try {
-      const raw = localStorage.getItem(this.opportunityTemplateStorageKey());
-      const parsed = raw ? JSON.parse(raw) as OpportunityMessageTemplate[] : null;
-      return Array.isArray(parsed) && parsed.length ? parsed : this.defaultOpportunityMessageTemplates();
-    } catch {
-      return this.defaultOpportunityMessageTemplates();
-    }
+    return this.crmLocalStorage.loadMessageTemplates(
+      this.opportunityTemplateStorageKey(),
+      this.defaultOpportunityMessageTemplates(),
+    );
   }
 
   private persistOpportunityMessageTemplates(items: OpportunityMessageTemplate[]): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(this.opportunityTemplateStorageKey(), JSON.stringify(items));
+    this.crmLocalStorage.persistMessageTemplates(this.opportunityTemplateStorageKey(), items);
   }
 
   private opportunityTemplateStorageKey(): string {
-    const empresa = this.auth.currentSession()?.empresa as { tenantId?: string; ruc?: string } | undefined;
-    const tenant = empresa?.tenantId || empresa?.ruc || 'default';
-    return `azurion.crm.opportunity.templates.${tenant}`;
+    return this.crmLocalStorage.opportunityTemplatesKey(this.crmStorageCompany());
+  }
+
+  private crmStorageCompany(): CrmStorageCompanyIdentity | undefined {
+    return this.auth.currentSession()?.empresa as CrmStorageCompanyIdentity | undefined;
   }
 
   private defaultOpportunityMessageTemplates(): OpportunityMessageTemplate[] {
@@ -8511,7 +9644,7 @@ export class CrmAdminPage {
   }
 
   private refreshOpportunityNegotiations(oportunidadId: number): void {
-    this.api.listCrmNegociaciones(oportunidadId).subscribe({
+    this.crmOpportunities.listNegotiations(oportunidadId).subscribe({
       next: (items) => {
         const normalized = items.map((item) => this.mapNegotiationRecord(item));
         const external = this.opportunityNegotiationRecords().filter((item) => Number(item.oportunidadId) !== Number(oportunidadId));
@@ -8549,7 +9682,7 @@ export class CrmAdminPage {
     ];
 
     return forkJoin(
-      plan.map((item) => this.api.createCrmActividad({
+      plan.map((item) => this.crmFollowups.createActivity({
         prospectoId: prospecto.id,
         oportunidadId: null,
         clienteId: null,

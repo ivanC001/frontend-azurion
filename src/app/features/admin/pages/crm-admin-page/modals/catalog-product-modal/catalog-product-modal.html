@@ -1,0 +1,71 @@
+<p-dialog header="Registrar producto CRM" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().catalogDrawerOpen()" (visibleChange)="!$event && host().catalogDrawerOpen.set(false)" styleClass="crm-dialog crm-dialog--catalogo crm-dialog--catalog-register">
+  <form class="dialog-form catalog-quick-form">
+    @if (host().catalogStep() === 'select') {
+      <div class="catalog-selector-head">
+        <div>
+          <span>Selecciona origen</span>
+          <strong>Que vas a registrar</strong>
+          <p>Elige entre {{ host().catalogTypeCards.length }} rubros comerciales. Despues AZURION mostrara un formulario corto con los campos correctos para vender desde CRM o landing.</p>
+        </div>
+      </div>
+      <div class="catalog-type-grid">
+        @for (type of host().catalogTypeCards; track type.value) {
+          <button type="button" class="catalog-type-card" (click)="host().selectCatalogType(type.value)">
+            <i [class]="type.icon"></i>
+            <strong>{{ type.label }}</strong>
+            <span>{{ type.description }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="catalog-intro">
+        <i class="pi pi-tags"></i>
+        <div>
+          <strong>Producto para CRM y landing</strong>
+          <span>Registra el producto, servicio o bien que ofreces. La landing solo enviara este ID y AZURION guardara el contexto.</span>
+        </div>
+      </div>
+      <div class="dialog-grid catalog-form-grid">
+        <div class="catalog-selected-type wide-field">
+          <i [class]="host().opportunityTypeMeta(host().catalogoForm.tipoItem).icon"></i>
+          <div>
+            <strong>{{ host().opportunityTypeMeta(host().catalogoForm.tipoItem).label }}</strong>
+            <span>{{ host().opportunityTypeMeta(host().catalogoForm.tipoItem).description }}</span>
+          </div>
+          @if (!host().catalogoForm.id) {
+            <button type="button" (click)="host().backToCatalogTypeSelection()">Cambiar</button>
+          }
+        </div>
+        <label class="wide-field">Nombre <span class="required">*</span><input pInputText name="catNombre" [(ngModel)]="host().catalogoForm.nombre" [placeholder]="host().catalogNamePlaceholder()" /></label>
+        <label>Precio referencial<input pInputText type="number" min="0" name="catPrecio" [(ngModel)]="host().catalogoForm.precioReferencial" placeholder="0.00" /></label>
+        @for (field of host().catalogFields(); track field.key) {
+          <label>
+            {{ field.label }}
+            <input
+              pInputText
+              [type]="field.type || 'text'"
+              [name]="'catAttr' + field.key"
+              [ngModel]="host().catalogAttribute(field.key)"
+              (ngModelChange)="host().setCatalogAttribute(field, $event)"
+              [placeholder]="field.placeholder"
+            />
+          </label>
+        }
+        <label class="check-row wide-field">
+          <input type="checkbox" name="catPublicEnabled" [(ngModel)]="host().catalogoForm.publicEnabled" />
+          <span>Habilitar esta oferta para recibir leads desde landing</span>
+        </label>
+        <label class="wide-field">Slug landing<input pInputText name="catLandingSlug" [(ngModel)]="host().catalogoForm.landingSlug" placeholder="toyota-hilux-2021, curso-excel..." /></label>
+        <label class="wide-field">Detalle rapido<textarea pTextarea name="catDescripcion" rows="3" [(ngModel)]="host().catalogoForm.descripcion" [placeholder]="host().catalogDescriptionPlaceholder()"></textarea></label>
+        <div class="catalog-help wide-field">
+          <i class="pi pi-link"></i>
+          <span>Al guardar, usa el enlace seguro de la tabla. La landing debe enviar <b>catalogoItemId</b> y <b>token</b>; no debe inventar datos del producto.</span>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().catalogDrawerOpen.set(false)" />
+        <p-button label="Guardar oferta" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveCatalogo()" />
+      </div>
+    }
+  </form>
+</p-dialog>

@@ -1,0 +1,47 @@
+.crm-card {
+  background: #fff;
+  border: 1px solid #dbe5f3;
+  border-radius: 8px;
+  display: grid;
+  gap: .25rem;
+  min-height: 5.75rem;
+  padding: .85rem;
+  position: relative;
+}
+
+.crm-card__icon {
+  align-items: center;
+  border-radius: 12px;
+  display: inline-flex;
+  height: 2.35rem;
+  justify-content: center;
+  position: absolute;
+  right: .85rem;
+  top: .85rem;
+  width: 2.35rem;
+}
+
+.crm-card__label {
+  color: #64748b;
+  font-size: .7rem;
+  font-weight: 850;
+}
+
+.crm-card__value {
+  color: #0f172a;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.crm-card__detail {
+  color: #64748b;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.crm-card--blue .crm-card__icon { background: #dbeafe; color: #2563eb; }
+.crm-card--green .crm-card__icon { background: #dcfce7; color: #059669; }
+.crm-card--violet .crm-card__icon { background: #ede9fe; color: #7c3aed; }
+.crm-card--amber .crm-card__icon { background: #fef3c7; color: #d97706; }
+.crm-card--red .crm-card__icon { background: #fee2e2; color: #dc2626; }
+.crm-card--slate .crm-card__icon { background: #e2e8f0; color: #475569; }

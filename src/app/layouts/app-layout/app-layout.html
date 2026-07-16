@@ -14,7 +14,7 @@
     (mouseleave)="setSidebarHover(false)"
   >
     <div class="sidebar-brand">
-      <a class="brand-link" routerLink="/admin/dashboard" (click)="handleNavSelection('/admin/dashboard')">
+      <a class="brand-link" [routerLink]="homeRoute()" (click)="handleNavSelection(homeRoute())">
         <span class="brand-mark">
           <img [src]="profile().logoPanelUrl || 'assets/logosinfondo.png'" alt="AZURION" class="brand-mark-image" />
         </span>
@@ -30,8 +30,25 @@
       <small>{{ profile().tenantId }}</small>
     </div>
 
+    @if (!isGeneralAdmin() && availableWorkspaces().length) {
+      <div class="workspace-switcher" [class.workspace-switcher-single]="availableWorkspaces().length === 1">
+        @for (workspace of availableWorkspaces(); track workspace.value) {
+          <button
+            type="button"
+            class="workspace-button"
+            [class.workspace-button-active]="selectedWorkspace() === workspace.value"
+            [attr.aria-label]="'Abrir menu ' + workspace.label"
+            (click)="selectWorkspace(workspace.value)"
+          >
+            <span><i [class]="'pi ' + workspace.icon"></i></span>
+            <strong>{{ workspace.label }}</strong>
+          </button>
+        }
+      </div>
+    }
+
     <nav class="sidebar-nav">
-      @for (section of navSections(); track section.label) {
+      @for (section of navSections(); track $index) {
         <section class="nav-section">
           @if (section.groupTitle) {
             <div class="nav-module-heading">

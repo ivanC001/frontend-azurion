@@ -1,0 +1,93 @@
+@if (host().stageMoveReview(); as review) {
+  <p-dialog
+    header="Requisitos para mover etapa"
+    [closable]="true"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="true"
+    (visibleChange)="!$event && host().closeStageMoveReview()"
+    appendTo="body"
+    [baseZIndex]="7600"
+    styleClass="crm-dialog crm-dialog--stage-review">
+    <section class="stage-review">
+      <header class="stage-review__head" [style.--stage-color]="review.target.color">
+        <div>
+          <span>Movimiento de oportunidad</span>
+          <h3>{{ review.opportunity.titulo }}</h3>
+          <p>{{ host().stageName(review.opportunity.etapa) }} -> {{ review.target.label }}</p>
+        </div>
+        <aside>
+          <b [class]="'pipeline-stage-mode pipeline-stage-mode--' + review.mode.toLowerCase()">
+            {{ review.mode === 'STRICT' ? 'Modo estricto' : review.mode === 'WARNING' ? 'Modo advertencia' : 'Modo libre' }}
+          </b>
+          <strong>S/ {{ review.opportunity.montoEstimado | number: '1.2-2' }}</strong>
+        </aside>
+      </header>
+
+      <div class="stage-review__objective">
+        <i [class]="review.target.icono || 'pi pi-flag'"></i>
+        <div>
+          <strong>Objetivo de {{ review.target.label }}</strong>
+          <span>{{ review.objective }}</span>
+        </div>
+      </div>
+
+      @if (review.errors.length) {
+        <div class="stage-review__alert stage-review__alert--error">
+          <i class="pi pi-lock"></i>
+          <div>
+            <strong>No se puede mover todavia</strong>
+            <span>Completa los requisitos obligatorios o registra el motivo requerido.</span>
+          </div>
+        </div>
+      } @else if (review.warnings.length) {
+        <div class="stage-review__alert stage-review__alert--warning">
+          <i class="pi pi-exclamation-triangle"></i>
+          <div>
+            <strong>Movimiento con advertencias</strong>
+            <span>Puedes continuar, pero conviene completar estos datos para no perder control comercial.</span>
+          </div>
+        </div>
+      }
+
+      <div class="stage-review__checklist">
+        @for (check of review.checklist; track check.code) {
+          <article [class.stage-review__check--done]="check.done" [class.stage-review__check--required]="check.required">
+            <i [class]="check.done ? 'pi pi-check-circle' : check.required ? 'pi pi-circle' : 'pi pi-info-circle'"></i>
+            <div>
+              <strong>{{ check.label }}</strong>
+              <span>{{ check.description }}</span>
+            </div>
+            @if (!check.done && check.action) {
+              <button type="button" (click)="host().runStageRequirementAction(check.action, review)">
+                {{ check.action === 'quote' ? 'Crear cotizacion' : check.action === 'activity' ? 'Registrar actividad' : 'Completar' }}
+              </button>
+            }
+          </article>
+        }
+      </div>
+
+      @if (review.target.value === 'PERDIDO') {
+        <label class="stage-review__loss">
+          Motivo de perdida <span class="required">*</span>
+          <textarea
+            pTextarea
+            rows="3"
+            [ngModel]="host().stageMoveComment()"
+            (ngModelChange)="host().stageMoveComment.set($event)"
+            placeholder="Ej. Cliente eligio competencia por precio, sin presupuesto, no respondio..."
+          ></textarea>
+        </label>
+      }
+
+      <footer class="dialog-actions">
+        <button type="button" class="secondary-button" (click)="host().closeStageMoveReview()">Cancelar</button>
+        <button type="button" class="primary-button" [disabled]="!host().canContinueStageMove(review) || host().saving()" (click)="host().continueStageMove()">
+          <i class="pi pi-arrow-right"></i>
+          Continuar movimiento
+        </button>
+      </footer>
+    </section>
+  </p-dialog>
+}

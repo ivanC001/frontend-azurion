@@ -1,0 +1,40 @@
+.crm-feature-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.prospect-titlebar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.prospect-primary-button--refresh {
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, #2563eb 35%, var(--az-border));
+  color: #2563eb;
+}
+
+.prospect-primary-button:hover:not(:disabled) {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.prospect-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .prospect-titlebar-actions,
+  .prospect-primary-button {
+    width: 100%;
+  }
+
+  .prospect-primary-button {
+    justify-content: center;
+  }
+}

@@ -1,0 +1,93 @@
+<section class="quotes-board clients-board">
+  <header class="quotes-hero clients-hero">
+    <div class="quotes-hero__icon clients-hero__icon"><i class="pi pi-trophy"></i></div>
+    <div>
+      <span>6</span>
+      <h2>Clientes</h2>
+      <p><i class="pi pi-circle-fill"></i> Ventas cerradas y expedientes validados</p>
+    </div>
+    <strong>{{ totalCustomers() }}</strong>
+  </header>
+
+  @if (filtersVisible()) {
+    <section class="opportunity-filters-panel">
+      <p-select
+        [options]="outcomeFilterOptions()"
+        [ngModel]="outcomeFilter()"
+        (ngModelChange)="outcomeFilterChange.emit($event)"
+        appendTo="body"
+      />
+      <button type="button" (click)="outcomeFilterChange.emit('TODOS')">
+        <i class="pi pi-filter-slash"></i>
+        Limpiar
+      </button>
+    </section>
+  }
+
+  <section class="quotes-metrics clients-metrics" aria-label="Resumen de clientes">
+    @for (metric of metrics(); track metric.label) {
+      <article>
+        <span>{{ metric.label }}</span>
+        <strong>{{ metric.value }}</strong>
+        <p><b>{{ metric.delta }}</b> {{ metric.detail }}</p>
+      </article>
+    }
+  </section>
+
+  <section class="quotes-content clients-content">
+    <article class="quotes-list-card clients-list-card">
+      <div class="quotes-card-head">
+        <h3>Clientes con venta cerrada</h3>
+        <button type="button" (click)="clearRequested.emit()">Ver todas</button>
+      </div>
+
+      <div class="clients-list">
+        @for (row of rows(); track row.opportunity.id) {
+          <article class="client-row client-row--won" role="button" tabindex="0" (click)="customerSelected.emit(row.opportunity)">
+            <i>{{ row.initials }}</i>
+            <div>
+              <strong>{{ row.contactName }}</strong>
+              <span>{{ row.purchaseLabel }}</span>
+              <span>{{ row.companyLabel }}</span>
+            </div>
+            <em class="client-status-badge client-status-badge--won">{{ row.documentCount }} doc(s)</em>
+            <time>{{ row.closureDate | date: 'dd/MM/yyyy' }}</time>
+            <b>
+              @if (row.debt <= 0) {
+                Pago completo
+              } @else {
+                Debe S/ {{ row.debt | number: '1.2-2' }}
+              }
+            </b>
+          </article>
+        } @empty {
+          <div class="quotes-empty">Todavia no hay ventas cerradas con documentacion validada.</div>
+        }
+      </div>
+      <footer class="prospect-pagination">
+        <span>{{ pageRangeLabel() }}</span>
+        <div>
+          <button type="button" [disabled]="!canGoPrevious()" (click)="previousPageRequested.emit()"><i class="pi pi-angle-left"></i></button>
+          <button type="button" [disabled]="!canGoNext()" (click)="nextPageRequested.emit()"><i class="pi pi-angle-right"></i></button>
+        </div>
+      </footer>
+    </article>
+
+    <article class="quotes-chart-card clients-chart-card">
+      <div class="quotes-card-head"><h3>Clientes por producto</h3></div>
+      <div class="quotes-donut-wrap clients-donut-wrap">
+        <div class="quotes-donut clients-donut" [style.background]="productRingBackground()">
+          <span>{{ totalCustomers() }}</span>
+          <small>Total</small>
+        </div>
+        <div class="quotes-legend clients-legend">
+          @for (item of productSummary(); track item.label) {
+            <span><i [style.background]="item.color"></i>{{ item.label }}<b>{{ item.value }} ({{ item.percent }}%)</b></span>
+          } @empty {
+            <span><i style="background: #e5e7eb"></i>Sin clientes<b>0 (0%)</b></span>
+          }
+        </div>
+      </div>
+    </article>
+  </section>
+</section>

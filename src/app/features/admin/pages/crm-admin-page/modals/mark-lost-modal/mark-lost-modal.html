@@ -1,0 +1,42 @@
+@if (host().lossDialog(); as loss) {
+  <p-dialog
+    [header]="loss.type === 'OPORTUNIDAD' ? 'Marcar oportunidad perdida' : 'Marcar prospecto perdido'"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="true"
+    (visibleChange)="!$event && host().closeLossDialog()"
+    appendTo="body"
+    [baseZIndex]="7700"
+    styleClass="crm-dialog crm-dialog--loss">
+    <section class="loss-dialog">
+      <header class="loss-dialog__head">
+        <span class="loss-dialog__icon"><i class="pi pi-times-circle"></i></span>
+        <div>
+          <strong>{{ loss.type === 'OPORTUNIDAD' ? loss.oportunidad?.titulo : loss.prospecto?.nombre }}</strong>
+          <p>
+            {{ loss.type === 'OPORTUNIDAD'
+              ? 'Se cerrara el negocio y se cancelaran sus actividades pendientes.'
+              : 'Se cerrara el prospecto sin crear oportunidad y se cancelaran sus actividades pendientes.' }}
+          </p>
+        </div>
+      </header>
+      <div class="dialog-grid">
+        <label class="wide-field">Motivo de perdida <span class="required">*</span>
+          <p-select [options]="host().lossReasonOptions()" [ngModel]="host().lossReason()" (ngModelChange)="host().lossReason.set($event)" appendTo="body" placeholder="Selecciona el motivo" />
+        </label>
+        <label class="wide-field">Observacion
+          <textarea pTextarea rows="4" [ngModel]="host().lossObservation()" (ngModelChange)="host().lossObservation.set($event)" placeholder="Agrega contexto: que paso, objecion, competencia, presupuesto o aprendizaje comercial"></textarea>
+        </label>
+      </div>
+      <footer class="dialog-actions">
+        <button type="button" class="secondary-button" (click)="host().closeLossDialog()">Cancelar</button>
+        <button type="button" class="danger-button" [disabled]="host().saving() || !host().lossReason()" (click)="host().saveLoss()">
+          <i class="pi pi-times-circle"></i>
+          Confirmar perdida
+        </button>
+      </footer>
+    </section>
+  </p-dialog>
+}

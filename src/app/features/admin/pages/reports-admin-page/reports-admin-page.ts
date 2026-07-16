@@ -11,6 +11,7 @@ import { TagModule } from 'primeng/tag';
 import {
   ExcelCellValue,
   ExcelReportColumn,
+  ExcelReportSheet,
   ExcelReportService,
 } from '../../data/excel-report.service';
 import {
@@ -19,6 +20,7 @@ import {
   Caja,
   CajaMovimiento,
   Compra,
+  CrmPipelineColumn,
   GuiaRemisionRecord,
   KardexMovimiento,
   NotaFiscalRecord,
@@ -27,7 +29,15 @@ import {
   VentaRecord,
 } from '../../data/admin-saas-api.service';
 
-type ReportModule = 'ventas' | 'compras' | 'stock' | 'kardex' | 'caja' | 'notas' | 'guias';
+type ReportModule =
+  | 'ventas'
+  | 'compras'
+  | 'stock'
+  | 'kardex'
+  | 'caja'
+  | 'notas'
+  | 'guias'
+  | 'crm_pipeline';
 
 interface ReportColumn extends ExcelReportColumn {
   align?: 'left' | 'right' | 'center';
@@ -58,6 +68,7 @@ export class ReportsAdminPage {
   protected readonly notasDebito = signal<NotaFiscalRecord[]>([]);
   protected readonly almacenes = signal<Almacen[]>([]);
   protected readonly productos = signal<Producto[]>([]);
+  protected readonly crmPipeline = signal<CrmPipelineColumn[]>([]);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -80,6 +91,7 @@ export class ReportsAdminPage {
     { label: 'Caja', value: 'caja' as const },
     { label: 'Notas credito/debito', value: 'notas' as const },
     { label: 'Guias remision', value: 'guias' as const },
+    { label: 'CRM pipeline', value: 'crm_pipeline' as const },
   ];
 
   protected readonly currentModuleLabel = computed(
@@ -129,6 +141,12 @@ export class ReportsAdminPage {
         { label: 'Otro', value: 'OTRO' },
       ];
     }
+    if (this.moduleFilter() === 'crm_pipeline') {
+      return this.crmPipeline().map((column) => ({
+        label: column.etapa.nombre,
+        value: column.etapa.codigo,
+      }));
+    }
     return [
       { label: 'Aceptado', value: 'ACEPTADO' },
       { label: 'Pendiente', value: 'PENDIENTE' },
@@ -140,6 +158,21 @@ export class ReportsAdminPage {
 
   protected readonly columns = computed<ReportColumn[]>(() => {
     switch (this.moduleFilter()) {
+      case 'crm_pipeline':
+        return [
+          { key: 'etapa', label: 'Etapa', width: 18 },
+          { key: 'orden', label: 'Orden', align: 'center', format: 'number', width: 10 },
+          { key: 'oportunidad', label: 'Oportunidad', width: 30 },
+          { key: 'cliente', label: 'Cliente / prospecto', width: 28 },
+          { key: 'tipo', label: 'Tipo', width: 16 },
+          { key: 'monto', label: 'Monto estimado', align: 'right', format: 'currency', width: 16 },
+          { key: 'probabilidad', label: 'Probabilidad %', align: 'right', format: 'number', width: 14 },
+          { key: 'cierreEstimado', label: 'Cierre estimado', width: 16 },
+          { key: 'responsable', label: 'Responsable', width: 22 },
+          { key: 'estado', label: 'Estado', align: 'center', width: 14 },
+          { key: 'creado', label: 'Creado', width: 18 },
+          { key: 'actualizado', label: 'Actualizado', width: 18 },
+        ];
       case 'stock':
         return [
           { key: 'producto', label: 'Producto' },
@@ -256,6 +289,20 @@ export class ReportsAdminPage {
 
   protected readonly reportRows = computed(() => this.filterRows(this.buildRows()));
 
+  protected readonly crmPipelineCards = computed(() =>
+    this.crmPipeline().map((column) => ({
+      codigo: column.etapa.codigo,
+      nombre: column.etapa.nombre,
+      color: column.etapa.color || '#2563eb',
+      cantidad: column.cantidad,
+      monto: Number(column.monto || 0),
+    })),
+  );
+
+  protected readonly canExportXls = computed(
+    () => this.reportRows().length > 0 || (this.moduleFilter() === 'crm_pipeline' && this.crmPipelineCards().length > 0),
+  );
+
   protected readonly metrics = computed(() => {
     const rows = this.reportRows();
     const totalAmount = rows.reduce((sum, row) => sum + Number(row['__amount'] || 0), 0);
@@ -314,6 +361,7 @@ export class ReportsAdminPage {
       kardex: safeList(this.api.listKardex(), [] as KardexMovimiento[], 'kardex'),
       cajas: safeList(this.api.listCajas(), [] as Caja[], 'caja'),
       guias: safeList(this.api.listGuiasRemision(), [] as GuiaRemisionRecord[], 'guias'),
+      crmPipeline: safeList(this.api.getCrmPipeline(), [] as CrmPipelineColumn[], 'crm pipeline'),
       notasCredito: safeList(
         this.api.listNotasCredito(),
         [] as NotaFiscalRecord[],
@@ -350,6 +398,7 @@ export class ReportsAdminPage {
           this.kardex.set(base.kardex);
           this.cajas.set(base.cajas);
           this.guias.set(base.guias);
+          this.crmPipeline.set(base.crmPipeline);
           this.notasCredito.set(base.notasCredito);
           this.notasDebito.set(base.notasDebito);
           this.movimientosCaja.set(movimientosCaja.flat());
@@ -411,6 +460,11 @@ export class ReportsAdminPage {
 
   protected async exportExcel(): Promise<void> {
     const rows = this.reportRows();
+    if (this.moduleFilter() === 'crm_pipeline' && this.crmPipelineCards().length) {
+      await this.exportCrmPipelineWorkbook(rows);
+      return;
+    }
+
     if (!rows.length) {
       this.errorMessage.set('No hay filas para exportar con los filtros actuales.');
       return;
@@ -432,6 +486,27 @@ export class ReportsAdminPage {
       ],
     );
     this.successMessage.set(`Reporte Excel generado: ${rows.length} fila(s).`);
+  }
+
+  protected exportCsv(): void {
+    const rows = this.reportRows();
+    if (!rows.length) {
+      this.errorMessage.set('No hay filas para exportar con los filtros actuales.');
+      return;
+    }
+
+    const columns = this.columns();
+    const lines = [
+      columns.map((column) => this.csvEscape(column.label)).join(','),
+      ...rows.map((row) =>
+        columns
+          .map((column) => this.csvEscape(this.normalizeCsvValue(row[column.key], column)))
+          .join(','),
+      ),
+    ];
+    const csv = `\uFEFF${lines.join('\r\n')}`;
+    this.downloadText(csv, `azurion-reporte-${this.moduleFilter()}-${this.today()}.csv`, 'text/csv;charset=utf-8;');
+    this.successMessage.set(`Reporte CSV generado: ${rows.length} fila(s).`);
   }
 
   protected cellClass(column: ReportColumn): string {
@@ -583,6 +658,8 @@ export class ReportsAdminPage {
           estado: this.resolveDocumentStatus(item),
           __date: item.fechaEmision,
         }));
+      case 'crm_pipeline':
+        return this.buildCrmPipelineRows();
       default:
         return this.ventas().map((item) => ({
           fecha: this.formatDateTime(item.fechaVenta),
@@ -703,6 +780,9 @@ export class ReportsAdminPage {
   }
 
   private resolveTotalKeys(): string[] {
+    if (this.moduleFilter() === 'crm_pipeline') {
+      return ['monto'];
+    }
     if (this.moduleFilter() === 'stock' || this.moduleFilter() === 'kardex') {
       return ['cantidad'];
     }
@@ -733,6 +813,101 @@ export class ReportsAdminPage {
       this.cajaFilter() ? `Caja ID: ${this.cajaFilter()}` : null,
     ].filter(Boolean);
     return parts.join(' | ');
+  }
+
+  private buildCrmPipelineRows(): ReportRow[] {
+    return this.crmPipeline().flatMap((column) =>
+      (column.oportunidades || []).map((opportunity) => ({
+        etapa: column.etapa.nombre,
+        orden: Number(column.etapa.orden || 0),
+        oportunidad: opportunity.titulo,
+        cliente: opportunity.clienteNombre || opportunity.prospectoNombre || 'Sin cliente',
+        tipo: opportunity.tipoOportunidad || 'Oportunidad',
+        monto: Number(opportunity.montoEstimado || 0),
+        probabilidad: Number(opportunity.probabilidad || column.etapa.probabilidadDefault || 0),
+        cierreEstimado: opportunity.fechaCierreEstimada || '',
+        responsable: opportunity.responsableId || '',
+        estado: opportunity.estado || '',
+        creado: this.formatDateTime(opportunity.createdAt),
+        actualizado: this.formatDateTime(opportunity.updatedAt || opportunity.fechaUltimaActualizacion),
+        __date: opportunity.fechaCierreEstimada || this.dateOnly(opportunity.createdAt),
+        __status: column.etapa.codigo,
+        __amount: Number(opportunity.montoEstimado || 0),
+      })),
+    );
+  }
+
+  private async exportCrmPipelineWorkbook(rows: ReportRow[]): Promise<void> {
+    const columns = this.columns().map(({ align, ...column }) => column);
+    const sheets: ExcelReportSheet[] = [
+      {
+        name: 'Pipeline completo',
+        title: 'Reporte CRM pipeline completo',
+        subtitle: this.currentFilterSubtitle(),
+        columns,
+        rows,
+        totalKeys: ['monto'],
+      },
+      {
+        name: 'Resumen etapas',
+        title: 'Resumen de cuadros del pipeline',
+        subtitle: this.currentFilterSubtitle(),
+        columns: [
+          { key: 'etapa', label: 'Etapa', width: 22 },
+          { key: 'codigo', label: 'Codigo', width: 16 },
+          { key: 'cantidad', label: 'Oportunidades', format: 'number', width: 16 },
+          { key: 'monto', label: 'Monto total', format: 'currency', width: 16 },
+        ],
+        rows: this.crmPipelineCards().map((card) => ({
+          etapa: card.nombre,
+          codigo: card.codigo,
+          cantidad: card.cantidad,
+          monto: card.monto,
+        })),
+        totalKeys: ['cantidad', 'monto'],
+      },
+      ...this.crmPipeline().map((column) => {
+        const stageRows = rows.filter((row) => row['__status'] === column.etapa.codigo);
+        return {
+          name: column.etapa.nombre,
+          title: `Pipeline - ${column.etapa.nombre}`,
+          subtitle: this.currentFilterSubtitle(),
+          columns,
+          rows: stageRows,
+          totalKeys: ['monto'],
+        };
+      }),
+    ];
+
+    await this.excelReport.exportWorkbook(`azurion-crm-pipeline-${this.today()}.xlsx`, sheets);
+    this.successMessage.set(`Pipeline CRM exportado en Excel: ${rows.length} oportunidad(es).`);
+  }
+
+  private normalizeCsvValue(value: ExcelCellValue, column: ReportColumn): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (column.format === 'currency' || column.format === 'number') {
+      return String(Number(value || 0));
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    return String(value);
+  }
+
+  private csvEscape(value: string): string {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+
+  private downloadText(content: string, fileName: string, type: string): void {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   private today(): string {

@@ -1,0 +1,16 @@
+.prospect-form-message {
+  align-items: flex-start;
+  border-radius: 0.5rem;
+  display: flex;
+  font-size: 0.76rem;
+  font-weight: 750;
+  gap: 0.5rem;
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.prospect-form-message--error {
+  background: color-mix(in srgb, #fee2e2 82%, var(--az-surface));
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+}

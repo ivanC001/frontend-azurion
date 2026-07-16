@@ -7,7 +7,8 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { catchError, finalize, forkJoin, map, of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -46,6 +47,20 @@ export class CompanySettingsPage implements OnDestroy {
   private readonly companyApi = inject(AdminSaasApiService);
   private readonly facturadorApi = inject(FacturadorApiService);
   private readonly session = inject(AuthSessionService);
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly settingsView: 'tenant' | 'facturador' =
+    this.route.snapshot.data['settingsView'] === 'facturador' ? 'facturador' : 'tenant';
+  protected readonly isFacturadorView = this.settingsView === 'facturador';
+  protected readonly pageTitle = this.isFacturadorView
+    ? 'Configuracion del facturador'
+    : 'Configuracion del tenant';
+  protected readonly pageDescription = this.isFacturadorView
+    ? 'Configura SUNAT, certificado digital y el logo fiscal de los comprobantes.'
+    : 'Administra la identidad y el logo del panel de tu empresa.';
+  protected readonly saveLabel = this.isFacturadorView
+    ? 'Guardar facturador'
+    : 'Guardar tenant';
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -83,9 +98,11 @@ export class CompanySettingsPage implements OnDestroy {
 
     forkJoin({
       empresa: this.companyApi.getCurrentEmpresa().pipe(catchError(() => of(null))),
-      facturador: this.facturadorApi
-        .listTenants()
-        .pipe(catchError(() => of({ total: 0, items: [] as readonly FacturadorTenant[] }))),
+      facturador: this.isFacturadorView
+        ? this.facturadorApi
+            .listTenants()
+            .pipe(catchError(() => of({ total: 0, items: [] as readonly FacturadorTenant[] })))
+        : of({ total: 0, items: [] as readonly FacturadorTenant[] }),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
@@ -116,7 +133,9 @@ export class CompanySettingsPage implements OnDestroy {
         },
         error: () =>
           this.errorMessage.set(
-            'No se pudo cargar la configuracion actual de empresa y facturador.',
+            this.isFacturadorView
+              ? 'No se pudo cargar la configuracion actual del facturador.'
+              : 'No se pudo cargar la configuracion actual del tenant.',
           ),
       });
   }
@@ -134,6 +153,7 @@ export class CompanySettingsPage implements OnDestroy {
       return;
     }
     if (
+      this.isFacturadorView &&
       this.form.sunat_mode === 'production' &&
       !this.form.certificado_file &&
       !this.form.certificado_url.trim() &&
@@ -145,75 +165,49 @@ export class CompanySettingsPage implements OnDestroy {
       return;
     }
 
-    this.saving.set(true);
-    forkJoin({
-      branding: this.persistPanelBranding().pipe(
-        map((empresa) => ({ ok: true as const, empresa })),
-        catchError((error: unknown) =>
-          of({
-            ok: false as const,
-            message: this.resolveErrorMessage(
-              error,
-              'No se pudo guardar el logo del panel administrativo.',
-            ),
-          }),
-        ),
-      ),
-      facturador: this.persistFacturadorConfig().pipe(
-        map((tenant) => ({ ok: true as const, tenant })),
-        catchError((error: unknown) =>
-          of({
-            ok: false as const,
-            message: this.resolveErrorMessage(
-              error,
-              'No se pudo guardar el logo y la configuracion de facturacion.',
-            ),
-          }),
-        ),
-      ),
-    })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe(({ branding, facturador }) => {
-        if (branding.ok) {
-          this.hydrateBrandingFromEmpresa(branding.empresa);
-          this.session.updateEmpresaData({
-            logoPanelUrl: branding.empresa.logoPanelUrl ?? null,
-          });
-          this.form.panel_logo_file = null;
-        }
+    if (this.isFacturadorView) {
+      this.saveFacturadorSettings();
+      return;
+    }
 
-        if (facturador.ok) {
-          this.existingConfig.set(facturador.tenant);
+    this.saveTenantSettings();
+  }
+
+  private saveTenantSettings(): void {
+    this.saving.set(true);
+    this.persistPanelBranding()
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (empresa) => {
+          this.hydrateBrandingFromEmpresa(empresa);
+          this.session.updateEmpresaData({ logoPanelUrl: empresa.logoPanelUrl ?? null });
+          this.form.panel_logo_file = null;
+          this.successMessage.set('Configuracion del tenant guardada correctamente.');
+        },
+        error: (error: unknown) =>
+          this.errorMessage.set(
+            this.resolveErrorMessage(error, 'No se pudo guardar la configuracion del tenant.'),
+          ),
+      });
+  }
+
+  private saveFacturadorSettings(): void {
+    this.saving.set(true);
+    this.persistFacturadorConfig()
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (tenant) => {
+          this.existingConfig.set(tenant);
           this.form.clave_sol = '';
           this.form.invoice_logo_file = null;
           this.form.certificado_file = null;
-          this.hydrateFormFromTenant(facturador.tenant);
-        }
-
-        if (branding.ok && facturador.ok) {
-          this.successMessage.set(
-            'Se guardaron el logo del panel y la configuracion del logo fiscal correctamente.',
-          );
-          return;
-        }
-
-        if (branding.ok) {
-          this.successMessage.set('Se guardo el logo del panel administrativo.');
+          this.hydrateFormFromTenant(tenant);
+          this.successMessage.set('Configuracion del facturador guardada correctamente.');
+        },
+        error: (error: unknown) =>
           this.errorMessage.set(
-            facturador.ok ? 'No se pudo determinar el estado del logo fiscal.' : facturador.message,
-          );
-          return;
-        }
-
-        if (facturador.ok) {
-          this.successMessage.set('Se guardo la configuracion del logo fiscal y facturacion.');
-          this.errorMessage.set(
-            branding.ok ? 'No se pudo determinar el estado del logo del panel.' : branding.message,
-          );
-          return;
-        }
-
-        this.errorMessage.set(`${branding.message} ${facturador.message}`.trim());
+            this.resolveErrorMessage(error, 'No se pudo guardar la configuracion del facturador.'),
+          ),
       });
   }
 

@@ -1,0 +1,103 @@
+<section class="salesforce-view salesforce-view--pipeline pipeline-compact-page">
+  <header class="pipeline-page-head">
+    <div>
+      <h2>Pipeline de Oportunidades <i class="pi pi-info-circle"></i></h2>
+      <p>Visualiza y gestiona todas las oportunidades de tu negocio.</p>
+    </div>
+    <div class="pipeline-page-actions">
+      <label class="pipeline-search-field">
+        <i class="pi pi-search"></i>
+        <input pInputText type="search" [ngModel]="query()" (ngModelChange)="queryChange.emit($event)" placeholder="Buscar oportunidades..." />
+      </label>
+      <button type="button" class="pipeline-light-action" (click)="clearStageFilterRequested.emit()">
+        <i class="pi pi-filter"></i>
+        Filtros
+      </button>
+      @if (canManageConfig()) {
+        <button type="button" class="pipeline-icon-action" title="Reglas del pipeline" aria-label="Reglas del pipeline" (click)="configureStagesRequested.emit()">
+          <i class="pi pi-cog"></i>
+        </button>
+      }
+      <button type="button" class="pipeline-primary-action" (click)="createOpportunityRequested.emit()">
+        <i class="pi pi-plus"></i>
+        Nueva oportunidad
+      </button>
+    </div>
+  </header>
+
+  <section class="pipeline-summary-grid" aria-label="Resumen del pipeline">
+    @for (card of summaryCards(); track card.label) {
+      <article [class]="'pipeline-summary-card pipeline-summary-card--' + card.tone">
+        <span><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em>{{ card.detail }}</em></span>
+        <b><i [class]="card.icon"></i></b>
+      </article>
+    }
+  </section>
+
+  <section class="pipeline-board pipeline-board--salesforce pipeline-board--compact" aria-label="Pipeline de oportunidades">
+    <div class="pipeline-scroll pipeline-scroll--salesforce pipeline-scroll--compact">
+      @for (column of columns(); track column.value) {
+        <article class="pipeline-column pipeline-column--salesforce" [style.--stage-color]="column.color">
+          <header class="pipeline-stage-header">
+            <div><span>{{ column.label }} ({{ column.items.length }})</span><strong>S/ {{ column.total | number: '1.0-0' }}</strong></div>
+            @if (canManageConfig()) {
+              <nav><button type="button" title="Configurar etapa" aria-label="Configurar etapa" (click)="configureStagesRequested.emit()"><i class="pi pi-ellipsis-h"></i></button></nav>
+            }
+          </header>
+          <div class="pipeline-stack pipeline-stack--salesforce">
+            @for (row of column.items; track row.opportunity.id) {
+              <article
+                class="deal-card deal-card--salesforce"
+                [class.deal-card--won]="row.won"
+                [class.deal-card--lost]="row.lost"
+                role="button"
+                tabindex="0"
+                (click)="opportunitySelected.emit({ opportunity: row.opportunity, stage: column.value })"
+                (keydown.enter)="opportunitySelected.emit({ opportunity: row.opportunity, stage: column.value })"
+              >
+                <div class="deal-card__top">
+                  <strong>{{ row.title }}</strong>
+                  <button type="button" title="Editar" aria-label="Editar oportunidad" (click)="$event.stopPropagation(); editOpportunityRequested.emit(row.opportunity)"><i class="pi pi-ellipsis-v"></i></button>
+                </div>
+                <span class="deal-card__amount">S/ {{ row.amount | number: '1.0-0' }}</span>
+                <em class="deal-card__client">{{ row.company }}</em>
+                <span class="deal-card__campaign"><i class="pi pi-megaphone"></i>{{ row.campaign }}</span>
+                <em>{{ row.origin }}</em>
+                <div class="deal-card__bottom">
+                  <span [class]="'deal-temperature deal-temperature--' + row.temperatureTone">{{ row.temperatureLabel }}</span>
+                  @if (row.closingDate) {
+                    <small><i class="pi pi-calendar"></i>{{ row.closingDate | date: 'dd MMM' }}</small>
+                  } @else {
+                    <small><i class="pi pi-calendar"></i>Sin cierre</small>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <div class="pipeline-empty">Sin oportunidades en esta etapa</div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+  <section class="pipeline-outcomes" aria-label="Resultados cerrados del pipeline">
+    <div>
+      <i class="pi pi-check-circle"></i>
+      <span><strong>Los cierres salen del pipeline activo</strong><small>Consulta las ventas ganadas en Clientes y las pérdidas en Oportunidades.</small></span>
+    </div>
+    <nav>
+      <button type="button" class="pipeline-outcome pipeline-outcome--won" (click)="closedOutcomeRequested.emit('GANADA')">
+        <i class="pi pi-trophy"></i> Ver ganadas
+      </button>
+      <button type="button" class="pipeline-outcome pipeline-outcome--lost" (click)="closedOutcomeRequested.emit('PERDIDA')">
+        <i class="pi pi-times-circle"></i> Ver perdidas
+      </button>
+    </nav>
+  </section>
+  <footer class="pipeline-help-strip">
+    <span><i class="pi pi-lightbulb"></i> Organiza las oportunidades por etapa y prioriza las que requieren accion.</span>
+    @if (canManageConfig()) {
+      <button type="button" (click)="configureStagesRequested.emit()">Ver reglas del pipeline <i class="pi pi-angle-right"></i></button>
+    }
+  </footer>
+</section>

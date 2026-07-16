@@ -1,9 +1,9 @@
 <section class="company-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">Configuracion empresarial</p>
-      <h1>Empresa y Facturacion SUNAT</h1>
-      <p>Separa el logo del panel administrativo del logo fiscal que viaja al facturador.</p>
+      <p class="page-eyebrow">{{ isFacturadorView ? 'Facturacion electronica' : 'Administracion empresarial' }}</p>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageDescription }}</p>
     </div>
     <p-button
       label="Recargar"
@@ -28,8 +28,9 @@
     </div>
   }
 
-  <div class="settings-grid">
-    <article class="panel panel--identity">
+  <div class="settings-grid settings-grid--single">
+    @if (!isFacturadorView) {
+      <article class="panel panel--identity">
       <header class="panel__header">
         <h2><i class="pi pi-id-card"></i> Identidad visual</h2>
       </header>
@@ -79,9 +80,11 @@
           </label>
         </div>
       </div>
-    </article>
+      </article>
+    }
 
-    <article class="panel panel--sunat">
+    @if (isFacturadorView) {
+      <article class="panel panel--sunat">
       <header class="panel__header">
         <h2><i class="pi pi-file-edit"></i> SUNAT / Facturacion</h2>
       </header>
@@ -183,12 +186,13 @@
         <i class="pi pi-info-circle"></i>
         <span>El logo fiscal se mantiene separado del panel para no mezclar branding operativo con branding tributario.</span>
       </div>
-    </article>
+      </article>
+    }
   </div>
 
   <footer class="actions-bar">
     <p-button
-      label="Guardar configuracion"
+      [label]="saveLabel"
       icon="pi pi-save"
       styleClass="az-primary save-btn"
       [loading]="saving()"

@@ -9,12 +9,15 @@ import { APP_SETTINGS } from '@core/config/app-settings';
 export interface PublicCrmLeadRequest {
   readonly tenantId?: string | null;
   readonly Ruc_tenant?: string | null;
+  readonly landingKey?: string | null;
   readonly tipoPersona?: string | null;
   readonly tipoDocumento?: string | null;
   readonly numeroDocumento?: string | null;
   readonly nombre: string;
   readonly empresa?: string | null;
   readonly correo?: string | null;
+  readonly email?: string | null;
+  readonly emai?: string | null;
   readonly telefono?: string | null;
   readonly direccion?: string | null;
   readonly origen?: string | null;
@@ -39,6 +42,7 @@ export interface PublicCrmLeadResponse {
   readonly origen: string;
   readonly canalIngreso: string;
   readonly estado: string;
+  readonly productoPendiente?: boolean | null;
 }
 
 export interface PublicCrmCatalogoItem {

@@ -1,0 +1,152 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="!$event && closed.emit()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="7900"
+  styleClass="crm-payment-dialog"
+  appendTo="body">
+  <ng-template pTemplate="header">
+    <strong class="payment-dialog-title">
+      <span><i class="pi pi-dollar"></i></span>
+      Registrar pago
+    </strong>
+  </ng-template>
+
+  <form class="payment-dialog-form" (submit)="$event.preventDefault(); saveRequested.emit()">
+    <section class="payment-dialog-summary">
+      <article class="payment-course-card">
+        <span class="payment-course-icon"><i class="pi pi-graduation-cap"></i></span>
+        <div class="payment-course-copy">
+          <strong>{{ opportunityTitle() }}</strong>
+          <div class="payment-money-grid">
+            <span><small>Total</small><b>S/ {{ summary().total | number: '1.2-2' }}</b></span>
+            <span><small>Pagado</small><b>S/ {{ summary().paid | number: '1.2-2' }}</b></span>
+            <span><small>Saldo</small><b>S/ {{ summary().pending | number: '1.2-2' }}</b></span>
+          </div>
+        </div>
+      </article>
+
+      <article class="payment-stat payment-stat--paid">
+        <span><i class="pi pi-check"></i></span>
+        <div><strong>{{ summary().paidInstallments }}</strong><small>Cuotas pagadas</small></div>
+      </article>
+      <article class="payment-stat payment-stat--pending">
+        <span><i class="pi pi-clock"></i></span>
+        <div><strong>{{ summary().pendingInstallments }}</strong><small>Pendientes</small></div>
+      </article>
+      <article class="payment-stat payment-stat--overdue">
+        <span><i class="pi pi-exclamation"></i></span>
+        <div><strong>{{ summary().overdueInstallments }}</strong><small>Vencidas</small></div>
+      </article>
+    </section>
+
+    <div class="payment-dialog-content">
+      <section class="payment-installments-panel">
+        <header><strong>Cuotas del curso</strong></header>
+        <div class="payment-installments-head" aria-hidden="true">
+          <span>Cuota</span><span>Vence</span><span>Monto</span><span>Estado</span>
+        </div>
+        <div class="payment-installments-list">
+          @for (installment of installments(); track installment.key) {
+            <label
+              class="payment-installment-row"
+              [class.payment-installment-row--selected]="form().cuotaKey === installment.key"
+              [class.payment-installment-row--disabled]="!installment.selectable"
+              (click)="selectInstallment(installment)">
+              <span>
+                <input
+                  type="radio"
+                  name="selectedInstallment"
+                  [checked]="form().cuotaKey === installment.key"
+                  [disabled]="!installment.selectable"
+                  (change)="selectInstallment(installment)" />
+                Cuota {{ installment.number }}
+              </span>
+              <span>{{ formatDate(installment.dueDate) }}</span>
+              <span>S/ {{ installment.amount | number: '1.2-2' }}</span>
+              <em [class]="'payment-installment-status payment-installment-status--' + installmentStatusTone(installment.status)">
+                {{ installmentStatusLabel(installment.status) }}
+              </em>
+            </label>
+          } @empty {
+            <div class="payment-installments-empty">
+              <i class="pi pi-calendar-times"></i>
+              No hay cuotas disponibles para registrar.
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="payment-fields-panel">
+        <div class="payment-fields-grid">
+          <label>
+            <span>Fecha <b>*</b></span>
+            <input pInputText type="date" name="payFecha" [ngModel]="form().fecha" (ngModelChange)="patchForm('fecha', $event)" />
+          </label>
+          <label>
+            <span>Tipo <b>*</b></span>
+            <p-select name="payTipo" [options]="typeOptions()" [ngModel]="form().tipo" (ngModelChange)="patchForm('tipo', $event)" appendTo="body" />
+          </label>
+          <label>
+            <span>Cuota seleccionada <b>*</b></span>
+            <p-select
+              name="payCuota"
+              [options]="selectableInstallments()"
+              optionLabel="number"
+              optionValue="key"
+              [ngModel]="form().cuotaKey"
+              (ngModelChange)="installmentSelected.emit($event)"
+              appendTo="body">
+              <ng-template #selectedItem>
+                <span>{{ selectedInstallmentLabel() }}</span>
+              </ng-template>
+              <ng-template let-item #item>
+                <span>Cuota {{ item.number }} - Vence {{ formatDate(item.dueDate) }}</span>
+              </ng-template>
+            </p-select>
+          </label>
+          <label>
+            <span>Monto <b>*</b></span>
+            <span class="payment-money-input"><i>S/</i><input pInputText type="number" min="0" step="0.01" name="payMonto" [ngModel]="form().monto" (ngModelChange)="patchForm('monto', $event)" /></span>
+          </label>
+          <label>
+            <span>Estado <b>*</b></span>
+            <p-select name="payEstado" [options]="statusOptions()" [ngModel]="form().estado" (ngModelChange)="patchForm('estado', $event)" appendTo="body" />
+          </label>
+          <label>
+            <span>Metodo <b>*</b></span>
+            <p-select name="payMetodo" [options]="methodOptions()" [ngModel]="form().metodo" (ngModelChange)="patchForm('metodo', $event)" appendTo="body" />
+          </label>
+          <label class="payment-upload-field">
+            <span>Adjuntar voucher / comprobante <b>*</b></span>
+            <span class="payment-upload-control">
+              <label class="payment-upload-button">
+                <i class="pi pi-paperclip"></i>
+                Seleccionar archivo
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" (change)="fileSelected.emit($event)" />
+              </label>
+              <small [class.payment-upload-name--empty]="!form().archivoNombre">{{ form().archivoNombre || 'Ningun archivo seleccionado' }}</small>
+              @if (form().archivoNombre) { <i class="pi pi-check-circle payment-upload-ok"></i> }
+            </span>
+            <small>Obligatorio para confirmar el pago.</small>
+          </label>
+          <label class="payment-observation-field">
+            <span>Observacion</span>
+            <textarea pTextarea rows="3" maxlength="250" name="payObservacion" [ngModel]="form().observacion" (ngModelChange)="patchForm('observacion', $event)" placeholder="Operacion, numero de deposito o referencia"></textarea>
+            <small>{{ form().observacion.length }}/250</small>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <footer class="payment-dialog-actions">
+      <button type="button" class="payment-cancel-button" (click)="closed.emit()">Cancelar</button>
+      <button type="submit" class="payment-save-button" [disabled]="saving() || !form().cuotaKey">
+        <i class="pi pi-save"></i>
+        {{ saving() ? 'Guardando...' : 'Guardar pago' }}
+      </button>
+    </footer>
+  </form>
+</p-dialog>

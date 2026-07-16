@@ -1,0 +1,92 @@
+<p-dialog
+  [showHeader]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="visible()"
+  (visibleChange)="closeFromVisibility($event)"
+  [style]="{ width: 'min(58rem, calc(100vw - 1rem))' }"
+  [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+  appendTo="body"
+>
+  <section class="distribution-modal">
+    <header class="distribution-modal__header">
+      <span class="distribution-modal__icon"><i class="pi pi-users"></i></span>
+      <div>
+        <h2>Repartir leads nuevos</h2>
+        <p>Distribucion rapida y equitativa entre vendedores activos.</p>
+      </div>
+      <button type="button" class="distribution-modal__close" aria-label="Cerrar" (click)="closed.emit()">
+        <i class="pi pi-times"></i>
+      </button>
+    </header>
+
+    <div class="distribution-modal__summary">
+      <span><i class="pi pi-megaphone"></i></span>
+      <div>
+        <strong>{{ leadCount() }} leads listos para repartir</strong>
+        <small>
+          {{ selectedProspectCount() ? 'Se usaran solo los leads seleccionados.' : 'Se usaran todos los leads nuevos filtrados actualmente.' }}
+        </small>
+      </div>
+      <b>{{ selectedProspectCount() || leadCount() }}</b>
+    </div>
+
+    <div class="distribution-modal__grid">
+      <section class="distribution-card">
+        <div class="distribution-card__head">
+          <h3>Vendedores activos</h3>
+          <span>{{ selectedSellerIds().length }} seleccionados</span>
+        </div>
+
+        <div class="distribution-sellers">
+          @for (seller of sellers(); track seller.id) {
+            <label class="distribution-seller" [class.is-selected]="isSellerSelected(seller.id)">
+              <input type="checkbox" [checked]="isSellerSelected(seller.id)" (change)="toggleSeller(seller.id, $event)" />
+              <span class="distribution-seller__avatar">{{ sellerInitials(seller) }}</span>
+              <span class="distribution-seller__copy">
+                <strong>{{ sellerName(seller) }}</strong>
+                <em>{{ sellerRoles(seller) }}</em>
+              </span>
+            </label>
+          } @empty {
+            <div class="distribution-empty">No hay vendedores activos disponibles.</div>
+          }
+        </div>
+      </section>
+
+      <section class="distribution-card">
+        <div class="distribution-card__head">
+          <h3>Vista previa del reparto</h3>
+        </div>
+
+        <div class="distribution-preview">
+          @for (item of preview(); track item.id) {
+            <article class="distribution-preview__row">
+              <div>
+                <strong>{{ item.name }}</strong>
+                <small>{{ item.current }} leads actuales</small>
+              </div>
+              <b>+{{ item.assigned }}</b>
+            </article>
+          } @empty {
+            <div class="distribution-empty">Selecciona vendedores para ver la distribucion.</div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <footer class="distribution-modal__footer">
+      <button type="button" class="distribution-action distribution-action--ghost" (click)="closed.emit()">Cancelar</button>
+      <button
+        type="button"
+        class="distribution-action distribution-action--primary"
+        [disabled]="saving() || !selectedSellerIds().length"
+        (click)="distributeRequested.emit()"
+      >
+        <i class="pi pi-check"></i>
+        Repartir ahora
+      </button>
+    </footer>
+  </section>
+</p-dialog>

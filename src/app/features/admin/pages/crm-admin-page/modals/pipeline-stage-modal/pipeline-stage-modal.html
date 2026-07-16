@@ -1,0 +1,16 @@
+<p-dialog header="Nueva etapa del embudo" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().activeDialog() === 'etapa'" (visibleChange)="!$event && host().activeDialog.set(null)" styleClass="crm-dialog">
+  <form class="dialog-form">
+    <div class="dialog-grid">
+      <label>Codigo <span class="required">*</span><input pInputText name="stageCodigo" [(ngModel)]="host().stageForm.codigo" placeholder="REUNION" /></label>
+      <label>Nombre <span class="required">*</span><input pInputText name="stageNombre" [(ngModel)]="host().stageForm.nombre" placeholder="Reunion" /></label>
+      <label>Orden<input pInputText type="number" name="stageOrden" [(ngModel)]="host().stageForm.orden" /></label>
+      <label>Color<input pInputText type="color" name="stageColor" [(ngModel)]="host().stageForm.color" /></label>
+      <label class="check-row"><input type="checkbox" name="stageGanado" [(ngModel)]="host().stageForm.ganado" /> Cierra como ganada</label>
+      <label class="check-row"><input type="checkbox" name="stagePerdido" [(ngModel)]="host().stageForm.perdido" /> Cierra como perdida</label>
+    </div>
+    <footer class="dialog-actions">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().activeDialog.set(null)" />
+      <p-button label="Guardar etapa" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveStage()" />
+    </footer>
+  </form>
+</p-dialog>

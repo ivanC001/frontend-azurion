@@ -20,6 +20,7 @@ interface NavLinkItem {
   groupId?: string;
   permission?: string;
   module?: string | readonly string[];
+  anyModule?: readonly string[];
   children?: NavLinkItem[];
 }
 
@@ -45,6 +46,7 @@ interface HeaderActionItem {
 }
 
 type ThemeMode = 'light' | 'dark';
+type WorkspaceMode = 'erp' | 'crm';
 
 interface AccountMenuItem {
   label: string;
@@ -65,6 +67,16 @@ export class AppLayout {
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
   private readonly lowStockAlerts = inject(LowStockAlertService);
+  private readonly erpModules = [
+    'VENTAS',
+    'COTIZACIONES',
+    'CLIENTES',
+    'CAJA',
+    'INVENTARIO',
+    'PRODUCTOS',
+    'REPORTES',
+    'FACTURACION',
+  ] as const;
 
   protected readonly sidebarCollapsed = signal(false);
   protected readonly sidebarHovered = signal(false);
@@ -74,6 +86,7 @@ export class AppLayout {
   protected readonly themeMode = signal<ThemeMode>(this.resolveThemeMode());
   protected readonly notificationsPanelOpen = signal(false);
   protected readonly accountPanelOpen = signal(false);
+  protected readonly activeWorkspace = signal<WorkspaceMode>(this.resolveInitialWorkspace());
 
   private readonly expandedGroups = signal<Record<string, boolean>>({
     'crm-captacion': true,
@@ -95,6 +108,30 @@ export class AppLayout {
 
   protected readonly sidebarExpanded = computed(() =>
     this.isDesktop() ? !this.sidebarCollapsed() || this.sidebarHovered() : this.mobileSidebarOpen(),
+  );
+
+  protected readonly availableWorkspaces = computed(() => {
+    const workspaces: { label: string; value: WorkspaceMode; icon: string }[] = [];
+    if (this.hasWorkspaceAccess('erp')) {
+      workspaces.push({ label: 'ERP', value: 'erp', icon: 'pi-box' });
+    }
+    if (this.hasWorkspaceAccess('crm')) {
+      workspaces.push({ label: 'CRM', value: 'crm', icon: 'pi-chart-line' });
+    }
+    return workspaces;
+  });
+
+  protected readonly selectedWorkspace = computed<WorkspaceMode>(() => {
+    const available = this.availableWorkspaces();
+    const requested = this.activeWorkspace();
+    if (available.some((workspace) => workspace.value === requested)) {
+      return requested;
+    }
+    return available[0]?.value ?? 'erp';
+  });
+
+  protected readonly homeRoute = computed(() =>
+    this.selectedWorkspace() === 'crm' ? '/admin/crm' : '/admin/dashboard',
   );
 
   protected readonly navSections = computed<NavSection[]>(() => {
@@ -135,221 +172,8 @@ export class AppLayout {
       ];
     }
 
-    const sections: NavSection[] = [
-      {
-        label: 'Resumen',
-        items: [
-          { label: 'Dashboard', route: '/admin/dashboard', icon: 'pi-home' },
-          {
-            label: 'Configuracion',
-            route: '/admin/configuracion-empresa',
-            icon: 'pi-cog',
-            permission: 'CONFIGURACION_WRITE',
-          },
-          {
-            label: 'Configuracion Tributaria',
-            route: '/admin/configuracion-tributaria',
-            icon: 'pi-percentage',
-            permission: 'TRIBUTACION_READ',
-          },
-          {
-            label: 'Reportes',
-            route: '/admin/reportes',
-            icon: 'pi-chart-bar',
-            permission: 'REPORTES_READ',
-            module: 'REPORTES',
-          },
-        ],
-      },
-      {
-        label: 'Ventas',
-        items: [
-          {
-            label: 'Ventas',
-            icon: 'pi-shopping-cart',
-            groupId: 'ventas',
-            children: [
-              {
-                label: 'Punto de venta',
-                route: '/admin/ventas/nueva',
-                icon: 'pi-shopping-cart',
-                permission: 'VENTAS_CREATE',
-                module: 'VENTAS',
-              },
-              {
-                label: 'Historial de ventas',
-                route: '/admin/ventas',
-                icon: 'pi-receipt',
-                permission: 'VENTAS_READ',
-                module: 'VENTAS',
-              },
-              {
-                label: 'Cotizaciones',
-                route: '/admin/ventas/cotizaciones',
-                icon: 'pi-file-edit',
-                permission: 'COTIZACIONES_READ',
-                module: 'COTIZACIONES',
-              },
-              {
-                label: 'Caja',
-                route: '/admin/caja',
-                icon: 'pi-credit-card',
-                permission: 'CAJA_READ',
-                module: 'CAJA',
-              },
-              {
-                label: 'Nota de credito',
-                route: '/admin/ventas/nota-credito',
-                icon: 'pi-minus-circle',
-                permission: 'NOTA_CREDITO_CREATE',
-                module: 'FACTURACION',
-              },
-              {
-                label: 'Nota de debito',
-                route: '/admin/ventas/nota-debito',
-                icon: 'pi-plus-circle',
-                permission: 'NOTA_DEBITO_CREATE',
-                module: 'FACTURACION',
-              },
-              {
-                label: 'Guia de remision',
-                route: '/admin/ventas/guia-remision',
-                icon: 'pi-truck',
-                permission: 'GUIA_REMISION_CREATE',
-                module: 'FACTURACION',
-              },
-            ],
-          },
-          {
-            label: 'Clientes',
-            route: '/admin/clientes',
-            icon: 'pi-id-card',
-            permission: 'CLIENTES_READ',
-            module: 'CLIENTES',
-          },
-          {
-            label: 'Sucursales',
-            route: '/admin/sucursales',
-            icon: 'pi-building',
-            permission: 'SUCURSALES_READ',
-          },
-        ],
-      },
-      {
-        label: 'General',
-        groupTitle: 'CRM',
-        groupIcon: 'pi-chart-line',
-        items: [
-          {
-            label: 'Dashboard',
-            route: '/admin/crm',
-            icon: 'pi-chart-pie',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-        ],
-      },
-      {
-        label: 'Captacion',
-        items: [
-          {
-            label: 'Prospectos',
-            route: '/admin/crm/prospectos',
-            icon: 'pi-address-book',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-          {
-            label: 'Seguimiento',
-            route: '/admin/crm/seguimiento',
-            icon: 'pi-comments',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-        ],
-      },
-      {
-        label: 'Comercial',
-        items: [
-          {
-            label: 'Pipeline',
-            route: '/admin/crm/pipeline',
-            icon: 'pi-chart-line',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-          {
-            label: 'Oportunidades',
-            route: '/admin/crm/oportunidades',
-            icon: 'pi-briefcase',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-        ],
-      },
-      {
-        label: 'Postventa',
-        items: [
-          {
-            label: 'Clientes',
-            route: '/admin/crm/clientes',
-            icon: 'pi-users',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-          {
-            label: 'Seguimiento de pagos',
-            route: '/admin/crm/seguimiento-pagos',
-            icon: 'pi-credit-card',
-            permission: 'CRM_READ',
-            module: 'CRM',
-          },
-        ],
-      },
-      {
-        label: 'Inventario',
-        items: [
-          {
-            label: 'Almacenes',
-            route: '/admin/almacenes',
-            icon: 'pi-shop',
-            permission: 'INVENTORY_READ',
-            module: 'INVENTARIO',
-          },
-          {
-            label: 'Productos',
-            route: '/admin/productos',
-            icon: 'pi-box',
-            permission: 'PRODUCTOS_READ',
-            module: 'INVENTARIO',
-          },
-          {
-            label: 'Inventarios',
-            route: '/admin/inventarios',
-            icon: 'pi-database',
-            permission: 'INVENTORY_READ',
-            module: 'INVENTARIO',
-          },
-        ],
-      },
-      {
-        label: 'Administracion',
-        items: [
-          {
-            label: 'Usuarios',
-            route: '/admin/usuarios',
-            icon: 'pi-users',
-            permission: 'USUARIOS_READ',
-          },
-          {
-            label: 'Seguridad Empresa',
-            route: '/admin/seguridad-empresa',
-            icon: 'pi-shield',
-            permission: 'ROLES_READ',
-          },
-        ],
-      },
-    ];
+    const sections =
+      this.selectedWorkspace() === 'crm' ? this.crmMenuSections() : this.erpMenuSections();
     return this.filterNavSections(sections);
   });
 
@@ -498,6 +322,15 @@ export class AppLayout {
       ...current,
       [groupId]: !current[groupId],
     });
+  }
+
+  protected selectWorkspace(workspace: WorkspaceMode): void {
+    if (this.selectedWorkspace() === workspace) {
+      return;
+    }
+    this.activeWorkspace.set(workspace);
+    void this.router.navigateByUrl(workspace === 'crm' ? '/admin/crm' : '/admin/dashboard');
+    this.closeMobileSidebar();
   }
 
   protected toggleSidebar(): void {
@@ -678,6 +511,335 @@ export class AppLayout {
     return typeof globalThis !== 'undefined' ? globalThis.innerWidth >= 1200 : true;
   }
 
+  private erpMenuSections(): NavSection[] {
+    return [
+      ...this.erpCoreMenuSections(),
+      ...this.tenantConfigurationSections(),
+      ...this.billingConfigurationSections(),
+    ];
+  }
+
+  private erpCoreMenuSections(): NavSection[] {
+    return [
+      {
+        label: 'General',
+        groupTitle: 'ERP',
+        groupIcon: 'pi-box',
+        items: [
+          {
+            label: 'Dashboard',
+            route: '/admin/dashboard',
+            icon: 'pi-home',
+            anyModule: this.erpModules,
+          },
+          {
+            label: 'Reportes',
+            route: '/admin/reportes',
+            icon: 'pi-chart-bar',
+            permission: 'REPORTES_READ',
+            module: 'REPORTES',
+          },
+          {
+            label: 'Cotizaciones',
+            route: '/admin/ventas/cotizaciones',
+            icon: 'pi-file-edit',
+            module: 'COTIZACIONES',
+          },
+          {
+            label: 'Clientes',
+            route: '/admin/clientes',
+            icon: 'pi-id-card',
+            module: 'CLIENTES',
+          },
+        ],
+      },
+      {
+        label: 'Ventas',
+        items: [
+          {
+            label: 'Punto de venta',
+            route: '/admin/ventas/nueva',
+            icon: 'pi-shopping-cart',
+            permission: 'VENTAS_CREATE',
+            module: 'VENTAS',
+          },
+          {
+            label: 'Historial de ventas',
+            route: '/admin/ventas',
+            icon: 'pi-receipt',
+            permission: 'VENTAS_READ',
+            module: 'VENTAS',
+          },
+          {
+            label: 'Caja',
+            route: '/admin/caja',
+            icon: 'pi-credit-card',
+            permission: 'CAJA_READ',
+            module: 'CAJA',
+          },
+          {
+            label: 'Nota de credito',
+            route: '/admin/ventas/nota-credito',
+            icon: 'pi-minus-circle',
+            permission: 'NOTA_CREDITO_CREATE',
+            module: 'FACTURACION',
+          },
+          {
+            label: 'Nota de debito',
+            route: '/admin/ventas/nota-debito',
+            icon: 'pi-plus-circle',
+            permission: 'NOTA_DEBITO_CREATE',
+            module: 'FACTURACION',
+          },
+          {
+            label: 'Guia de remision',
+            route: '/admin/ventas/guia-remision',
+            icon: 'pi-truck',
+            permission: 'GUIA_REMISION_CREATE',
+            module: 'FACTURACION',
+          },
+        ],
+      },
+      {
+        label: 'Inventario',
+        items: [
+          {
+            label: 'Almacenes',
+            route: '/admin/almacenes',
+            icon: 'pi-shop',
+            permission: 'INVENTORY_READ',
+            module: 'INVENTARIO',
+          },
+          {
+            label: 'Productos',
+            route: '/admin/productos',
+            icon: 'pi-box',
+            permission: 'PRODUCTOS_READ',
+            module: 'INVENTARIO',
+          },
+          {
+            label: 'Inventarios',
+            route: '/admin/inventarios',
+            icon: 'pi-database',
+            permission: 'INVENTORY_READ',
+            module: 'INVENTARIO',
+          },
+        ],
+      },
+    ];
+  }
+
+  private crmMenuSections(): NavSection[] {
+    return [
+      {
+        label: 'General',
+        groupTitle: 'CRM',
+        groupIcon: 'pi-chart-line',
+        items: [
+          {
+            label: 'Dashboard',
+            route: '/admin/crm',
+            icon: 'pi-chart-pie',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+          {
+            label: 'Reportes CRM',
+            route: '/admin/reportes',
+            icon: 'pi-chart-bar',
+            anyModule: ['REPORTES', 'CRM'],
+          },
+        ],
+      },
+      {
+        label: 'Captacion',
+        items: [
+          {
+            label: 'Prospectos',
+            route: '/admin/crm/prospectos',
+            icon: 'pi-address-book',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+          {
+            label: 'Seguimiento',
+            route: '/admin/crm/seguimiento',
+            icon: 'pi-comments',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+        ],
+      },
+      {
+        label: 'Comercial',
+        items: [
+          {
+            label: 'Pipeline',
+            route: '/admin/crm/pipeline',
+            icon: 'pi-chart-line',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+          {
+            label: 'Oportunidades',
+            route: '/admin/crm/oportunidades',
+            icon: 'pi-briefcase',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+          {
+            label: 'Cotizaciones CRM',
+            route: '/admin/ventas/cotizaciones',
+            icon: 'pi-file-edit',
+            anyModule: ['COTIZACIONES', 'CRM'],
+          },
+        ],
+      },
+      {
+        label: 'Postventa',
+        items: [
+          {
+            label: 'Clientes',
+            route: '/admin/crm/clientes',
+            icon: 'pi-users',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+          {
+            label: 'Seguimiento de pagos',
+            route: '/admin/crm/seguimiento-pagos',
+            icon: 'pi-credit-card',
+            permission: 'CRM_READ',
+            module: 'CRM',
+          },
+        ],
+      },
+      {
+        label: 'Configuracion',
+        items: [
+          {
+            label: 'Configuracion CRM',
+            route: '/admin/crm/administracion/general',
+            icon: 'pi-cog',
+            groupId: 'crm-configuracion',
+            permission: 'CRM_CONFIG_MANAGE',
+            module: 'CRM',
+            children: [
+              {
+                label: 'Productos CRM',
+                route: '/admin/crm/productos',
+                icon: 'pi-tags',
+                permission: 'CRM_CATALOG_MANAGE',
+                module: 'CRM',
+              },
+              {
+                label: 'General',
+                route: '/admin/crm/administracion/general',
+                icon: 'pi-sliders-h',
+                permission: 'CRM_CONFIG_MANAGE',
+                module: 'CRM',
+              },
+              {
+                label: 'Canales',
+                route: '/admin/crm/administracion/canales',
+                icon: 'pi-link',
+                permission: 'CRM_CONFIG_MANAGE',
+                module: 'CRM',
+              },
+              {
+                label: 'Correo',
+                route: '/admin/crm/administracion/correo',
+                icon: 'pi-envelope',
+                permission: 'CRM_CONFIG_MANAGE',
+                module: 'CRM',
+              },
+              {
+                label: 'Monedas',
+                route: '/admin/crm/administracion/monedas',
+                icon: 'pi-dollar',
+                permission: 'CRM_CONFIG_MANAGE',
+                module: 'CRM',
+              },
+              {
+                label: 'Promociones',
+                route: '/admin/crm/administracion/promociones',
+                icon: 'pi-ticket',
+                permission: 'CRM_CONFIG_MANAGE',
+                module: 'CRM',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+  }
+
+  private tenantConfigurationSections(): NavSection[] {
+    return [
+      {
+        label: 'Administracion',
+        groupTitle: 'Configuracion del tenant',
+        groupIcon: 'pi-building',
+        items: [
+          {
+            label: 'Empresa',
+            route: '/admin/configuracion-empresa',
+            icon: 'pi-cog',
+            permission: 'CONFIGURACION_WRITE',
+          },
+          {
+            label: 'Sucursales',
+            route: '/admin/sucursales',
+            icon: 'pi-building',
+            permission: 'SUCURSALES_READ',
+          },
+          {
+            label: 'Usuarios',
+            route: '/admin/usuarios',
+            icon: 'pi-users',
+            permission: 'USUARIOS_READ',
+          },
+          {
+            label: 'Seguridad Empresa',
+            route: '/admin/seguridad-empresa',
+            icon: 'pi-shield',
+            permission: 'ROLES_READ',
+          },
+        ],
+      },
+    ];
+  }
+
+  private billingConfigurationSections(): NavSection[] {
+    return [
+      {
+        label: 'Configuracion',
+        groupTitle: 'Facturador',
+        groupIcon: 'pi-file-check',
+        items: [
+          {
+            label: 'Configuracion tributaria',
+            route: '/admin/configuracion-tributaria',
+            icon: 'pi-percentage',
+            permission: 'TRIBUTACION_READ',
+            module: 'FACTURACION',
+          },
+          {
+            label: 'Configuracion facturador',
+            route: '/admin/configuracion-facturador',
+            icon: 'pi-sliders-h',
+            permission: 'CONFIGURACION_WRITE',
+            module: 'FACTURACION',
+          },
+        ],
+      },
+    ];
+  }
+
+  private resolveInitialWorkspace(): WorkspaceMode {
+    return this.router.url.startsWith('/admin/crm') ? 'crm' : 'erp';
+  }
+
   private filterNavSections(sections: NavSection[]): NavSection[] {
     return sections
       .map((section) => ({
@@ -702,6 +864,16 @@ export class AppLayout {
   private canAccessMenuItem(item: NavLinkItem): boolean {
     const hasPermission = !item.permission || this.authSession.hasPermission(item.permission);
     const hasModule = !item.module || this.authSession.hasModule(item.module);
-    return hasPermission && hasModule;
+    const hasAnyModule = !item.anyModule || this.hasAnyModule(item.anyModule);
+    return hasPermission && hasModule && hasAnyModule;
+  }
+
+  private hasAnyModule(modules: readonly string[]): boolean {
+    return modules.some((moduleCode) => this.authSession.hasModule(moduleCode));
+  }
+
+  private hasWorkspaceAccess(workspace: WorkspaceMode): boolean {
+    const sections = workspace === 'crm' ? this.crmMenuSections() : this.erpCoreMenuSections();
+    return this.filterNavSections(sections).length > 0;
   }
 }

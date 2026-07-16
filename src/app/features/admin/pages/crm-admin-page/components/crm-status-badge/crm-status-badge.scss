@@ -1,0 +1,16 @@
+.crm-status-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: .68rem;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 1.45rem;
+  padding: .18rem .55rem;
+}
+
+.crm-status-badge--green { background: #dcfce7; color: #047857; }
+.crm-status-badge--blue { background: #dbeafe; color: #2563eb; }
+.crm-status-badge--amber { background: #fef3c7; color: #b45309; }
+.crm-status-badge--red { background: #fee2e2; color: #dc2626; }
+.crm-status-badge--slate { background: #e2e8f0; color: #475569; }

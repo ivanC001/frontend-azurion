@@ -1,0 +1,96 @@
+<section class="crm-dashboard-board crm-executive-dashboard">
+  <header class="executive-head">
+    <div>
+      <h2>Resumen Ejecutivo</h2>
+      <p>{{ now() | date: 'MMMM yyyy' }} &middot; Actualizado recientemente</p>
+    </div>
+    <div class="executive-actions">
+      <button type="button" class="executive-action" (click)="exportRequested.emit()">
+        <i class="pi pi-download"></i>
+        <span>Exportar</span>
+      </button>
+      <button type="button" class="executive-action executive-action--primary" (click)="createOpportunityRequested.emit()">
+        <i class="pi pi-plus"></i>
+        <span>Nuevo deal</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="executive-kpi-grid" aria-label="Indicadores ejecutivos">
+    @for (kpi of kpis(); track kpi.label) {
+      <article [class]="'executive-kpi executive-kpi--' + kpi.tone">
+        <div>
+          <span>{{ kpi.label }}</span>
+          <strong>{{ kpi.value }}</strong>
+          <p>{{ kpi.detail }}</p>
+        </div>
+        <i [class]="kpi.icon"></i>
+        <em [class]="'executive-trend executive-trend--' + kpi.trendTone">
+          <i [class]="kpi.trendTone === 'up' ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'"></i>
+          {{ kpi.trend }}
+        </em>
+      </article>
+    }
+  </section>
+
+  <section class="executive-main-grid">
+    <article class="executive-panel executive-chart-panel">
+      <div class="executive-panel__head">
+        <div>
+          <h3>Ingresos vs Meta</h3>
+          <p>Ene - Dic {{ now() | date: 'yyyy' }}</p>
+        </div>
+        <div class="executive-legend">
+          <span><i class="legend-dot legend-dot--real"></i>Real</span>
+          <span><i class="legend-dot legend-dot--target"></i>Meta</span>
+        </div>
+      </div>
+
+      <div class="executive-chart">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="Grafico de ingresos contra meta">
+          @for (guide of revenueChart().guides; track guide.label) {
+            <text class="chart-guide-label" x="8" [attr.y]="guide.y + 4">{{ guide.label }}</text>
+            <line class="chart-guide-line" x1="72" x2="944" [attr.y1]="guide.y" [attr.y2]="guide.y"></line>
+          }
+          <polygon class="chart-area" [attr.points]="revenueChart().areaPoints"></polygon>
+          <polyline class="chart-target-line" [attr.points]="revenueChart().targetPoints"></polyline>
+          <polyline class="chart-real-line" [attr.points]="revenueChart().realPoints"></polyline>
+        </svg>
+        <div class="executive-chart-labels">
+          @for (label of revenueChart().labels; track label) {
+            <span>{{ label }}</span>
+          }
+        </div>
+      </div>
+    </article>
+
+    <article class="executive-panel executive-pipeline-panel">
+      <div class="executive-panel__head">
+        <h3>Pipeline</h3>
+        <button type="button" class="executive-more" title="Ver pipeline" aria-label="Ver pipeline" (click)="pipelineRequested.emit()">
+          <i class="pi pi-ellipsis-h"></i>
+        </button>
+      </div>
+
+      <div class="executive-pipeline-list">
+        @for (row of pipelineRows(); track row.label) {
+          <button type="button" class="executive-pipeline-row" (click)="pipelineRequested.emit()">
+            <span>
+              <strong>{{ row.label }}</strong>
+              <em>{{ row.amount }}</em>
+            </span>
+            <b>{{ row.count }}</b>
+            <i class="executive-pipeline-track">
+              <i [style.width.%]="row.percent" [style.background]="row.color"></i>
+            </i>
+          </button>
+        }
+      </div>
+
+      <footer class="executive-pipeline-total">
+        <span>Total pipeline</span>
+        <strong>{{ pipelineTotal() }}</strong>
+      </footer>
+    </article>
+  </section>
+</section>

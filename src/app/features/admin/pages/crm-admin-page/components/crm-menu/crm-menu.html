@@ -1,0 +1,11 @@
+<nav class="crm-menu">
+  @for (item of items(); track item.id) {
+    <button type="button" [class.is-active]="item.id === activeId()" (click)="selected.emit(item.id)">
+      <i [class]="item.icon"></i>
+      <span>{{ item.label }}</span>
+      @if (item.count !== undefined) {
+        <b>{{ item.count }}</b>
+      }
+    </button>
+  }
+</nav>

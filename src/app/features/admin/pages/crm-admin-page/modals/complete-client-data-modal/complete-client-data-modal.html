@@ -1,0 +1,102 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="!$event && closed.emit()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="7950"
+  styleClass="crm-client-completion-dialog"
+  appendTo="body">
+  <ng-template pTemplate="header">
+    <strong class="client-completion-title">
+      <span><i class="pi pi-id-card"></i></span>
+      {{ action() === 'EDIT' ? 'Editar datos comerciales' : 'Completar datos del cliente' }}
+    </strong>
+  </ng-template>
+
+  <form class="client-completion-form" (submit)="$event.preventDefault(); saveRequested.emit()">
+    <section class="client-completion-alert">
+      <span><i class="pi pi-info-circle"></i></span>
+      <div>
+        <strong>{{ action() === 'EDIT' ? 'Actualiza la ficha del contacto' : 'Faltan datos para crear el cliente' }}</strong>
+        <p>Completa la ficha antes de {{ actionTitle() }}. Así el cierre, los pagos y los documentos quedarán vinculados correctamente.</p>
+      </div>
+    </section>
+
+    <div class="client-completion-layout">
+      <aside class="client-completion-context">
+        <span class="client-avatar"><i class="pi pi-user"></i></span>
+        <small>Prospecto</small>
+        <strong>{{ prospectName() }}</strong>
+        <div></div>
+        <small>Oportunidad</small>
+        <b>{{ opportunityTitle() }}</b>
+        <ul>
+          <li><i class="pi pi-check-circle"></i> Evita errores al crear el cliente</li>
+          <li><i class="pi pi-check-circle"></i> Vincula pagos y comprobantes</li>
+          <li><i class="pi pi-check-circle"></i> Conserva el historial comercial</li>
+        </ul>
+      </aside>
+
+      <section class="client-completion-fields">
+        <header>
+          <i class="pi pi-address-book"></i>
+          <div><strong>Identificacion y contacto</strong><small>Los campos con * son necesarios para continuar.</small></div>
+        </header>
+        <div class="client-completion-grid">
+          <label>
+            <span>Tipo de persona <b>*</b></span>
+            <p-select name="clientTipoPersona" [options]="personTypeOptions()" [ngModel]="form().tipoPersona" (ngModelChange)="patchForm('tipoPersona', $event)" appendTo="body" />
+          </label>
+          <label>
+            <span>Tipo de documento <b>*</b></span>
+            <p-select name="clientTipoDocumento" [options]="documentTypeOptions()" [ngModel]="form().tipoDocumento" (ngModelChange)="patchForm('tipoDocumento', $event)" appendTo="body" />
+          </label>
+          <label>
+            <span>Numero de documento <b>*</b></span>
+            <input pInputText inputmode="numeric" maxlength="11" name="clientNumeroDocumento" [ngModel]="form().numeroDocumento" (ngModelChange)="patchForm('numeroDocumento', $event)" placeholder="DNI o RUC" />
+            <small>{{ documentHint() }}</small>
+          </label>
+
+          @if (form().tipoPersona === 'JURIDICA') {
+            <label class="span-2">
+              <span>Razon social <b>*</b></span>
+              <input pInputText name="clientRazonSocial" [ngModel]="form().razonSocial" (ngModelChange)="patchForm('razonSocial', $event)" placeholder="Nombre legal de la empresa" />
+            </label>
+            <label>
+              <span>Nombre comercial</span>
+              <input pInputText name="clientNombreComercial" [ngModel]="form().nombreComercial" (ngModelChange)="patchForm('nombreComercial', $event)" placeholder="Opcional" />
+            </label>
+          } @else {
+            <label class="span-3">
+              <span>Nombre completo <b>*</b></span>
+              <input pInputText name="clientNombre" [ngModel]="form().nombre" (ngModelChange)="patchForm('nombre', $event)" placeholder="Nombres y apellidos" />
+            </label>
+          }
+
+          <label>
+            <span>Telefono</span>
+            <input pInputText inputmode="tel" maxlength="30" name="clientTelefono" [ngModel]="form().telefono" (ngModelChange)="patchForm('telefono', $event)" placeholder="999999999" />
+          </label>
+          <label class="span-2">
+            <span>Correo electronico</span>
+            <input pInputText type="email" name="clientCorreo" [ngModel]="form().correo" (ngModelChange)="patchForm('correo', $event)" placeholder="cliente@correo.com" />
+          </label>
+          <label class="span-3">
+            <span>Direccion</span>
+            <input pInputText name="clientDireccion" [ngModel]="form().direccion" (ngModelChange)="patchForm('direccion', $event)" placeholder="Direccion fiscal o de contacto" />
+          </label>
+        </div>
+        <p class="client-contact-note"><i class="pi pi-phone"></i> Registra al menos un medio de contacto: telefono o correo.</p>
+      </section>
+    </div>
+
+    <footer class="client-completion-actions">
+      <button type="button" class="client-completion-cancel" (click)="closed.emit()">Cancelar</button>
+      <button type="submit" class="client-completion-save" [disabled]="saving()">
+        <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+        {{ saving() ? 'Guardando...' : saveLabel() }}
+      </button>
+    </footer>
+  </form>
+</p-dialog>

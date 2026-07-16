@@ -1,0 +1,123 @@
+<p-dialog [header]="host().activityForm.id ? '' : 'Registrar actividad'" [showHeader]="!host().activityForm.id" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().activeDialog() === 'actividad'" (visibleChange)="!$event && host().closeActivityDialog()" [baseZIndex]="7200" appendTo="body" styleClass="crm-dialog crm-dialog--activity">
+  @if (host().activityForm.id) {
+    <div class="activity-complete-head">
+      <div class="activity-complete-title">
+        <span><i class="pi pi-clipboard"></i></span>
+        <strong>Marcar actividad cumplida</strong>
+      </div>
+      <button type="button" class="activity-complete-close" (click)="host().closeActivityDialog()"><i class="pi pi-times"></i></button>
+    </div>
+  }
+  <form class="dialog-form activity-register-form" [class.activity-register-form--complete]="host().activityForm.id">
+    @if (host().activityForm.id) {
+      <div class="activity-complete-topbar">
+        <span></span>
+        <div class="activity-complete-actions">
+          <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().closeActivityDialog()" />
+          <p-button label="Marcar cumplido" icon="pi pi-check-circle" severity="success" [loading]="host().saving()" (onClick)="host().saveActivity()" />
+        </div>
+      </div>
+    }
+    <section class="activity-register-layout">
+      @if (host().activityContext(); as context) {
+        <aside class="activity-context-card">
+          <i [class]="host().activityTypeIcon()"></i>
+          <div>
+            <span>{{ context.type === 'OPORTUNIDAD' ? 'Oportunidad seleccionada' : 'Prospecto seleccionado' }}</span>
+            <strong>{{ context.title }}</strong>
+            <hr />
+            <p class="activity-context-meta"><i [class]="host().activityTypeIcon()"></i><span>Tipo de actividad: <b>{{ host().humanize(host().activityForm.tipoActividad) }}</b></span></p>
+            <p class="activity-context-meta"><i class="pi pi-clock"></i><span>{{ host().activityForm.fechaProgramada ? host().activityRelativeLabel(host().activityForm.fechaProgramada) : 'Sin fecha programada' }}</span></p>
+            <hr />
+            <small>{{ context.detail }}</small>
+          </div>
+        </aside>
+      } @else {
+        <aside class="activity-context-card activity-context-card--empty">
+          <i class="pi pi-calendar-plus"></i>
+          <div>
+            <span>Nuevo seguimiento</span>
+            <strong>Elige el contacto</strong>
+            <p>Relaciona la actividad con un prospecto, oportunidad o cliente.</p>
+            <small>Despues registra si quedo pendiente o si ya se realizo.</small>
+          </div>
+        </aside>
+      }
+
+      <div class="activity-register-fields">
+        @if (!host().activityContext()) {
+          <section class="activity-field-section">
+            <h3>Contacto</h3>
+            <div class="dialog-grid dialog-grid--activity">
+              <label>Prospecto<p-select name="actProspecto" [options]="host().prospectoOptions()" [(ngModel)]="host().activityForm.prospectoId" [showClear]="true" appendTo="body" /></label>
+              <label>Oportunidad<p-select name="actOportunidad" [options]="host().oportunidadOptions()" [(ngModel)]="host().activityForm.oportunidadId" [showClear]="true" appendTo="body" /></label>
+              <label class="wide-field">Cliente<p-select name="actCliente" [options]="host().clienteOptions()" [(ngModel)]="host().activityForm.clienteId" [showClear]="true" appendTo="body" /></label>
+            </div>
+          </section>
+        }
+
+        <section class="activity-field-section activity-section--main">
+          <h3>Actividad</h3>
+          <div class="dialog-grid dialog-grid--activity">
+            <label>Tipo <span class="required">*</span><p-select name="actTipo" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().tipoActividadOptions" [(ngModel)]="host().activityForm.tipoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Estado <span class="required">*</span><p-select name="actEstadoActividad" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().actividadEstadoOptions" [(ngModel)]="host().activityForm.estadoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actFecha" [(ngModel)]="host().activityForm.fechaProgramada" /></label>
+            <label>Asunto <span class="required">*</span><input pInputText name="actAsunto" [(ngModel)]="host().activityForm.asunto" placeholder="Ej. Llamar para confirmar interes" /></label>
+          </div>
+        </section>
+
+        <section class="activity-field-section activity-section--result">
+          <h3>Resultado comercial</h3>
+          <div class="activity-qualification-note">
+            <i class="pi pi-info-circle"></i>
+            <strong>Regla de seguimiento</strong>
+            <span>Contactado solo prueba contacto. Interesado o solicita propuesta confirma necesidad e interes y puede dejarlo calificado.</span>
+          </div>
+          <div class="dialog-grid dialog-grid--activity activity-result-grid">
+            <label>Resultado del contacto<p-select name="actResultado" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().activityResultOptions" [ngModel]="host().activityForm.resultadoContacto" (ngModelChange)="host().onActivityResultChange($event)" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            <label>Nivel de interes<p-select name="actNivelInteres" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().activityInterestOptions" [(ngModel)]="host().activityForm.nivelInteres" appendTo="body" placeholder="Frio, medio o caliente"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+            @if (host().activityForm.prospectoId) {
+              <label class="activity-status-field">
+                Estado del prospecto
+                <p-select name="actEstadoProspecto" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().activityProspectStatusOptions" [(ngModel)]="host().activityForm.nuevoEstadoProspecto" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select>
+              </label>
+            }
+            <label class="wide-field">Descripcion<textarea pTextarea name="actDescripcion" rows="4" [(ngModel)]="host().activityForm.descripcion" placeholder="Detalle breve: que respondio, objeciones, acuerdos o siguiente paso"></textarea></label>
+          </div>
+          @if (host().activityForm.prospectoId) {
+            <p class="activity-help-note"><i class="pi pi-check-circle"></i> Si confirmas interes, el prospecto queda listo para crear oportunidad sin duplicar informacion.</p>
+          }
+        </section>
+
+        @if (host().activityForm.estadoActividad === 'REALIZADA') {
+          <section class="activity-field-section activity-next-section">
+            <div class="activity-section-title">
+              <h3>Siguiente paso</h3>
+              <label class="activity-next-toggle">
+                <input type="checkbox" name="actProgramarSiguiente" [(ngModel)]="host().activityForm.programarSiguiente" (change)="host().onScheduleNextToggle()" />
+                Programar siguiente actividad
+              </label>
+            </div>
+            @if (host().activityForm.programarSiguiente) {
+              <div class="dialog-grid dialog-grid--activity">
+                <label>Tipo de actividad<p-select name="actNextTipo" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().tipoActividadOptions" [(ngModel)]="host().activityForm.siguienteTipoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
+                <label>Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actNextFecha" [(ngModel)]="host().activityForm.siguienteFechaProgramada" /></label>
+                <label class="wide-field">Asunto siguiente <span class="required">*</span><input pInputText class="activity-subject-input" name="actNextAsunto" [(ngModel)]="host().activityForm.siguienteAsunto" placeholder="Ej. Enviar propuesta actualizada" /></label>
+                @if (!host().activityForm.id) {
+                  <label class="wide-field">Nota interna<textarea pTextarea name="actNextDescripcion" rows="3" [(ngModel)]="host().activityForm.siguienteDescripcion" placeholder="Que debe hacer el vendedor en el proximo contacto"></textarea></label>
+                }
+              </div>
+              @if (!host().activityForm.id) {
+                <p class="activity-help-note activity-help-note--next">La oportunidad quedara con una tarea pendiente para continuar el ciclo: programar, realizar, registrar resultado y volver a programar.</p>
+              }
+            }
+          </section>
+        }
+      </div>
+    </section>
+    <div class="dialog-actions" [class.activity-actions--hidden]="host().activityForm.id">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().closeActivityDialog()" />
+      <p-button [label]="host().activityForm.id ? 'Marcar cumplido' : 'Guardar seguimiento'" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveActivity()" />
+    </div>
+  </form>
+</p-dialog>

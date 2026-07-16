@@ -1,0 +1,83 @@
+<section class="crm-email-settings-card">
+  <header>
+    <div>
+      <span>Comunicacion interna CRM</span>
+      <h3>Correo electronico SMTP</h3>
+      <p>Configura el remitente propio de esta empresa para cotizaciones, seguimiento, recordatorios y pagos.</p>
+    </div>
+    <b [class]="'email-status email-status--' + statusTone()">{{ statusLabel() }}</b>
+  </header>
+
+  @if (message()) {
+    <div class="email-message email-message--ok"><i class="pi pi-check-circle"></i>{{ message() }}</div>
+  }
+  @if (error()) {
+    <div class="email-message email-message--error"><i class="pi pi-exclamation-triangle"></i>{{ error() }}</div>
+  }
+
+  <div class="email-settings-grid">
+    <article>
+      <h4><i class="pi pi-user-edit"></i> Identidad del remitente</h4>
+      <label>Nombre remitente
+        <input pInputText [(ngModel)]="form.nombreRemitente" name="emailFromName" placeholder="Interamericana Norte" [disabled]="!canManage()" />
+      </label>
+      <label>Correo remitente
+        <input pInputText type="email" [(ngModel)]="form.correoRemitente" name="emailFromAddress" placeholder="ventas@empresa.com" [disabled]="!canManage()" />
+      </label>
+      <label>Reply-To
+        <input pInputText type="email" [(ngModel)]="form.replyTo" name="emailReplyTo" placeholder="asesor@empresa.com" [disabled]="!canManage()" />
+      </label>
+    </article>
+
+    <article>
+      <h4><i class="pi pi-server"></i> Configuracion SMTP</h4>
+      <div class="smtp-row">
+        <label>SMTP Host
+          <input pInputText [(ngModel)]="form.smtpHost" name="smtpHost" placeholder="smtp.gmail.com" [disabled]="!canManage()" />
+        </label>
+        <label>Puerto
+          <input pInputText type="number" min="1" max="65535" [(ngModel)]="form.smtpPort" name="smtpPort" [disabled]="!canManage()" />
+        </label>
+      </div>
+      <label>Seguridad
+        <p-select [options]="securityOptions" [(ngModel)]="form.smtpSecurity" name="smtpSecurity" appendTo="body" [disabled]="!canManage()" />
+      </label>
+      <label>Usuario SMTP
+        <input pInputText [(ngModel)]="form.smtpUsername" name="smtpUsername" placeholder="ventas@empresa.com" [disabled]="!canManage()" />
+      </label>
+      <label>Contrasena SMTP
+        <input pInputText type="password" [(ngModel)]="form.smtpPassword" name="smtpPassword" [placeholder]="config()?.smtpPasswordConfigured ? 'Contrasena configurada - escribir solo para cambiar' : 'APP_PASSWORD'" [disabled]="!canManage()" autocomplete="new-password" />
+      </label>
+    </article>
+
+    <article class="email-state-panel">
+      <h4><i class="pi pi-shield"></i> Estado y prueba</h4>
+      <dl>
+        <div><dt>Activo</dt><dd>{{ config()?.activo ? 'Si' : 'No' }}</dd></div>
+        <div><dt>Verificado</dt><dd>{{ config()?.verificado ? 'Si' : 'No' }}</dd></div>
+        <div><dt>Ultima verificacion</dt><dd>{{ config()?.fechaVerificacion ? (config()?.fechaVerificacion | date: 'dd/MM/yyyy HH:mm') : 'Sin verificar' }}</dd></div>
+      </dl>
+      @if (config()?.ultimoError) {
+        <p class="email-last-error"><i class="pi pi-info-circle"></i>{{ config()?.ultimoError }}</p>
+      }
+      <label>Enviar prueba a
+        <input pInputText type="email" [ngModel]="testEmailTo()" (ngModelChange)="testEmailTo.set($event)" name="testEmailTo" placeholder="admin@empresa.com" [disabled]="!canManage()" />
+      </label>
+      <div class="email-actions">
+        <button type="button" class="email-action email-action--secondary" [disabled]="saving() || !canManage()" (click)="save()">
+          <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+          {{ saving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+        <button type="button" class="email-action email-action--primary" [disabled]="testing() || !config() || !canManage()" (click)="sendTest()">
+          <i [class]="testing() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"></i>
+          {{ testing() ? 'Enviando...' : 'Enviar prueba' }}
+        </button>
+        <button type="button" class="email-action" [disabled]="toggling() || !config() || !canManage()" (click)="toggleActive()">
+          <i [class]="config()?.activo ? 'pi pi-pause' : 'pi pi-check-circle'"></i>
+          {{ config()?.activo ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+      <small><i class="pi pi-lock"></i> La contrasena se guarda cifrada y nunca se muestra en pantalla.</small>
+    </article>
+  </div>
+</section>

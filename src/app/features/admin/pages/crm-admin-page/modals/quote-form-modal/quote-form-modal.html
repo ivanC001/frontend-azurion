@@ -1,0 +1,122 @@
+<p-dialog header="Crear cotizacion CRM" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().activeDialog() === 'cotizacion'" (visibleChange)="!$event && host().activeDialog.set(null)" styleClass="crm-dialog crm-dialog--quote-modern">
+  <form class="dialog-form quote-modern-form">
+    <section class="quote-modern-hero">
+      <div class="quote-company-mark">
+        @if (host().quoteCompanyLogoUrl(); as logo) {
+          <img [src]="logo" alt="Logo empresa" />
+        } @else {
+          <span>{{ host().quoteCompanyName().slice(0, 2).toUpperCase() }}</span>
+        }
+      </div>
+      <div>
+        <span>Cotizacion comercial desde oportunidad</span>
+        <h3>{{ host().quoteOfferName() }}</h3>
+        <p>{{ host().quoteOfferDescription() }}</p>
+      </div>
+      <strong>{{ host().quoteCurrencyPrefix() }} {{ host().quoteTotal() | number: '1.2-2' }}</strong>
+    </section>
+
+    <section class="quote-context-grid">
+      <article class="quote-context-card">
+        <i class="pi pi-user"></i>
+        <div>
+          <span>Solicitante</span>
+          <strong>{{ host().quoteOpportunityContactName() }}</strong>
+          <p>{{ host().quoteOpportunityContactDetail() }}</p>
+        </div>
+      </article>
+      <article class="quote-context-card quote-context-card--product">
+        <i class="pi pi-tags"></i>
+        <div>
+          <span>Producto de interes</span>
+          <strong>{{ host().quoteOfferName() }}</strong>
+          <p>{{ host().selectedOpportunity()?.tipoOportunidad || 'Oferta CRM' }} - {{ host().quoteCurrencyPrefix() }} {{ host().quoteTotal() | number: '1.2-2' }}</p>
+        </div>
+      </article>
+      <article class="quote-context-card quote-context-card--seller">
+        <i class="pi pi-briefcase"></i>
+        <div>
+          <span>Responsable</span>
+          <strong>{{ host().quoteResponsibleName() }}</strong>
+          <p>La sucursal se toma de la sesion del vendedor.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="quote-commercial-card">
+      <div class="quote-commercial-card__head">
+        <div>
+          <span>Condiciones comerciales</span>
+          <strong>El vendedor solo define vencimiento, observacion y ajustes de precio.</strong>
+        </div>
+      </div>
+      <div class="quote-modern-grid quote-modern-grid--conditions">
+        <label>Moneda
+          <p-select name="quoteMoneda" [options]="host().quoteCurrencyOptions()" [ngModel]="host().quoteForm.moneda" (ngModelChange)="host().onQuoteCurrencyChange($event)" appendTo="body" />
+        </label>
+        <label>Vencimiento<input pInputText type="date" name="quoteVencimiento" [(ngModel)]="host().quoteForm.fechaVencimiento" /></label>
+        @if (host().quoteCurrencyInfo(); as currency) {
+          <label>Tipo cambio final
+            <input pInputText [value]="currency.tipoCambioVenta | number: '1.4-6'" disabled />
+          </label>
+        }
+        <label class="wide-field">Observacion<input pInputText name="quoteObservacion" [(ngModel)]="host().quoteForm.observacion" placeholder="Condiciones comerciales, validez o entregables" /></label>
+      </div>
+    </section>
+
+    <section class="quote-offer-card">
+      <div class="quote-offer-card__head">
+        <div>
+          <span>Items de la propuesta</span>
+          <strong>Producto ya tomado desde la oportunidad</strong>
+        </div>
+        <b>{{ host().selectedOpportunity()?.tipoOportunidad || 'CRM' }}</b>
+      </div>
+      <div class="quote-lines quote-lines--modern">
+        <div class="quote-line quote-line--modern quote-line--header" aria-hidden="true">
+          <span>Producto CRM</span>
+          <span>Cantidad</span>
+          <span>Precio</span>
+          <span>Descuento</span>
+          <span>Promocion</span>
+          <span>Total</span>
+          <span></span>
+        </div>
+        @for (line of host().quoteForm.detalles; track $index) {
+          <div class="quote-line quote-line--modern">
+            <p-select
+              name="quoteCatalogo{{ $index }}"
+              [options]="host().catalogoOptions()"
+              [ngModel]="line.catalogoItemId"
+              (ngModelChange)="host().onQuoteCatalogChange(line, $event)"
+              appendTo="body"
+              placeholder="Selecciona un producto CRM"
+              [filter]="true"
+              filterBy="label"
+            />
+            <input pInputText type="number" min="1" step="1" name="quoteCant{{ $index }}" [ngModel]="line.cantidad" (ngModelChange)="line.cantidad = host().normalizeQuoteQuantity($event)" placeholder="Cant." />
+            <input pInputText type="number" min="0" name="quotePrecio{{ $index }}" [(ngModel)]="line.precioUnitario" placeholder="Precio" />
+            <input pInputText type="number" min="0" name="quoteDscto{{ $index }}" [(ngModel)]="line.descuento" placeholder="Desc." />
+            <p-select name="quotePromo{{ $index }}" [options]="host().promotionOptions()" [(ngModel)]="line.promocionId" appendTo="body" placeholder="Promocion" [showClear]="true" />
+            <div class="quote-line-total">
+              @if (host().linePromotionDiscount(line) > 0) {
+                <small>Promo -{{ host().quoteCurrencyPrefix() }} {{ host().linePromotionDiscount(line) | number: '1.2-2' }}</small>
+              }
+              <strong>{{ host().quoteCurrencyPrefix() }} {{ host().lineTotal(line) | number: '1.2-2' }}</strong>
+            </div>
+            <button type="button" pButton class="p-button-text p-button-rounded danger-action" icon="pi pi-trash" (click)="host().removeQuoteLine($index)"></button>
+          </div>
+        }
+      </div>
+      <div class="quote-offer-card__footer">
+        <p-button label="Agregar item adicional" icon="pi pi-plus" severity="secondary" [outlined]="true" size="small" (onClick)="host().addQuoteLine()" />
+        <span>Las promociones se registran desde Panel administrativo CRM y aqui solo se aplican.</span>
+      </div>
+    </section>
+
+    <div class="dialog-actions quote-modern-actions">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().activeDialog.set(null)" />
+      <p-button label="Generar cotizacion" icon="pi pi-file-edit" [loading]="host().saving()" (onClick)="host().saveQuote()" />
+    </div>
+  </form>
+</p-dialog>
