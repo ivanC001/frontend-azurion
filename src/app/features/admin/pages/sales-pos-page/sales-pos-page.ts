@@ -784,7 +784,7 @@ export class SalesPosPage {
     if (typeof error === 'object' && error !== null) {
       const httpError = error as { status?: number; error?: { message?: string } };
       if (httpError.status === 0) {
-        return 'No se pudo conectar con el backend.';
+        return 'No se pudo conectar con el servidor. Intenta nuevamente.';
       }
       return httpError.error?.message || 'No se pudo completar la venta.';
     }

@@ -328,7 +328,7 @@ export class SalesRemissionGuidePage {
         return 'No tienes permisos para registrar guias de remision.';
       }
       if (httpError.status === 0) {
-        return 'No se pudo conectar con el backend.';
+        return 'No se pudo conectar con el servidor. Intenta nuevamente.';
       }
       return httpError.error?.message || 'No se pudo registrar la guia.';
     }

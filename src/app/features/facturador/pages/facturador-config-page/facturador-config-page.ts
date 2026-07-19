@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { ApiUrlService } from '@core/api/api-url.service';
 import {
   CreateFacturadorTenantRequest,
   FacturadorApiService,
@@ -45,7 +44,6 @@ export class FacturadorConfigPage {
 
   private readonly facturadorApi = inject(FacturadorApiService);
   private readonly route = inject(ActivatedRoute);
-  private readonly apiUrl = inject(ApiUrlService);
   private pendingTenantIdFromUrl: number | null = null;
 
   protected readonly tenants = signal<FacturadorTenant[]>([]);
@@ -262,7 +260,7 @@ export class FacturadorConfigPage {
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const httpError = error as { status?: number; error?: { message?: string } };
       if (httpError.status === 0) {
-        return `No se pudo conectar con facturador. Verifica ${this.apiUrl.baseUrl('facturador')}.`;
+        return 'No se pudo conectar con el servicio de facturacion. Intenta nuevamente.';
       }
       return httpError.error?.message || 'No se pudo completar la operacion en facturador.';
     }

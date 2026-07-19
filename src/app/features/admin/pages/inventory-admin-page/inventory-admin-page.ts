@@ -804,7 +804,7 @@ export class InventoryAdminPage {
         return 'No tienes permisos de inventario. Solicita rol ADMIN o SALES en este tenant.';
       }
       if (httpError.status === 500) {
-        return 'El backend reporto un error interno en inventario. Revisa logs del servidor.';
+        return 'No se pudo completar la operacion en este momento. Intenta nuevamente.';
       }
 
       if (!('error' in httpError)) {

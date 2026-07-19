@@ -11,7 +11,6 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { ApiUrlService } from '@core/api/api-url.service';
 import {
   CreateFacturadorTenantRequest,
   FacturadorApiService,
@@ -56,7 +55,6 @@ interface FacturadorTenantForm {
 })
 export class FacturadorCompaniesPage {
   private readonly facturadorApi = inject(FacturadorApiService);
-  private readonly apiUrl = inject(ApiUrlService);
   private readonly router = inject(Router);
 
   protected readonly tenants = signal<FacturadorTenant[]>([]);
@@ -325,7 +323,7 @@ export class FacturadorCompaniesPage {
         error?: { message?: string; context?: unknown };
       };
       if (httpError.status === 0) {
-        return `No se pudo conectar con el facturador. Verifica que este activo en ${this.apiUrl.baseUrl('facturador')}.`;
+        return 'No se pudo conectar con el servicio de facturacion. Intenta nuevamente.';
       }
 
       const backendMessage = httpError.error?.message?.trim() || '';
@@ -335,7 +333,7 @@ export class FacturadorCompaniesPage {
         normalizedMessage.includes('invalid jwt token') ||
         normalizedMessage.includes('invalid api key')
       ) {
-        return 'Facturador rechazo autenticacion. En local habilita AUTH_DISABLED=true en su .env o usa integracion server-to-server.';
+        return 'No se pudo completar la operacion en el servicio de facturacion.';
       }
 
       return httpError.error?.message || 'No se pudo completar la operacion en el facturador.';

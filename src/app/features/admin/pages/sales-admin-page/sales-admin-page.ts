@@ -433,7 +433,7 @@ export class SalesAdminPage implements OnDestroy {
       this.ventasRequestSubscription = null;
       this.loading.set(false);
       this.errorMessage.set(
-        'La consulta de ventas demoro demasiado. Revisa backend y vuelve a recargar.',
+        'La consulta de ventas demoro demasiado. Intenta nuevamente en unos momentos.',
       );
     }, SalesAdminPage.LIST_WATCHDOG_MS);
   }
@@ -1671,10 +1671,10 @@ export class SalesAdminPage implements OnDestroy {
         return 'No tienes permiso para registrar o consultar ventas.';
       }
       if (httpError.status === 422) {
-        return httpError.error?.message || 'Validacion rechazada por el backend.';
+        return httpError.error?.message || 'Revisa los datos ingresados.';
       }
       if (httpError.status === 0) {
-        return 'No se pudo conectar con el backend.';
+        return 'No se pudo conectar con el servidor. Intenta nuevamente.';
       }
       if ((httpError as { name?: string }).name === 'TimeoutError') {
         return 'La consulta de ventas demoro demasiado. Intenta recargar.';

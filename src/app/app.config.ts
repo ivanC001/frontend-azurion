@@ -11,6 +11,7 @@ import { providePrimeNG } from 'primeng/config';
 
 import { routes } from './app.routes';
 import { APP_SETTINGS, appSettings } from '@core/config/app-settings';
+import { apiErrorInterceptor } from '@core/api/api-error.interceptor';
 import { authSessionInterceptor } from '@core/auth/interceptors/auth-session.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -28,7 +29,7 @@ export const appConfig: ApplicationConfig = {
     }),
     MessageService,
     provideZonelessChangeDetection(),
-    provideHttpClient(withInterceptors([authSessionInterceptor])),
+    provideHttpClient(withInterceptors([apiErrorInterceptor, authSessionInterceptor])),
     provideRouter(routes),
   ],
 };

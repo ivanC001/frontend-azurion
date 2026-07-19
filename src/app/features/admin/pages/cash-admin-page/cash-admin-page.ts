@@ -698,7 +698,7 @@ export class CashAdminPage {
         return 'No tienes permisos de caja. Solicita rol ADMIN o SALES.';
       }
       if (httpError.status === 500) {
-        return 'El backend reporto un error interno en caja. Revisa logs del servidor.';
+        return 'No se pudo completar la operacion en este momento. Intenta nuevamente.';
       }
       if (!('error' in httpError)) {
         return 'No se pudo completar la operacion.';

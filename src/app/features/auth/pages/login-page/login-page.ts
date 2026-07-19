@@ -8,7 +8,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 
-import { ApiUrlService } from '@core/api/api-url.service';
 import { AuthApiService } from '@core/auth/auth-api.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
 
@@ -21,7 +20,6 @@ import { AuthSessionService } from '@core/auth/auth-session.service';
 })
 export class LoginPage implements OnInit {
   private readonly authApi = inject(AuthApiService);
-  private readonly apiUrl = inject(ApiUrlService);
   private readonly session = inject(AuthSessionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -163,14 +161,14 @@ export class LoginPage implements OnInit {
     if (typeof error === 'object' && error !== null && 'name' in error) {
       const timeoutError = error as { name?: string };
       if (timeoutError.name === 'TimeoutError') {
-        return 'El backend no respondio a tiempo. Verifica que este activo y vuelve a intentar.';
+        return 'El servicio no respondio a tiempo. Intenta nuevamente en unos momentos.';
       }
     }
 
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const httpError = error as { status?: number; error?: unknown };
       if (httpError.status === 0) {
-        return `No se pudo conectar con el servidor. Verifica que el backend este activo en ${this.apiUrl.baseUrl('saasCore')}.`;
+        return 'No se pudo conectar con el servidor. Intenta nuevamente en unos momentos.';
       }
 
       const backendMessage = this.extractBackendMessage(httpError.error);

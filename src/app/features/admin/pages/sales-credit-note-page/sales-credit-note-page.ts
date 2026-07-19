@@ -209,7 +209,7 @@ export class SalesCreditNotePage {
         return 'No tienes permisos para registrar notas de credito.';
       }
       if (httpError.status === 0) {
-        return 'No se pudo conectar con el backend.';
+        return 'No se pudo conectar con el servidor. Intenta nuevamente.';
       }
       return httpError.error?.message || 'No se pudo registrar la nota de credito.';
     }

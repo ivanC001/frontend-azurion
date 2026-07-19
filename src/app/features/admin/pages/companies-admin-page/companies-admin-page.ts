@@ -10,7 +10,6 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { ApiUrlService } from '@core/api/api-url.service';
 import { FacturadorApiService } from '@features/facturador/data/facturador-api.service';
 import {
   AdminSaasApiService,
@@ -71,7 +70,6 @@ interface EmpresaCreationFlowResult {
 export class CompaniesAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly facturadorApi = inject(FacturadorApiService);
-  private readonly apiUrl = inject(ApiUrlService);
   private readonly router = inject(Router);
 
   protected readonly empresas = signal<Empresa[]>([]);
@@ -477,14 +475,10 @@ export class CompaniesAdminPage {
   }
 
   private resolveError(error: unknown): string {
-    if (error instanceof Error && error.message.trim().length > 0) {
-      return error.message.trim();
-    }
-
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const httpError = error as HttpErrorLike;
       if (httpError.status === 0) {
-        return `No se pudo conectar con la API. Verifica que el backend AZURION este activo en ${this.apiUrl.baseUrl('saasCore')}.`;
+        return 'No se pudo conectar con el servidor. Intenta nuevamente en unos momentos.';
       }
 
       return (
@@ -494,6 +488,10 @@ export class CompaniesAdminPage {
       );
     }
 
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return error.message.trim();
+    }
+
     return 'No se pudo completar la operacion.';
   }
 
@@ -501,7 +499,7 @@ export class CompaniesAdminPage {
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const httpError = error as HttpErrorLike;
       if (httpError.status === 0) {
-        return `No se pudo conectar con facturador en ${this.apiUrl.baseUrl('facturador')}.`;
+        return 'No se pudo conectar con el servicio de facturacion. Intenta nuevamente.';
       }
 
       const backendMessage = this.extractErrorMessage(httpError.error);
@@ -511,7 +509,7 @@ export class CompaniesAdminPage {
         normalizedMessage.includes('invalid jwt token') ||
         normalizedMessage.includes('invalid api key')
       ) {
-        return 'Facturador rechazo autenticacion. En local habilita AUTH_DISABLED=true en su .env o usa integracion server-to-server.';
+        return 'No se pudo completar la operacion en el servicio de facturacion.';
       }
 
       return backendMessage || httpError.message || 'Error no controlado en facturador.';

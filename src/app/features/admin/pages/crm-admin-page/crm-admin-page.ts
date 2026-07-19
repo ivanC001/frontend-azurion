@@ -10151,7 +10151,7 @@ export class CrmAdminPage {
 
   private resolveWhatsappEndpointError(error: unknown): string {
     if (typeof error === 'object' && error !== null && 'status' in error && Number((error as { status?: number }).status) === 404) {
-      return 'El backend activo todavia no tiene las rutas nuevas de WhatsApp. Reinicia el backend de Azurion y vuelve a intentarlo.';
+      return 'La funcion solicitada no esta disponible en este momento.';
     }
     return this.resolveError(error);
   }
