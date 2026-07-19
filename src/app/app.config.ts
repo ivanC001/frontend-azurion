@@ -4,7 +4,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
 import { providePrimeNG } from 'primeng/config';
@@ -29,6 +29,6 @@ export const appConfig: ApplicationConfig = {
     MessageService,
     provideZonelessChangeDetection(),
     provideHttpClient(withInterceptors([authSessionInterceptor])),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideRouter(routes),
   ],
 };

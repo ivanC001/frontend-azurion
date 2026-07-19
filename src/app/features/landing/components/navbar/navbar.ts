@@ -20,11 +20,11 @@ export class NavbarComponent {
 
   protected readonly navItems: readonly NavItem[] = [
     { label: 'Inicio', fragment: 'inicio' },
-    { label: 'Funciones', fragment: 'funciones' },
-    { label: 'Modulos', fragment: 'modulos' },
-    { label: 'Beneficios', fragment: 'beneficios' },
-    { label: 'Precios', fragment: 'planes' },
-    { label: 'Recursos', fragment: 'facturacion' },
+    { label: 'Plataforma', fragment: 'novedades' },
+    { label: 'CRM', fragment: 'crm' },
+    { label: 'ERP', fragment: 'modulos' },
+    { label: 'Facturacion', fragment: 'facturacion' },
+    { label: 'Planes', fragment: 'planes' },
     { label: 'Contacto', fragment: 'contacto' },
   ];
 

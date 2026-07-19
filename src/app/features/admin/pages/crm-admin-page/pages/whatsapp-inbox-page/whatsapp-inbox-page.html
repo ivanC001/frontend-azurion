@@ -1,0 +1,324 @@
+<section class="whatsapp-inbox">
+  <header class="inbox-toolbar">
+    <div class="inbox-title">
+      <span class="whatsapp-logo"><i class="pi pi-whatsapp"></i></span>
+      <div>
+        <h1>Bandeja de WhatsApp</h1>
+        <p>Conversa y gestiona tus contactos desde el CRM</p>
+      </div>
+    </div>
+
+    <div class="toolbar-filters">
+      <label class="channel-selector" [class.channel-selector--connected]="connectionStatus()?.conectado" [title]="connectionStatus()?.message || 'Estado de conexion no comprobado'">
+        <span class="channel-dot"><i class="pi pi-whatsapp"></i></span>
+        <span>
+          <strong>WhatsApp Meta</strong>
+          <small><i></i> {{ connectionStatus()?.conectado ? 'Canal conectado' : (connectionStatus()?.configuracionCompleta ? 'Conexion pendiente' : 'Configuracion incompleta') }}</small>
+        </span>
+      </label>
+
+      <label class="compact-select">
+        <span class="sr-only">Estado de conversación</span>
+        <select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
+          <option value="">Todos los estados</option>
+          <option value="ABIERTA">Abiertas</option>
+          <option value="RESUELTA">Resueltas</option>
+          <option value="ARCHIVADA">Archivadas</option>
+        </select>
+        <i class="pi pi-chevron-down"></i>
+      </label>
+
+      <label class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          type="search"
+          placeholder="Buscar conversación..."
+          [ngModel]="query()"
+          (ngModelChange)="onQueryChange($event)"
+        />
+      </label>
+
+      <button class="icon-button toolbar-refresh" type="button" title="Actualizar bandeja" (click)="onStatusFilterChange(statusFilter())">
+        <i class="pi pi-refresh"></i>
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage() || successMessage()) {
+    <div class="feedback" [class.feedback--error]="errorMessage()">
+      <i class="pi" [class.pi-exclamation-circle]="errorMessage()" [class.pi-check-circle]="successMessage()"></i>
+      <span>{{ errorMessage() || successMessage() }}</span>
+      <button type="button" aria-label="Cerrar aviso" (click)="errorMessage.set(''); successMessage.set('')">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  }
+
+  <div class="inbox-shell" [attr.data-mobile-panel]="mobilePanel()">
+    <aside class="conversation-panel panel-list">
+      <div class="panel-heading">
+        <div>
+          <h2>Conversaciones</h2>
+          <span>{{ conversations().length }} visibles</span>
+        </div>
+        <button class="icon-button" type="button" title="Actualizar" (click)="onStatusFilterChange(statusFilter())">
+          <i class="pi pi-refresh"></i>
+        </button>
+      </div>
+
+      <nav class="conversation-tabs" aria-label="Filtros de conversación">
+        <button type="button" [class.active]="activeFilter() === 'TODAS'" (click)="setInboxFilter('TODAS')">
+          Todas
+          <span>{{ conversations().length }}</span>
+        </button>
+        <button type="button" [class.active]="activeFilter() === 'NO_LEIDAS'" (click)="setInboxFilter('NO_LEIDAS')">
+          No leídas
+          @if (unreadTotal() > 0) { <span>{{ unreadTotal() }}</span> }
+        </button>
+        <button type="button" [class.active]="activeFilter() === 'MIAS'" (click)="setInboxFilter('MIAS')">
+          Mis chats
+          @if (mineTotal() > 0) { <span>{{ mineTotal() }}</span> }
+        </button>
+      </nav>
+
+      <div class="conversation-list">
+        @if (loadingList() && conversations().length === 0) {
+          @for (placeholder of [1, 2, 3, 4, 5]; track placeholder) {
+            <div class="conversation-skeleton"><i></i><span></span></div>
+          }
+        } @else if (conversations().length === 0) {
+          <div class="empty-list">
+            <span><i class="pi pi-comments"></i></span>
+            <strong>No hay conversaciones</strong>
+            <p>Los mensajes recibidos por el webhook de Meta aparecerán aquí automáticamente.</p>
+          </div>
+        } @else {
+          @for (conversation of conversations(); track conversation.id) {
+            <button
+              type="button"
+              class="conversation-item"
+              [class.active]="selectedProspectId() === conversation.prospectoId"
+              [class.unread]="conversation.noLeidos > 0"
+              (click)="selectConversation(conversation)"
+            >
+              <span class="avatar avatar--{{ conversation.prospectoId % 5 }}">{{ initials(conversation.nombre) }}</span>
+              <span class="conversation-copy">
+                <span class="conversation-line">
+                  <strong>{{ conversation.nombre || 'Contacto de WhatsApp' }}</strong>
+                  <time>{{ timeLabel(conversation.ultimoMensajeEn) }}</time>
+                </span>
+                <span class="conversation-line conversation-preview">
+                  <span>
+                    @if (conversation.ultimaDireccion === 'SALIENTE') { <i class="pi pi-check"></i> }
+                    {{ conversation.ultimoMensaje || 'Conversación iniciada' }}
+                  </span>
+                  @if (conversation.noLeidos > 0) { <b>{{ conversation.noLeidos }}</b> }
+                </span>
+                <span class="conversation-meta">
+                  <em [class.resolved]="conversation.estadoConversacion === 'RESUELTA'">
+                    {{ conversation.estadoConversacion === 'RESUELTA' ? 'Resuelta' : (conversation.estadoProspecto || 'Nuevo') }}
+                  </em>
+                  @if (conversation.responsableId) { <small>{{ conversation.responsableId }}</small> }
+                </span>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <main class="chat-panel panel-chat">
+      @if (selectedConversation(); as conversation) {
+        <header class="chat-header">
+          <button class="mobile-back" type="button" aria-label="Volver a conversaciones" (click)="backToList()">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <span class="avatar avatar--large avatar--{{ conversation.prospectoId % 5 }}">{{ initials(conversation.nombre) }}</span>
+          <div class="chat-contact">
+            <strong>{{ conversation.nombre }}</strong>
+            <span><i class="pi pi-whatsapp"></i> {{ conversation.telefono || 'Sin teléfono' }}</span>
+          </div>
+          <div class="chat-actions">
+            <button class="icon-button detail-trigger" type="button" title="Información del contacto" (click)="showDetail()">
+              <i class="pi pi-user"></i>
+            </button>
+            <button
+              class="resolve-button"
+              type="button"
+              [class.is-resolved]="conversation.estadoConversacion === 'RESUELTA'"
+              [disabled]="savingAction()"
+              (click)="toggleResolved()"
+            >
+              <i class="pi" [class.pi-check-circle]="conversation.estadoConversacion !== 'RESUELTA'" [class.pi-replay]="conversation.estadoConversacion === 'RESUELTA'"></i>
+              {{ conversation.estadoConversacion === 'RESUELTA' ? 'Reabrir' : 'Marcar como resuelta' }}
+            </button>
+          </div>
+        </header>
+
+        <div #messageScroller class="message-history">
+          <div class="day-divider"><span>Conversación</span></div>
+
+          @if (loadingMessages() && messages().length === 0) {
+            <div class="message-loading"><i class="pi pi-spin pi-spinner"></i> Cargando mensajes...</div>
+          } @else if (messages().length === 0) {
+            <div class="empty-chat">
+              <span><i class="pi pi-whatsapp"></i></span>
+              <strong>Aún no hay mensajes</strong>
+              <p>Escribe el primer mensaje para iniciar la conversación con este prospecto.</p>
+            </div>
+          } @else {
+            @for (message of messages(); track message.metaMessageId || message.id) {
+              <article class="message-row" [class.message-row--outgoing]="message.direccion === 'SALIENTE'">
+                <div class="message-bubble">
+                  @if (message.tipoMensaje !== 'text') {
+                    <small class="message-type"><i class="pi pi-paperclip"></i> {{ message.tipoMensaje }}</small>
+                  }
+                  <p>{{ message.contenido || 'Mensaje sin contenido visible' }}</p>
+                  <footer>
+                    <time>{{ messageTime(message.mensajeEn || message.createdAt) }}</time>
+                    @if (message.direccion === 'SALIENTE') {
+                      <i class="pi pi-check" [class.message-read]="message.estado === 'read' || message.estado === 'LEIDO'"></i>
+                      <i class="pi pi-check second-check" [class.message-read]="message.estado === 'read' || message.estado === 'LEIDO'"></i>
+                    }
+                  </footer>
+                </div>
+              </article>
+            }
+          }
+        </div>
+
+        <footer class="composer">
+          <div class="composer-tabs">
+            <button type="button" class="active"><i class="pi pi-send"></i> Responder</button>
+            <button type="button" title="Usa el panel derecho para guardar una nota interna"><i class="pi pi-file-edit"></i> Nota interna</button>
+          </div>
+          <div class="composer-box">
+            <textarea
+              rows="3"
+              maxlength="4096"
+              placeholder="Escribe tu mensaje..."
+              [ngModel]="draft()"
+              (ngModelChange)="draft.set($event)"
+              (keydown)="onComposerKeydown($event)"
+            ></textarea>
+            <div class="composer-actions">
+              <div>
+                <button type="button" title="Emojis disponibles próximamente" disabled><i class="pi pi-face-smile"></i></button>
+                <button type="button" title="Adjuntos disponibles próximamente" disabled><i class="pi pi-paperclip"></i></button>
+                <button type="button" title="Imágenes disponibles próximamente" disabled><i class="pi pi-image"></i></button>
+                <small>Enter para enviar · Shift + Enter para nueva línea</small>
+              </div>
+              <div>
+                <button class="template-button" type="button" title="Plantillas de Meta disponibles próximamente" disabled>
+                  <i class="pi pi-bookmark"></i> Plantillas
+                </button>
+                <button class="send-button" type="button" [disabled]="!draft().trim() || sending()" (click)="sendMessage()">
+                  @if (sending()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-send"></i> }
+                  Enviar
+                </button>
+              </div>
+            </div>
+          </div>
+        </footer>
+      } @else {
+        <div class="no-selection">
+          <span><i class="pi pi-whatsapp"></i></span>
+          <h2>Tu bandeja de WhatsApp</h2>
+          <p>Selecciona una conversación para ver el historial y responder desde el CRM.</p>
+        </div>
+      }
+    </main>
+
+    <aside class="contact-panel panel-detail">
+      @if (selectedConversation(); as conversation) {
+        <header class="detail-heading">
+          <button class="mobile-back" type="button" aria-label="Volver al chat" (click)="backToChat()">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <strong>Información del contacto</strong>
+          <i class="pi pi-chevron-up"></i>
+        </header>
+
+        <section class="contact-card">
+          <div class="contact-identity">
+            <span class="avatar avatar--profile avatar--{{ conversation.prospectoId % 5 }}">{{ initials(conversation.nombre) }}</span>
+            <div>
+              <strong>{{ conversation.nombre }}</strong>
+              <span><i class="pi pi-whatsapp"></i> {{ conversation.telefono || 'Sin teléfono' }}</span>
+              @if (conversation.correo) { <span><i class="pi pi-envelope"></i> {{ conversation.correo }}</span> }
+              @if (conversation.direccion) { <span><i class="pi pi-map-marker"></i> {{ conversation.direccion }}</span> }
+            </div>
+          </div>
+          <div class="quick-actions">
+            <button type="button" (click)="openProspect()"><i class="pi pi-user"></i><span>Ver perfil</span></button>
+            <button type="button" disabled title="Disponible próximamente"><i class="pi pi-calendar-plus"></i><span>Actividad</span></button>
+            <button type="button" disabled title="Disponible próximamente"><i class="pi pi-check-square"></i><span>Tarea</span></button>
+          </div>
+        </section>
+
+        <section class="detail-card prospect-card">
+          <header><strong>Prospecto</strong><span>{{ conversation.estadoProspecto || 'Nuevo' }}</span></header>
+          <dl>
+            <div><dt>Origen</dt><dd>{{ conversation.origen || conversation.canalIngreso || 'WhatsApp' }}</dd></div>
+            <div><dt>Campaña</dt><dd>{{ conversation.campania || 'Sin campaña' }}</dd></div>
+            <div><dt>Interés</dt><dd>{{ conversation.interesPrincipal || 'No especificado' }}</dd></div>
+            <div>
+              <dt>Responsable</dt>
+              <dd>
+                <select
+                  aria-label="Responsable de la conversación"
+                  [disabled]="savingAction()"
+                  [ngModel]="conversation.responsableId || ''"
+                  (ngModelChange)="assignConversation($event)"
+                >
+                  <option value="">Sin asignar</option>
+                  @for (user of users(); track user.id) { <option [value]="user.username">{{ user.nombres }}</option> }
+                </select>
+              </dd>
+            </div>
+          </dl>
+          <button class="outline-button" type="button" (click)="openProspect()">Ver ficha del prospecto</button>
+        </section>
+
+        <section class="detail-card">
+          <header><strong>Actividades próximas</strong><i class="pi pi-chevron-up"></i></header>
+          @if (selectedActivities().length === 0) {
+            <p class="detail-empty">No hay actividades pendientes para este contacto.</p>
+          } @else {
+            <div class="activity-list">
+              @for (activity of selectedActivities(); track activity.id) {
+                <div class="activity-item">
+                  <i class="pi" [class.pi-phone]="activity.tipoActividad === 'LLAMADA'" [class.pi-calendar]="activity.tipoActividad !== 'LLAMADA'"></i>
+                  <span><strong>{{ activity.asunto }}</strong><small>{{ activity.fechaProgramada | date: 'dd MMM yyyy · HH:mm' }}</small></span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="detail-card note-card">
+          <header><strong>Nota interna</strong><i class="pi pi-lock"></i></header>
+          <textarea
+            id="internal-note"
+            rows="4"
+            maxlength="4000"
+            placeholder="Información visible solo para tu equipo..."
+            [ngModel]="noteDraft()"
+            (ngModelChange)="noteDraft.set($event)"
+          ></textarea>
+          <button type="button" [disabled]="savingAction() || noteDraft().trim() === (conversation.notaInterna || '').trim()" (click)="saveInternalNote()">
+            Guardar nota
+          </button>
+        </section>
+
+        <section class="detail-card integration-status" [class.integration-status--connected]="connectionStatus()?.conectado">
+          <span><i class="pi pi-shield"></i></span>
+          <div>
+            <strong>{{ connectionStatus()?.conectado ? 'Conectado con Meta' : 'Conexion con Meta pendiente' }}</strong>
+            <small>{{ connectionStatus()?.message || 'No se pudo comprobar el estado real de la integracion.' }}</small>
+          </div>
+        </section>
+      }
+    </aside>
+  </div>
+</section>

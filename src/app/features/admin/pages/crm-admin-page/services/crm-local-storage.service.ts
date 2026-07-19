@@ -29,7 +29,17 @@ export class CrmLocalStorageService {
     return Array.isArray(parsed) ? parsed : [];
   }
 
-  persistRecords<T>(key: string, items: readonly T[]): void {
+  clearRecords(key: string): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  }
+
+  replaceMigrationRecords<T>(key: string, items: readonly T[]): void {
+    if (!items.length) {
+      this.clearRecords(key);
+      return;
+    }
     this.writeJson(key, items);
   }
 

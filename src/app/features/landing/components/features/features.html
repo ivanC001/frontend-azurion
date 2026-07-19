@@ -1,10 +1,50 @@
-<section class="modules" id="modulos">
+<section class="system-story" id="novedades">
   <div class="section-shell">
     <div class="section-head section-head--center">
-      <p class="section-kicker">Todo lo que necesitas</p>
-      <h2 class="section-title">Modulos integrados para hacer crecer tu negocio</h2>
+      <p class="section-kicker">Lo nuevo en Azurion</p>
+      <h2 class="section-title">Todo el ciclo comercial conectado con tu operacion</h2>
       <p class="section-copy">
-        Todas las herramientas que tu empresa necesita en una sola plataforma.
+        El CRM ya no vive aislado: cada lead, cotizacion, pago y cliente alimenta la misma
+        informacion que usa tu empresa para vender, facturar y decidir.
+      </p>
+    </div>
+
+    <div class="system-story__grid">
+      <figure class="system-story__visual">
+        <img
+          src="assets/landing/azurion-system-overview.jpg"
+          alt="Panel unificado de CRM, ventas, inventario, pagos y reportes"
+          loading="lazy"
+        />
+        <figcaption>
+          <i class="pi pi-check-circle"></i>
+          <span><strong>Operacion conectada</strong> ERP, CRM y cobranza en una sola vista</span>
+        </figcaption>
+      </figure>
+
+      <div class="capability-list" id="crm">
+        @for (capability of newCapabilities; track capability.title; let index = $index) {
+          <article>
+            <span class="capability-list__index">0{{ index + 1 }}</span>
+            <i class="pi {{ capability.icon }}"></i>
+            <div>
+              <h3>{{ capability.title }}</h3>
+              <p>{{ capability.description }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="modules" id="modulos">
+  <div class="section-shell">
+    <div class="section-head">
+      <p class="section-kicker">Plataforma modular</p>
+      <h2 class="section-title">ERP y CRM con una sola fuente de informacion</h2>
+      <p class="section-copy">
+        Activa los modulos que necesita cada empresa y conserva una experiencia coherente entre areas.
       </p>
     </div>
 
@@ -12,38 +52,31 @@
       @for (module of modules; track module.title) {
         <article class="module-card">
           <span><i class="pi {{ module.icon }}"></i></span>
-          <h3>{{ module.title }}</h3>
-          <p>{{ module.description }}</p>
+          <div>
+            <h3>{{ module.title }}</h3>
+            <p>{{ module.description }}</p>
+          </div>
+          <i class="pi pi-arrow-up-right module-card__arrow"></i>
         </article>
       }
     </div>
 
     <a class="modules__link" routerLink="/inicio" fragment="contacto">
-      Ver todos los modulos
+      Diseñar mi solucion
       <i class="pi pi-arrow-right"></i>
     </a>
   </div>
 </section>
 
-<section class="benefits" id="beneficios">
-  <div class="section-shell">
-    <div class="section-head">
-      <p class="section-kicker">Beneficios</p>
-      <h2 class="section-title">Una plataforma preparada para operar con control</h2>
-      <p class="section-copy">
-        AZURION conecta tus procesos clave con una experiencia moderna, rapida y segura.
-      </p>
-    </div>
-
-    <div class="benefits__grid">
-      @for (benefit of benefits; track benefit.title) {
-        <p-card styleClass="feature-card">
-          <i class="pi {{ benefit.icon }}"></i>
-          <h3>{{ benefit.title }}</h3>
-          <p>{{ benefit.description }}</p>
-        </p-card>
-      }
-    </div>
+<section class="controls" id="beneficios">
+  <div class="section-shell controls__grid">
+    @for (control of controls; track control.title) {
+      <article>
+        <i class="pi {{ control.icon }}"></i>
+        <h3>{{ control.title }}</h3>
+        <p>{{ control.description }}</p>
+      </article>
+    }
   </div>
 </section>
 
@@ -51,9 +84,10 @@
   <div class="section-shell billing__grid">
     <div>
       <p class="section-kicker">Facturacion electronica</p>
-      <h2 class="section-title">Motor SUNAT conectado a tu operacion diaria</h2>
+      <h2 class="section-title">La venta termina con documentos en orden</h2>
       <p class="section-copy">
-        Emite comprobantes desde ventas, procesa respuestas del facturador y conserva PDF, XML y CDR.
+        Emite comprobantes desde la operacion, procesa la respuesta del facturador y conserva
+        los documentos vinculados al cliente y a la venta.
       </p>
       <div class="billing__tags">
         @for (item of invoiceItems; track item) {
@@ -62,30 +96,29 @@
       </div>
     </div>
 
-    <div class="billing-panel">
-      <div class="billing-panel__status">
-        <span>F001-009384</span>
-        <strong>Aceptado por SUNAT</strong>
-      </div>
-      <div class="billing-panel__lines">
-        <span></span>
-        <span></span>
-        <span></span>
+    <div class="billing-panel" aria-label="Ejemplo de comprobante aceptado">
+      <header>
+        <span><i class="pi pi-file-check"></i> F001-009384</span>
+        <strong><i class="pi pi-check-circle"></i> Aceptado por SUNAT</strong>
+      </header>
+      <div class="billing-panel__summary">
+        <span><small>Cliente</small> Empresa Demo SAC</span>
+        <span><small>Total</small> S/ 1,350.00</span>
       </div>
       <div class="billing-panel__files">
-        <article><i class="pi pi-file-pdf"></i>PDF</article>
-        <article><i class="pi pi-code"></i>XML</article>
-        <article><i class="pi pi-verified"></i>CDR</article>
+        <article><i class="pi pi-file-pdf"></i> PDF</article>
+        <article><i class="pi pi-code"></i> XML</article>
+        <article><i class="pi pi-verified"></i> CDR</article>
       </div>
     </div>
   </div>
 </section>
 
-<section class="flow">
+<section class="flow" id="proceso">
   <div class="section-shell">
     <div class="section-head section-head--center">
-      <p class="section-kicker">Flujo del sistema</p>
-      <h2 class="section-title">De la venta al comprobante validado</h2>
+      <p class="section-kicker">Flujo comercial</p>
+      <h2 class="section-title">Del primer interes al pago conciliado</h2>
     </div>
 
     <div class="flow__line">
@@ -95,27 +128,26 @@
           <span>{{ step.title }}</span>
         </article>
         @if (!last) {
-          <i class="pi pi-arrow-right flow__arrow"></i>
+          <i class="pi pi-angle-right flow__arrow"></i>
         }
       }
     </div>
   </div>
 </section>
 
-<section class="testimonials" id="nosotros">
+<section class="teams" id="nosotros">
   <div class="section-shell">
     <div class="section-head">
-      <p class="section-kicker">Confianza</p>
-      <h2 class="section-title">Equipos que operan con mas claridad</h2>
+      <p class="section-kicker">Una plataforma, varias perspectivas</p>
+      <h2 class="section-title">Cada equipo ve lo que necesita para avanzar</h2>
     </div>
 
-    <div class="testimonials__grid">
-      @for (testimonial of testimonials; track testimonial.name) {
-        <article class="testimonial-card">
-          <i class="pi pi-star-fill"></i>
-          <p>"{{ testimonial.quote }}"</p>
-          <strong>{{ testimonial.name }}</strong>
-          <span>{{ testimonial.role }}</span>
+    <div class="teams__grid">
+      @for (team of teams; track team.title) {
+        <article>
+          <i class="pi {{ team.icon }}"></i>
+          <h3>{{ team.title }}</h3>
+          <p>{{ team.description }}</p>
         </article>
       }
     </div>

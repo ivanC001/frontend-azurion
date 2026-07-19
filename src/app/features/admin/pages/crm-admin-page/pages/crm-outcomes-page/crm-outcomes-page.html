@@ -1,0 +1,100 @@
+<main class="crm-outcomes-page">
+  <header class="outcomes-header">
+    <div>
+      <span>CIERRE COMERCIAL</span>
+      <h1>Ganadas y perdidas</h1>
+      <p>Analiza los resultados finales sin mezclar cierres con el pipeline activo.</p>
+    </div>
+    <div class="outcomes-header__actions">
+      <label class="outcomes-search">
+        <i class="pi pi-search"></i>
+        <input type="search" [ngModel]="query()" (ngModelChange)="updateQuery($event)" placeholder="Buscar oportunidad o cliente...">
+      </label>
+      <button type="button" class="outcomes-button" [class.is-active]="filtersOpen()" (click)="filtersOpen.set(!filtersOpen())">
+        <i class="pi pi-filter"></i>
+        Filtros
+        <i [class]="filtersOpen() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+      </button>
+      <button type="button" class="outcomes-button outcomes-button--primary" [disabled]="loading()" (click)="load(true)">
+        <i [class]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+        Actualizar
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="outcomes-alert"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
+  }
+
+  <section class="outcomes-metrics" aria-label="Resumen de cierres">
+    @for (metric of metrics(); track metric.label) {
+      <article [class]="'outcome-metric outcome-metric--' + metric.tone">
+        <i [class]="metric.icon"></i>
+        <span>{{ metric.label }}</span>
+        <strong>{{ metric.value }}</strong>
+        <small>{{ metric.detail }}</small>
+      </article>
+    }
+  </section>
+
+  <section class="outcomes-panel">
+    <nav class="outcomes-tabs" aria-label="Resultado comercial">
+      @for (option of resultOptions; track option.value) {
+        <button type="button" [class.is-active]="resultFilter() === option.value" (click)="selectResult(option.value)">
+          <i [class]="option.icon"></i>
+          {{ option.label }}
+        </button>
+      }
+    </nav>
+
+    @if (filtersOpen()) {
+      <section class="outcomes-filters">
+        <label>Desde cierre<input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)"></label>
+        <label>Hasta cierre<input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)"></label>
+        <label>Responsable<input type="text" [ngModel]="responsible()" (ngModelChange)="responsible.set($event)" placeholder="Usuario responsable"></label>
+        <button type="button" class="outcomes-button" (click)="clearFilters()"><i class="pi pi-filter-slash"></i>Limpiar</button>
+        <button type="button" class="outcomes-button outcomes-button--primary" (click)="applyFilters()"><i class="pi pi-check"></i>Aplicar</button>
+      </section>
+    }
+
+    <div class="outcomes-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Oportunidad</th>
+            <th>Cliente / prospecto</th>
+            <th>Resultado</th>
+            <th>Monto final</th>
+            <th>Fecha de cierre</th>
+            <th>Responsable</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of pageData().content; track item.id) {
+            <tr>
+              <td><b>{{ item.titulo }}</b><small>OP-{{ item.id }} · {{ item.tipoOportunidad || 'Oportunidad' }}</small></td>
+              <td><b>{{ contactName(item) }}</b><small>{{ item.descripcion || 'Sin descripcion' }}</small></td>
+              <td><span [class]="item.estado === 'GANADA' ? 'result-badge result-badge--won' : 'result-badge result-badge--lost'">{{ item.estado === 'GANADA' ? 'Ganada' : 'Perdida' }}</span></td>
+              <td class="outcome-money">S/ {{ money(item.montoReal || item.montoEstimado) }}</td>
+              <td>{{ closureDate(item) | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ item.responsableId || 'Sin responsable' }}</td>
+              <td>{{ item.estado === 'PERDIDA' ? (item.motivoPerdida || 'Sin motivo registrado') : 'Cierre confirmado' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="outcomes-empty">No hay cierres para los filtros seleccionados.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="outcomes-pagination">
+      <span>{{ pageLabel() }}</span>
+      <div>
+        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <strong>{{ pageData().page + 1 }} / {{ pageData().totalPages || 1 }}</strong>
+        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+      </div>
+    </footer>
+  </section>
+</main>

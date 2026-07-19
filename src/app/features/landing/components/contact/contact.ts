@@ -11,6 +11,7 @@ import { PublicCrmApiService } from '../../data/public-crm-api.service';
 const DEFAULT_LANDING_CAMPAIGN = 'municipios';
 const DEFAULT_LANDING_CATALOGO_ITEM_ID = 2;
 const DEFAULT_LANDING_CATALOGO_TOKEN = '17PpDlCo06aCju4Z6iptGGvxzLbMMv9k';
+const DEFAULT_LANDING_TENANT = '20000000012';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,7 +28,7 @@ export class ContactComponent {
   protected readonly successMessage = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly form = {
-    tenantId: this.route.snapshot.queryParamMap.get('tenant') || '',
+    tenantId: this.route.snapshot.queryParamMap.get('tenant') || DEFAULT_LANDING_TENANT,
     catalogoItemId: Number(this.route.snapshot.queryParamMap.get('catalogoItemId')) || DEFAULT_LANDING_CATALOGO_ITEM_ID,
     catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || DEFAULT_LANDING_CATALOGO_TOKEN,
     landingKey: this.route.snapshot.queryParamMap.get('landingKey') || '',

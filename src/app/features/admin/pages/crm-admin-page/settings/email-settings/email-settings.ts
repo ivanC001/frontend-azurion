@@ -11,6 +11,7 @@ import {
   TenantEmailConfigRequest,
   TenantEmailConfigService,
 } from './tenant-email-config.service';
+import { CrmInboxChannelStateService } from '../../services/crm-inbox-channel-state.service';
 
 interface EmailConfigForm {
   nombreRemitente: string;
@@ -35,6 +36,7 @@ interface EmailConfigForm {
 export class EmailSettings implements OnInit {
   readonly canManage = input(false);
   private readonly service = inject(TenantEmailConfigService);
+  private readonly crmInboxChannels = inject(CrmInboxChannelStateService);
 
   protected readonly config = signal<TenantEmailConfig | null>(null);
   protected readonly loading = signal(false);
@@ -97,6 +99,7 @@ export class EmailSettings implements OnInit {
         next: (config) => {
           this.config.set(config);
           this.form = { ...this.toForm(config), smtpPassword: '' };
+          this.crmInboxChannels.updateChannel('CORREO', Boolean(config.activo), 'Correo');
           this.message.set('Configuracion guardada. Envia un correo de prueba para verificarla.');
         },
         error: (error: unknown) => this.error.set(this.resolveError(error)),
@@ -120,6 +123,7 @@ export class EmailSettings implements OnInit {
         next: (config) => {
           this.config.set(config);
           this.form = { ...this.toForm(config), smtpPassword: '' };
+          this.crmInboxChannels.updateChannel('CORREO', Boolean(config.activo), 'Correo');
           this.message.set('Correo de prueba enviado correctamente. Configuracion verificada.');
         },
         error: (error: unknown) => this.error.set(this.resolveError(error) || 'No se pudo enviar el correo de prueba.'),
@@ -139,6 +143,7 @@ export class EmailSettings implements OnInit {
       next: (saved) => {
         this.config.set(saved);
         this.form = { ...this.toForm(saved), smtpPassword: '' };
+        this.crmInboxChannels.updateChannel('CORREO', Boolean(saved.activo), 'Correo');
         this.message.set(saved.activo ? 'Configuracion de correo activada.' : 'Configuracion de correo desactivada.');
       },
       error: (error: unknown) => this.error.set(this.resolveError(error)),

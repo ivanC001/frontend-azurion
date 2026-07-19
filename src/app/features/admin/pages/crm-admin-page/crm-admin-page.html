@@ -1,5 +1,5 @@
 <section class="admin-page crm-page" [class.crm-page--executive]="activeTab() === 'dashboard'">
-  @if (activeTab() !== 'embudo') {
+  @if (activeTab() !== 'embudo' && activeTab() !== 'seguimientoPagos') {
     <header class="page-header crm-header" [class.crm-header--followup]="activeTab() === 'seguimiento'" [class.crm-header--capture]="isCommercialStageTab()">
       <div>
         <p class="page-eyebrow">{{ pageMeta().eyebrow }}</p>
@@ -414,19 +414,103 @@
                       <textarea pTextarea rows="3" [name]="'crmIntegrationMetadata' + integration.canal" [ngModel]="integration.metadataJson || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'metadataJson', $event)" placeholder='{"utm_source":"landing","utm_medium":"formulario"}' [disabled]="!canManageCrmConfig()"></textarea>
                     </label>
                   </div>
+                } @else if (integration.canal === 'WHATSAPP') {
+                  <div class="crm-integration-fields crm-integration-fields--editor crm-whatsapp-fields">
+                    <label>Token de acceso de Meta
+                      <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAccess' + integration.canal" [ngModel]="integration.accessToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'accessToken', $event)" [placeholder]="integration.accessTokenConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Pega el token generado en Meta'" [disabled]="!canManageCrmConfig()" />
+                      <small>Meta genera este token. Azurion solo lo guarda y lo valida; no puede emitirlo.</small>
+                    </label>
+                    <label>App ID
+                      <input pInputText [name]="'crmIntegrationApp' + integration.canal" [ngModel]="integration.appId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appId', $event)" placeholder="ID de la app de Meta" [disabled]="!canManageCrmConfig()" />
+                    </label>
+                    <label>App secret
+                      <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAppSecret' + integration.canal" [ngModel]="integration.appSecret || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appSecret', $event)" [placeholder]="integration.appSecretConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Secreto de la app de Meta'" [disabled]="!canManageCrmConfig()" />
+                    </label>
+                    <label>WABA ID
+                      <input pInputText [name]="'crmIntegrationWaba' + integration.canal" [ngModel]="integration.wabaId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'wabaId', $event)" placeholder="ID de la cuenta de WhatsApp Business" [disabled]="!canManageCrmConfig()" />
+                    </label>
+                    <label>Phone number ID
+                      <input pInputText [name]="'crmIntegrationPhone' + integration.canal" [ngModel]="integration.phoneNumberId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)" placeholder="ID del numero en WhatsApp Manager" [disabled]="!canManageCrmConfig()" />
+                    </label>
+
+                    <section class="wide-field crm-whatsapp-secret">
+                      <header>
+                        <div>
+                          <strong>Verify token</strong>
+                          <small>Azurion lo genera de forma segura. Debes copiar exactamente el mismo valor en Meta.</small>
+                        </div>
+                        <button type="button" [disabled]="!canManageCrmConfig() || whatsappTokenGenerating()" (click)="generateWhatsappVerifyToken(integration)">
+                          <i [class]="whatsappTokenGenerating() ? 'pi pi-spin pi-spinner' : 'pi pi-key'"></i>
+                          {{ whatsappTokenGenerating() ? 'Generando...' : (integration.verifyTokenConfigured ? 'Regenerar token' : 'Generar token') }}
+                        </button>
+                      </header>
+                      <div class="crm-copy-row">
+                        <input pInputText readonly [value]="whatsappGeneratedVerifyToken() || ''" [placeholder]="integration.verifyTokenConfigured ? 'Configurado. Regenera para obtener un valor nuevo.' : 'Genera el token para copiarlo en Meta'" />
+                        <button type="button" title="Copiar verify token" [disabled]="!whatsappGeneratedVerifyToken()" (click)="copyWhatsappValue(whatsappGeneratedVerifyToken(), 'Verify token')"><i class="pi pi-copy"></i> Copiar</button>
+                      </div>
+                      @if (whatsappGeneratedVerifyToken()) {
+                        <p><i class="pi pi-exclamation-circle"></i> Copialo ahora: por seguridad no volvera a mostrarse al recargar la pagina.</p>
+                      }
+                    </section>
+
+                    <section class="wide-field crm-whatsapp-callback">
+                      <header>
+                        <div>
+                          <strong>Callback URL para registrar en Meta</strong>
+                          <small>Esta direccion se calcula automaticamente y no se edita.</small>
+                        </div>
+                      </header>
+                      <div class="crm-copy-row">
+                        <input pInputText readonly [value]="whatsappWebhookUrl()" />
+                        <button type="button" (click)="copyWhatsappValue(whatsappWebhookUrl(), 'Callback URL')"><i class="pi pi-copy"></i> Copiar</button>
+                      </div>
+                      @if (!whatsappWebhookIsPublicHttps()) {
+                        <p class="crm-whatsapp-warning"><i class="pi pi-exclamation-triangle"></i> Meta exige una URL publica con HTTPS. El dominio actual no cumple esa condicion.</p>
+                      }
+                    </section>
+
+                    <section class="wide-field crm-whatsapp-status">
+                      @if (whatsappConnectionStatus(); as status) {
+                        <div class="crm-whatsapp-status__checks">
+                          <span [class.ok]="status.accesoMetaValido"><i [class]="status.accesoMetaValido ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> Acceso a Meta</span>
+                          <span [class.ok]="status.wabaSuscrita"><i [class]="status.wabaSuscrita ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> App suscrita a WABA</span>
+                          <span [class.ok]="status.webhookVerificado"><i [class]="status.webhookVerificado ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> Webhook verificado</span>
+                        </div>
+                        <p>{{ status.message || (status.conectado ? 'WhatsApp esta conectado.' : 'La conexion aun esta incompleta.') }}</p>
+                        @if (status.displayPhoneNumber || status.verifiedName) {
+                          <small>{{ status.verifiedName || 'WhatsApp Business' }} · {{ status.displayPhoneNumber || 'Numero sin mostrar' }} @if (status.qualityRating) { · Calidad: {{ status.qualityRating }} }</small>
+                        }
+                      } @else {
+                        <p>Aun no se ha comprobado la conexion con Meta.</p>
+                      }
+                      <div class="crm-whatsapp-actions">
+                        <button type="button" class="crm-whatsapp-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal || whatsappTesting()" (click)="saveCrmIntegration(integration)">
+                          <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+                          {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
+                        </button>
+                        <button type="button" class="crm-whatsapp-test" [disabled]="!canManageCrmConfig() || whatsappTesting() || integrationSaving() === integration.canal" (click)="testWhatsappConnection()">
+                          <i [class]="whatsappTesting() ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"></i>
+                          {{ whatsappTesting() ? 'Comprobando...' : 'Probar conexion' }}
+                        </button>
+                      </div>
+                    </section>
+                  </div>
                 } @else {
                   <div class="crm-integration-fields crm-integration-fields--editor">
                     <label>Access token
-                      <input pInputText [name]="'crmIntegrationAccess' + integration.canal" [ngModel]="integration.accessToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'accessToken', $event)" placeholder="Token de acceso" [disabled]="!canManageCrmConfig()" />
+                      <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAccess' + integration.canal" [ngModel]="integration.accessToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'accessToken', $event)" [placeholder]="integration.accessTokenConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Token de acceso'" [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label>Verify token
-                      <input pInputText [name]="'crmIntegrationVerify' + integration.canal" [ngModel]="integration.verifyToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'verifyToken', $event)" placeholder="Token de verificacion" [disabled]="!canManageCrmConfig()" />
+                      <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationVerify' + integration.canal" [ngModel]="integration.verifyToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'verifyToken', $event)" [placeholder]="integration.verifyTokenConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Token de verificacion'" [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label class="wide-field">Webhook URL
                       <input pInputText [name]="'crmIntegrationWebhook' + integration.canal" [ngModel]="integration.webhookUrl || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'webhookUrl', $event)" placeholder="https://..." [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label>App ID
                       <input pInputText [name]="'crmIntegrationApp' + integration.canal" [ngModel]="integration.appId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appId', $event)" placeholder="ID de app" [disabled]="!canManageCrmConfig()" />
+                    </label>
+                    <label>App secret
+                      <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAppSecret' + integration.canal" [ngModel]="integration.appSecret || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appSecret', $event)" [placeholder]="integration.appSecretConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Secreto de la app de Meta'" [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label>Phone number ID
                       <input pInputText [name]="'crmIntegrationPhone' + integration.canal" [ngModel]="integration.phoneNumberId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)" placeholder="Solo WhatsApp si aplica" [disabled]="!canManageCrmConfig()" />
@@ -439,10 +523,12 @@
 
                 <footer class="crm-integration-editor__footer">
                   <span><i class="pi pi-shield"></i> {{ integration.canal === 'WEB' ? 'La landing envia JSON publico y el servidor valida tenant, producto y token.' : 'Las credenciales se almacenan de forma segura para este tenant.' }}</span>
-                  <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal" (click)="saveCrmIntegration(integration)">
-                    <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-                    {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
-                  </button>
+                  @if (integration.canal !== 'WHATSAPP') {
+                    <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal" (click)="saveCrmIntegration(integration)">
+                      <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+                      {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
+                    </button>
+                  }
                 </footer>
               </article>
             }

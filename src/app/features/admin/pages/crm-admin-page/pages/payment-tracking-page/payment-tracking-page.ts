@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 export interface PaymentTrackingSummaryCard {
@@ -78,6 +78,7 @@ export interface PaymentTrackingPageMeta {
   styleUrl: './payment-tracking-page.scss',
 })
 export class PaymentTrackingPage {
+  protected readonly filtersOpen = signal(false);
   readonly query = input('');
   readonly summaryCards = input<readonly PaymentTrackingSummaryCard[]>([]);
   readonly collectionSummary = input<readonly PaymentCollectionSummaryItem[]>([]);

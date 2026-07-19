@@ -21,11 +21,11 @@ export class FooterComponent {
     {
       title: 'Producto',
       links: [
-        { label: 'ERP SaaS', href: '#erp-saas' },
+        { label: 'CRM y Pipeline', href: '#crm' },
+        { label: 'ERP SaaS', href: '#modulos' },
         { label: 'Facturacion Electronica', href: '#facturacion' },
-        { label: 'Inventario', href: '#inventario' },
-        { label: 'Ventas', href: '#ventas' },
-        { label: 'Caja', href: '#ventas' },
+        { label: 'Seguimiento de pagos', href: '#novedades' },
+        { label: 'Reportes', href: '#novedades' },
       ],
     },
     {

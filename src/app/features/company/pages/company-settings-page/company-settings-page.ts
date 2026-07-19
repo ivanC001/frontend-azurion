@@ -13,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 
+import { ApiUrlService } from '@core/api/api-url.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { AdminSaasApiService, Empresa } from '@features/admin/data/admin-saas-api.service';
 import {
@@ -46,6 +47,7 @@ interface CompanyConfigForm {
 export class CompanySettingsPage implements OnDestroy {
   private readonly companyApi = inject(AdminSaasApiService);
   private readonly facturadorApi = inject(FacturadorApiService);
+  private readonly apiUrl = inject(ApiUrlService);
   private readonly session = inject(AuthSessionService);
   private readonly route = inject(ActivatedRoute);
 
@@ -69,6 +71,26 @@ export class CompanySettingsPage implements OnDestroy {
   protected readonly existingConfig = signal<FacturadorTenant | null>(null);
   protected readonly panelLogoPreviewUrl = signal<string | null>(null);
   protected readonly invoiceLogoPreviewUrl = signal<string | null>(null);
+  protected readonly panelLogoLoadFailed = signal(false);
+  protected readonly panelLogoSelectedFileName = signal<string | null>(null);
+  protected readonly clearPanelLogoRequested = signal(false);
+  protected readonly panelLogoDisplayUrl = computed(() =>
+    this.panelLogoPreviewUrl() && !this.panelLogoLoadFailed()
+      ? this.panelLogoPreviewUrl()!
+      : 'assets/logosinfondo.png',
+  );
+  protected readonly panelLogoStatusLabel = computed(() => {
+    if (this.panelLogoSelectedFileName()) {
+      return 'Pendiente de guardar';
+    }
+    if (this.clearPanelLogoRequested()) {
+      return 'Se quitara al guardar';
+    }
+    if (this.panelLogoLoadFailed()) {
+      return 'No disponible';
+    }
+    return this.panelLogoPreviewUrl() ? 'Configurado' : 'Logo Azurion';
+  });
 
   protected readonly sessionData = this.session.currentSession;
   protected readonly empresaContext = computed(() => this.sessionData()?.empresa ?? null);
@@ -115,7 +137,7 @@ export class CompanySettingsPage implements OnDestroy {
               razonSocial: empresa.razonSocial,
               tenantId: empresa.tenantId,
               schemaName: empresa.schemaName,
-              logoPanelUrl: empresa.logoPanelUrl ?? null,
+              logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl),
               activo: empresa.activo,
             });
           }
@@ -180,8 +202,10 @@ export class CompanySettingsPage implements OnDestroy {
       .subscribe({
         next: (empresa) => {
           this.hydrateBrandingFromEmpresa(empresa);
-          this.session.updateEmpresaData({ logoPanelUrl: empresa.logoPanelUrl ?? null });
+          this.session.updateEmpresaData({ logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl) });
           this.form.panel_logo_file = null;
+          this.panelLogoSelectedFileName.set(null);
+          this.clearPanelLogoRequested.set(false);
           this.successMessage.set('Configuracion del tenant guardada correctamente.');
         },
         error: (error: unknown) =>
@@ -223,6 +247,38 @@ export class CompanySettingsPage implements OnDestroy {
     this.handleLogoFileSelection(event, 'panel');
   }
 
+  protected clearPanelLogoSelection(): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.form.panel_logo_file = null;
+    this.panelLogoSelectedFileName.set(null);
+    this.clearPanelLogoRequested.set(true);
+    this.panelLogoLoadFailed.set(false);
+    this.setPanelLogoPreview(null, false);
+  }
+
+  protected handlePanelLogoError(event: Event): void {
+    const current = this.panelLogoPreviewUrl();
+    const failedUrl = event.target instanceof HTMLImageElement
+      ? event.target.currentSrc || event.target.src
+      : '';
+
+    if (
+      !current ||
+      this.panelLogoDisplayUrl() === 'assets/logosinfondo.png' ||
+      !this.sameBrowserUrl(failedUrl, current)
+    ) {
+      return;
+    }
+
+    this.panelLogoLoadFailed.set(true);
+    this.errorMessage.set(
+      current.startsWith('blob:')
+        ? 'No se pudo previsualizar el archivo seleccionado. Usa una imagen PNG, JPG/JPEG o WEBP valida.'
+        : 'El logo guardado no se pudo cargar. Sube un logo nuevo y guarda la configuracion.',
+    );
+  }
+
   protected onInvoiceLogoFileSelected(event: Event): void {
     this.handleLogoFileSelection(event, 'invoice');
   }
@@ -249,6 +305,7 @@ export class CompanySettingsPage implements OnDestroy {
   private persistPanelBranding() {
     return this.companyApi.updateCurrentEmpresaBranding({
       logoPanelFile: this.form.panel_logo_file,
+      clearLogoPanel: this.clearPanelLogoRequested(),
     });
   }
 
@@ -297,10 +354,10 @@ export class CompanySettingsPage implements OnDestroy {
       return;
     }
 
-    const logoUrl = (empresa.logoPanelUrl || '').trim();
-    if (logoUrl) {
-      this.setPanelLogoPreview(logoUrl, false);
-    }
+    this.panelLogoLoadFailed.set(false);
+    this.panelLogoSelectedFileName.set(null);
+    this.clearPanelLogoRequested.set(false);
+    this.setPanelLogoPreview(this.apiUrl.publicFileUrl(empresa.logoPanelUrl), false);
   }
 
   private hydrateFormFromTenant(tenant: FacturadorTenant): void {
@@ -326,6 +383,7 @@ export class CompanySettingsPage implements OnDestroy {
     if (!file) {
       if (type === 'panel') {
         this.form.panel_logo_file = null;
+        this.panelLogoSelectedFileName.set(null);
       } else {
         this.form.invoice_logo_file = null;
       }
@@ -335,17 +393,21 @@ export class CompanySettingsPage implements OnDestroy {
     if (!this.isValidLogoFile(file)) {
       if (type === 'panel') {
         this.form.panel_logo_file = null;
+        this.panelLogoSelectedFileName.set(null);
       } else {
         this.form.invoice_logo_file = null;
       }
       input.value = '';
-      this.errorMessage.set('Logo invalido. Usa PNG, JPG, JPEG, WEBP o SVG (maximo 2 MB).');
+      this.errorMessage.set('Logo invalido. Usa PNG, JPG, JPEG o WEBP (maximo 2 MB).');
       return;
     }
 
     const preview = URL.createObjectURL(file);
     if (type === 'panel') {
       this.form.panel_logo_file = file;
+      this.panelLogoSelectedFileName.set(file.name);
+      this.clearPanelLogoRequested.set(false);
+      this.panelLogoLoadFailed.set(false);
       this.setPanelLogoPreview(preview, true);
       return;
     }
@@ -379,9 +441,8 @@ export class CompanySettingsPage implements OnDestroy {
       'image/jpeg',
       'image/jpg',
       'image/webp',
-      'image/svg+xml',
     ]);
-    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.svg'];
+    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
     const lowerName = file.name.toLowerCase();
     const hasAllowedExtension = allowedExtensions.some((extension) =>
       lowerName.endsWith(extension),
@@ -411,7 +472,7 @@ export class CompanySettingsPage implements OnDestroy {
     return file.size <= maxBytes && hasAllowedExtension && hasAllowedMime;
   }
 
-  private setPanelLogoPreview(url: string, isObjectUrl: boolean): void {
+  private setPanelLogoPreview(url: string | null, isObjectUrl: boolean): void {
     const current = this.panelLogoPreviewUrl();
     this.revokeObjectUrl(current);
     this.panelLogoPreviewUrl.set(url);
@@ -434,6 +495,22 @@ export class CompanySettingsPage implements OnDestroy {
   private revokeObjectUrl(value: string | null): void {
     if (value && value.startsWith('blob:')) {
       URL.revokeObjectURL(value);
+    }
+  }
+
+  private sameBrowserUrl(left: string, right: string): boolean {
+    if (!left || !right) {
+      return false;
+    }
+
+    if (typeof window === 'undefined') {
+      return left === right;
+    }
+
+    try {
+      return new URL(left, window.location.href).href === new URL(right, window.location.href).href;
+    } catch {
+      return left === right;
     }
   }
 

@@ -2,6 +2,13 @@
   grid-template-columns: repeat(4, minmax(8rem, 1fr));
 }
 
+.user-stat { align-items: center; display: flex !important; gap: 0.7rem; }
+.user-stat > i { align-items: center; background: var(--stat-bg, var(--az-blue-soft)); border-radius: 0.65rem; color: var(--stat-color, var(--az-blue)); display: inline-flex; flex: 0 0 2.25rem; height: 2.25rem; justify-content: center; }
+.user-stat div { min-width: 0; }
+.user-stat--green { --stat-bg: color-mix(in srgb, #10b981 14%, var(--az-surface)); --stat-color: #059669; }
+.user-stat--red { --stat-bg: color-mix(in srgb, #ef4444 12%, var(--az-surface)); --stat-color: #dc2626; }
+.user-stat--violet { --stat-bg: color-mix(in srgb, #8b5cf6 14%, var(--az-surface)); --stat-color: #7c3aed; }
+
 .role-tags {
   display: flex;
   flex-wrap: wrap;

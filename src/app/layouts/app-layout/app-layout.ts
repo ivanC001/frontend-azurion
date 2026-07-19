@@ -12,6 +12,7 @@ import { AuthSessionService } from '@core/auth/auth-session.service';
 import { SessionModuleSyncService } from '@core/auth/session-module-sync.service';
 import { UiToastService } from '@core/services/ui-toast.service';
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { CrmInboxChannelStateService } from '@features/admin/pages/crm-admin-page/services/crm-inbox-channel-state.service';
 
 interface NavLinkItem {
   label: string;
@@ -19,6 +20,7 @@ interface NavLinkItem {
   icon?: string;
   groupId?: string;
   permission?: string;
+  anyPermission?: readonly string[];
   module?: string | readonly string[];
   anyModule?: readonly string[];
   children?: NavLinkItem[];
@@ -67,16 +69,8 @@ export class AppLayout {
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
   private readonly lowStockAlerts = inject(LowStockAlertService);
-  private readonly erpModules = [
-    'VENTAS',
-    'COTIZACIONES',
-    'CLIENTES',
-    'CAJA',
-    'INVENTARIO',
-    'PRODUCTOS',
-    'REPORTES',
-    'FACTURACION',
-  ] as const;
+  private readonly crmInboxChannels = inject(CrmInboxChannelStateService);
+  private readonly erpModules = ['ERP'] as const;
 
   protected readonly sidebarCollapsed = signal(false);
   protected readonly sidebarHovered = signal(false);
@@ -87,8 +81,10 @@ export class AppLayout {
   protected readonly notificationsPanelOpen = signal(false);
   protected readonly accountPanelOpen = signal(false);
   protected readonly activeWorkspace = signal<WorkspaceMode>(this.resolveInitialWorkspace());
+  private readonly failedBrandLogoUrl = signal<string | null>(null);
 
   private readonly expandedGroups = signal<Record<string, boolean>>({
+    'crm-bandeja': true,
     'crm-captacion': true,
     'crm-comercial': true,
     'crm-dashboard': true,
@@ -131,7 +127,7 @@ export class AppLayout {
   });
 
   protected readonly homeRoute = computed(() =>
-    this.selectedWorkspace() === 'crm' ? '/admin/crm' : '/admin/dashboard',
+    this.selectedWorkspace() === 'crm' ? this.resolveCrmHomeRoute() : '/admin/dashboard',
   );
 
   protected readonly navSections = computed<NavSection[]>(() => {
@@ -140,10 +136,9 @@ export class AppLayout {
         {
           label: 'Plataforma',
           items: [
-            { label: 'Dashboard', route: '/admin/dashboard', icon: 'pi-chart-line' },
+            { label: 'Resumen plataforma', route: '/admin/control-empresas', icon: 'pi-chart-pie' },
             { label: 'Empresas', route: '/admin/empresas', icon: 'pi-building' },
             { label: 'Planes', route: '/admin/planes', icon: 'pi-wallet' },
-            { label: 'Control Empresas', route: '/admin/control-empresas', icon: 'pi-sitemap' },
           ],
         },
         {
@@ -242,6 +237,11 @@ export class AppLayout {
     };
   });
 
+  protected readonly brandLogoSrc = computed(() => {
+    const logoUrl = this.profile().logoPanelUrl;
+    return logoUrl && this.failedBrandLogoUrl() !== logoUrl ? logoUrl : 'assets/logosinfondo.png';
+  });
+
   protected readonly isDarkTheme = computed(() => this.themeMode() === 'dark');
   protected readonly themeButtonLabel = computed(() =>
     this.isDarkTheme() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
@@ -285,6 +285,9 @@ export class AppLayout {
     this.applyThemeMode(this.themeMode());
     if (!this.isGeneralAdmin()) {
       this.lowStockAlerts.refresh(true);
+      if (this.authSession.hasModule('CRM')) {
+        this.crmInboxChannels.refresh();
+      }
     }
   }
 
@@ -314,6 +317,13 @@ export class AppLayout {
 
   protected toggleThemeMode(): void {
     this.setThemeMode(this.isDarkTheme() ? 'light' : 'dark');
+  }
+
+  protected handleBrandLogoError(): void {
+    const logoUrl = this.profile().logoPanelUrl;
+    if (logoUrl) {
+      this.failedBrandLogoUrl.set(logoUrl);
+    }
   }
 
   protected toggleGroup(groupId: string): void {
@@ -463,8 +473,9 @@ export class AppLayout {
 
   protected logout(): void {
     this.closeHeaderPanels();
+    const loginUrl = this.authSession.currentSession()?.adminGeneral ? '/auth/login' : '/auth';
     this.authSession.clearSession();
-    void this.router.navigate(['/auth/login']);
+    void this.router.navigate([loginUrl]);
   }
 
   private setThemeMode(mode: ThemeMode): void {
@@ -537,7 +548,7 @@ export class AppLayout {
             route: '/admin/reportes',
             icon: 'pi-chart-bar',
             permission: 'REPORTES_READ',
-            module: 'REPORTES',
+            module: ['ERP', 'REPORTES'],
           },
           {
             label: 'Cotizaciones',
@@ -561,42 +572,42 @@ export class AppLayout {
             route: '/admin/ventas/nueva',
             icon: 'pi-shopping-cart',
             permission: 'VENTAS_CREATE',
-            module: 'VENTAS',
+            module: ['ERP', 'VENTAS'],
           },
           {
             label: 'Historial de ventas',
             route: '/admin/ventas',
             icon: 'pi-receipt',
             permission: 'VENTAS_READ',
-            module: 'VENTAS',
+            module: ['ERP', 'VENTAS'],
           },
           {
             label: 'Caja',
             route: '/admin/caja',
             icon: 'pi-credit-card',
             permission: 'CAJA_READ',
-            module: 'CAJA',
+            module: ['ERP', 'CAJA'],
           },
           {
             label: 'Nota de credito',
             route: '/admin/ventas/nota-credito',
             icon: 'pi-minus-circle',
             permission: 'NOTA_CREDITO_CREATE',
-            module: 'FACTURACION',
+            module: ['ERP', 'FACTURACION'],
           },
           {
             label: 'Nota de debito',
             route: '/admin/ventas/nota-debito',
             icon: 'pi-plus-circle',
             permission: 'NOTA_DEBITO_CREATE',
-            module: 'FACTURACION',
+            module: ['ERP', 'FACTURACION'],
           },
           {
             label: 'Guia de remision',
             route: '/admin/ventas/guia-remision',
             icon: 'pi-truck',
             permission: 'GUIA_REMISION_CREATE',
-            module: 'FACTURACION',
+            module: ['ERP', 'FACTURACION'],
           },
         ],
       },
@@ -608,21 +619,21 @@ export class AppLayout {
             route: '/admin/almacenes',
             icon: 'pi-shop',
             permission: 'INVENTORY_READ',
-            module: 'INVENTARIO',
+            module: ['ERP', 'INVENTARIO'],
           },
           {
             label: 'Productos',
             route: '/admin/productos',
             icon: 'pi-box',
             permission: 'PRODUCTOS_READ',
-            module: 'INVENTARIO',
+            module: ['ERP', 'INVENTARIO'],
           },
           {
             label: 'Inventarios',
             route: '/admin/inventarios',
             icon: 'pi-database',
             permission: 'INVENTORY_READ',
-            module: 'INVENTARIO',
+            module: ['ERP', 'INVENTARIO'],
           },
         ],
       },
@@ -640,14 +651,15 @@ export class AppLayout {
             label: 'Dashboard',
             route: '/admin/crm',
             icon: 'pi-chart-pie',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
             module: 'CRM',
           },
           {
             label: 'Reportes CRM',
-            route: '/admin/reportes',
+            route: '/admin/crm/reportes',
             icon: 'pi-chart-bar',
-            anyModule: ['REPORTES', 'CRM'],
+            anyPermission: ['CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
+            module: 'CRM',
           },
         ],
       },
@@ -655,17 +667,25 @@ export class AppLayout {
         label: 'Captacion',
         items: [
           {
+            label: 'Bandeja',
+            icon: 'pi-inbox',
+            groupId: 'crm-bandeja',
+            anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+            module: 'CRM',
+            children: this.crmInboxMenuItems(),
+          },
+          {
             label: 'Prospectos',
             route: '/admin/crm/prospectos',
             icon: 'pi-address-book',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_LEADS_READ'],
             module: 'CRM',
           },
           {
             label: 'Seguimiento',
             route: '/admin/crm/seguimiento',
             icon: 'pi-comments',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_ACTIVITIES_READ'],
             module: 'CRM',
           },
         ],
@@ -677,21 +697,29 @@ export class AppLayout {
             label: 'Pipeline',
             route: '/admin/crm/pipeline',
             icon: 'pi-chart-line',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_PIPELINE_READ', 'CRM_PIPELINE_VIEW', 'CRM_OPPORTUNITIES_READ'],
             module: 'CRM',
           },
           {
             label: 'Oportunidades',
             route: '/admin/crm/oportunidades',
             icon: 'pi-briefcase',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_OPPORTUNITIES_READ'],
+            module: 'CRM',
+          },
+          {
+            label: 'Ganadas y perdidas',
+            route: '/admin/crm/resultados',
+            icon: 'pi-flag',
+            anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
             module: 'CRM',
           },
           {
             label: 'Cotizaciones CRM',
-            route: '/admin/ventas/cotizaciones',
+            route: '/admin/crm/cotizaciones',
             icon: 'pi-file-edit',
-            anyModule: ['COTIZACIONES', 'CRM'],
+            anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_QUOTES_CREATE'],
+            module: 'CRM',
           },
         ],
       },
@@ -702,14 +730,14 @@ export class AppLayout {
             label: 'Clientes',
             route: '/admin/crm/clientes',
             icon: 'pi-users',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_OPPORTUNITIES_READ'],
             module: 'CRM',
           },
           {
             label: 'Seguimiento de pagos',
             route: '/admin/crm/seguimiento-pagos',
             icon: 'pi-credit-card',
-            permission: 'CRM_READ',
+            anyPermission: ['CRM_OPPORTUNITIES_READ'],
             module: 'CRM',
           },
         ],
@@ -771,7 +799,49 @@ export class AppLayout {
           },
         ],
       },
+      ...this.tenantConfigurationSections(),
     ];
+  }
+
+  private crmInboxMenuItems(): NavLinkItem[] {
+    const activeChannels = this.crmInboxChannels.activeChannelCodes();
+    const items: Array<NavLinkItem & { channel: string }> = [
+      {
+        channel: 'WHATSAPP',
+        label: 'WhatsApp',
+        route: '/admin/crm/whatsapp',
+        icon: 'pi-whatsapp',
+        anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+        module: 'CRM',
+      },
+      {
+        channel: 'FACEBOOK',
+        label: 'Facebook',
+        route: '/admin/crm/bandeja/facebook',
+        icon: 'pi-facebook',
+        anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+        module: 'CRM',
+      },
+      {
+        channel: 'INSTAGRAM',
+        label: 'Instagram',
+        route: '/admin/crm/bandeja/instagram',
+        icon: 'pi-instagram',
+        anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+        module: 'CRM',
+      },
+      {
+        channel: 'CORREO',
+        label: 'Correo',
+        route: '/admin/crm/bandeja/correo',
+        icon: 'pi-envelope',
+        anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+        module: 'CRM',
+      },
+    ];
+    return items
+      .filter((item) => activeChannels.has(item.channel))
+      .map(({ channel: _channel, ...item }) => item);
   }
 
   private tenantConfigurationSections(): NavSection[] {
@@ -822,14 +892,14 @@ export class AppLayout {
             route: '/admin/configuracion-tributaria',
             icon: 'pi-percentage',
             permission: 'TRIBUTACION_READ',
-            module: 'FACTURACION',
+            module: ['ERP', 'FACTURACION'],
           },
           {
             label: 'Configuracion facturador',
             route: '/admin/configuracion-facturador',
             icon: 'pi-sliders-h',
             permission: 'CONFIGURACION_WRITE',
-            module: 'FACTURACION',
+            module: ['ERP', 'FACTURACION'],
           },
         ],
       },
@@ -863,9 +933,11 @@ export class AppLayout {
 
   private canAccessMenuItem(item: NavLinkItem): boolean {
     const hasPermission = !item.permission || this.authSession.hasPermission(item.permission);
+    const hasAnyPermission =
+      !item.anyPermission || item.anyPermission.some((code) => this.authSession.hasPermission(code));
     const hasModule = !item.module || this.authSession.hasModule(item.module);
     const hasAnyModule = !item.anyModule || this.hasAnyModule(item.anyModule);
-    return hasPermission && hasModule && hasAnyModule;
+    return hasPermission && hasAnyPermission && hasModule && hasAnyModule;
   }
 
   private hasAnyModule(modules: readonly string[]): boolean {
@@ -873,7 +945,22 @@ export class AppLayout {
   }
 
   private hasWorkspaceAccess(workspace: WorkspaceMode): boolean {
-    const sections = workspace === 'crm' ? this.crmMenuSections() : this.erpCoreMenuSections();
-    return this.filterNavSections(sections).length > 0;
+    return this.authSession.hasModule(workspace === 'crm' ? 'CRM' : 'ERP');
+  }
+
+  private resolveCrmHomeRoute(): string {
+    if (
+      this.authSession.hasPermission('CRM_REPORTS_READ') ||
+      this.authSession.hasPermission('CRM_REPORTS_TEAM')
+    ) {
+      return '/admin/crm';
+    }
+    if (this.authSession.hasPermission('CRM_LEADS_READ')) {
+      return '/admin/crm/prospectos';
+    }
+    if (this.authSession.hasPermission('CRM_ACTIVITIES_READ')) {
+      return '/admin/crm/seguimiento';
+    }
+    return '/admin/crm/pipeline';
   }
 }

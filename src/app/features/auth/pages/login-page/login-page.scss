@@ -12,6 +12,14 @@
   padding: 0.75rem;
 }
 
+.login-page--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.login-page--tenant {
+  background: #eef5fb;
+}
+
 .access-panel {
   border-radius: 0.75rem;
   min-height: calc(100dvh - 1.5rem);
@@ -50,6 +58,11 @@
   gap: 0.45rem;
   text-decoration: none;
   width: fit-content;
+}
+
+.back-link--light {
+  align-self: flex-start;
+  color: #1d4ed8;
 }
 
 .access-hero,

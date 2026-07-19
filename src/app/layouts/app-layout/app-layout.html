@@ -16,7 +16,7 @@
     <div class="sidebar-brand">
       <a class="brand-link" [routerLink]="homeRoute()" (click)="handleNavSelection(homeRoute())">
         <span class="brand-mark">
-          <img [src]="profile().logoPanelUrl || 'assets/logosinfondo.png'" alt="AZURION" class="brand-mark-image" />
+          <img [src]="brandLogoSrc()" alt="AZURION" class="brand-mark-image" (error)="handleBrandLogoError()" />
         </span>
         <span class="brand-copy">
           <strong>{{ profile().empresaNombre || 'AZURION' }}</strong>

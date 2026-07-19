@@ -42,16 +42,16 @@
 .brand__mark {
   align-items: center;
   display: inline-flex;
-  height: 4.35rem;
+  height: 3.35rem;
   justify-content: center;
-  width: 4.35rem;
+  width: 3.35rem;
 }
 
 .brand__mark img {
   display: block;
-  height: 4.35rem;
+  height: 3.35rem;
   object-fit: contain;
-  width: 4.35rem;
+  width: 3.35rem;
 }
 
 .brand__copy {
@@ -61,7 +61,7 @@
 
 .brand__copy strong {
   color: #ffffff;
-  font-size: 1.9rem;
+  font-size: 1.65rem;
   font-weight: 900;
   letter-spacing: 0;
 }
@@ -159,7 +159,7 @@
 }
 
 :host ::ng-deep .nav-demo {
-  background: linear-gradient(135deg, #0b72ff, #0ea5e9);
+  background: #1268ee;
   border: 0;
   box-shadow: 0 0.9rem 1.8rem rgba(14, 165, 233, 0.24);
   color: #ffffff;
@@ -229,8 +229,8 @@
 
   .brand__mark,
   .brand__mark img {
-    height: 3.2rem;
-    width: 3.2rem;
+    height: 2.7rem;
+    width: 2.7rem;
   }
 
   .brand__copy strong {

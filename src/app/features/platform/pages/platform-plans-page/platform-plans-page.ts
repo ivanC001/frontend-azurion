@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
@@ -26,7 +27,7 @@ interface PlanEditForm {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-platform-plans-page',
-  imports: [FormsModule, ButtonModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [DecimalPipe, FormsModule, ButtonModule, InputTextModule, SelectModule, TableModule, TagModule],
   templateUrl: './platform-plans-page.html',
   styleUrl: './platform-plans-page.scss',
 })
@@ -50,6 +51,14 @@ export class PlatformPlansPage {
 
   protected readonly activePlans = computed(
     () => this.plans().filter((plan) => plan.estado.toUpperCase() === 'ACTIVO').length,
+  );
+  protected readonly inactivePlans = computed(
+    () => this.plans().filter((plan) => plan.estado.toUpperCase() !== 'ACTIVO').length,
+  );
+  protected readonly monthlyReference = computed(() =>
+    this.plans()
+      .filter((plan) => plan.estado.toUpperCase() === 'ACTIVO')
+      .reduce((total, plan) => total + Number(plan.precioMensual || 0), 0),
   );
 
   protected readonly statusOptions = [

@@ -1,6 +1,5 @@
 .contact {
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 58, 138, 0.9));
+  background: #173152;
   color: #fff;
   padding: 5.5rem 0;
 
@@ -35,7 +34,7 @@
   i {
     align-items: center;
     background: rgba(255, 255, 255, 0.14);
-    border-radius: 0.8rem;
+    border-radius: 0.5rem;
     color: #67e8f9;
     display: inline-flex;
     height: 2.4rem;
@@ -46,7 +45,7 @@
 
 .contact-form {
   background: rgba(255, 255, 255, 0.98);
-  border-radius: 1.2rem;
+  border-radius: 0.5rem;
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.2);
   display: grid;
   gap: 1rem;
@@ -73,7 +72,7 @@
 }
 
 .lead-alert {
-  border-radius: 0.8rem;
+  border-radius: 0.45rem;
   font-size: 0.86rem;
   font-weight: 800;
   grid-column: 1 / -1;
@@ -91,7 +90,7 @@
 }
 
 :host ::ng-deep .contact-button {
-  border-radius: 999px;
+  border-radius: 0.5rem;
   font-weight: 850;
 }
 

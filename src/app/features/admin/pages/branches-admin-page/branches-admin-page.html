@@ -18,15 +18,10 @@
     <div class="alert alert--success">{{ successMessage() }}</div>
   }
 
-  <section class="stats-grid">
-    <article>
-      <span>Sucursales</span>
-      <strong>{{ branchStats().total }}</strong>
-    </article>
-    <article>
-      <span>Activas</span>
-      <strong>{{ branchStats().active }}</strong>
-    </article>
+  <section class="stats-grid branch-stats">
+    <article class="branch-stat"><i class="pi pi-building"></i><div><span>Sucursales</span><strong>{{ branchStats().total }}</strong></div></article>
+    <article class="branch-stat branch-stat--green"><i class="pi pi-check-circle"></i><div><span>Activas</span><strong>{{ branchStats().active }}</strong></div></article>
+    <article class="branch-stat branch-stat--red"><i class="pi pi-pause-circle"></i><div><span>Inactivas</span><strong>{{ branchStats().inactive }}</strong></div></article>
   </section>
 
   <div class="content-grid branch-content-grid">

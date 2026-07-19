@@ -17,14 +17,6 @@ export class AuthApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = inject(ApiUrlService);
 
-  registerAdminGeneral(request: Omit<LoginRequest, 'tenantId'>) {
-    return this.http
-      .post<
-        ApiResponse<{ id: number; username: string; tenantId: string; roles: string[] }>
-      >(this.apiUrl.url('saasCore', '/v1/auth/register'), request)
-      .pipe(map((response) => response.data));
-  }
-
   loginPublic(request: Omit<LoginRequest, 'tenantId'>) {
     return this.http
       .post<
@@ -41,25 +33,4 @@ export class AuthApiService {
       .pipe(map((response) => response.data));
   }
 
-  loginLegacy(request: LoginRequest) {
-    return this.http
-      .post<ApiResponse<LoginResponse>>(this.apiUrl.url('saasCore', '/v1/auth/login'), request)
-      .pipe(map((response) => response.data));
-  }
-
-  login(request: LoginRequest) {
-    const tenantId = request.tenantId?.trim();
-    if (tenantId) {
-      return this.loginTenant({
-        username: request.username,
-        password: request.password,
-        tenantId,
-      });
-    }
-
-    return this.loginPublic({
-      username: request.username,
-      password: request.password,
-    });
-  }
 }

@@ -1,0 +1,41 @@
+<section class="channel-inbox" [style.--channel-color]="view().color">
+  <header>
+    <span><i class="pi" [class]="'pi ' + view().icon"></i></span>
+    <div>
+      <small>Bandeja CRM</small>
+      <h1>{{ view().title }}</h1>
+      <p>{{ active() ? view().description : 'Este canal no se mostrará en Bandeja hasta que su configuración quede activa.' }}</p>
+    </div>
+  </header>
+
+  <article>
+    @if (loading()) {
+      <div class="channel-copy channel-copy--loading">
+        <span><i class="pi pi-spin pi-spinner"></i></span>
+        <h2>Comprobando configuración</h2>
+      </div>
+    } @else if (active()) {
+      <div class="channel-status">
+        <i class="pi pi-check-circle"></i>
+        <span><strong>Canal activo</strong><small>Visible porque su configuración está habilitada.</small></span>
+      </div>
+      <div class="channel-copy">
+        <span><i class="pi pi-comments"></i></span>
+        <h2>Bandeja preparada</h2>
+        <p>{{ view().detail }}</p>
+        <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Revisar configuración</a>
+      </div>
+    } @else {
+      <div class="channel-status channel-status--inactive">
+        <i class="pi pi-eye-slash"></i>
+        <span><strong>Canal no disponible</strong><small>La configuración de este canal no está activa.</small></span>
+      </div>
+      <div class="channel-copy">
+        <span><i class="pi pi-cog"></i></span>
+        <h2>Activa el canal para mostrarlo en Bandeja</h2>
+        <p>Cuando la configuración quede activa para este tenant, el acceso aparecerá automáticamente en el menú CRM.</p>
+        <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Ir a configuración</a>
+      </div>
+    }
+  </article>
+</section>

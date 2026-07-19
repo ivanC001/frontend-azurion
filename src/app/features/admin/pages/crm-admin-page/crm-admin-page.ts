@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, forkJoin, of } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,6 +14,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { ApiUrlService } from '@core/api/api-url.service';
 import { CompleteClientDataModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, PipelineStageModal, ActivityFormModal, QuoteFormModal } from './modals';
 import {
   CrmClientCompletionAction,
@@ -37,6 +39,7 @@ import {
 } from './pages';
 import {
   CrmFollowupService,
+  CrmInboxChannelStateService,
   CrmLiveUpdateService,
   CrmLocalStorageService,
   CrmOpportunityService,
@@ -57,6 +60,7 @@ import {
   CrmEtapaPipeline,
   CrmNegociacion,
   CrmOportunidad,
+  CrmOportunidadRecurso,
   CrmProspecto,
   CreateCrmNegociacionRequest,
   PromocionCotizacion,
@@ -65,6 +69,7 @@ import {
   UpdateCrmCanalTokenConfigRequest,
   UpdateCrmCurrencyConfigRequest,
   UsuarioTenant,
+  WhatsappConnectionStatus,
 } from '../../data/admin-saas-api.service';
 
 type CrmTab =
@@ -97,7 +102,7 @@ type OpportunityDetailTab =
 type DialogType = 'prospecto' | 'oportunidad' | 'actividad' | 'cotizacion' | 'etapa' | 'catalogo' | null;
 type CatalogStep = 'select' | 'form';
 type OpportunityView = 'ABIERTAS' | 'COTIZADAS' | 'NEGOCIACION' | 'GANADAS';
-type CrmIntegrationField = 'nombre' | 'accessToken' | 'verifyToken' | 'webhookUrl' | 'appId' | 'phoneNumberId' | 'metadataJson';
+type CrmIntegrationField = 'nombre' | 'accessToken' | 'verifyToken' | 'webhookUrl' | 'appId' | 'appSecret' | 'phoneNumberId' | 'wabaId' | 'metadataJson';
 type CrmCurrencyField = 'nombre' | 'simbolo' | 'tipoCambioBase' | 'margenConversionPorcentaje';
 const DEFAULT_CRM_INTEGRATIONS: readonly CrmCanalTokenConfig[] = [
   { canal: 'WEB', nombre: 'Landing web', activo: false },
@@ -651,6 +656,13 @@ interface QuoteForm {
   detalles: QuoteLineForm[];
 }
 
+interface LegacyOpportunityRecords {
+  requirements: OpportunityRequirementRecord[];
+  payments: OpportunityPaymentRecord[];
+  documents: OpportunityDocumentRecord[];
+  closures: OpportunityClosureRecord[];
+}
+
 interface PromotionForm {
   codigo: string;
   nombre: string;
@@ -713,12 +725,15 @@ export class CrmAdminPage {
   private readonly crmProspects = inject(CrmProspectService);
   private readonly crmFollowups = inject(CrmFollowupService);
   private readonly crmLiveUpdates = inject(CrmLiveUpdateService);
+  private readonly crmInboxChannels = inject(CrmInboxChannelStateService);
   private readonly crmOpportunities = inject(CrmOpportunityService);
   private readonly auth = inject(AuthSessionService);
+  private readonly apiUrl = inject(ApiUrlService);
   private readonly crmLocalStorage = inject(CrmLocalStorageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private legacyOpportunityMigrationStarted = false;
 
   protected readonly prospectos = signal<CrmProspecto[]>([]);
   protected readonly oportunidades = signal<CrmOportunidad[]>([]);
@@ -746,6 +761,10 @@ export class CrmAdminPage {
   protected readonly loading = signal(false);
   public readonly saving = signal(false);
   protected readonly integrationSaving = signal<string | null>(null);
+  protected readonly whatsappGeneratedVerifyToken = signal<string | null>(null);
+  protected readonly whatsappTokenGenerating = signal(false);
+  protected readonly whatsappTesting = signal(false);
+  protected readonly whatsappConnectionStatus = signal<WhatsappConnectionStatus | null>(null);
   protected readonly currencySaving = signal<string | null>(null);
   protected readonly activeTab = signal<CrmTab>('dashboard');
   protected readonly opportunityView = signal<OpportunityView>('ABIERTAS');
@@ -796,7 +815,7 @@ export class CrmAdminPage {
   public readonly opportunityDetailTab = signal<OpportunityDetailTab>('resumen');
   protected readonly opportunityMessageTemplates = signal<OpportunityMessageTemplate[]>(this.loadOpportunityMessageTemplates());
   protected readonly opportunityRequirementRecords = signal<OpportunityRequirementRecord[]>(this.loadOpportunityRecords<OpportunityRequirementRecord>(this.opportunityRequirementStorageKey()));
-  protected readonly opportunityNegotiationRecords = signal<OpportunityNegotiationRecord[]>(this.loadOpportunityRecords<OpportunityNegotiationRecord>(this.opportunityNegotiationStorageKey()));
+  protected readonly opportunityNegotiationRecords = signal<OpportunityNegotiationRecord[]>([]);
   protected readonly opportunityPaymentRecords = signal<OpportunityPaymentRecord[]>(this.loadOpportunityRecords<OpportunityPaymentRecord>(this.opportunityPaymentStorageKey()));
   protected readonly opportunityDocumentRecords = signal<OpportunityDocumentRecord[]>(this.loadOpportunityRecords<OpportunityDocumentRecord>(this.opportunityDocumentStorageKey()));
   protected readonly opportunityClosureRecords = signal<OpportunityClosureRecord[]>(this.loadOpportunityRecords<OpportunityClosureRecord>(this.opportunityClosureStorageKey()));
@@ -3639,7 +3658,6 @@ export class CrmAdminPage {
         this.prospectos.set(snapshot.prospectos);
         this.reconcileProspectSelection(snapshot.prospectos);
         this.oportunidades.set(snapshot.oportunidades);
-        this.reconcileLocalOpportunityRecords(snapshot.oportunidades);
         this.actividades.set(snapshot.actividades);
 
         const selectedId = this.selectedOpportunity()?.id;
@@ -3653,6 +3671,7 @@ export class CrmAdminPage {
   }
 
   protected load(): void {
+    const legacyRecords = this.legacyOpportunityRecords();
     this.loading.set(true);
     this.errorMessage.set(null);
     forkJoin({
@@ -3668,16 +3687,19 @@ export class CrmAdminPage {
       cotizaciones: this.api.listCotizaciones().pipe(catchError(() => of([] as Cotizacion[]))),
       promociones: this.api.listPromocionesCotizacion().pipe(catchError(() => of([] as PromocionCotizacion[]))),
       integraciones: this.api.listCrmIntegraciones().pipe(catchError(() => of([] as CrmCanalTokenConfig[]))),
+      whatsappStatus: this.api.getCrmWhatsappConnectionStatus().pipe(catchError(() => of(null))),
       monedas: this.api.listCrmCurrencyConfig().pipe(catchError(() => of([] as CrmCurrencyConfig[]))),
       dashboard: this.api.getCrmDashboard().pipe(catchError(() => of(null))),
+      resources: this.crmOpportunities.listResources(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, monedas, dashboard }) => {
+        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, whatsappStatus, monedas, dashboard, resources }) => {
           this.prospectos.set(prospectos);
           this.reconcileProspectSelection(prospectos);
           this.oportunidades.set(oportunidades);
-          this.reconcileLocalOpportunityRecords(oportunidades);
+          this.applyOpportunityResources(resources);
+          this.migrateLegacyOpportunityRecords(legacyRecords);
           this.etapas.set(etapas);
           this.catalogoItems.set(catalogo);
           this.actividades.set(actividades);
@@ -3688,6 +3710,7 @@ export class CrmAdminPage {
           this.cotizaciones.set(cotizaciones);
           this.promocionesCotizacion.set(promociones);
           this.crmIntegraciones.set(this.withDefaultCrmIntegrations(integraciones));
+          this.whatsappConnectionStatus.set(whatsappStatus);
           this.crmCurrencyConfigs.set(this.withDefaultCrmCurrencies(monedas));
           this.dashboard.set(dashboard);
         },
@@ -4433,6 +4456,77 @@ export class CrmAdminPage {
     return JSON.stringify(payload, null, 2);
   }
 
+  protected whatsappWebhookUrl(): string {
+    const tenant = this.auth.currentSession()?.tenantId || 'TU_TENANT';
+    const configuredUrl = this.apiUrl.url('saasCore', `/v1/public/crm/whatsapp/${encodeURIComponent(tenant)}/webhook`);
+    return new URL(configuredUrl, window.location.origin).toString();
+  }
+
+  protected whatsappWebhookIsPublicHttps(): boolean {
+    try {
+      const url = new URL(this.whatsappWebhookUrl());
+      return url.protocol === 'https:' && !['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  protected copyWhatsappValue(value: string | null | undefined, label: string): void {
+    if (!value) {
+      this.errorMessage.set(`No hay ${label.toLowerCase()} disponible para copiar.`);
+      return;
+    }
+    void navigator.clipboard.writeText(value).then(
+      () => this.successMessage.set(`${label} copiado.`),
+      () => this.errorMessage.set(`No se pudo copiar ${label.toLowerCase()}.`),
+    );
+  }
+
+  protected generateWhatsappVerifyToken(integration: CrmCanalTokenConfig): void {
+    if (!this.canManageCrmConfig() || this.whatsappTokenGenerating()) {
+      return;
+    }
+    if (integration.verifyTokenConfigured && !window.confirm('Se reemplazara el verify token actual. Meta dejara de validar el webhook hasta que copies el nuevo token alli. ¿Deseas continuar?')) {
+      return;
+    }
+    this.errorMessage.set(null);
+    this.whatsappTokenGenerating.set(true);
+    this.api.generateCrmWhatsappVerifyToken()
+      .pipe(finalize(() => this.whatsappTokenGenerating.set(false)))
+      .subscribe({
+        next: (result) => {
+          this.whatsappGeneratedVerifyToken.set(result.verifyToken);
+          this.crmIntegraciones.update((items) => items.map((item) => item.canal === 'WHATSAPP'
+            ? { ...item, verifyTokenConfigured: true, webhookVerifiedAt: null }
+            : item));
+          this.whatsappConnectionStatus.update((status) => status ? { ...status, webhookVerificado: false, conectado: false, webhookVerifiedAt: null } : status);
+          this.successMessage.set('Verify token generado y guardado. Copialo ahora en Meta.');
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveWhatsappEndpointError(error)),
+      });
+  }
+
+  protected testWhatsappConnection(): void {
+    if (!this.canManageCrmConfig() || this.whatsappTesting()) {
+      return;
+    }
+    this.errorMessage.set(null);
+    this.whatsappTesting.set(true);
+    this.api.testCrmWhatsappConnection()
+      .pipe(finalize(() => this.whatsappTesting.set(false)))
+      .subscribe({
+        next: (status) => {
+          this.whatsappConnectionStatus.set(status);
+          if (status.conectado) {
+            this.successMessage.set(status.message || 'WhatsApp esta conectado correctamente.');
+          } else {
+            this.errorMessage.set(status.message || 'La configuracion de WhatsApp aun no esta completa.');
+          }
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveWhatsappEndpointError(error)),
+      });
+  }
+
   protected updateCrmIntegrationField(canal: string, field: CrmIntegrationField, value: string): void {
     this.crmIntegraciones.update((items) =>
       items.map((item) => item.canal === canal ? { ...item, [field]: value } : item),
@@ -4451,16 +4545,19 @@ export class CrmAdminPage {
       return;
     }
     const isWeb = integration.canal === 'WEB';
+    const isWhatsapp = integration.canal === 'WHATSAPP';
     const request: UpdateCrmCanalTokenConfigRequest = {
       canal: integration.canal,
       nombre: integration.nombre?.trim() || integration.canal,
       accessToken: isWeb ? null : integration.accessToken?.trim() || null,
       verifyToken: isWeb ? null : integration.verifyToken?.trim() || null,
-      webhookUrl: isWeb ? null : integration.webhookUrl?.trim() || null,
+      webhookUrl: isWeb || isWhatsapp ? null : integration.webhookUrl?.trim() || null,
       appId: isWeb ? null : integration.appId?.trim() || null,
+      appSecret: isWeb ? null : integration.appSecret?.trim() || null,
       phoneNumberId: isWeb ? null : integration.phoneNumberId?.trim() || null,
+      wabaId: isWhatsapp ? integration.wabaId?.trim() || null : null,
       activo: integration.activo,
-      metadataJson: integration.metadataJson?.trim() || null,
+      metadataJson: isWhatsapp ? null : integration.metadataJson?.trim() || null,
     };
     this.integrationSaving.set(integration.canal);
     this.api
@@ -4469,6 +4566,12 @@ export class CrmAdminPage {
       .subscribe({
         next: (saved) => {
           this.crmIntegraciones.update((items) => items.map((item) => item.canal === saved.canal ? saved : item));
+          if (saved.canal === 'WHATSAPP') {
+            this.api.getCrmWhatsappConnectionStatus().pipe(catchError(() => of(null))).subscribe((status) => {
+              this.whatsappConnectionStatus.set(status);
+            });
+          }
+          this.crmInboxChannels.updateChannel(saved.canal, saved.activo, saved.nombre);
           this.successMessage.set(`Integracion ${saved.nombre} guardada.`);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -5015,23 +5118,24 @@ export class CrmAdminPage {
     this.finalizeSaleClosure(item);
   }
 
-  private registerOpportunityClosure(item: CrmOportunidad): void {
-    if (this.isSaleClosed(item)) {
-      return;
-    }
-    const record: OpportunityClosureRecord = {
-      id: this.createLocalId('close'),
-      oportunidadId: item.id,
+  private finalizeSaleClosure(item: CrmOportunidad): void {
+    const clientKey = this.createLocalId('close');
+    this.saving.set(true);
+    this.crmOpportunities.createResource(item.id, 'CIERRE', {
+      clientKey,
       closedAt: new Date().toISOString(),
       closedBy: this.auth.currentSession()?.nombres || this.auth.currentSession()?.username || 'Usuario',
-    };
-    const next = [record, ...this.opportunityClosureRecords()];
-    this.opportunityClosureRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityClosureStorageKey(), next);
+    }).pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: (resource) => {
+        const record = this.mapClosureResource(resource);
+        this.opportunityClosureRecords.set([record, ...this.opportunityClosureRecords()]);
+        this.completeSaleClosure(item);
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
-  private finalizeSaleClosure(item: CrmOportunidad): void {
-    this.registerOpportunityClosure(item);
+  private completeSaleClosure(item: CrmOportunidad): void {
     this.opportunityDetailOpen.set(false);
     const prospectAlreadyConverted = Boolean(this.prospectForOpportunity(item)?.clienteId);
     if (!item.prospectoId || item.clienteId || prospectAlreadyConverted) {
@@ -6266,30 +6370,46 @@ export class CrmAdminPage {
       this.errorMessage.set('La cantidad debe ser mayor a cero.');
       return;
     }
-    const record: OpportunityRequirementRecord = {
-      id: this.requirementForm.id || this.createLocalId('req'),
-      oportunidadId: opportunity.id,
+    const clientKey = this.requirementForm.id || this.createLocalId('req');
+    const data = {
+      clientKey,
       catalogoItemId: this.requirementForm.catalogoItemId,
       nombre,
       cantidad: Math.max(1, Number(this.requirementForm.cantidad || 1)),
       precioUnitario: Math.max(0, Number(this.requirementForm.precioUnitario || 0)),
       observacion: this.requirementForm.observacion.trim(),
-      createdAt: new Date().toISOString(),
     };
-    const current = this.opportunityRequirementRecords();
-    const next = current.some((item) => item.id === record.id)
-      ? current.map((item) => item.id === record.id ? record : item)
-      : [...current, record];
-    this.opportunityRequirementRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityRequirementStorageKey(), next);
-    this.opportunityRequirementDialogOpen.set(false);
-    this.successMessage.set('Requerimiento agregado a la oportunidad.');
+    const resourceId = Number(this.requirementForm.id);
+    const request$ = this.requirementForm.id && Number.isFinite(resourceId)
+      ? this.crmOpportunities.updateResource(opportunity.id, resourceId, 'REQUISITO', data)
+      : this.crmOpportunities.createResource(opportunity.id, 'REQUISITO', data);
+    this.saving.set(true);
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: (resource) => {
+        const record = this.mapRequirementResource(resource);
+        const current = this.opportunityRequirementRecords();
+        this.opportunityRequirementRecords.set(current.some((item) => item.id === record.id)
+          ? current.map((item) => item.id === record.id ? record : item)
+          : [...current, record]);
+        this.opportunityRequirementDialogOpen.set(false);
+        this.successMessage.set('Requerimiento guardado en la oportunidad.');
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   public deleteOpportunityRequirement(id: string): void {
-    const next = this.opportunityRequirementRecords().filter((item) => item.id !== id);
-    this.opportunityRequirementRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityRequirementStorageKey(), next);
+    const record = this.opportunityRequirementRecords().find((item) => item.id === id);
+    const resourceId = Number(id);
+    if (!record || !Number.isFinite(resourceId)) {
+      return;
+    }
+    this.crmOpportunities.deleteResource(record.oportunidadId, resourceId).subscribe({
+      next: () => this.opportunityRequirementRecords.set(
+        this.opportunityRequirementRecords().filter((item) => item.id !== id),
+      ),
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   public advanceInterestedToQuoted(item: CrmOportunidad): void {
@@ -6591,38 +6711,56 @@ export class CrmAdminPage {
       this.errorMessage.set(`El pago al contado debe cubrir el saldo completo de S/ ${currentPlan.pendingAmount.toFixed(2)}.`);
       return;
     }
-    const record: OpportunityPaymentRecord = {
-      id: this.paymentForm.id || this.createLocalId('pay'),
-      oportunidadId: opportunity.id,
+    const clientKey = this.paymentForm.id || this.createLocalId('pay');
+    const data = {
+      clientKey,
       fecha: this.paymentForm.fecha,
       tipo: this.paymentForm.tipo,
       monto: Number(this.paymentForm.monto || 0),
       estado: this.paymentForm.estado,
       metodo: this.paymentForm.metodo.trim(),
       observacion: this.paymentForm.observacion.trim(),
-      archivoNombre: this.paymentForm.archivoNombre,
-      archivoDataUrl: this.paymentForm.archivoDataUrl,
-      createdAt: new Date().toISOString(),
     };
-    const next = [record, ...this.opportunityPaymentRecords().filter((item) => item.id !== record.id)];
-    this.opportunityPaymentRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityPaymentStorageKey(), next);
-    this.opportunityPaymentDialogOpen.set(false);
-    if (currentPlan.isCredit && !currentPlan.firstPaymentDone) {
-      this.scheduleRemainingInstallments(opportunity);
-    }
-    if (this.canCloseWon(opportunity)) {
-      this.markWon(opportunity);
-      return;
-    }
-    this.opportunityDetailTab.set('pagos');
-    this.successMessage.set('Pago y comprobante registrados en la oportunidad.');
+    const file = this.fileFromDataUrl(this.paymentForm.archivoDataUrl, this.paymentForm.archivoNombre);
+    const resourceId = Number(this.paymentForm.id);
+    const request$ = this.paymentForm.id && Number.isFinite(resourceId)
+      ? this.crmOpportunities.updateResource(opportunity.id, resourceId, 'PAGO', data, file)
+      : this.crmOpportunities.createResource(opportunity.id, 'PAGO', data, file);
+    this.saving.set(true);
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: (resource) => {
+        const record = this.mapPaymentResource(resource);
+        this.opportunityPaymentRecords.set([
+          record,
+          ...this.opportunityPaymentRecords().filter((item) => item.id !== record.id),
+        ]);
+        this.opportunityPaymentDialogOpen.set(false);
+        if (currentPlan.isCredit && !currentPlan.firstPaymentDone) {
+          this.scheduleRemainingInstallments(opportunity);
+        }
+        if (this.canCloseWon(opportunity)) {
+          this.markWon(opportunity);
+          return;
+        }
+        this.opportunityDetailTab.set('pagos');
+        this.successMessage.set('Pago y comprobante guardados en el servidor.');
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   public deleteOpportunityPayment(id: string): void {
-    const next = this.opportunityPaymentRecords().filter((item) => item.id !== id);
-    this.opportunityPaymentRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityPaymentStorageKey(), next);
+    const record = this.opportunityPaymentRecords().find((item) => item.id === id);
+    const resourceId = Number(id);
+    if (!record || !Number.isFinite(resourceId)) {
+      return;
+    }
+    this.crmOpportunities.deleteResource(record.oportunidadId, resourceId).subscribe({
+      next: () => this.opportunityPaymentRecords.set(
+        this.opportunityPaymentRecords().filter((item) => item.id !== id),
+      ),
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected onOpportunityPaymentFileSelected(event: Event): void {
@@ -6650,29 +6788,50 @@ export class CrmAdminPage {
       this.errorMessage.set('Indica nombre o selecciona un archivo.');
       return;
     }
-    const record: OpportunityDocumentRecord = {
-      id: this.documentForm.id || this.createLocalId('doc'),
-      oportunidadId: opportunity.id,
+    const clientKey = this.documentForm.id || this.createLocalId('doc');
+    const data = {
+      clientKey,
       categoria: this.documentForm.categoria,
       nombre,
       descripcion: this.documentForm.descripcion.trim(),
-      archivoNombre: this.documentForm.archivoNombre,
-      archivoDataUrl: this.documentForm.archivoDataUrl,
-      mimeType: this.documentForm.mimeType,
-      createdAt: new Date().toISOString(),
     };
-    const next = [record, ...this.opportunityDocumentRecords().filter((item) => item.id !== record.id)];
-    this.opportunityDocumentRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityDocumentStorageKey(), next);
-    this.opportunityDetailTab.set('documentos');
-    this.opportunityDocumentDialogOpen.set(false);
-    this.successMessage.set('Documento agregado a la oportunidad.');
+    const file = this.fileFromDataUrl(
+      this.documentForm.archivoDataUrl,
+      this.documentForm.archivoNombre,
+      this.documentForm.mimeType,
+    );
+    const resourceId = Number(this.documentForm.id);
+    const request$ = this.documentForm.id && Number.isFinite(resourceId)
+      ? this.crmOpportunities.updateResource(opportunity.id, resourceId, 'DOCUMENTO', data, file)
+      : this.crmOpportunities.createResource(opportunity.id, 'DOCUMENTO', data, file);
+    this.saving.set(true);
+    request$.pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: (resource) => {
+        const record = this.mapDocumentResource(resource);
+        this.opportunityDocumentRecords.set([
+          record,
+          ...this.opportunityDocumentRecords().filter((item) => item.id !== record.id),
+        ]);
+        this.opportunityDetailTab.set('documentos');
+        this.opportunityDocumentDialogOpen.set(false);
+        this.successMessage.set('Documento guardado en el servidor.');
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   public deleteOpportunityDocument(id: string): void {
-    const next = this.opportunityDocumentRecords().filter((item) => item.id !== id);
-    this.opportunityDocumentRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityDocumentStorageKey(), next);
+    const record = this.opportunityDocumentRecords().find((item) => item.id === id);
+    const resourceId = Number(id);
+    if (!record || !Number.isFinite(resourceId)) {
+      return;
+    }
+    this.crmOpportunities.deleteResource(record.oportunidadId, resourceId).subscribe({
+      next: () => this.opportunityDocumentRecords.set(
+        this.opportunityDocumentRecords().filter((item) => item.id !== id),
+      ),
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   public onOpportunityDocumentFileSelected(event: Event): void {
@@ -6686,21 +6845,46 @@ export class CrmAdminPage {
     });
   }
 
-  public downloadLocalFile(name: string, dataUrl: string): void {
-    if (!dataUrl || typeof document === 'undefined') {
+  public downloadLocalFile(name: string, resourceReference: string): void {
+    if (!resourceReference || typeof document === 'undefined') {
       return;
     }
-    const anchor = document.createElement('a');
-    anchor.href = dataUrl;
-    anchor.download = name || 'archivo';
-    anchor.click();
+    const resourceId = Number(resourceReference);
+    const record = [...this.opportunityDocumentRecords(), ...this.opportunityPaymentRecords()]
+      .find((item) => Number(item.id) === resourceId);
+    if (!record || !Number.isFinite(resourceId)) {
+      return;
+    }
+    this.crmOpportunities.downloadResource(record.oportunidadId, resourceId).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = name || 'archivo';
+        anchor.click();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
-  public previewLocalFile(dataUrl: string): void {
-    if (!dataUrl || typeof window === 'undefined') {
+  public previewLocalFile(resourceReference: string): void {
+    if (!resourceReference || typeof window === 'undefined') {
       return;
     }
-    window.open(dataUrl, '_blank', 'noopener,noreferrer');
+    const resourceId = Number(resourceReference);
+    const record = this.opportunityDocumentRecords().find((item) => Number(item.id) === resourceId);
+    if (!record || !Number.isFinite(resourceId)) {
+      return;
+    }
+    this.crmOpportunities.downloadResource(record.oportunidadId, resourceId, true).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected addOpportunityMessageTemplate(): void {
@@ -7645,8 +7829,9 @@ export class CrmAdminPage {
     const existingCount = plan.paidPayments.length + plan.pendingInstallments.length;
     const records = Array.from({ length: count }, (_, index): OpportunityPaymentRecord => {
       const dueDate = this.addMonths(baseDate, index + 1);
+      const installmentNumber = existingCount + index + 1;
       return {
-        id: this.createLocalId('pay'),
+        id: `installment:${item.id}:${installmentNumber}:${this.toInputDate(dueDate)}`,
         oportunidadId: item.id,
         fecha: this.toInputDate(dueDate),
         tipo: 'CUOTA',
@@ -7655,16 +7840,30 @@ export class CrmAdminPage {
           : amount,
         estado: 'PENDIENTE',
         metodo: 'Credito',
-        observacion: `Cuota ${existingCount + index + 1} de ${plan.cuotas} programada`,
+        observacion: `Cuota ${installmentNumber} de ${plan.cuotas} programada`,
         archivoNombre: '',
         archivoDataUrl: '',
         createdAt: new Date().toISOString(),
       };
     });
-    const next = [...records, ...this.opportunityPaymentRecords()];
-    this.opportunityPaymentRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityPaymentStorageKey(), next);
-    this.successMessage.set('Cuotas pendientes programadas para seguimiento de pagos.');
+    forkJoin(records.map((record) => this.crmOpportunities.createResource(item.id, 'PAGO', {
+      clientKey: record.id,
+      fecha: record.fecha,
+      tipo: record.tipo,
+      monto: record.monto,
+      estado: record.estado,
+      metodo: record.metodo,
+      observacion: record.observacion,
+    }))).subscribe({
+      next: (resources) => {
+        const saved = resources.map((resource) => this.mapPaymentResource(resource));
+        const byId = new Map(this.opportunityPaymentRecords().map((record) => [record.id, record]));
+        saved.forEach((record) => byId.set(record.id, record));
+        this.opportunityPaymentRecords.set([...byId.values()]);
+        this.successMessage.set('Cuotas pendientes programadas para seguimiento de pagos.');
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected openPaymentFollowUpDetail(item: CrmOportunidad): void {
@@ -7801,7 +8000,7 @@ export class CrmAdminPage {
         next: (file) => {
           const contentType = file.contentType || 'application/pdf';
           const fileName = file.fileName || `cotizacion-crm-${item.id}.pdf`;
-          this.downloadLocalFile(fileName, `data:${contentType};base64,${file.base64}`);
+          this.downloadGeneratedBase64(fileName, contentType, file.base64);
           if (successMessage) {
             this.successMessage.set(successMessage);
           }
@@ -8120,9 +8319,20 @@ export class CrmAdminPage {
       return;
     }
     const record = { ...this.defaultRequirementForOpportunity(item), id: this.createLocalId('req') };
-    const next = [...this.opportunityRequirementRecords(), record];
-    this.opportunityRequirementRecords.set(next);
-    this.persistOpportunityRecords(this.opportunityRequirementStorageKey(), next);
+    this.crmOpportunities.createResource(item.id, 'REQUISITO', {
+      clientKey: record.id,
+      catalogoItemId: record.catalogoItemId,
+      nombre: record.nombre,
+      cantidad: record.cantidad,
+      precioUnitario: record.precioUnitario,
+      observacion: record.observacion,
+    }).subscribe({
+      next: (resource) => this.opportunityRequirementRecords.set([
+        ...this.opportunityRequirementRecords(),
+        this.mapRequirementResource(resource),
+      ]),
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected opportunityNextActionLabel(item: CrmOportunidad): string {
@@ -9422,62 +9632,253 @@ export class CrmAdminPage {
     };
   }
 
+  private legacyOpportunityRecords(): LegacyOpportunityRecords {
+    return {
+      requirements: this.loadOpportunityRecords<OpportunityRequirementRecord>(this.opportunityRequirementStorageKey()),
+      payments: this.loadOpportunityRecords<OpportunityPaymentRecord>(this.opportunityPaymentStorageKey()),
+      documents: this.loadOpportunityRecords<OpportunityDocumentRecord>(this.opportunityDocumentStorageKey()),
+      closures: this.loadOpportunityRecords<OpportunityClosureRecord>(this.opportunityClosureStorageKey()),
+    };
+  }
+
+  private applyOpportunityResources(resources: readonly CrmOportunidadRecurso[]): void {
+    const unique = [...new Map(resources.map((resource) => [resource.id, resource])).values()];
+    this.opportunityRequirementRecords.set(unique
+      .filter((resource) => resource.tipo === 'REQUISITO')
+      .map((resource) => this.mapRequirementResource(resource)));
+    this.opportunityPaymentRecords.set(unique
+      .filter((resource) => resource.tipo === 'PAGO')
+      .map((resource) => this.mapPaymentResource(resource)));
+    this.opportunityDocumentRecords.set(unique
+      .filter((resource) => resource.tipo === 'DOCUMENTO')
+      .map((resource) => this.mapDocumentResource(resource)));
+    this.opportunityClosureRecords.set(unique
+      .filter((resource) => resource.tipo === 'CIERRE')
+      .map((resource) => this.mapClosureResource(resource)));
+  }
+
+  private mapRequirementResource(resource: CrmOportunidadRecurso): OpportunityRequirementRecord {
+    const data = resource.data;
+    return {
+      id: String(resource.id),
+      oportunidadId: resource.oportunidadId,
+      catalogoItemId: data['catalogoItemId'] == null ? null : Number(data['catalogoItemId']),
+      nombre: String(data['nombre'] || ''),
+      cantidad: Number(data['cantidad'] || 0),
+      precioUnitario: Number(data['precioUnitario'] || 0),
+      observacion: String(data['observacion'] || ''),
+      createdAt: resource.createdAt || new Date().toISOString(),
+    };
+  }
+
+  private mapPaymentResource(resource: CrmOportunidadRecurso): OpportunityPaymentRecord {
+    const data = resource.data;
+    return {
+      id: String(resource.id),
+      oportunidadId: resource.oportunidadId,
+      fecha: String(data['fecha'] || ''),
+      tipo: String(data['tipo'] || 'OTRO') as OpportunityPaymentRecord['tipo'],
+      monto: Number(data['monto'] || 0),
+      estado: String(data['estado'] || 'PENDIENTE') as OpportunityPaymentRecord['estado'],
+      metodo: String(data['metodo'] || ''),
+      observacion: String(data['observacion'] || ''),
+      archivoNombre: resource.archivoNombre || '',
+      archivoDataUrl: resource.hasArchivo ? String(resource.id) : '',
+      createdAt: resource.createdAt || new Date().toISOString(),
+    };
+  }
+
+  private mapDocumentResource(resource: CrmOportunidadRecurso): OpportunityDocumentRecord {
+    const data = resource.data;
+    return {
+      id: String(resource.id),
+      oportunidadId: resource.oportunidadId,
+      categoria: String(data['categoria'] || 'OTRO') as OpportunityDocumentRecord['categoria'],
+      nombre: String(data['nombre'] || ''),
+      descripcion: String(data['descripcion'] || ''),
+      archivoNombre: resource.archivoNombre || '',
+      archivoDataUrl: resource.hasArchivo ? String(resource.id) : '',
+      mimeType: resource.archivoMimeType || '',
+      createdAt: resource.createdAt || new Date().toISOString(),
+    };
+  }
+
+  private mapClosureResource(resource: CrmOportunidadRecurso): OpportunityClosureRecord {
+    return {
+      id: String(resource.id),
+      oportunidadId: resource.oportunidadId,
+      closedAt: String(resource.data['closedAt'] || resource.createdAt || new Date().toISOString()),
+      closedBy: String(resource.data['closedBy'] || resource.createdBy || 'Usuario'),
+    };
+  }
+
+  private migrateLegacyOpportunityRecords(legacy: LegacyOpportunityRecords): void {
+    if (this.legacyOpportunityMigrationStarted) {
+      return;
+    }
+    type LegacyKind = keyof LegacyOpportunityRecords;
+    type MigrationResult = { kind: LegacyKind; key: string; migrated: boolean };
+    const operations: Observable<MigrationResult>[] = [];
+    const addOperation = (
+      kind: LegacyKind,
+      record: { id: string; oportunidadId: number },
+      operation: Observable<CrmOportunidadRecurso>,
+    ): void => {
+      const key = this.legacyRecordKey(record);
+      operations.push(operation.pipe(
+        map(() => ({ kind, key, migrated: true })),
+        catchError(() => of({ kind, key, migrated: false })),
+      ));
+    };
+
+    for (const record of legacy.requirements) {
+      addOperation('requirements', record, this.crmOpportunities.createResource(record.oportunidadId, 'REQUISITO', {
+        clientKey: record.id,
+        catalogoItemId: record.catalogoItemId,
+        nombre: record.nombre,
+        cantidad: record.cantidad,
+        precioUnitario: record.precioUnitario,
+        observacion: record.observacion,
+      }));
+    }
+    for (const record of legacy.payments) {
+      addOperation('payments', record, this.crmOpportunities.createResource(record.oportunidadId, 'PAGO', {
+        clientKey: record.id,
+        fecha: record.fecha,
+        tipo: record.tipo,
+        monto: record.monto,
+        estado: record.estado,
+        metodo: record.metodo,
+        observacion: record.observacion,
+      }, this.fileFromDataUrl(record.archivoDataUrl, record.archivoNombre)));
+    }
+    for (const record of legacy.documents) {
+      addOperation('documents', record, this.crmOpportunities.createResource(record.oportunidadId, 'DOCUMENTO', {
+        clientKey: record.id,
+        categoria: record.categoria,
+        nombre: record.nombre,
+        descripcion: record.descripcion,
+      }, this.fileFromDataUrl(record.archivoDataUrl, record.archivoNombre, record.mimeType)));
+    }
+    for (const record of legacy.closures) {
+      addOperation('closures', record, this.crmOpportunities.createResource(record.oportunidadId, 'CIERRE', {
+        clientKey: record.id,
+        closedAt: record.closedAt,
+        closedBy: record.closedBy,
+      }));
+    }
+
+    const legacyCount = legacy.requirements.length + legacy.payments.length + legacy.documents.length + legacy.closures.length;
+    if (!legacyCount) {
+      return;
+    }
+    if (!operations.length) {
+      return;
+    }
+
+    this.legacyOpportunityMigrationStarted = true;
+    forkJoin(operations).subscribe({
+      next: (results) => {
+        const failed = new Map<LegacyKind, Set<string>>();
+        for (const result of results.filter((item) => !item.migrated)) {
+          const keys = failed.get(result.kind) ?? new Set<string>();
+          keys.add(result.key);
+          failed.set(result.kind, keys);
+        }
+        this.saveRemainingLegacyRecords(legacy, failed);
+        this.crmOpportunities.listResources().subscribe({
+          next: (resources) => this.applyOpportunityResources(resources),
+          error: () => undefined,
+        });
+        this.legacyOpportunityMigrationStarted = false;
+        const failedCount = results.filter((item) => !item.migrated).length;
+        if (failedCount) {
+          this.errorMessage.set(`${results.length - failedCount} registro(s) locales migrados; ${failedCount} se conservaron localmente porque requieren revision.`);
+        } else {
+          this.successMessage.set('Los registros locales del CRM se migraron al servidor.');
+        }
+      },
+    });
+  }
+
+  private saveRemainingLegacyRecords(
+    legacy: LegacyOpportunityRecords,
+    failed: ReadonlyMap<keyof LegacyOpportunityRecords, ReadonlySet<string>>,
+  ): void {
+    const remaining = <T extends { id: string; oportunidadId: number }>(
+      kind: keyof LegacyOpportunityRecords,
+      records: readonly T[],
+    ): T[] => records.filter((record) => failed.get(kind)?.has(this.legacyRecordKey(record)) ?? false);
+
+    this.crmLocalStorage.replaceMigrationRecords(
+      this.opportunityRequirementStorageKey(),
+      remaining('requirements', legacy.requirements),
+    );
+    this.crmLocalStorage.replaceMigrationRecords(
+      this.opportunityPaymentStorageKey(),
+      remaining('payments', legacy.payments),
+    );
+    this.crmLocalStorage.replaceMigrationRecords(
+      this.opportunityDocumentStorageKey(),
+      remaining('documents', legacy.documents),
+    );
+    this.crmLocalStorage.replaceMigrationRecords(
+      this.opportunityClosureStorageKey(),
+      remaining('closures', legacy.closures),
+    );
+  }
+
+  private legacyRecordKey(record: { id: string; oportunidadId: number }): string {
+    return `${record.oportunidadId}:${record.id}`;
+  }
+
+  private fileFromDataUrl(dataUrl: string, name: string, fallbackMime = 'application/octet-stream'): File | null {
+    if (!dataUrl?.startsWith('data:') || typeof atob === 'undefined') {
+      return null;
+    }
+    try {
+      const [header, encoded] = dataUrl.split(',', 2);
+      const mime = /^data:([^;]+);base64$/i.exec(header)?.[1] || fallbackMime;
+      const binary = atob(encoded);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new File([bytes], name || 'archivo', { type: mime });
+    } catch {
+      return null;
+    }
+  }
+
+  private downloadGeneratedBase64(name: string, mimeType: string, base64: string): void {
+    if (!base64 || typeof document === 'undefined' || typeof atob === 'undefined') {
+      return;
+    }
+    try {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      const objectUrl = URL.createObjectURL(
+        new Blob([bytes], { type: mimeType || 'application/octet-stream' }),
+      );
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = name || 'archivo';
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    } catch {
+      this.errorMessage.set('No se pudo preparar el archivo para descargar.');
+    }
+  }
+
   private loadOpportunityRecords<T>(key: string): T[] {
     return this.crmLocalStorage.loadRecords<T>(key);
   }
 
-  private persistOpportunityRecords<T>(key: string, items: T[]): void {
-    this.crmLocalStorage.persistRecords(key, items);
-  }
-
-  private reconcileLocalOpportunityRecords(opportunities: CrmOportunidad[]): void {
-    const validIds = new Set(opportunities.map((item) => Number(item.id)));
-    const reconcile = <T extends { oportunidadId: number }>(
-      records: T[],
-      storageKey: string,
-      update: (items: T[]) => void,
-    ): void => {
-      const filtered = records.filter((item) => validIds.has(Number(item.oportunidadId)));
-      if (filtered.length === records.length) {
-        return;
-      }
-      update(filtered);
-      this.persistOpportunityRecords(storageKey, filtered);
-    };
-
-    reconcile(
-      this.opportunityRequirementRecords(),
-      this.opportunityRequirementStorageKey(),
-      (items) => this.opportunityRequirementRecords.set(items),
-    );
-    reconcile(
-      this.opportunityNegotiationRecords(),
-      this.opportunityNegotiationStorageKey(),
-      (items) => this.opportunityNegotiationRecords.set(items),
-    );
-    reconcile(
-      this.opportunityPaymentRecords(),
-      this.opportunityPaymentStorageKey(),
-      (items) => this.opportunityPaymentRecords.set(items),
-    );
-    reconcile(
-      this.opportunityDocumentRecords(),
-      this.opportunityDocumentStorageKey(),
-      (items) => this.opportunityDocumentRecords.set(items),
-    );
-    reconcile(
-      this.opportunityClosureRecords(),
-      this.opportunityClosureStorageKey(),
-      (items) => this.opportunityClosureRecords.set(items),
-    );
-  }
-
   private opportunityRequirementStorageKey(): string {
     return `${this.opportunityStoragePrefix()}.requirements`;
-  }
-
-  private opportunityNegotiationStorageKey(): string {
-    return `${this.opportunityStoragePrefix()}.negotiations`;
   }
 
   private opportunityPaymentStorageKey(): string {
@@ -9721,5 +10122,12 @@ export class CrmAdminPage {
       return apiError?.details?.[0] || apiError?.message || 'No se pudo completar la operacion.';
     }
     return 'No se pudo completar la operacion.';
+  }
+
+  private resolveWhatsappEndpointError(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'status' in error && Number((error as { status?: number }).status) === 404) {
+      return 'El backend activo todavia no tiene las rutas nuevas de WhatsApp. Reinicia el backend de Azurion y vuelve a intentarlo.';
+    }
+    return this.resolveError(error);
   }
 }

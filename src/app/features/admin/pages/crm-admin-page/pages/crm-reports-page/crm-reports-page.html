@@ -1,0 +1,124 @@
+<main class="crm-reports-page">
+  <header class="reports-header">
+    <div>
+      <span>ANALITICA CRM</span>
+      <h1>Reportes comerciales</h1>
+      <p>Consulta prospectos, actividades y oportunidades al detalle sin mezclar informacion del ERP.</p>
+    </div>
+    <div class="reports-header__actions">
+      <label class="reports-search">
+        <i class="pi pi-search"></i>
+        <input type="search" [ngModel]="query()" (ngModelChange)="updateQuery($event)" placeholder="Buscar en el reporte...">
+      </label>
+      <button type="button" class="report-button" [class.is-active]="filtersOpen()" (click)="filtersOpen.set(!filtersOpen())">
+        <i class="pi pi-filter"></i>
+        Filtros
+        @if (activeFilters()) { <b>{{ activeFilters() }}</b> }
+        <i [class]="filtersOpen() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+      </button>
+      <button type="button" class="report-button" [disabled]="exporting()" (click)="exportCsv()">
+        <i [class]="exporting() ? 'pi pi-spin pi-spinner' : 'pi pi-file'"></i>
+        CSV
+      </button>
+      <button type="button" class="report-button report-button--primary" [disabled]="exporting()" (click)="exportExcel()">
+        <i [class]="exporting() ? 'pi pi-spin pi-spinner' : 'pi pi-file-excel'"></i>
+        Excel
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="report-alert report-alert--error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="report-alert report-alert--success"><i class="pi pi-check-circle"></i>{{ successMessage() }}</div>
+  }
+
+  <nav class="report-types" aria-label="Tipos de reporte CRM">
+    @for (option of reportOptions; track option.value) {
+      <button type="button" [class.is-active]="reportKind() === option.value" [class]="'report-type report-type--' + option.tone" (click)="selectReport(option.value)">
+        <i [class]="option.icon"></i>
+        <span><strong>{{ option.label }}</strong><small>{{ option.detail }}</small></span>
+        @if (reportKind() === option.value) { <em>{{ pageData().totalElements }}</em> }
+      </button>
+    }
+  </nav>
+
+  <section class="report-panel">
+    @if (filtersOpen()) {
+      <section class="report-filters">
+        <label>
+          Estado
+          <select [ngModel]="status()" (ngModelChange)="status.set($event)">
+            <option value="">Todos</option>
+            @for (option of statusOptions(); track option) {
+              <option [value]="option">{{ option.replace('_', ' ') }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Responsable
+          <input type="text" [ngModel]="responsible()" (ngModelChange)="responsible.set($event)" placeholder="Usuario o asesor">
+        </label>
+        <label>
+          Desde
+          <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)">
+        </label>
+        <label>
+          Hasta
+          <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)">
+        </label>
+        <button type="button" class="report-button" (click)="clearFilters()"><i class="pi pi-filter-slash"></i>Limpiar</button>
+        <button type="button" class="report-button report-button--primary" (click)="load(0)"><i class="pi pi-check"></i>Aplicar</button>
+      </section>
+    }
+
+    <div class="report-table-toolbar">
+      <div>
+        <strong>Detalle de {{ reportKind().toLowerCase() }}</strong>
+        <small>Consultas paginadas en el servidor, 20 registros por pagina.</small>
+      </div>
+      <button type="button" class="report-icon-button" [disabled]="loading()" (click)="load()" title="Actualizar reporte" aria-label="Actualizar reporte">
+        <i [class]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+      </button>
+    </div>
+
+    <div class="report-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            @for (column of columns(); track column.key) {
+              <th [class.cell-center]="column.align === 'center'" [class.cell-right]="column.align === 'right'">{{ column.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pageData().content; track row['id']) {
+            <tr>
+              @for (column of columns(); track column.key) {
+                <td [class.cell-center]="column.align === 'center'" [class.cell-right]="column.align === 'right'">
+                  @if (isStatusColumn(column)) {
+                    <span class="report-status">{{ displayCell(row, column) }}</span>
+                  } @else {
+                    {{ displayCell(row, column) }}
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr><td [attr.colspan]="columns().length" class="report-empty">No hay registros para los filtros seleccionados.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="report-pagination">
+      <span>{{ pageLabel() }}</span>
+      <div>
+        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <strong>{{ pageData().page + 1 }} / {{ pageData().totalPages || 1 }}</strong>
+        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+      </div>
+    </footer>
+  </section>
+</main>

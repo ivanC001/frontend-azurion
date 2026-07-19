@@ -28,11 +28,23 @@
     </div>
   }
 
+  <section class="company-summary" aria-label="Resumen de configuracion">
+    @if (!isFacturadorView) {
+      <article><i class="pi pi-building"></i><div><span>Empresa</span><strong>{{ form.business_name || 'Sin razon social' }}</strong></div></article>
+      <article><i class="pi pi-id-card"></i><div><span>RUC</span><strong>{{ form.ruc || 'No registrado' }}</strong></div></article>
+      <article><i class="pi pi-image"></i><div><span>Logo del panel</span><strong>{{ panelLogoStatusLabel() }}</strong></div></article>
+    } @else {
+      <article><i class="pi pi-send"></i><div><span>Entorno SUNAT</span><strong>{{ isProductionMode() ? 'Produccion' : 'Beta' }}</strong></div></article>
+      <article><i class="pi pi-file-check"></i><div><span>Certificado</span><strong>{{ form.certificado_file || form.certificado_url || existingConfig()?.certificado_url ? 'Configurado' : 'Pendiente' }}</strong></div></article>
+      <article><i class="pi pi-image"></i><div><span>Logo fiscal</span><strong>{{ invoiceLogoPreviewUrl() ? 'Configurado' : 'Pendiente' }}</strong></div></article>
+    }
+  </section>
+
   <div class="settings-grid settings-grid--single">
     @if (!isFacturadorView) {
       <article class="panel panel--identity">
       <header class="panel__header">
-        <h2><i class="pi pi-id-card"></i> Identidad visual</h2>
+        <div><span class="panel__icon"><i class="pi pi-id-card"></i></span><div><h2>Identidad del tenant</h2><p>Datos visibles y marca del panel administrativo.</p></div></div>
       </header>
 
       <div class="identity-body">
@@ -42,27 +54,43 @@
             <small>Este logo aparece arriba a la izquierda en el panel. Si no subes uno, se muestra Azurion por defecto.</small>
           </div>
 
-          <div class="identity-logo">
-            @if (panelLogoPreviewUrl()) {
-              <img [src]="panelLogoPreviewUrl()!" alt="Logo panel administrativo" />
-            } @else {
-              <img src="assets/logosinfondo.png" alt="Logo base Azurion" />
-            }
+          <div class="identity-logo" [class.identity-logo--fallback]="panelLogoLoadFailed() || !panelLogoPreviewUrl()">
+            <img [src]="panelLogoDisplayUrl()" alt="Logo panel administrativo" (error)="handlePanelLogoError($event)" />
           </div>
+          @if (panelLogoLoadFailed()) {
+            <small class="logo-warning">El logo guardado no esta disponible. Sube uno nuevo para reemplazarlo.</small>
+          }
+          @if (clearPanelLogoRequested()) {
+            <small class="logo-warning">El logo actual se quitara cuando guardes la configuracion.</small>
+          }
 
-          <label>
-            Subir logo del tenant
+          <label class="logo-upload">
+            <span>Subir logo del tenant</span>
             <input
               type="file"
               name="panel_logo_file"
-              accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+              class="logo-upload__input"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
               (change)="onPanelLogoFileSelected($event)"
             />
-            <small>PNG, JPG, JPEG, WEBP o SVG (max. 2MB)</small>
-            @if (form.panel_logo_file) {
-              <small>Archivo: {{ form.panel_logo_file.name }}</small>
+            <span class="logo-upload__control">
+              <i class="pi pi-upload"></i>
+              Elegir logo
+            </span>
+            <small>PNG, JPG, JPEG o WEBP (max. 2MB)</small>
+            @if (panelLogoSelectedFileName()) {
+              <small>Archivo: {{ panelLogoSelectedFileName() }}</small>
+            } @else {
+              <small>Ningun archivo seleccionado</small>
             }
           </label>
+
+          @if (panelLogoPreviewUrl() || panelLogoSelectedFileName()) {
+            <button type="button" class="logo-clear-button" [disabled]="saving()" (click)="clearPanelLogoSelection()">
+              <i class="pi pi-trash"></i>
+              Quitar logo
+            </button>
+          }
         </section>
 
         <div class="form-grid form-grid--identity">
@@ -86,7 +114,7 @@
     @if (isFacturadorView) {
       <article class="panel panel--sunat">
       <header class="panel__header">
-        <h2><i class="pi pi-file-edit"></i> SUNAT / Facturacion</h2>
+        <div><span class="panel__icon panel__icon--sunat"><i class="pi pi-file-edit"></i></span><div><h2>SUNAT y facturacion</h2><p>Credenciales, certificado y marca de documentos fiscales.</p></div></div>
       </header>
 
       <div class="mode-row">
@@ -116,11 +144,11 @@
           <input
             type="file"
             name="invoice_logo_file"
-            accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
             (change)="onInvoiceLogoFileSelected($event)"
           />
           <small>Este logo se imprime en facturas, boletas, notas y PDFs.</small>
-          <small>PNG, JPG, JPEG, WEBP o SVG (max. 2MB)</small>
+          <small>PNG, JPG, JPEG o WEBP (max. 2MB)</small>
           @if (form.invoice_logo_file) {
             <small>Archivo: {{ form.invoice_logo_file.name }}</small>
           }

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
@@ -26,6 +27,8 @@ import {
 })
 export class PlatformControlPage {
   private readonly api = inject(AdminSaasApiService);
+  private readonly route = inject(ActivatedRoute);
+  private requestedEmpresaId = Number(this.route.snapshot.queryParamMap.get('empresaId')) || null;
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -66,6 +69,15 @@ export class PlatformControlPage {
   protected readonly activeModuleCount = computed(
     () => Object.values(this.moduleDraft()).filter(Boolean).length,
   );
+  protected readonly activeCompanies = computed(
+    () => this.empresas().filter((empresa) => empresa.activo).length,
+  );
+  protected readonly activeSubscriptions = computed(
+    () => this.suscripciones().filter((item) => item.estado.toUpperCase() === 'ACTIVA').length,
+  );
+  protected readonly suspendedSubscriptions = computed(
+    () => this.suscripciones().filter((item) => item.estado.toUpperCase() === 'SUSPENDIDA').length,
+  );
 
   protected readonly moduleCards = computed(() =>
     this.modulos().map((modulo) => {
@@ -98,9 +110,13 @@ export class PlatformControlPage {
           this.suscripciones.set(suscripciones);
 
           const current = this.selectedEmpresaId();
-          if (!current || !empresas.some((empresa) => empresa.id === current)) {
+          const requested = this.requestedEmpresaId;
+          if (requested && empresas.some((empresa) => empresa.id === requested)) {
+            this.selectedEmpresaId.set(requested);
+          } else if (!current || !empresas.some((empresa) => empresa.id === current)) {
             this.selectedEmpresaId.set(empresas[0]?.id ?? null);
           }
+          this.requestedEmpresaId = null;
           this.loadCompanyContext();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -177,13 +193,6 @@ export class PlatformControlPage {
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
-  }
-
-  protected empresaActivationNotice(action: 'habilitar' | 'deshabilitar'): void {
-    this.successMessage.set(null);
-    this.errorMessage.set(
-      `La accion de ${action} empresa requiere endpoint de actualizacion en /v1/saas/empresas (pendiente backend).`,
-    );
   }
 
   protected toggleUser(user: UsuarioTenant): void {
@@ -266,6 +275,18 @@ export class PlatformControlPage {
       ...this.rolesInputByUser(),
       [userId]: value,
     });
+  }
+
+  protected moduleIcon(code: string): string {
+    const normalized = code.toUpperCase();
+    if (normalized === 'CRM') return 'pi-chart-line';
+    if (normalized === 'ERP') return 'pi-box';
+    if (normalized === 'FACTURACION') return 'pi-receipt';
+    if (normalized === 'INVENTARIO') return 'pi-database';
+    if (normalized === 'CAJA') return 'pi-credit-card';
+    if (normalized === 'VENTAS') return 'pi-shopping-cart';
+    if (normalized === 'REPORTES') return 'pi-chart-bar';
+    return 'pi-th-large';
   }
 
   private loadTenantUsers(): void {

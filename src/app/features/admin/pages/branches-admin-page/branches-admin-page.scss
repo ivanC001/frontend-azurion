@@ -24,6 +24,12 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.branch-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.branch-stat { align-items: center; display: flex !important; gap: 0.7rem; }
+.branch-stat > i { align-items: center; background: var(--stat-bg, var(--az-blue-soft)); border-radius: 0.65rem; color: var(--stat-color, var(--az-blue)); display: inline-flex; flex: 0 0 2.25rem; height: 2.25rem; justify-content: center; }
+.branch-stat--green { --stat-bg: color-mix(in srgb, #10b981 14%, var(--az-surface)); --stat-color: #059669; }
+.branch-stat--red { --stat-bg: color-mix(in srgb, #ef4444 12%, var(--az-surface)); --stat-color: #dc2626; }
+
 .table-head p {
   color: var(--az-text-soft);
   line-height: 1.35;
@@ -109,6 +115,7 @@
 }
 
 @media (max-width: 520px) {
+  .branch-stats { grid-template-columns: 1fr; }
   .ubigeo-search {
     grid-template-columns: 1fr;
   }

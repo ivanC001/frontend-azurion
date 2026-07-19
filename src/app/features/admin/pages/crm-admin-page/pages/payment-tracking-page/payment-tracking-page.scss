@@ -64,6 +64,12 @@
   color: var(--payment-text);
 }
 
+.payment-action--soft.is-active {
+  background: color-mix(in srgb, #2563eb 10%, var(--payment-surface));
+  border-color: #60a5fa;
+  color: #1d4ed8;
+}
+
 .payment-action--primary {
   background: #2563eb;
   border: 1px solid #2563eb;
@@ -334,8 +340,15 @@
 
 .payment-table-card table {
   border-collapse: collapse;
-  min-width: 58rem;
+  table-layout: fixed;
+  min-width: 66rem;
   width: 100%;
+}
+
+.payment-table-card th,
+.payment-table-card td {
+  display: table-cell;
+  vertical-align: middle;
 }
 
 .payment-table-card th {
@@ -344,6 +357,7 @@
   font-size: .66rem;
   padding: .65rem .75rem;
   text-align: left;
+  white-space: nowrap;
 }
 
 .payment-table-card td {
@@ -351,6 +365,41 @@
   color: var(--payment-text);
   font-size: .72rem;
   padding: .7rem .75rem;
+}
+
+.payment-table-card th:nth-child(1),
+.payment-table-card td:nth-child(1) {
+  width: 19rem;
+}
+
+.payment-table-card th:nth-child(2),
+.payment-table-card td:nth-child(2) {
+  width: 9rem;
+}
+
+.payment-table-card th:nth-child(3),
+.payment-table-card td:nth-child(3) {
+  width: 6.5rem;
+}
+
+.payment-table-card th:nth-child(4),
+.payment-table-card td:nth-child(4) {
+  width: 12rem;
+}
+
+.payment-table-card th:nth-child(5),
+.payment-table-card td:nth-child(5) {
+  width: 10rem;
+}
+
+.payment-table-card th:nth-child(6),
+.payment-table-card td:nth-child(6) {
+  width: 11rem;
+}
+
+.payment-table-card th:nth-child(7),
+.payment-table-card td:nth-child(7) {
+  width: 7rem;
 }
 
 .payment-client-cell {
@@ -374,10 +423,18 @@
 }
 
 .payment-client-cell div,
-.payment-table-card td:not(:first-child),
 .payment-upcoming-list div {
   display: grid;
   gap: .12rem;
+}
+
+.payment-table-card td > b,
+.payment-table-card td > small {
+  display: block;
+}
+
+.payment-table-card td > small {
+  margin-top: .18rem;
 }
 
 .payment-client-cell small:last-child {

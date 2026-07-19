@@ -24,21 +24,21 @@
   }
 
   <div class="metrics">
-    <article>
-      <span>Empresas activas</span>
-      <strong>{{ activeCompanies() }}</strong>
+    <article class="metric metric--blue">
+      <i class="pi pi-building"></i>
+      <div><span>Empresas activas</span><strong>{{ activeCompanies() }}</strong></div>
     </article>
-    <article>
-      <span>Planes disponibles</span>
-      <strong>{{ planes().length }}</strong>
+    <article class="metric metric--violet">
+      <i class="pi pi-wallet"></i>
+      <div><span>Planes disponibles</span><strong>{{ planes().length }}</strong></div>
     </article>
-    <article>
-      <span>Suscripciones activas</span>
-      <strong>{{ activeSubscriptions() }}</strong>
+    <article class="metric metric--green">
+      <i class="pi pi-check-circle"></i>
+      <div><span>Suscripciones activas</span><strong>{{ activeSubscriptions() }}</strong></div>
     </article>
-    <article>
-      <span>Modulos contratables</span>
-      <strong>{{ moduleCount() }}</strong>
+    <article class="metric metric--amber">
+      <i class="pi pi-th-large"></i>
+      <div><span>Modulos contratables</span><strong>{{ moduleCount() }}</strong></div>
     </article>
   </div>
 
@@ -46,15 +46,28 @@
     <div class="table-panel__head">
       <div>
         <h2>Empresas registradas</h2>
-        <p>Listado obtenido desde <code>/api/v1/saas/empresas</code>.</p>
+        <p>Busca un tenant y abre su suscripcion, usuarios y modulos contratados.</p>
+      </div>
+      <div class="company-filters">
+        <span class="search-control">
+          <i class="pi pi-search"></i>
+          <input pInputText type="search" [value]="searchTerm()" (input)="setSearch($event)" placeholder="Empresa, RUC o tenant" />
+        </span>
+        <p-select
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+        />
       </div>
     </div>
 
     <p-table
-      [value]="empresas()"
+      [value]="filteredCompanies()"
       [loading]="loading()"
-      [paginator]="empresas().length > 8"
-      [rows]="8"
+      [paginator]="filteredCompanies().length > 10"
+      [rows]="10"
       responsiveLayout="scroll"
       styleClass="companies-table"
     >
@@ -66,6 +79,7 @@
           <th>Schema</th>
           <th>Plan</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </ng-template>
 
@@ -91,12 +105,23 @@
           <td>
             <p-tag [value]="empresa.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(empresa.activo)" />
           </td>
+          <td>
+            <button
+              type="button"
+              class="company-action"
+              title="Administrar empresa"
+              aria-label="Administrar empresa"
+              (click)="manageCompany(empresa)"
+            >
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6">Todavia no hay empresas registradas.</td>
+          <td colspan="7">No hay empresas que coincidan con la busqueda.</td>
         </tr>
       </ng-template>
     </p-table>

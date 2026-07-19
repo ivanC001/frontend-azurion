@@ -2370,3 +2370,43 @@ html.dark body .crm-page app-pipeline-page .pipeline-compact-page .pipeline-empt
   border-color: #475467 !important;
   color: #98a2b3 !important;
 }
+
+/* WhatsApp configuration is global because the CRM editor uses no encapsulation. */
+.crm-whatsapp-fields label > small,
+.crm-whatsapp-secret small,
+.crm-whatsapp-callback small,
+.crm-whatsapp-status > small { color: var(--az-text-soft); font-size: .66rem; font-weight: 600; }
+.crm-whatsapp-secret,
+.crm-whatsapp-callback,
+.crm-whatsapp-status { background: color-mix(in srgb, #16a34a 4%, var(--az-surface)); border: 1px solid color-mix(in srgb, #16a34a 20%, var(--az-border)); border-radius: .78rem; display: grid; gap: .65rem; padding: .8rem; }
+.crm-whatsapp-secret header > div,
+.crm-whatsapp-callback header > div { display: grid; gap: .18rem; }
+.crm-whatsapp-secret header strong,
+.crm-whatsapp-callback header strong { color: var(--az-text); font-size: .78rem; }
+.crm-whatsapp-secret button,
+.crm-copy-row button,
+.crm-whatsapp-save,
+.crm-whatsapp-test { background: var(--az-surface); border: 1px solid #86c99e; border-radius: .58rem; color: #047857; cursor: pointer; font-size: .7rem; font-weight: 900; min-height: 2.45rem; padding: .55rem .72rem; }
+.crm-whatsapp-secret button:disabled,
+.crm-copy-row button:disabled,
+.crm-whatsapp-save:disabled,
+.crm-whatsapp-test:disabled { cursor: not-allowed; opacity: .55; }
+.crm-copy-row { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr) auto; }
+.crm-copy-row input { font-family: monospace; font-size: .72rem; }
+.crm-whatsapp-secret > p,
+.crm-whatsapp-callback > p,
+.crm-whatsapp-status > p { color: var(--az-text-soft); font-size: .68rem; margin: 0; }
+.crm-whatsapp-warning { color: #b45309 !important; font-weight: 750; }
+.crm-whatsapp-status__checks { display: grid; gap: .5rem; grid-template-columns: repeat(3, 1fr); }
+.crm-whatsapp-status__checks span { border: 1px solid #f2b7b7; border-radius: .6rem; color: #b91c1c; font-size: .68rem; font-weight: 850; padding: .6rem; text-align: center; }
+.crm-whatsapp-status__checks span.ok { border-color: #8ed5aa; color: #047857; }
+.crm-whatsapp-actions { display: flex; gap: .6rem; justify-content: flex-end; }
+.crm-whatsapp-save { background: #16a34a; color: #fff; }
+
+@media (max-width: 640px) {
+  .crm-integration-fields { grid-template-columns: 1fr; }
+  .crm-integration-fields .wide-field { grid-column: auto; }
+  .crm-copy-row,
+  .crm-whatsapp-status__checks { grid-template-columns: 1fr; }
+  .crm-whatsapp-actions { flex-direction: column; }
+}

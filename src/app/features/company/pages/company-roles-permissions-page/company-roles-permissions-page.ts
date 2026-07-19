@@ -16,12 +16,14 @@ import {
   Empresa,
   Permiso,
   Rol,
+  RoleScope,
 } from '@features/admin/data/admin-saas-api.service';
 
 interface RolForm {
   codigo: string;
   nombre: string;
   descripcion: string;
+  ambito: Exclude<RoleScope, 'MIXED'>;
   templateCode: string | null;
 }
 
@@ -38,6 +40,7 @@ interface RoleTemplate {
   readonly codigo: string;
   readonly nombre: string;
   readonly descripcion: string;
+  readonly ambito: Exclude<RoleScope, 'MIXED'>;
   readonly permisoCodigos: readonly string[];
 }
 
@@ -87,6 +90,7 @@ export class CompanyRolesPermissionsPage {
   protected readonly deleteRolId = signal<number | null>(null);
   protected readonly deletePermisoId = signal<number | null>(null);
   protected readonly createRolePermissionIds = signal<number[]>([]);
+  protected readonly createRoleScope = signal<Exclude<RoleScope, 'MIXED'>>('ERP');
   protected readonly selectedRolePermissionIds = signal<number[]>([]);
   protected readonly permissionSearch = signal('');
   protected readonly errorMessage = signal<string | null>(null);
@@ -103,6 +107,7 @@ export class CompanyRolesPermissionsPage {
     codigo: '',
     nombre: '',
     descripcion: '',
+    ambito: 'ERP',
     templateCode: null,
   };
 
@@ -120,6 +125,7 @@ export class CompanyRolesPermissionsPage {
       codigo: 'SUPERVISOR_OPERATIVO',
       nombre: 'Supervisor operativo',
       descripcion: 'Controla configuracion, inventario, clientes y caja sin tocar seguridad base.',
+      ambito: 'ERP',
       permisoCodigos: [
         'VENTAS_READ',
         'VENTAS_CANCEL',
@@ -140,6 +146,7 @@ export class CompanyRolesPermissionsPage {
       codigo: 'CAJA_VENTAS',
       nombre: 'Caja y ventas',
       descripcion: 'Atiende caja, clientes y operaciones de punto de venta.',
+      ambito: 'ERP',
       permisoCodigos: [
         'VENTAS_READ',
         'VENTAS_CREATE',
@@ -160,6 +167,7 @@ export class CompanyRolesPermissionsPage {
       codigo: 'INVENTARIO_OPERATIVO',
       nombre: 'Inventario operativo',
       descripcion: 'Gestiona productos, movimientos, stock y consultas de inventario.',
+      ambito: 'ERP',
       permisoCodigos: [
         'PRODUCTOS_READ',
         'INVENTORY_READ',
@@ -177,6 +185,7 @@ export class CompanyRolesPermissionsPage {
       codigo: 'CONSULTA_GENERAL',
       nombre: 'Consulta general',
       descripcion: 'Consulta informacion operativa sin registrar cambios.',
+      ambito: 'ERP',
       permisoCodigos: [
         'VENTAS_READ',
         'CAJA_READ',
@@ -269,11 +278,26 @@ export class CompanyRolesPermissionsPage {
     })),
   );
 
+  protected readonly scopeOptions = [
+    { label: 'ERP', value: 'ERP' },
+    { label: 'CRM', value: 'CRM' },
+    { label: 'Gobierno del tenant', value: 'TENANT' },
+    { label: 'Compartido: clientes y cotizaciones', value: 'SHARED' },
+  ] satisfies { label: string; value: Exclude<RoleScope, 'MIXED'> }[];
+
   protected readonly createPermissionGroups = computed(() =>
-    this.groupPermissions(this.sortedPermisos()),
+    this.groupPermissions(
+      this.sortedPermisos().filter((permission) =>
+        this.isPermissionInScope(this.createRoleScope(), permission.modulo),
+      ),
+    ),
   );
   protected readonly selectedRolePermissionGroups = computed(() =>
-    this.groupPermissions(this.sortedPermisos()),
+    this.groupPermissions(
+      this.sortedPermisos().filter((permission) =>
+        this.isPermissionInScope(this.selectedRol()?.ambito ?? 'MIXED', permission.modulo),
+      ),
+    ),
   );
   protected readonly visibleSelectedRolePermissionGroups = computed(() => {
     const query = this.permissionSearch().trim().toLowerCase();
@@ -291,7 +315,7 @@ export class CompanyRolesPermissionsPage {
   });
   protected readonly permissionMatrix = computed<PermissionMatrixRow[]>(() => {
     const query = this.permissionSearch().trim().toLowerCase();
-    const rows = this.groupPermissions(this.sortedPermisos()).map((group) => {
+    const rows = this.selectedRolePermissionGroups().map((group) => {
       const permissionsByAction: Record<PermissionAction, Permiso[]> = {
         read: [],
         create: [],
@@ -330,6 +354,12 @@ export class CompanyRolesPermissionsPage {
   );
   protected readonly systemRolesCount = computed(
     () => this.roles().filter((rol) => rol.sistema).length,
+  );
+  protected readonly erpRolesCount = computed(
+    () => this.roles().filter((rol) => rol.ambito === 'ERP' && !rol.deprecated).length,
+  );
+  protected readonly crmRolesCount = computed(
+    () => this.roles().filter((rol) => rol.ambito === 'CRM' && !rol.deprecated).length,
   );
   protected readonly customPermissionsCount = computed(
     () => this.permisos().filter((permiso) => !permiso.sistema).length,
@@ -417,8 +447,10 @@ export class CompanyRolesPermissionsPage {
       codigo: template.codigo,
       nombre: template.nombre,
       descripcion: template.descripcion,
+      ambito: template.ambito,
       templateCode,
     };
+    this.createRoleScope.set(template.ambito);
     this.createRolePermissionIds.set(this.resolvePermissionIds(template.permisoCodigos));
   }
 
@@ -452,6 +484,7 @@ export class CompanyRolesPermissionsPage {
           codigo: generatedCode,
           nombre: this.rolForm.nombre.trim(),
           descripcion: this.rolForm.descripcion.trim() || null,
+          ambito: this.rolForm.ambito,
         },
         { tenantId },
       )
@@ -467,7 +500,7 @@ export class CompanyRolesPermissionsPage {
         next: (role) => {
           this.successMessage.set(`Rol ${role.codigo} listo para asignar usuarios.`);
           this.roleDialogVisible.set(false);
-          this.rolForm = { codigo: '', nombre: '', descripcion: '', templateCode: null };
+          this.resetRoleForm();
           this.createRolePermissionIds.set([]);
           this.selectedRolId.set(role.id);
           this.load();
@@ -640,7 +673,7 @@ export class CompanyRolesPermissionsPage {
   protected openRoleDialog(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.rolForm = { codigo: '', nombre: '', descripcion: '', templateCode: null };
+    this.resetRoleForm();
     this.createRolePermissionIds.set([]);
     this.roleDialogVisible.set(true);
   }
@@ -667,7 +700,11 @@ export class CompanyRolesPermissionsPage {
       return;
     }
     this.selectedRolePermissionIds.set(
-      selected ? this.sortedPermisos().map((permiso) => permiso.id) : [],
+      selected
+        ? this.selectedRolePermissionGroups().flatMap((group) =>
+            group.permisos.map((permiso) => permiso.id),
+          )
+        : [],
     );
   }
 
@@ -754,6 +791,27 @@ export class CompanyRolesPermissionsPage {
     return permiso.sistema ? 'contrast' : 'success';
   }
 
+  protected onRoleScopeChange(scope: Exclude<RoleScope, 'MIXED'>): void {
+    this.rolForm.ambito = scope;
+    this.createRoleScope.set(scope);
+    this.rolForm.templateCode = null;
+    const allowedIds = new Set(
+      this.sortedPermisos()
+        .filter((permission) => this.isPermissionInScope(scope, permission.modulo))
+        .map((permission) => permission.id),
+    );
+    this.createRolePermissionIds.set(
+      this.createRolePermissionIds().filter((permissionId) => allowedIds.has(permissionId)),
+    );
+  }
+
+  protected roleScopeLabel(role: Rol): string {
+    if (role.ambito === 'TENANT') return 'Tenant';
+    if (role.ambito === 'SHARED') return 'Compartido';
+    if (role.ambito === 'MIXED') return 'Legado mixto';
+    return role.ambito;
+  }
+
   private refreshSelectedRolePermissions(): void {
     const role = this.selectedRol();
     this.selectedRolePermissionIds.set(role ? role.permisos.map((item) => item.id) : []);
@@ -790,6 +848,34 @@ export class CompanyRolesPermissionsPage {
         modulo,
         permisos: [...items].sort((a, b) => a.nombre.localeCompare(b.nombre)),
       }));
+  }
+
+  private isPermissionInScope(scope: RoleScope, moduleValue: string | null): boolean {
+    if (scope === 'MIXED') {
+      return true;
+    }
+    const module = (moduleValue || 'GENERAL').toUpperCase();
+    if (scope === 'TENANT') {
+      return ['GENERAL', 'SEGURIDAD', 'CONFIGURACION', 'SUCURSALES', 'SAAS_CORE', 'AUDITORIA'].includes(module);
+    }
+    if (scope === 'CRM') {
+      return ['CRM', 'CLIENTES', 'COTIZACIONES'].includes(module);
+    }
+    if (scope === 'SHARED') {
+      return ['CLIENTES', 'COTIZACIONES'].includes(module);
+    }
+    return module !== 'CRM';
+  }
+
+  private resetRoleForm(): void {
+    this.rolForm = {
+      codigo: '',
+      nombre: '',
+      descripcion: '',
+      ambito: 'ERP',
+      templateCode: null,
+    };
+    this.createRoleScope.set('ERP');
   }
 
   private resolvePermissionAction(code: string): PermissionAction {

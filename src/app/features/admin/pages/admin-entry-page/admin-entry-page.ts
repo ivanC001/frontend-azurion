@@ -10,7 +10,8 @@ import { AuthSessionService } from '@core/auth/auth-session.service';
 })
 export class AdminEntryPage implements OnInit {
   private readonly router = inject(Router);
-  private readonly session = inject(AuthSessionService).currentSession;
+  private readonly auth = inject(AuthSessionService);
+  private readonly session = this.auth.currentSession;
 
   ngOnInit(): void {
     const current = this.session();
@@ -19,8 +20,41 @@ export class AdminEntryPage implements OnInit {
       !!current?.adminGeneral ||
       roles.some((role) => role === 'ROLE_ADMIN_GENERAL' || role === 'ROLE_PLATFORM_ADMIN');
 
-    void this.router.navigate(['/admin/dashboard'], {
+    const target = this.resolveEntryRoute(isGeneral);
+    void this.router.navigate([target], {
       replaceUrl: true,
     });
+  }
+
+  private resolveEntryRoute(isGeneral: boolean): string {
+    if (isGeneral) {
+      return '/admin/control-empresas';
+    }
+    if (this.auth.hasModule('ERP')) {
+      return '/admin/dashboard';
+    }
+    if (this.auth.hasPermission('CRM_REPORTS_READ') || this.auth.hasPermission('CRM_REPORTS_TEAM')) {
+      return '/admin/crm';
+    }
+    if (this.auth.hasPermission('CRM_LEADS_READ')) {
+      return '/admin/crm/prospectos';
+    }
+    if (this.auth.hasPermission('CRM_ACTIVITIES_READ')) {
+      return '/admin/crm/seguimiento';
+    }
+    if (
+      this.auth.hasPermission('CRM_PIPELINE_READ') ||
+      this.auth.hasPermission('CRM_PIPELINE_VIEW') ||
+      this.auth.hasPermission('CRM_OPPORTUNITIES_READ')
+    ) {
+      return '/admin/crm/pipeline';
+    }
+    if (this.auth.hasPermission('CONFIGURACION_WRITE')) {
+      return '/admin/configuracion-empresa';
+    }
+    if (this.auth.hasPermission('USUARIOS_READ')) {
+      return '/admin/usuarios';
+    }
+    return '/admin/seguridad-empresa';
   }
 }

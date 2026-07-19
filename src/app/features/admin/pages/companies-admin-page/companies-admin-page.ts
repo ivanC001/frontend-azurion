@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Observable, forkJoin, of, switchMap } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
@@ -71,6 +72,7 @@ export class CompaniesAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly facturadorApi = inject(FacturadorApiService);
   private readonly apiUrl = inject(ApiUrlService);
+  private readonly router = inject(Router);
 
   protected readonly empresas = signal<Empresa[]>([]);
   protected readonly planes = signal<Plan[]>([]);
@@ -81,6 +83,8 @@ export class CompaniesAdminPage {
   protected readonly dialogVisible = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+  protected readonly searchTerm = signal('');
+  protected readonly statusFilter = signal<'TODAS' | 'ACTIVAS' | 'INACTIVAS'>('TODAS');
   private readonly assignableModuleCodes = new Set([
     'ERP',
     'INVENTARIO',
@@ -134,6 +138,27 @@ export class CompaniesAdminPage {
   );
 
   protected readonly moduleCount = computed(() => this.assignableModules().length);
+  protected readonly statusOptions = [
+    { label: 'Todas', value: 'TODAS' },
+    { label: 'Activas', value: 'ACTIVAS' },
+    { label: 'Inactivas', value: 'INACTIVAS' },
+  ];
+  protected readonly filteredCompanies = computed(() => {
+    const query = this.searchTerm().trim().toLocaleLowerCase();
+    const status = this.statusFilter();
+    return this.empresas().filter((empresa) => {
+      const matchesStatus =
+        status === 'TODAS' ||
+        (status === 'ACTIVAS' && empresa.activo) ||
+        (status === 'INACTIVAS' && !empresa.activo);
+      const matchesQuery =
+        !query ||
+        [empresa.razonSocial, empresa.ruc, empresa.tenantId, empresa.schemaName]
+          .filter(Boolean)
+          .some((value) => String(value).toLocaleLowerCase().includes(query));
+      return matchesStatus && matchesQuery;
+    });
+  });
 
   constructor() {
     this.loadData();
@@ -148,6 +173,16 @@ export class CompaniesAdminPage {
 
   protected closeCreateDialog(): void {
     this.dialogVisible.set(false);
+  }
+
+  protected setSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+  }
+
+  protected manageCompany(empresa: Empresa): void {
+    void this.router.navigate(['/admin/control-empresas'], {
+      queryParams: { empresaId: empresa.id },
+    });
   }
 
   protected generateTenantFields(): void {

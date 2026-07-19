@@ -57,10 +57,10 @@
   }
 
   <section class="stats-grid users-stats">
-    <article><span>Total usuarios</span><strong>{{ usuarios().length }}</strong></article>
-    <article><span>Con acceso</span><strong>{{ activeUsers() }}</strong></article>
-    <article><span>Inhabilitados</span><strong>{{ inactiveUsers() }}</strong></article>
-    <article><span>Roles disponibles</span><strong>{{ roles().length }}</strong></article>
+    <article class="user-stat"><i class="pi pi-users"></i><div><span>Total usuarios</span><strong>{{ usuarios().length }}</strong></div></article>
+    <article class="user-stat user-stat--green"><i class="pi pi-user"></i><div><span>Con acceso</span><strong>{{ activeUsers() }}</strong></div></article>
+    <article class="user-stat user-stat--red"><i class="pi pi-user-minus"></i><div><span>Inhabilitados</span><strong>{{ inactiveUsers() }}</strong></div></article>
+    <article class="user-stat user-stat--violet"><i class="pi pi-shield"></i><div><span>Roles disponibles</span><strong>{{ roles().length }}</strong></div></article>
   </section>
 
   <section class="table-panel">
@@ -206,7 +206,7 @@
               <input type="checkbox" [checked]="hasRole(role.codigo)" (change)="toggleRole(role.codigo)" />
               <span>
                 <strong>{{ role.nombre }}</strong>
-                <small>{{ role.descripcion || role.codigo }}</small>
+                <small>{{ role.ambito }} | {{ role.descripcion || role.codigo }}</small>
               </span>
             </label>
           }
@@ -270,7 +270,7 @@
               <input type="checkbox" [checked]="hasEditRole(role.codigo)" (change)="toggleEditRole(role.codigo)" />
               <span>
                 <strong>{{ role.nombre }}</strong>
-                <small>{{ role.descripcion || role.codigo }}</small>
+                <small>{{ role.ambito }} | {{ role.descripcion || role.codigo }}</small>
               </span>
             </label>
           }

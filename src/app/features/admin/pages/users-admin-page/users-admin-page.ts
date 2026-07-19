@@ -92,7 +92,7 @@ export class UsersAdminPage {
     password: '',
     nombres: '',
     email: '',
-    roles: this.session.currentSession()?.adminGeneral ? ['ADMIN_EMPRESA'] : ['VENDEDOR'],
+    roles: this.session.currentSession()?.adminGeneral ? ['ADMIN_EMPRESA'] : [],
     sucursalIds: [],
   };
   protected rolForm: RolForm = {
@@ -147,6 +147,13 @@ export class UsersAdminPage {
   protected readonly sortedRoles = computed(() =>
     [...this.roles()]
       .filter((role) => this.isGeneralAdmin() || role.codigo !== 'ADMIN_EMPRESA')
+      .filter((role) => !role.deprecated)
+      .filter((role) => {
+        if (this.isGeneralAdmin()) return true;
+        if (role.ambito === 'ERP') return this.session.hasModule('ERP');
+        if (role.ambito === 'CRM') return this.session.hasModule('CRM');
+        return true;
+      })
       .sort((a, b) => a.codigo.localeCompare(b.codigo)),
   );
   protected readonly sucursalOptions = computed(() =>
@@ -288,8 +295,10 @@ export class UsersAdminPage {
         (this.isGeneralAdmin()
           ? this.roles().find((role) => role.codigo === 'ADMIN_EMPRESA')
           : null) ??
-        this.roles().find((role) => role.codigo === 'VENDEDOR') ??
-        this.roles()[0];
+        (this.session.hasModule('CRM') && !this.session.hasModule('ERP')
+          ? this.sortedRoles().find((role) => role.codigo === 'CRM_VENDEDOR')
+          : this.sortedRoles().find((role) => role.codigo === 'ERP_VENDEDOR')) ??
+        this.sortedRoles()[0];
       this.form.roles = suggestedRole ? [suggestedRole.codigo] : [];
     }
 
@@ -538,6 +547,8 @@ export class UsersAdminPage {
           codigo: generatedCode,
           nombre: this.rolForm.nombre.trim(),
           descripcion: this.rolForm.descripcion.trim() || null,
+          ambito:
+            this.session.hasModule('CRM') && !this.session.hasModule('ERP') ? 'CRM' : 'ERP',
         },
         { tenantId },
       )

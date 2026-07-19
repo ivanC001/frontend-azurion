@@ -5,6 +5,11 @@
       <p>Gestiona saldos pendientes, cuotas vencidas y proximos cobros de clientes.</p>
     </div>
     <div class="payment-tracking-page__actions">
+      <button type="button" class="payment-action payment-action--soft" [class.is-active]="filtersOpen()" (click)="filtersOpen.set(!filtersOpen())">
+        <i class="pi pi-filter"></i>
+        Filtros
+        <i [class]="filtersOpen() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+      </button>
       <button type="button" class="payment-action payment-action--soft" (click)="exportRequested.emit()">
         <i class="pi pi-download"></i>
         Exportar
@@ -51,6 +56,7 @@
 
   <section class="payment-tracking-page__content">
     <div class="payment-tracking-page__main">
+      @if (filtersOpen()) {
       <section class="payment-filters">
         <label>
           Busqueda
@@ -99,6 +105,7 @@
           Limpiar
         </button>
       </section>
+      }
 
       <section class="payment-table-card">
         <nav class="payment-table-tabs">

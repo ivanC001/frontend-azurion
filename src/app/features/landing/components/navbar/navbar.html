@@ -2,7 +2,7 @@
   <div class="navbar__inner">
     <a class="brand" routerLink="/inicio" fragment="inicio" aria-label="AZURION inicio" (click)="closeMenu()">
       <span class="brand__mark">
-        <img src="assets/azurion-mark.png" alt="AZURION" />
+        <img src="assets/logosinfondo.png" alt="AZURION" />
       </span>
       <span class="brand__copy">
         <strong>AZURION</strong>
@@ -25,15 +25,12 @@
         @for (item of navItems; track item.label) {
           <a [routerLink]="['/inicio']" [fragment]="item.fragment" (click)="closeMenu()">
             {{ item.label }}
-            @if (item.label === 'Recursos') {
-              <i class="pi pi-angle-down"></i>
-            }
           </a>
         }
       </nav>
 
       <div class="navbar__actions">
-        <a class="nav-login" routerLink="/auth/login" (click)="closeMenu()">
+        <a class="nav-login" routerLink="/auth" (click)="closeMenu()">
           <i class="pi pi-user"></i>
           <span>Iniciar sesion</span>
         </a>

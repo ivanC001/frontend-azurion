@@ -40,7 +40,25 @@ export const routes: Routes = [
       import('@layouts/auth-layout/auth-layout').then((component) => component.AuthLayout),
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        data: { loginMode: 'tenant' },
+        loadComponent: () =>
+          import('@features/auth/pages/login-page/login-page').then(
+            (component) => component.LoginPage,
+          ),
+      },
+      {
         path: 'login',
+        data: { loginMode: 'general' },
+        loadComponent: () =>
+          import('@features/auth/pages/login-page/login-page').then(
+            (component) => component.LoginPage,
+          ),
+      },
+      {
+        path: 'empresa/login',
+        data: { loginMode: 'tenant' },
         loadComponent: () =>
           import('@features/auth/pages/login-page/login-page').then(
             (component) => component.LoginPage,
@@ -48,13 +66,6 @@ export const routes: Routes = [
       },
       {
         path: 'register',
-        loadComponent: () =>
-          import('@features/auth/pages/register-page/register-page').then(
-            (component) => component.RegisterPage,
-          ),
-      },
-      {
-        path: '',
         pathMatch: 'full',
         redirectTo: 'login',
       },
@@ -68,7 +79,12 @@ export const routes: Routes = [
   {
     path: 'register',
     pathMatch: 'full',
-    redirectTo: 'auth/register',
+    redirectTo: 'auth/login',
+  },
+  {
+    path: 'login-empresa',
+    pathMatch: 'full',
+    redirectTo: 'auth',
   },
   {
     path: 'dashboard',
@@ -91,6 +107,8 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
+        canActivate: [permissionGuard],
+        data: { module: 'ERP' },
         loadComponent: () =>
           import('@features/admin/pages/admin-dashboard-page/admin-dashboard-page').then(
             (component) => component.AdminDashboardPage,
@@ -98,6 +116,7 @@ export const routes: Routes = [
       },
       {
         path: 'empresas',
+        canActivate: [generalAdminGuard],
         loadComponent: () =>
           import('@features/admin/pages/companies-admin-page/companies-admin-page').then(
             (component) => component.CompaniesAdminPage,
@@ -105,6 +124,7 @@ export const routes: Routes = [
       },
       {
         path: 'planes',
+        canActivate: [generalAdminGuard],
         loadComponent: () =>
           import('@features/platform/pages/platform-plans-page/platform-plans-page').then(
             (component) => component.PlatformPlansPage,
@@ -112,6 +132,7 @@ export const routes: Routes = [
       },
       {
         path: 'control-empresas',
+        canActivate: [generalAdminGuard],
         loadComponent: () =>
           import('@features/platform/pages/platform-control-page/platform-control-page').then(
             (component) => component.PlatformControlPage,
@@ -119,7 +140,8 @@ export const routes: Routes = [
       },
       {
         path: 'configuracion-empresa',
-        data: { settingsView: 'tenant' },
+        canActivate: [permissionGuard],
+        data: { permission: 'CONFIGURACION_WRITE', settingsView: 'tenant' },
         loadComponent: () =>
           import('@features/company/pages/company-settings-page/company-settings-page').then(
             (component) => component.CompanySettingsPage,
@@ -130,7 +152,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: {
           permission: 'CONFIGURACION_WRITE',
-          module: 'FACTURACION',
+          module: ['ERP', 'FACTURACION'],
           settingsView: 'facturador',
         },
         loadComponent: () =>
@@ -141,7 +163,7 @@ export const routes: Routes = [
       {
         path: 'configuracion-tributaria',
         canActivate: [permissionGuard],
-        data: { permission: 'TRIBUTACION_READ' },
+        data: { permission: 'TRIBUTACION_READ', module: ['ERP', 'FACTURACION'] },
         loadComponent: () =>
           import('@features/admin/pages/tax-settings-page/tax-settings-page').then(
             (component) => component.TaxSettingsPage,
@@ -172,6 +194,8 @@ export const routes: Routes = [
       },
       {
         path: 'almacenes',
+        canActivate: [permissionGuard],
+        data: { permission: 'INVENTORY_READ', module: ['ERP', 'INVENTARIO'] },
         loadComponent: () =>
           import('@features/admin/pages/warehouses-admin-page/warehouses-admin-page').then(
             (component) => component.WarehousesAdminPage,
@@ -179,6 +203,8 @@ export const routes: Routes = [
       },
       {
         path: 'caja',
+        canActivate: [permissionGuard],
+        data: { permission: 'CAJA_READ', module: ['ERP', 'CAJA'] },
         loadComponent: () =>
           import('@features/admin/pages/cash-admin-page/cash-admin-page').then(
             (component) => component.CashAdminPage,
@@ -186,6 +212,8 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/nota-credito',
+        canActivate: [permissionGuard],
+        data: { permission: 'NOTA_CREDITO_CREATE', module: ['ERP', 'FACTURACION'] },
         loadComponent: () =>
           import('@features/admin/pages/sales-credit-note-page/sales-credit-note-page').then(
             (component) => component.SalesCreditNotePage,
@@ -193,6 +221,8 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/nota-debito',
+        canActivate: [permissionGuard],
+        data: { permission: 'NOTA_DEBITO_CREATE', module: ['ERP', 'FACTURACION'] },
         loadComponent: () =>
           import('@features/admin/pages/sales-debit-note-page/sales-debit-note-page').then(
             (component) => component.SalesDebitNotePage,
@@ -200,6 +230,8 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/guia-remision',
+        canActivate: [permissionGuard],
+        data: { permission: 'GUIA_REMISION_CREATE', module: ['ERP', 'FACTURACION'] },
         loadComponent: () =>
           import('@features/admin/pages/sales-remission-guide-page/sales-remission-guide-page').then(
             (component) => component.SalesRemissionGuidePage,
@@ -207,15 +239,65 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/cotizaciones',
+        canActivate: [permissionGuard],
+        data: { permission: 'COTIZACIONES_READ', module: 'COTIZACIONES' },
         loadComponent: () =>
           import('@features/admin/pages/sales-quotes-page/sales-quotes-page').then(
             (component) => component.SalesQuotesPage,
           ),
       },
       {
+        path: 'crm/whatsapp',
+        canActivate: [permissionGuard],
+        data: { anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'], module: 'CRM' },
+        loadComponent: () =>
+          import(
+            '@features/admin/pages/crm-admin-page/pages/whatsapp-inbox-page/whatsapp-inbox-page'
+          ).then((component) => component.WhatsappInboxPage),
+      },
+      {
+        path: 'crm/bandeja/facebook',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+          module: 'CRM',
+          inboxChannel: 'FACEBOOK',
+        },
+        loadComponent: () =>
+          import(
+            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
+          ).then((component) => component.ChannelInboxPage),
+      },
+      {
+        path: 'crm/bandeja/instagram',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+          module: 'CRM',
+          inboxChannel: 'INSTAGRAM',
+        },
+        loadComponent: () =>
+          import(
+            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
+          ).then((component) => component.ChannelInboxPage),
+      },
+      {
+        path: 'crm/bandeja/correo',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
+          module: 'CRM',
+          inboxChannel: 'CORREO',
+        },
+        loadComponent: () =>
+          import(
+            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
+          ).then((component) => component.ChannelInboxPage),
+      },
+      {
         path: 'crm/prospectos',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'captacion' },
+        data: { anyPermission: ['CRM_LEADS_READ'], module: 'CRM', initialTab: 'captacion' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -224,7 +306,7 @@ export const routes: Routes = [
       {
         path: 'crm/seguimiento',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'seguimiento' },
+        data: { anyPermission: ['CRM_ACTIVITIES_READ'], module: 'CRM', initialTab: 'seguimiento' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -233,7 +315,11 @@ export const routes: Routes = [
       {
         path: 'crm/pipeline',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'embudo' },
+        data: {
+          anyPermission: ['CRM_PIPELINE_READ', 'CRM_PIPELINE_VIEW', 'CRM_OPPORTUNITIES_READ'],
+          module: 'CRM',
+          initialTab: 'embudo',
+        },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -242,7 +328,7 @@ export const routes: Routes = [
       {
         path: 'crm/oportunidades',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'oportunidades' },
+        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'oportunidades' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -251,7 +337,11 @@ export const routes: Routes = [
       {
         path: 'crm/cotizaciones',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'oportunidades' },
+        data: {
+          anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_QUOTES_CREATE'],
+          module: 'CRM',
+          initialTab: 'oportunidades',
+        },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -260,7 +350,7 @@ export const routes: Routes = [
       {
         path: 'crm/negociacion',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'oportunidades' },
+        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'oportunidades' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -269,7 +359,7 @@ export const routes: Routes = [
       {
         path: 'crm/clientes',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'clientes' },
+        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'clientes' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -278,10 +368,31 @@ export const routes: Routes = [
       {
         path: 'crm/seguimiento-pagos',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'seguimientoPagos' },
+        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'seguimientoPagos' },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
+          ),
+      },
+      {
+        path: 'crm/resultados',
+        canActivate: [permissionGuard],
+        data: {
+          anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
+          module: 'CRM',
+        },
+        loadComponent: () =>
+          import('@features/admin/pages/crm-admin-page/pages/crm-outcomes-page/crm-outcomes-page').then(
+            (component) => component.CrmOutcomesPage,
+          ),
+      },
+      {
+        path: 'crm/reportes',
+        canActivate: [permissionGuard],
+        data: { anyPermission: ['CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'], module: 'CRM' },
+        loadComponent: () =>
+          import('@features/admin/pages/crm-admin-page/pages/crm-reports-page/crm-reports-page').then(
+            (component) => component.CrmReportsPage,
           ),
       },
       {
@@ -346,7 +457,11 @@ export const routes: Routes = [
       {
         path: 'crm',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_READ', module: 'CRM', initialTab: 'dashboard' },
+        data: {
+          anyPermission: ['CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
+          module: 'CRM',
+          initialTab: 'dashboard',
+        },
         loadComponent: () =>
           import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
             (component) => component.CrmAdminPage,
@@ -354,6 +469,8 @@ export const routes: Routes = [
       },
       {
         path: 'ventas/nueva',
+        canActivate: [permissionGuard],
+        data: { permission: 'VENTAS_CREATE', module: ['ERP', 'VENTAS'] },
         loadComponent: () =>
           import('@features/admin/pages/sales-pos-page/sales-pos-page').then(
             (component) => component.SalesPosPage,
@@ -361,6 +478,8 @@ export const routes: Routes = [
       },
       {
         path: 'ventas',
+        canActivate: [permissionGuard],
+        data: { permission: 'VENTAS_READ', module: ['ERP', 'VENTAS'] },
         loadComponent: () =>
           import('@features/admin/pages/sales-admin-page/sales-admin-page').then(
             (component) => component.SalesAdminPage,
@@ -368,6 +487,8 @@ export const routes: Routes = [
       },
       {
         path: 'productos',
+        canActivate: [permissionGuard],
+        data: { permission: 'PRODUCTOS_READ', module: ['ERP', 'INVENTARIO'] },
         loadComponent: () =>
           import('@features/admin/pages/products-admin-page/products-admin-page').then(
             (component) => component.ProductsAdminPage,
@@ -375,6 +496,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventarios',
+        canActivate: [permissionGuard],
+        data: { permission: 'INVENTORY_READ', module: ['ERP', 'INVENTARIO'] },
         loadComponent: () =>
           import('@features/admin/pages/inventory-admin-page/inventory-admin-page').then(
             (component) => component.InventoryAdminPage,
@@ -382,6 +505,12 @@ export const routes: Routes = [
       },
       {
         path: 'reportes',
+        canActivate: [permissionGuard],
+        data: {
+          permission: 'REPORTES_READ',
+          allPermissions: ['REPORTES_READ'],
+          module: ['ERP', 'REPORTES'],
+        },
         loadComponent: () =>
           import('@features/admin/pages/reports-admin-page/reports-admin-page').then(
             (component) => component.ReportsAdminPage,
@@ -389,6 +518,8 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
+        canActivate: [permissionGuard],
+        data: { permission: 'USUARIOS_READ' },
         loadComponent: () =>
           import('@features/admin/pages/users-admin-page/users-admin-page').then(
             (component) => component.UsersAdminPage,
@@ -396,6 +527,8 @@ export const routes: Routes = [
       },
       {
         path: 'clientes',
+        canActivate: [permissionGuard],
+        data: { permission: 'CLIENTES_READ', module: 'CLIENTES' },
         loadComponent: () =>
           import('@features/admin/pages/customers-admin-page/customers-admin-page').then(
             (component) => component.CustomersAdminPage,
@@ -403,6 +536,8 @@ export const routes: Routes = [
       },
       {
         path: 'sucursales',
+        canActivate: [permissionGuard],
+        data: { permission: 'SUCURSALES_READ' },
         loadComponent: () =>
           import('@features/admin/pages/branches-admin-page/branches-admin-page').then(
             (component) => component.BranchesAdminPage,

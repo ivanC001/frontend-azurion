@@ -1,106 +1,86 @@
 <section class="platform-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">Panel General</p>
-      <h1>Gestion de planes SaaS</h1>
-      <p>Registro y actualizacion de planes para controlar limites, precios y estado comercial.</p>
+      <p class="page-eyebrow">Administracion Azurion</p>
+      <h1>Planes y limites SaaS</h1>
+      <p>Administra la oferta comercial, capacidad mensual y disponibilidad de cada plan.</p>
     </div>
-    <div class="header-side">
-      <span>Activos: {{ activePlans() }}</span>
-      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
-    </div>
+    <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
   </header>
 
   @if (errorMessage()) {
-    <div class="alert alert--error">{{ errorMessage() }}</div>
+    <div class="alert alert--error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
   }
   @if (successMessage()) {
-    <div class="alert alert--success">{{ successMessage() }}</div>
+    <div class="alert alert--success"><i class="pi pi-check-circle"></i>{{ successMessage() }}</div>
   }
 
+  <section class="plan-metrics" aria-label="Resumen de planes">
+    <article class="metric metric--blue"><i class="pi pi-wallet"></i><div><span>Total planes</span><strong>{{ plans().length }}</strong><small>catalogo registrado</small></div></article>
+    <article class="metric metric--green"><i class="pi pi-check-circle"></i><div><span>Planes activos</span><strong>{{ activePlans() }}</strong><small>disponibles para contratar</small></div></article>
+    <article class="metric metric--amber"><i class="pi pi-pause-circle"></i><div><span>No disponibles</span><strong>{{ inactivePlans() }}</strong><small>suspendidos o inactivos</small></div></article>
+    <article class="metric metric--violet"><i class="pi pi-money-bill"></i><div><span>Valor del catalogo</span><strong>S/ {{ monthlyReference() | number: '1.2-2' }}</strong><small>suma mensual referencial</small></div></article>
+  </section>
+
   <div class="content-grid">
-    <form class="form-panel">
-      <h2>Nuevo plan</h2>
-      <label>
-        Nombre
-        <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Plan Business" />
-      </label>
-      <label>
-        Codigo
-        <input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="BUSINESS" />
-      </label>
-      <label>
-        Limite mensual
-        <input pInputText type="number" name="limiteMensualBolsa" [(ngModel)]="form.limiteMensualBolsa" />
-      </label>
-      <label>
-        Precio mensual
-        <input pInputText type="number" step="0.01" name="precioMensual" [(ngModel)]="form.precioMensual" />
-      </label>
-      <p-button label="Registrar plan" icon="pi pi-save" styleClass="az-primary save-btn" [loading]="saving()" (onClick)="createPlan()" />
+    <form class="form-panel" (submit)="$event.preventDefault(); createPlan()">
+      <div class="panel-title">
+        <span><i class="pi pi-plus"></i></span>
+        <div><h2>Crear plan</h2><p>Define una nueva opcion comercial.</p></div>
+      </div>
+      <label>Nombre<input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Plan Business" /></label>
+      <label>Codigo<input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="BUSINESS" /></label>
+      <div class="form-row">
+        <label>Limite mensual<input pInputText type="number" min="0" name="limiteMensualBolsa" [(ngModel)]="form.limiteMensualBolsa" /></label>
+        <label>Precio mensual<input pInputText type="number" min="0" step="0.01" name="precioMensual" [(ngModel)]="form.precioMensual" /></label>
+      </div>
+      <p-button type="submit" label="Registrar plan" icon="pi pi-save" styleClass="az-primary save-btn" [loading]="saving()" />
     </form>
 
     <section class="table-panel">
-      <p-table [value]="plans()" [loading]="loading()" responsiveLayout="scroll">
+      <div class="panel-title table-panel__title">
+        <span><i class="pi pi-list"></i></span>
+        <div><h2>Catalogo de planes</h2><p>Edita limites, precio y disponibilidad desde la misma fila.</p></div>
+      </div>
+      <p-table [value]="plans()" [loading]="loading()" [paginator]="plans().length > 10" [rows]="10" responsiveLayout="scroll">
         <ng-template pTemplate="header">
-          <tr>
-            <th>Codigo</th>
-            <th>Nombre</th>
-            <th>Limite</th>
-            <th>Precio</th>
-            <th>Estado</th>
-            <th>Accion</th>
-          </tr>
+          <tr><th>Codigo</th><th>Nombre</th><th>Limite</th><th>Precio mensual</th><th>Estado</th><th>Acciones</th></tr>
         </ng-template>
         <ng-template pTemplate="body" let-plan>
           <tr>
-            <td><strong>{{ plan.codigo }}</strong></td>
+            <td><span class="plan-code">{{ plan.codigo }}</span></td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
                 <input pInputText [(ngModel)]="edit.nombre" [ngModelOptions]="{ standalone: true }" />
-              } @else {
-                {{ plan.nombre }}
-              }
+              } @else { <strong>{{ plan.nombre }}</strong> }
             </td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
-                <input pInputText type="number" [(ngModel)]="edit.limiteMensualBolsa" [ngModelOptions]="{ standalone: true }" />
-              } @else {
-                {{ plan.limiteMensualBolsa }}
-              }
+                <input pInputText type="number" min="0" [(ngModel)]="edit.limiteMensualBolsa" [ngModelOptions]="{ standalone: true }" />
+              } @else { {{ plan.limiteMensualBolsa | number }} }
             </td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
-                <input pInputText type="number" step="0.01" [(ngModel)]="edit.precioMensual" [ngModelOptions]="{ standalone: true }" />
-              } @else {
-                S/ {{ plan.precioMensual }}
-              }
+                <input pInputText type="number" min="0" step="0.01" [(ngModel)]="edit.precioMensual" [ngModelOptions]="{ standalone: true }" />
+              } @else { <strong>S/ {{ plan.precioMensual | number: '1.2-2' }}</strong> }
             </td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
-                <p-select
-                  [options]="statusOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  [(ngModel)]="edit.estado"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-              } @else {
-                <p-tag [value]="plan.estado" [severity]="statusSeverity(plan.estado)" />
-              }
+                <p-select [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="edit.estado" [ngModelOptions]="{ standalone: true }" />
+              } @else { <p-tag [value]="plan.estado" [severity]="statusSeverity(plan.estado)" /> }
             </td>
             <td class="actions-cell">
               @if (editPlanId() === plan.id) {
-                <p-button label="Guardar" size="small" (onClick)="saveEdit(plan.id)" />
-                <p-button label="Cancelar" size="small" severity="secondary" (onClick)="cancelEdit()" />
+                <p-button icon="pi pi-check" title="Guardar cambios" size="small" (onClick)="saveEdit(plan.id)" />
+                <p-button icon="pi pi-times" title="Cancelar edicion" size="small" severity="secondary" (onClick)="cancelEdit()" />
               } @else {
-                <p-button label="Editar" size="small" severity="secondary" (onClick)="startEdit(plan)" />
+                <p-button icon="pi pi-pencil" title="Editar plan" size="small" severity="secondary" (onClick)="startEdit(plan)" />
               }
             </td>
           </tr>
         </ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td colspan="6">Todavia no hay planes registrados.</td></tr></ng-template>
       </p-table>
     </section>
   </div>
 </section>
-

@@ -25,7 +25,6 @@ export interface CreateEmpresaRequest {
 }
 
 export interface UpdateCurrentEmpresaBrandingRequest {
-  readonly logoPanelUrl?: string | null;
   readonly logoPanelFile?: File | null;
   readonly clearLogoPanel?: boolean;
 }
@@ -1354,6 +1353,29 @@ export interface CrmReportes {
   readonly prospectosDescartados: number;
 }
 
+export type CrmOportunidadRecursoTipo = 'REQUISITO' | 'PAGO' | 'DOCUMENTO' | 'CIERRE';
+
+export interface CrmOportunidadRecurso {
+  readonly id: number;
+  readonly oportunidadId: number;
+  readonly tipo: CrmOportunidadRecursoTipo;
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly hasArchivo: boolean;
+  readonly archivoNombre?: string | null;
+  readonly archivoMimeType?: string | null;
+  readonly archivoSize?: number | null;
+  readonly createdBy: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export interface CrmResultadosResumen {
+  readonly ganadas: number;
+  readonly perdidas: number;
+  readonly montoGanado: number;
+  readonly montoPerdido: number;
+}
+
 export interface CrmCanalTokenConfig {
   readonly id?: number | null;
   readonly canal: 'WEB' | 'WHATSAPP' | 'INSTAGRAM' | 'FACEBOOK' | string;
@@ -1362,9 +1384,29 @@ export interface CrmCanalTokenConfig {
   readonly verifyToken?: string | null;
   readonly webhookUrl?: string | null;
   readonly appId?: string | null;
+  readonly appSecret?: string | null;
   readonly phoneNumberId?: string | null;
+  readonly wabaId?: string | null;
+  readonly accessTokenConfigured?: boolean;
+  readonly verifyTokenConfigured?: boolean;
+  readonly appSecretConfigured?: boolean;
+  readonly webhookVerifiedAt?: string | null;
+  readonly lastConnectionTestAt?: string | null;
+  readonly lastConnectionOk?: boolean | null;
+  readonly lastConnectionMessage?: string | null;
+  readonly wabaSubscribed?: boolean | null;
+  readonly metaDisplayPhoneNumber?: string | null;
+  readonly metaVerifiedName?: string | null;
+  readonly metaQualityRating?: string | null;
+  readonly metaTokenExpiresAt?: string | null;
   readonly activo: boolean;
   readonly metadataJson?: string | null;
+}
+
+export interface CrmInboxChannelAvailability {
+  readonly canal: 'WHATSAPP' | 'FACEBOOK' | 'INSTAGRAM' | 'CORREO' | string;
+  readonly nombre: string;
+  readonly activo: boolean;
 }
 
 export interface UpdateCrmCanalTokenConfigRequest {
@@ -1374,9 +1416,82 @@ export interface UpdateCrmCanalTokenConfigRequest {
   readonly verifyToken?: string | null;
   readonly webhookUrl?: string | null;
   readonly appId?: string | null;
+  readonly appSecret?: string | null;
   readonly phoneNumberId?: string | null;
+  readonly wabaId?: string | null;
   readonly activo?: boolean | null;
   readonly metadataJson?: string | null;
+}
+
+export interface WhatsappVerifyTokenResponse {
+  readonly verifyToken: string;
+  readonly generadoEn: string;
+}
+
+export interface WhatsappConnectionStatus {
+  readonly activo: boolean;
+  readonly configuracionCompleta: boolean;
+  readonly accesoMetaValido: boolean;
+  readonly wabaSuscrita: boolean;
+  readonly webhookVerificado: boolean;
+  readonly conectado: boolean;
+  readonly displayPhoneNumber?: string | null;
+  readonly verifiedName?: string | null;
+  readonly qualityRating?: string | null;
+  readonly tokenExpiresAt?: string | null;
+  readonly permissions: string[];
+  readonly message?: string | null;
+  readonly testedAt?: string | null;
+  readonly webhookVerifiedAt?: string | null;
+}
+
+export interface CrmWhatsappMessage {
+  readonly id: number;
+  readonly prospectoId?: number | null;
+  readonly metaMessageId: string;
+  readonly direccion: 'ENTRANTE' | 'SALIENTE' | string;
+  readonly remitente?: string | null;
+  readonly destinatario?: string | null;
+  readonly tipoMensaje: string;
+  readonly contenido?: string | null;
+  readonly estado: string;
+  readonly mensajeEn?: string | null;
+  readonly leidoEn?: string | null;
+  readonly createdAt?: string | null;
+}
+
+export interface CrmWhatsappConversation {
+  readonly id: number;
+  readonly prospectoId: number;
+  readonly nombre: string;
+  readonly telefono?: string | null;
+  readonly correo?: string | null;
+  readonly direccion?: string | null;
+  readonly origen?: string | null;
+  readonly canalIngreso?: string | null;
+  readonly campania?: string | null;
+  readonly interesPrincipal?: string | null;
+  readonly estadoProspecto?: string | null;
+  readonly nivelInteres?: string | null;
+  readonly responsableId?: string | null;
+  readonly estadoConversacion: 'ABIERTA' | 'RESUELTA' | 'ARCHIVADA' | string;
+  readonly noLeidos: number;
+  readonly ultimoMensaje?: string | null;
+  readonly ultimaDireccion?: string | null;
+  readonly ultimoMensajeEn?: string | null;
+  readonly notaInterna?: string | null;
+}
+
+export interface CrmWhatsappConversationFilters {
+  readonly query?: string | null;
+  readonly estado?: string | null;
+  readonly soloNoLeidas?: boolean;
+  readonly soloMias?: boolean;
+}
+
+export interface SendCrmWhatsappMessageRequest {
+  readonly mensaje: string;
+  readonly previewUrl?: boolean | null;
 }
 
 export interface CrmCurrencyConfig {
@@ -1437,13 +1552,17 @@ export interface CreateUsuarioTenantRequest {
   readonly sucursalIds?: number[];
 }
 
+export type RoleScope = 'TENANT' | 'ERP' | 'CRM' | 'SHARED' | 'MIXED';
+
 export interface Rol {
   readonly id: number;
   readonly codigo: string;
   readonly nombre: string;
   readonly descripcion: string | null;
+  readonly ambito: RoleScope;
   readonly activo: boolean;
   readonly sistema: boolean;
+  readonly deprecated: boolean;
   readonly editable: boolean;
   readonly eliminable: boolean;
   readonly gestionaPermisos: boolean;
@@ -1466,6 +1585,7 @@ export interface CreateRolRequest {
   readonly codigo: string;
   readonly nombre: string;
   readonly descripcion?: string | null;
+  readonly ambito: Exclude<RoleScope, 'MIXED'>;
 }
 
 export interface CreatePermisoRequest {
@@ -1523,9 +1643,6 @@ export class AdminSaasApiService {
   updateCurrentEmpresaBranding(request: UpdateCurrentEmpresaBrandingRequest) {
     const formData = new FormData();
 
-    if (request.logoPanelUrl && request.logoPanelUrl.trim()) {
-      formData.set('logoPanelUrl', request.logoPanelUrl.trim());
-    }
     if (request.logoPanelFile) {
       formData.set('logoPanelFile', request.logoPanelFile, request.logoPanelFile.name);
     }
@@ -2373,11 +2490,131 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmInboxChannels() {
+    return this.http
+      .get<ApiResponse<CrmInboxChannelAvailability[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/canales'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   saveCrmIntegracion(request: UpdateCrmCanalTokenConfigRequest) {
     return this.http
       .put<ApiResponse<CrmCanalTokenConfig>>(this.apiUrl.url('saasCore', '/v1/saas/crm/integraciones'), request, {
         headers: this.session.apiHeaders(),
       })
+      .pipe(map((response) => response.data));
+  }
+
+  generateCrmWhatsappVerifyToken() {
+    return this.http
+      .post<ApiResponse<WhatsappVerifyTokenResponse>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/verify-token'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  testCrmWhatsappConnection() {
+    return this.http
+      .post<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/probar'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmWhatsappConnectionStatus() {
+    return this.http
+      .get<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/estado'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmWhatsappConversations(filters: CrmWhatsappConversationFilters = {}) {
+    let params = new HttpParams();
+    if (filters.query?.trim()) {
+      params = params.set('query', filters.query.trim());
+    }
+    if (filters.estado?.trim()) {
+      params = params.set('estado', filters.estado.trim());
+    }
+    if (filters.soloNoLeidas) {
+      params = params.set('soloNoLeidas', true);
+    }
+    if (filters.soloMias) {
+      params = params.set('soloMias', true);
+    }
+
+    return this.http
+      .get<ApiResponse<CrmWhatsappConversation[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/conversaciones'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  markCrmWhatsappConversationRead(prospectoId: number) {
+    return this.http
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/leer`),
+        {},
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmWhatsappConversationStatus(prospectoId: number, estado: 'ABIERTA' | 'RESUELTA' | 'ARCHIVADA') {
+    return this.http
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/estado`),
+        { estado },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  assignCrmWhatsappConversation(prospectoId: number, responsableId: string | null) {
+    return this.http
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/asignacion`),
+        { responsableId },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmWhatsappConversationNote(prospectoId: number, nota: string | null) {
+    return this.http
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/nota`),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmWhatsappMessages(prospectoId: number) {
+    return this.http
+      .get<ApiResponse<CrmWhatsappMessage[]>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  sendCrmWhatsappMessage(prospectoId: number, request: SendCrmWhatsappMessageRequest) {
+    return this.http
+      .post<ApiResponse<CrmWhatsappMessage>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -2524,6 +2761,15 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmResultadosPage(request: CrmOportunidadPageRequest = {}) {
+    return this.http
+      .get<ApiResponse<PageResponse<CrmOportunidad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/resultados/page'), {
+        headers: this.session.apiHeaders(),
+        params: this.buildQueryParams(request),
+      })
+      .pipe(map((response) => response.data));
+  }
+
   listCrmSeguimientoPagosPage(request: CrmOportunidadPageRequest = {}) {
     return this.http
       .get<ApiResponse<PageResponse<CrmOportunidad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/pagos/seguimiento/page'), {
@@ -2629,6 +2875,68 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmOportunidadRecursos() {
+    return this.http
+      .get<ApiResponse<CrmOportunidadRecurso[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/oportunidades/recursos'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  createCrmOportunidadRecurso(
+    oportunidadId: number,
+    tipo: CrmOportunidadRecursoTipo,
+    data: Readonly<Record<string, unknown>>,
+    file?: File | null,
+  ) {
+    const formData = this.crmResourceFormData(tipo, data, file);
+    return this.http
+      .post<ApiResponse<CrmOportunidadRecurso>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos`),
+        formData,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmOportunidadRecurso(
+    oportunidadId: number,
+    resourceId: number,
+    tipo: CrmOportunidadRecursoTipo,
+    data: Readonly<Record<string, unknown>>,
+    file?: File | null,
+  ) {
+    const formData = this.crmResourceFormData(tipo, data, file);
+    return this.http
+      .put<ApiResponse<CrmOportunidadRecurso>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`),
+        formData,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  deleteCrmOportunidadRecurso(oportunidadId: number, resourceId: number) {
+    return this.http
+      .delete<ApiResponse<string>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  downloadCrmOportunidadRecurso(oportunidadId: number, resourceId: number, inline = false) {
+    return this.http.get(
+      this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}/archivo`),
+      {
+        headers: this.session.apiHeaders(),
+        params: new HttpParams().set('inline', inline),
+        responseType: 'blob',
+      },
+    );
+  }
+
   listCrmActividadesPage(request: CrmActividadPageRequest = {}) {
     return this.http
       .get<ApiResponse<PageResponse<CrmActividad>>>(this.apiUrl.url('saasCore', '/v1/saas/crm/actividades/page'), {
@@ -2703,6 +3011,14 @@ export class AdminSaasApiService {
   getCrmReporteProspectosOrigen() {
     return this.http
       .get<ApiResponse<CrmReporteBucket[]>>(this.apiUrl.url('saasCore', '/v1/saas/crm/reportes/prospectos-origen'), {
+        headers: this.session.apiHeaders(),
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmReporteGanadasPerdidas() {
+    return this.http
+      .get<ApiResponse<CrmResultadosResumen>>(this.apiUrl.url('saasCore', '/v1/saas/crm/reportes/ganadas-perdidas'), {
         headers: this.session.apiHeaders(),
       })
       .pipe(map((response) => response.data));
@@ -2897,6 +3213,23 @@ export class AdminSaasApiService {
       }
     });
     return params.keys().length ? params : undefined;
+  }
+
+  private crmResourceFormData(
+    tipo: CrmOportunidadRecursoTipo,
+    data: Readonly<Record<string, unknown>>,
+    file?: File | null,
+  ): FormData {
+    const formData = new FormData();
+    formData.set(
+      'metadata',
+      new Blob([JSON.stringify({ tipo, data })], { type: 'application/json' }),
+      'metadata.json',
+    );
+    if (file) {
+      formData.set('file', file, file.name);
+    }
+    return formData;
   }
 
   private cached<T>(

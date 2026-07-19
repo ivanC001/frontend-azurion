@@ -7,6 +7,7 @@ import type {
   CreateCrmOpportunityRequest,
   UpdateCrmOpportunityRequest,
 } from '../models';
+import type { CrmOportunidadRecursoTipo } from '../../../data/admin-saas-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class CrmOpportunityService {
@@ -66,5 +67,36 @@ export class CrmOpportunityService {
 
   createNegotiation(oportunidadId: number, request: CreateCrmNegotiationRequest) {
     return this.api.createCrmNegociacion(oportunidadId, request);
+  }
+
+  listResources() {
+    return this.api.listCrmOportunidadRecursos();
+  }
+
+  createResource(
+    oportunidadId: number,
+    tipo: CrmOportunidadRecursoTipo,
+    data: Readonly<Record<string, unknown>>,
+    file?: File | null,
+  ) {
+    return this.api.createCrmOportunidadRecurso(oportunidadId, tipo, data, file);
+  }
+
+  updateResource(
+    oportunidadId: number,
+    resourceId: number,
+    tipo: CrmOportunidadRecursoTipo,
+    data: Readonly<Record<string, unknown>>,
+    file?: File | null,
+  ) {
+    return this.api.updateCrmOportunidadRecurso(oportunidadId, resourceId, tipo, data, file);
+  }
+
+  deleteResource(oportunidadId: number, resourceId: number) {
+    return this.api.deleteCrmOportunidadRecurso(oportunidadId, resourceId);
+  }
+
+  downloadResource(oportunidadId: number, resourceId: number, inline = false) {
+    return this.api.downloadCrmOportunidadRecurso(oportunidadId, resourceId, inline);
   }
 }

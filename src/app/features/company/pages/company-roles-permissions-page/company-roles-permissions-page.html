@@ -26,6 +26,36 @@
     }
   </nav>
 
+  <section class="access-boundaries" aria-label="Limites de administracion">
+    @if (platformMode) {
+      <article class="access-boundary access-boundary--platform">
+        <i class="pi pi-globe"></i>
+        <div><strong>Plataforma Azurion</strong><span>ADMIN_GENERAL administra empresas, planes y seguridad global.</span></div>
+      </article>
+      <article class="access-boundary access-boundary--tenant">
+        <i class="pi pi-building"></i>
+        <div><strong>Gobierno del tenant</strong><span>ADMIN_EMPRESA administra usuarios, roles, sucursales y configuracion.</span></div>
+      </article>
+      <article class="access-boundary access-boundary--modules">
+        <i class="pi pi-th-large"></i>
+        <div><strong>Acceso por contrato</strong><span>ERP y CRM solo operan cuando el modulo correspondiente esta activo.</span></div>
+      </article>
+    } @else {
+      <article class="access-boundary access-boundary--tenant">
+        <i class="pi pi-shield"></i>
+        <div><strong>Administracion de empresa</strong><span>Gestiona al equipo sin heredar permisos operativos automaticamente.</span></div>
+      </article>
+      <article class="access-boundary access-boundary--erp">
+        <i class="pi pi-box"></i>
+        <div><strong>Roles ERP</strong><span>Ventas, caja, almacen, inventario y contabilidad.</span></div>
+      </article>
+      <article class="access-boundary access-boundary--crm">
+        <i class="pi pi-chart-line"></i>
+        <div><strong>Roles CRM</strong><span>Prospectos, seguimiento, oportunidades y postventa.</span></div>
+      </article>
+    }
+  </section>
+
   @if (errorMessage()) {
     <div class="alert alert--error">{{ errorMessage() }}</div>
   }
@@ -72,6 +102,16 @@
       <strong>{{ customRolesCount() }}</strong>
       <small>Listos para ajustarse por empresa y proceso.</small>
     </article>
+    <article class="stat-card stat-card--erp">
+      <span>Roles ERP</span>
+      <strong>{{ erpRolesCount() }}</strong>
+      <small>Acceso operativo solo cuando ERP esta contratado.</small>
+    </article>
+    <article class="stat-card stat-card--crm">
+      <span>Roles CRM</span>
+      <strong>{{ crmRolesCount() }}</strong>
+      <small>Captacion, seguimiento, pipeline y postventa.</small>
+    </article>
     <article class="stat-card">
       <span>Permisos personalizados</span>
       <strong>{{ customPermissionsCount() }}</strong>
@@ -102,6 +142,19 @@
             [ngModelOptions]="{ standalone: true }"
             placeholder="Selecciona una plantilla"
             [showClear]="true"
+          />
+        </label>
+
+        <label>
+          Ambito del rol
+          <p-select
+            [options]="scopeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="createRoleScope()"
+            (ngModelChange)="onRoleScopeChange($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Selecciona ERP, CRM o tenant"
           />
         </label>
 
@@ -283,6 +336,10 @@
               <span>{{ rol.descripcion || 'Sin descripcion registrada.' }}</span>
             </div>
             <div class="summary-tags">
+              <p-tag [value]="roleScopeLabel(rol)" severity="info" />
+              @if (rol.deprecated) {
+                <p-tag value="Legado: no asignar" severity="warn" />
+              }
               <p-tag [value]="rol.activo ? 'Activo' : 'Inactivo'" [severity]="rol.activo ? 'success' : 'danger'" />
               <p-tag [value]="rol.gestionaPermisos ? 'Editable' : 'Automatico'" [severity]="rol.gestionaPermisos ? 'info' : 'contrast'" />
             </div>
@@ -476,6 +533,19 @@
           [ngModelOptions]="{ standalone: true }"
           placeholder="Selecciona una plantilla"
           [showClear]="true"
+        />
+      </label>
+
+      <label>
+        Ambito del rol
+        <p-select
+          [options]="scopeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="createRoleScope()"
+          (ngModelChange)="onRoleScopeChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Selecciona ERP, CRM o tenant"
         />
       </label>
 

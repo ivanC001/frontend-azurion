@@ -1,4 +1,5 @@
-<main class="login-page">
+<main class="login-page login-page--single" [class.login-page--tenant]="loginMode === 'tenant'">
+  @if (loginMode === 'general') {
   <section class="access-panel access-panel--admin" aria-label="Acceso administrador AZURION">
     <a class="back-link" routerLink="/inicio">
       <i class="pi pi-arrow-left"></i>
@@ -109,8 +110,13 @@
     </footer>
   </section>
 
+  } @else {
   <section class="access-panel access-panel--tenant" aria-label="Acceso usuarios AZURION">
     <div class="tenant-stage">
+      <a class="back-link back-link--light" routerLink="/auth/login">
+        <i class="pi pi-arrow-left"></i>
+        <span>Acceso administrador</span>
+      </a>
       <a class="brand-lockup brand-lockup--light" routerLink="/inicio" aria-label="AZURION inicio">
         <img src="assets/logosinfondo.png" alt="AZURION" />
         <strong>AZURION</strong>
@@ -214,4 +220,5 @@
       </footer>
     </div>
   </section>
+  }
 </main>

@@ -1,4 +1,5 @@
 export * from './crm-followup.service';
+export * from './crm-inbox-channel-state.service';
 export * from './crm-live-update.service';
 export * from './crm-local-storage.service';
 export * from './crm-opportunity.service';

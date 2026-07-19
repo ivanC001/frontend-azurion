@@ -1,7 +1,5 @@
 .pricing {
-  background:
-    linear-gradient(180deg, #061429, #020617),
-    #020617;
+  background: #101827;
   color: #f8fafc;
   padding: 4.8rem 0;
 }
@@ -82,7 +80,7 @@
   }
 
   &.plan-card--featured {
-    background: linear-gradient(180deg, rgba(29, 78, 216, 0.92), rgba(8, 47, 73, 0.88));
+    background: #155fc9;
     border-color: rgba(56, 189, 248, 0.42);
     transform: translateY(-0.45rem);
 

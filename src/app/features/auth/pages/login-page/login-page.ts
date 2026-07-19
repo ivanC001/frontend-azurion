@@ -26,8 +26,8 @@ export class LoginPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  protected rememberAdmin = true;
-  protected rememberTenant = true;
+  protected rememberAdmin = false;
+  protected rememberTenant = false;
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected loginMode: 'general' | 'tenant' = 'general';
@@ -42,6 +42,8 @@ export class LoginPage implements OnInit {
   };
 
   ngOnInit(): void {
+    this.loginMode = this.route.snapshot.data['loginMode'] === 'tenant' ? 'tenant' : 'general';
+
     if (this.session.currentSession() && this.session.hasActiveSession()) {
       void this.router.navigateByUrl(this.resolvePostLoginUrl(), { replaceUrl: true });
       return;
@@ -112,7 +114,10 @@ export class LoginPage implements OnInit {
             return;
           }
 
-          this.session.setSession(response);
+          this.session.setSession(
+            response,
+            mode === 'general' ? this.rememberAdmin : this.rememberTenant,
+          );
           void this.router.navigateByUrl(this.resolvePostLoginUrl(), { replaceUrl: true });
         },
         error: (error: unknown) => {
@@ -151,10 +156,7 @@ export class LoginPage implements OnInit {
   }
 
   protected focusTenantAccess(): void {
-    this.switchMode('tenant');
-    window.requestAnimationFrame(() => {
-      document.getElementById('tenant-ruc')?.focus();
-    });
+    void this.router.navigate(['/auth']);
   }
 
   private resolveError(error: unknown): string {

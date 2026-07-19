@@ -80,6 +80,7 @@ export class BranchesAdminPage {
   protected readonly branchStats = computed(() => ({
     total: this.sucursales().length,
     active: this.sucursales().filter((item) => item.activo).length,
+    inactive: this.sucursales().filter((item) => !item.activo).length,
   }));
 
   constructor() {
