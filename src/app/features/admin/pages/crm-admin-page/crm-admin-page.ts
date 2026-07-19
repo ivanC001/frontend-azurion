@@ -6485,8 +6485,10 @@ export class CrmAdminPage {
       this.errorMessage.set('El precio final debe ser mayor a cero.');
       return;
     }
-    if (Number(this.negotiationForm.descuento || 0) < 0 || Number(this.negotiationForm.descuento || 0) > 100) {
-      this.errorMessage.set('El descuento debe estar entre 0 y 100%.');
+    const precioOriginal = Math.max(0, Number(this.negotiationForm.precioOriginal || 0));
+    const precioFinal = Math.max(0, Number(this.negotiationForm.precioFinal || 0));
+    if (precioOriginal > 0 && precioFinal > precioOriginal) {
+      this.errorMessage.set('El precio final no puede ser mayor al precio original.');
       return;
     }
     const isCredit = this.negotiationForm.formaPago === 'Credito';
@@ -6502,9 +6504,9 @@ export class CrmAdminPage {
       cotizacionId: this.negotiationForm.cotizacionId,
       estado: finalAgreement ? 'CLIENTE_CONFORME' : (this.negotiationForm.estado || null),
       solicitudCliente: this.negotiationForm.objecion || 'MEJOR_PRECIO',
-      precioOriginal: Number(this.negotiationForm.precioOriginal || 0),
-      descuento: Number(this.negotiationForm.descuento || 0),
-      precioFinal: Number(this.negotiationForm.precioFinal || 0),
+      precioOriginal,
+      descuento: Math.max(0, Math.round((precioOriginal - precioFinal) * 100) / 100),
+      precioFinal,
       formaPago: this.negotiationForm.formaPago.trim(),
       cuotas: Math.max(1, Number(this.negotiationForm.cuotas || 1)),
       fechaInicio: this.negotiationForm.fechaInicio || null,
