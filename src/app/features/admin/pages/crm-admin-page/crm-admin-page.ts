@@ -854,6 +854,7 @@ export class CrmAdminPage {
   public requirementForm: OpportunityRequirementForm = this.emptyOpportunityRequirementForm();
   public negotiationForm: OpportunityNegotiationForm = this.emptyOpportunityNegotiationForm();
   protected paymentForm: OpportunityPaymentForm = this.emptyOpportunityPaymentForm();
+  private paymentSelectedFile: File | null = null;
   protected clientCompletionForm: CrmClientCompletionDraft = this.emptyClientCompletionForm();
   public documentForm: OpportunityDocumentForm = this.emptyOpportunityDocumentForm();
 
@@ -6541,6 +6542,7 @@ export class CrmAdminPage {
     }
     this.selectedOpportunity.set(item);
     this.paymentForm = this.emptyOpportunityPaymentForm();
+    this.paymentSelectedFile = null;
     const pending = this.opportunityFinancialSummary(item).pending || Number(item.montoReal || item.montoEstimado || 0);
     if (plan.isCredit) {
       this.paymentForm.tipo = 'CUOTA';
@@ -6691,7 +6693,9 @@ export class CrmAdminPage {
       this.errorMessage.set('Para confirmar el pago selecciona el estado Pagado.');
       return;
     }
-    if (!this.paymentForm.archivoNombre || !this.paymentForm.archivoDataUrl) {
+    const file = this.paymentSelectedFile
+      ?? this.fileFromDataUrl(this.paymentForm.archivoDataUrl, this.paymentForm.archivoNombre);
+    if (!this.paymentForm.archivoNombre || !file) {
       this.errorMessage.set('Adjunta obligatoriamente el voucher o comprobante del pago.');
       return;
     }
@@ -6721,7 +6725,6 @@ export class CrmAdminPage {
       metodo: this.paymentForm.metodo.trim(),
       observacion: this.paymentForm.observacion.trim(),
     };
-    const file = this.fileFromDataUrl(this.paymentForm.archivoDataUrl, this.paymentForm.archivoNombre);
     const resourceId = Number(this.paymentForm.id);
     const request$ = this.paymentForm.id && Number.isFinite(resourceId)
       ? this.crmOpportunities.updateResource(opportunity.id, resourceId, 'PAGO', data, file)
@@ -6734,6 +6737,7 @@ export class CrmAdminPage {
           record,
           ...this.opportunityPaymentRecords().filter((item) => item.id !== record.id),
         ]);
+        this.paymentSelectedFile = null;
         this.opportunityPaymentDialogOpen.set(false);
         if (currentPlan.isCredit && !currentPlan.firstPaymentDone) {
           this.scheduleRemainingInstallments(opportunity);
@@ -6764,10 +6768,31 @@ export class CrmAdminPage {
   }
 
   protected onOpportunityPaymentFileSelected(event: Event): void {
-    this.readSmallFile(event, 5_000_000, (file, dataUrl) => {
-      this.paymentForm.archivoNombre = file.name;
-      this.paymentForm.archivoDataUrl = dataUrl;
-    });
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.paymentSelectedFile = null;
+    this.paymentForm = { ...this.paymentForm, archivoNombre: '', archivoDataUrl: '' };
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    const allowedExtensions = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.webp']);
+    if (!allowedExtensions.has(extension)) {
+      this.errorMessage.set('El comprobante debe ser PDF, PNG, JPG o WEBP.');
+      input.value = '';
+      return;
+    }
+    if (file.size <= 0 || file.size > 8 * 1024 * 1024) {
+      this.errorMessage.set('El comprobante debe pesar como maximo 8 MB.');
+      input.value = '';
+      return;
+    }
+    this.paymentSelectedFile = file;
+    this.paymentForm = {
+      ...this.paymentForm,
+      archivoNombre: file.name,
+      archivoDataUrl: '',
+    };
   }
 
   public openOpportunityDocumentDialog(item: CrmOportunidad): void {
