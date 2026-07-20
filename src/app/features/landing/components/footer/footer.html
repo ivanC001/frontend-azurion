@@ -17,7 +17,11 @@
       <nav aria-label="{{ group.title }}">
         <h3>{{ group.title }}</h3>
         @for (link of group.links; track link.label) {
-          <a [href]="link.href">{{ link.label }}</a>
+          @if (link.route) {
+            <a [routerLink]="link.route">{{ link.label }}</a>
+          } @else {
+            <a [href]="link.href">{{ link.label }}</a>
+          }
         }
       </nav>
     }

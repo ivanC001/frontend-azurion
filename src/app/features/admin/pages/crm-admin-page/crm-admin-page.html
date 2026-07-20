@@ -475,10 +475,14 @@
                           <span [class.ok]="status.accesoMetaValido"><i [class]="status.accesoMetaValido ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> Acceso a Meta</span>
                           <span [class.ok]="status.wabaSuscrita"><i [class]="status.wabaSuscrita ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> App suscrita a WABA</span>
                           <span [class.ok]="status.webhookVerificado"><i [class]="status.webhookVerificado ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> Webhook verificado</span>
+                          <span [class.ok]="status.lastWebhookAt"><i [class]="status.lastWebhookAt ? 'pi pi-check-circle' : 'pi pi-clock'"></i> Eventos recibidos</span>
                         </div>
                         <p>{{ status.message || (status.conectado ? 'WhatsApp esta conectado.' : 'La conexion aun esta incompleta.') }}</p>
                         @if (status.displayPhoneNumber || status.verifiedName) {
                           <small>{{ status.verifiedName || 'WhatsApp Business' }} · {{ status.displayPhoneNumber || 'Numero sin mostrar' }} @if (status.qualityRating) { · Calidad: {{ status.qualityRating }} }</small>
+                        }
+                        @if (status.lastWebhookAt) {
+                          <small>Ultimo webhook: {{ status.lastWebhookAt | date:'dd/MM/yyyy HH:mm' }} @if (status.lastInboundMessageAt) { · Ultimo mensaje: {{ status.lastInboundMessageAt | date:'dd/MM/yyyy HH:mm' }} }</small>
                         }
                       } @else {
                         <p>Aun no se ha comprobado la conexion con Meta.</p>
@@ -487,6 +491,10 @@
                         <button type="button" class="crm-whatsapp-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal || whatsappTesting()" (click)="saveCrmIntegration(integration)">
                           <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
                           {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
+                        </button>
+                        <button type="button" class="crm-whatsapp-subscribe" [disabled]="!canManageCrmConfig() || whatsappSubscribing() || integrationSaving() === integration.canal || !integration.accessTokenConfigured || !integration.appSecretConfigured || !integration.appId || !integration.wabaId || !integration.phoneNumberId" (click)="subscribeWhatsappApp()">
+                          <i [class]="whatsappSubscribing() ? 'pi pi-spin pi-spinner' : 'pi pi-link'"></i>
+                          {{ whatsappSubscribing() ? 'Suscribiendo...' : (whatsappConnectionStatus()?.wabaSuscrita ? 'Resuscribir app' : 'Suscribir app') }}
                         </button>
                         <button type="button" class="crm-whatsapp-test" [disabled]="!canManageCrmConfig() || whatsappTesting() || integrationSaving() === integration.canal" (click)="testWhatsappConnection()">
                           <i [class]="whatsappTesting() ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"></i>

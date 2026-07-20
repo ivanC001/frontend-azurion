@@ -1443,6 +1443,8 @@ export interface WhatsappConnectionStatus {
   readonly message?: string | null;
   readonly testedAt?: string | null;
   readonly webhookVerifiedAt?: string | null;
+  readonly lastWebhookAt?: string | null;
+  readonly lastInboundMessageAt?: string | null;
 }
 
 export interface CrmWhatsappMessage {
@@ -2521,6 +2523,16 @@ export class AdminSaasApiService {
     return this.http
       .post<ApiResponse<WhatsappConnectionStatus>>(
         this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/probar'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  subscribeCrmWhatsappApp() {
+    return this.http
+      .post<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/suscribir'),
         null,
         { headers: this.session.apiHeaders() },
       )

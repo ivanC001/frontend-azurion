@@ -1,8 +1,10 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 type FooterLink = {
   label: string;
-  href: string;
+  href?: string;
+  route?: string;
 };
 
 type FooterGroup = {
@@ -13,6 +15,7 @@ type FooterGroup = {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-footer',
+  imports: [RouterLink],
   templateUrl: './footer.html',
   styleUrl: './footer.scss',
 })
@@ -50,7 +53,7 @@ export class FooterComponent {
       title: 'Legal',
       links: [
         { label: 'Terminos y Condiciones', href: '#contacto' },
-        { label: 'Politica de Privacidad', href: '#contacto' },
+        { label: 'Politica de Privacidad', route: '/politica-de-privacidad' },
       ],
     },
     {

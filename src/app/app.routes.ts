@@ -32,6 +32,13 @@ export const routes: Routes = [
             (component) => component.CrmLeadPage,
           ),
       },
+      {
+        path: 'politica-de-privacidad',
+        loadComponent: () =>
+          import('@features/landing/pages/privacy-policy-page/privacy-policy-page').then(
+            (component) => component.PrivacyPolicyPage,
+          ),
+      },
     ],
   },
   {

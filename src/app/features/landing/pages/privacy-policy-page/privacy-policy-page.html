@@ -1,0 +1,253 @@
+<app-navbar />
+
+<main class="privacy-page">
+  <header class="privacy-hero">
+    <div class="section-shell privacy-hero__inner">
+      <div class="privacy-hero__copy">
+        <a class="privacy-back" routerLink="/inicio">
+          <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          Volver al inicio
+        </a>
+        <p class="privacy-kicker">
+          <i class="pi pi-lock" aria-hidden="true"></i> Privacidad y confianza
+        </p>
+        <h1>Política de Privacidad</h1>
+        <p>
+          Explicamos de forma clara qué datos personales trata AZURION, para qué se utilizan y cómo
+          puedes ejercer control sobre ellos.
+        </p>
+        <div class="privacy-meta">
+          <span
+            ><i class="pi pi-calendar" aria-hidden="true"></i> Actualizada: {{ updatedAt }}</span
+          >
+          <span><i class="pi pi-map-marker" aria-hidden="true"></i> Aplicable en Perú</span>
+        </div>
+      </div>
+
+      <div class="privacy-hero__seal" aria-label="Compromisos de privacidad">
+        <span class="privacy-hero__seal-icon"><i class="pi pi-shield"></i></span>
+        <strong>Tus datos bajo control</strong>
+        <ul>
+          <li><i class="pi pi-check-circle"></i> Uso limitado a fines informados</li>
+          <li><i class="pi pi-check-circle"></i> Acceso protegido por tenant</li>
+          <li><i class="pi pi-check-circle"></i> Derechos ARCO disponibles</li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <section class="section-shell privacy-layout">
+    <aside class="privacy-index" aria-label="Contenido de la política">
+      <div class="privacy-index__header">
+        <span>Contenido</span>
+        <button
+          type="button"
+          title="Imprimir política"
+          aria-label="Imprimir política"
+          (click)="printPolicy()"
+        >
+          <i class="pi pi-print"></i>
+        </button>
+      </div>
+      <nav>
+        @for (section of sections; track section.id) {
+          <a [href]="'#' + section.id">
+            <i class="pi {{ section.icon }}" aria-hidden="true"></i>
+            {{ section.label }}
+          </a>
+        }
+      </nav>
+    </aside>
+
+    <article class="privacy-document">
+      <div class="privacy-summary">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <p>
+          Esta política cubre el sitio público, las cuentas de usuario, el CRM, el ERP y las
+          integraciones habilitadas por cada empresa en AZURION.
+        </p>
+      </div>
+
+      <section id="alcance">
+        <span class="section-number">01</span>
+        <div>
+          <h2>Alcance y responsables</h2>
+          <p>
+            AZURION proporciona una plataforma empresarial para captación comercial, CRM, ERP,
+            cobranza y facturación. Tratamos los datos necesarios para operar la plataforma y
+            administrar las cuentas contratadas.
+          </p>
+          <p>
+            Cuando una empresa utiliza AZURION para registrar prospectos, clientes o trabajadores,
+            esa empresa decide las finalidades del tratamiento y actúa como responsable de dichos
+            datos. AZURION actúa como proveedor encargado del tratamiento conforme a sus
+            instrucciones y a la configuración de su tenant.
+          </p>
+        </div>
+      </section>
+
+      <section id="datos">
+        <span class="section-number">02</span>
+        <div>
+          <h2>Datos que tratamos</h2>
+          <p>Según las funciones utilizadas, podemos tratar las siguientes categorías:</p>
+          <ul>
+            <li>
+              <strong>Identificación y contacto:</strong> nombre, documento, teléfono, correo,
+              empresa y dirección.
+            </li>
+            <li>
+              <strong>Información comercial:</strong> productos de interés, campañas, cotizaciones,
+              oportunidades, pagos y actividades.
+            </li>
+            <li>
+              <strong>Conversaciones:</strong> mensajes y archivos enviados mediante WhatsApp,
+              correo u otros canales conectados.
+            </li>
+            <li>
+              <strong>Cuenta y seguridad:</strong> usuario, roles, permisos, sucursal, registros de
+              acceso y eventos de auditoría.
+            </li>
+            <li>
+              <strong>Datos técnicos:</strong> dirección IP, navegador, dispositivo, fecha, hora y
+              registros necesarios para diagnosticar incidentes.
+            </li>
+          </ul>
+          <p>
+            No solicitamos datos sensibles salvo que sean estrictamente necesarios y exista una base
+            legal válida.
+          </p>
+        </div>
+      </section>
+
+      <section id="finalidades">
+        <span class="section-number">03</span>
+        <div>
+          <h2>Para qué usamos los datos</h2>
+          <ul>
+            <li>Crear y administrar cuentas, empresas, usuarios, roles y sucursales.</li>
+            <li>
+              Gestionar leads, seguimiento, oportunidades, ventas, pagos y atención al cliente.
+            </li>
+            <li>Entregar mensajes solicitados y mantener el historial de las comunicaciones.</li>
+            <li>
+              Proteger el servicio, prevenir fraude, duplicidad, abuso y accesos no autorizados.
+            </li>
+            <li>
+              Cumplir obligaciones contractuales, tributarias, contables y legales aplicables.
+            </li>
+            <li>
+              Medir el funcionamiento del servicio y corregir errores sin utilizar el contenido para
+              fines incompatibles.
+            </li>
+          </ul>
+          <p>
+            El tratamiento se sustenta, según corresponda, en el consentimiento, la ejecución de un
+            contrato, el cumplimiento de una obligación legal o un interés legítimo debidamente
+            evaluado.
+          </p>
+        </div>
+      </section>
+
+      <section id="whatsapp" class="privacy-highlight">
+        <span class="section-number section-number--whatsapp"><i class="pi pi-whatsapp"></i></span>
+        <div>
+          <h2>WhatsApp Business y servicios de Meta</h2>
+          <p>
+            Si una empresa activa WhatsApp Business, AZURION recibe mediante webhooks los mensajes
+            enviados al número empresarial conectado. Podemos almacenar el número del remitente, su
+            nombre público, el contenido, los archivos adjuntos, los identificadores técnicos del
+            mensaje y los estados de entrega o lectura.
+          </p>
+          <p>
+            Utilizamos esa información para mostrar la conversación en el CRM, identificar o crear
+            el prospecto, asignar responsables y responder desde el canal autorizado. Meta también
+            trata información conforme a sus propias condiciones y políticas. AZURION no solicita ni
+            almacena la contraseña personal de WhatsApp del usuario.
+          </p>
+        </div>
+      </section>
+
+      <section id="comparticion">
+        <span class="section-number">05</span>
+        <div>
+          <h2>Proveedores y transferencias</h2>
+          <p>
+            Podemos utilizar proveedores de infraestructura, alojamiento, correo, almacenamiento,
+            mensajería, facturación y soporte. Solo reciben la información necesaria para prestar su
+            servicio y están sujetos a obligaciones de seguridad y confidencialidad.
+          </p>
+          <p>
+            No vendemos datos personales. La información podrá comunicarse cuando lo solicite una
+            autoridad competente, sea necesario proteger derechos o exista una obligación legal.
+            Algunos proveedores pueden operar fuera del Perú; en esos casos se aplican medidas
+            contractuales y técnicas razonables para proteger los datos.
+          </p>
+        </div>
+      </section>
+
+      <section id="conservacion">
+        <span class="section-number">06</span>
+        <div>
+          <h2>Conservación y seguridad</h2>
+          <p>
+            Conservamos la información durante la vigencia de la cuenta y por el tiempo necesario
+            para cumplir la finalidad informada, obligaciones legales, resolución de controversias y
+            protección frente a responsabilidades. Cada empresa debe configurar sus propios plazos
+            de conservación para la información incorporada al CRM o ERP.
+          </p>
+          <p>
+            Aplicamos aislamiento por tenant, control de acceso basado en roles y permisos,
+            autenticación, auditoría, cifrado en tránsito, validación de webhooks y respaldos.
+            Ningún sistema es infalible; ante un incidente relevante aplicaremos el procedimiento de
+            respuesta y las comunicaciones exigidas por la normativa aplicable.
+          </p>
+        </div>
+      </section>
+
+      <section id="derechos">
+        <span class="section-number">07</span>
+        <div>
+          <h2>Tus derechos</h2>
+          <p>
+            Puedes solicitar información, acceso, rectificación, actualización, inclusión,
+            cancelación u oposición respecto de tus datos personales y, cuando corresponda, revocar
+            tu consentimiento. Estos derechos se conocen como derechos ARCO.
+          </p>
+          <p>
+            Si tus datos fueron recopilados por una empresa que usa AZURION, presenta primero tu
+            solicitud ante esa empresa. También puedes escribirnos para identificar al responsable
+            adecuado. Podremos pedir información razonable para verificar tu identidad antes de
+            atender una solicitud.
+          </p>
+        </div>
+      </section>
+
+      <section id="contacto">
+        <span class="section-number">08</span>
+        <div>
+          <h2>Contacto y cambios en esta política</h2>
+          <p>
+            Para consultas de privacidad o solicitudes relacionadas con tus datos, escribe a
+            <a href="mailto:privacidad@azurion.tech">privacidad@azurion.tech</a> indicando tu
+            nombre, la empresa relacionada y el derecho que deseas ejercer.
+          </p>
+          <p>
+            Podemos actualizar esta política cuando cambien el servicio, las integraciones o las
+            obligaciones legales. Publicaremos la nueva versión en esta misma dirección e
+            indicaremos su fecha de actualización.
+          </p>
+          <div class="privacy-contact">
+            <span><i class="pi pi-envelope"></i></span>
+            <div>
+              <small>Canal de privacidad</small>
+              <a href="mailto:privacidad@azurion.tech">privacidad@azurion.tech</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+  </section>
+</main>
+
+<app-footer />

@@ -764,6 +764,7 @@ export class CrmAdminPage {
   protected readonly whatsappGeneratedVerifyToken = signal<string | null>(null);
   protected readonly whatsappTokenGenerating = signal(false);
   protected readonly whatsappTesting = signal(false);
+  protected readonly whatsappSubscribing = signal(false);
   protected readonly whatsappConnectionStatus = signal<WhatsappConnectionStatus | null>(null);
   protected readonly currencySaving = signal<string | null>(null);
   protected readonly activeTab = signal<CrmTab>('dashboard');
@@ -4523,6 +4524,28 @@ export class CrmAdminPage {
           } else {
             this.errorMessage.set(status.message || 'La configuracion de WhatsApp aun no esta completa.');
           }
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveWhatsappEndpointError(error)),
+      });
+  }
+
+  protected subscribeWhatsappApp(): void {
+    if (!this.canManageCrmConfig() || this.whatsappSubscribing()) {
+      return;
+    }
+    this.errorMessage.set(null);
+    this.whatsappSubscribing.set(true);
+    this.api.subscribeCrmWhatsappApp()
+      .pipe(finalize(() => this.whatsappSubscribing.set(false)))
+      .subscribe({
+        next: (status) => {
+          this.whatsappConnectionStatus.set(status);
+          this.crmIntegraciones.update((items) => items.map((item) => item.canal === 'WHATSAPP'
+            ? { ...item, wabaSubscribed: status.wabaSuscrita, lastConnectionOk: status.accesoMetaValido }
+            : item));
+          this.successMessage.set(status.wabaSuscrita
+            ? 'La aplicacion quedo suscrita al WABA. Configura ahora el webhook de Meta.'
+            : (status.message || 'Meta no confirmo la suscripcion al WABA.'));
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveWhatsappEndpointError(error)),
       });
