@@ -140,15 +140,39 @@
 }
 
 :host ::ng-deep .users-dialog,
-:host ::ng-deep .roles-dialog {
+:host ::ng-deep .roles-dialog,
+:host ::ng-deep .password-dialog {
   max-width: calc(100vw - 2rem);
   width: min(46rem, calc(100vw - 2rem));
 }
 
 :host ::ng-deep .users-dialog .p-dialog-content,
-:host ::ng-deep .roles-dialog .p-dialog-content {
+:host ::ng-deep .roles-dialog .p-dialog-content,
+:host ::ng-deep .password-dialog .p-dialog-content {
   max-height: calc(100dvh - 12rem);
   overflow-y: auto;
+}
+
+:host ::ng-deep .password-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+}
+
+.password-form {
+  display: grid;
+  gap: 0.9rem;
+
+  p {
+    color: var(--az-text-soft);
+    margin: 0;
+  }
+
+  label {
+    color: var(--az-text);
+    display: grid;
+    font-size: 0.84rem;
+    font-weight: 800;
+    gap: 0.4rem;
+  }
 }
 
 :host ::ng-deep .p-select,

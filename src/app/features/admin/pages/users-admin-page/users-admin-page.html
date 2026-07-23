@@ -128,6 +128,15 @@
               <button
                 type="button"
                 pButton
+                class="p-button-text p-button-help p-button-rounded"
+                icon="pi pi-key"
+                pTooltip="Cambiar contrasena"
+                tooltipPosition="top"
+                (click)="openPasswordDialog(item)"
+              ></button>
+              <button
+                type="button"
+                pButton
                 class="p-button-text p-button-rounded"
                 [class.p-button-warning]="item.activo"
                 [class.p-button-success]="!item.activo"
@@ -218,6 +227,49 @@
   <ng-template pTemplate="footer">
     <button type="button" pButton class="az-secondary p-button-outlined" (click)="userDialogVisible.set(false)">Cancelar</button>
     <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="save()">Registrar usuario</button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  header="Cambiar contrasena"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="passwordDialogVisible()"
+  (visibleChange)="passwordDialogVisible.set($event)"
+  styleClass="password-dialog"
+>
+  <form class="dialog-form password-form">
+    <p>Define una nueva contrasena para <strong>{{ passwordForm.username }}</strong>.</p>
+    <label>
+      Nueva contrasena
+      <input
+        pInputText
+        type="password"
+        name="newPassword"
+        [(ngModel)]="passwordForm.password"
+        minlength="8"
+        autocomplete="new-password"
+        placeholder="Minimo 8 caracteres"
+      />
+    </label>
+    <label>
+      Confirmar contrasena
+      <input
+        pInputText
+        type="password"
+        name="confirmPassword"
+        [(ngModel)]="passwordForm.confirmPassword"
+        minlength="8"
+        autocomplete="new-password"
+        placeholder="Repite la nueva contrasena"
+      />
+    </label>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button type="button" pButton class="az-secondary p-button-outlined" (click)="passwordDialogVisible.set(false)">Cancelar</button>
+    <button type="button" pButton class="az-primary" icon="pi pi-key" [loading]="saving()" (click)="savePassword()">Actualizar contrasena</button>
   </ng-template>
 </p-dialog>
 

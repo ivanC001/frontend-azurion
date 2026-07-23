@@ -69,11 +69,6 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    if (password.length < 8) {
-      this.errorMessage.set('La contrasena debe tener al menos 8 caracteres.');
-      return;
-    }
-
     const tenantId = mode === 'tenant' ? this.tenantCredentials.tenantId.trim() : '';
     if (mode === 'tenant' && !tenantId) {
       this.errorMessage.set('Debes ingresar el identificador fiscal o tenant de la empresa.');

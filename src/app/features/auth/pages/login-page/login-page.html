@@ -243,16 +243,16 @@
               />
             </label>
 
-            <label class="tenant-field-label" for="tenant-username">Correo electronico</label>
+            <label class="tenant-field-label" for="tenant-username">Usuario o correo electronico</label>
             <label class="field-shell field-shell--tenant">
               <i class="pi pi-envelope"></i>
               <input
                 id="tenant-username"
                 pInputText
-                type="email"
+                type="text"
                 name="tenantUsername"
                 autocomplete="username"
-                placeholder="tuusuario@empresa.com"
+                placeholder="admin o tuusuario@empresa.com"
                 [(ngModel)]="tenantCredentials.username"
               />
             </label>

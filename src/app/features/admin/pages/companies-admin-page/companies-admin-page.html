@@ -23,6 +23,21 @@
     </div>
   }
 
+  @if (initialCredentials(); as credentials) {
+    <section class="initial-credentials" aria-label="Credenciales iniciales del tenant">
+      <i class="pi pi-key"></i>
+      <div>
+        <strong>Administrador inicial creado</strong>
+        <p>
+          Tenant <code>{{ credentials.tenantId }}</code>
+          · Usuario <code>{{ credentials.username }}</code>
+          · Contrasena temporal <code>{{ credentials.password }}</code>
+        </p>
+        <small>Cambia esta contrasena desde Usuarios antes de entregar el acceso.</small>
+      </div>
+    </section>
+  }
+
   <div class="metrics">
     <article class="metric metric--blue">
       <i class="pi pi-building"></i>

@@ -48,6 +48,13 @@ interface EditUsuarioForm {
   sucursalIds: number[];
 }
 
+interface PasswordForm {
+  userId: number | null;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-users-admin-page',
@@ -84,6 +91,7 @@ export class UsersAdminPage {
   protected readonly userDialogVisible = signal(false);
   protected readonly roleDialogVisible = signal(false);
   protected readonly editDialogVisible = signal(false);
+  protected readonly passwordDialogVisible = signal(false);
   protected readonly searchTerm = signal('');
 
   protected form: UsuarioForm = {
@@ -109,6 +117,12 @@ export class UsersAdminPage {
     activo: true,
     roles: [],
     sucursalIds: [],
+  };
+  protected passwordForm: PasswordForm = {
+    userId: null,
+    username: '',
+    password: '',
+    confirmPassword: '',
   };
 
   protected readonly activeUsers = computed(
@@ -334,6 +348,67 @@ export class UsersAdminPage {
       sucursalIds: user.sucursales.map((sucursal) => sucursal.id),
     };
     this.editDialogVisible.set(true);
+  }
+
+  protected openPasswordDialog(user: UsuarioTenant): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.passwordForm = {
+      userId: user.id,
+      username: user.username,
+      password: '',
+      confirmPassword: '',
+    };
+    this.passwordDialogVisible.set(true);
+  }
+
+  protected savePassword(): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const tenantId = this.resolveTargetTenant();
+    if (!tenantId || !this.passwordForm.userId) {
+      this.errorMessage.set('Selecciona un tenant y un usuario validos.');
+      return;
+    }
+    if (this.passwordForm.password.length < 8) {
+      this.errorMessage.set('La nueva contrasena debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (this.passwordForm.password !== this.passwordForm.confirmPassword) {
+      this.errorMessage.set('La confirmacion de la contrasena no coincide.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.api
+      .updateUsuarioPassword(
+        this.passwordForm.userId,
+        { password: this.passwordForm.password },
+        { tenantId },
+      )
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.successMessage.set(`Contrasena de ${this.passwordForm.username} actualizada.`);
+          this.passwordDialogVisible.set(false);
+          this.passwordForm = {
+            userId: null,
+            username: '',
+            password: '',
+            confirmPassword: '',
+          };
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected toggleEditRole(roleCode: string): void {

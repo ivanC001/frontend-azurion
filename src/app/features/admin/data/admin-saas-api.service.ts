@@ -1668,6 +1668,10 @@ export interface UpdateUsuarioTenantRequest {
   readonly sucursalIds?: number[];
 }
 
+export interface UpdateUsuarioPasswordRequest {
+  readonly password: string;
+}
+
 export interface SyncUsuarioRolesRequest {
   readonly rolCodigos: string[];
 }
@@ -3323,6 +3327,23 @@ export class AdminSaasApiService {
     return this.http
       .put<ApiResponse<UsuarioTenant>>(
         this.apiUrl.url('saasCore', `/v1/saas/usuarios/${id}`),
+        request,
+        {
+          headers: this.session.apiHeaders(tenantId),
+        },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateUsuarioPassword(
+    id: number,
+    request: UpdateUsuarioPasswordRequest,
+    options: TenantScopedOptions = {},
+  ) {
+    const tenantId = options.tenantId?.trim() || null;
+    return this.http
+      .put<ApiResponse<string>>(
+        this.apiUrl.url('saasCore', `/v1/saas/usuarios/${id}/password`),
         request,
         {
           headers: this.session.apiHeaders(tenantId),

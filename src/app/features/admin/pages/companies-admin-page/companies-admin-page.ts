@@ -60,6 +60,12 @@ interface EmpresaCreationFlowResult {
   readonly facturadorMessage: string;
 }
 
+interface TenantInitialCredentials {
+  readonly tenantId: string;
+  readonly username: string;
+  readonly password: string;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-companies-admin-page',
@@ -89,6 +95,7 @@ export class CompaniesAdminPage {
   protected readonly dialogVisible = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
+  protected readonly initialCredentials = signal<TenantInitialCredentials | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<'TODAS' | 'ACTIVAS' | 'INACTIVAS'>('TODAS');
   private readonly assignableModuleCodes = new Set([
@@ -188,6 +195,7 @@ export class CompaniesAdminPage {
     this.form = this.createEmptyForm();
     this.errorMessage.set(null);
     this.successMessage.set(null);
+    this.initialCredentials.set(null);
     this.dialogVisible.set(true);
   }
 
@@ -354,9 +362,14 @@ export class CompaniesAdminPage {
         finalize(() => this.saving.set(false)),
       )
       .subscribe({
-        next: ({ suscripcionMessage, facturadorSynced, facturadorMessage }: EmpresaCreationFlowResult) => {
+        next: ({ empresa, suscripcionMessage, facturadorSynced, facturadorMessage }: EmpresaCreationFlowResult) => {
           this.dialogVisible.set(false);
           this.loadData();
+          this.initialCredentials.set({
+            tenantId: empresa.tenantId,
+            username: 'admin',
+            password: 'admin1',
+          });
 
           if (suscripcionMessage) {
             this.successMessage.set('Empresa registrada en AZURION.');
