@@ -76,12 +76,12 @@ export class LoginPage implements OnInit {
 
     const tenantId = mode === 'tenant' ? this.tenantCredentials.tenantId.trim() : '';
     if (mode === 'tenant' && !tenantId) {
-      this.errorMessage.set('Debes ingresar el RUC de la empresa.');
+      this.errorMessage.set('Debes ingresar el identificador fiscal o tenant de la empresa.');
       return;
     }
 
-    if (mode === 'tenant' && !/^[0-9]{11}$/.test(tenantId)) {
-      this.errorMessage.set('El RUC debe tener 11 digitos.');
+    if (mode === 'tenant' && !/^[A-Za-z0-9][A-Za-z0-9._/-]{2,39}$/.test(tenantId)) {
+      this.errorMessage.set('Ingresa un identificador fiscal o tenant valido.');
       return;
     }
 
@@ -107,7 +107,7 @@ export class LoginPage implements OnInit {
         next: (response) => {
           if (!response?.accessToken) {
             this.errorMessage.set(
-              'La respuesta del servidor no incluyo token. Verifica credenciales o RUC.',
+              'La respuesta del servidor no incluyo token. Verifica las credenciales y la empresa.',
             );
             return;
           }
@@ -148,7 +148,10 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    const normalized = input.value.replace(/[^0-9]/g, '').slice(0, 11);
+    const normalized = input.value
+      .toUpperCase()
+      .replace(/[^A-Z0-9._/-]/g, '')
+      .slice(0, 40);
     input.value = normalized;
     this.tenantCredentials.tenantId = normalized;
   }
@@ -214,11 +217,11 @@ export class LoginPage implements OnInit {
           fallbackMessage.includes('tenant requerido') ||
           fallbackMessage.includes('ruc')
         ) {
-          return 'Debes ingresar un RUC valido para iniciar sesion en empresa.';
+          return 'Debes ingresar un identificador fiscal o tenant valido.';
         }
 
         if (fallbackMessage.includes('credenciales') || fallbackMessage.includes('unauthorized')) {
-          return 'Credenciales o RUC invalidos. Verifique sus datos y, si persiste, comuniquese con el administrador.';
+          return 'Credenciales o empresa invalidas. Verifica los datos y, si persiste, comunicate con el administrador.';
         }
       }
 
@@ -227,7 +230,7 @@ export class LoginPage implements OnInit {
         fallbackMessage.includes('tenant') &&
         (fallbackMessage.includes('requerido') || fallbackMessage.includes('required'))
       ) {
-        return 'Este usuario pertenece a una empresa. Cambia a "Usuario Empresa", ingresa el RUC y vuelve a intentar.';
+        return 'Este usuario pertenece a una empresa. Cambia a "Usuario Empresa", identifica el tenant y vuelve a intentar.';
       }
 
       return apiError?.details?.[0] || apiError?.message || 'No se pudo iniciar sesion.';

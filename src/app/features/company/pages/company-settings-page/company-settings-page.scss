@@ -1,6 +1,6 @@
 .company-page { display: grid; gap: 0.8rem; min-width: 0; }
 .page-header { align-items: center; background: linear-gradient(135deg, var(--az-surface), color-mix(in srgb, var(--az-blue-soft) 72%, var(--az-surface))); border: 1px solid var(--az-border); border-radius: 0.95rem; display: flex; gap: 1rem; justify-content: space-between; padding: 0.9rem 1rem; }
-.page-header h1 { color: var(--az-text); font-size: clamp(1.2rem, 1.8vw, 1.55rem); margin: 0; }
+.page-header h1 { color: var(--az-text); font-size: 1.45rem; margin: 0; }
 .page-header p { color: var(--az-text-soft); line-height: 1.4; margin: 0.3rem 0 0; }
 .page-eyebrow { color: #087e8b !important; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; margin: 0 0 0.2rem !important; text-transform: uppercase; }
 .alert { align-items: center; border-radius: 0.75rem; display: flex; gap: 0.55rem; padding: 0.75rem 0.85rem; }
@@ -18,6 +18,28 @@
 .panel { background: var(--az-surface); border: 1px solid var(--az-border); border-radius: 0.9rem; display: grid; gap: 0.85rem; padding: 0.85rem; }
 .panel--identity { border-top: 3px solid #2563eb; }
 .panel--sunat { border-top: 3px solid #ef4444; }
+.tenant-profile-grid { display: grid; gap: 0.8rem; grid-template-columns: minmax(16rem, 19rem) minmax(0, 1fr); }
+.tenant-details-grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tenant-logo-card { align-content: start; background: var(--az-surface); }
+.profile-panel { align-content: start; min-width: 0; }
+.profile-panel--general { min-height: 100%; }
+.profile-panel__header { align-items: center; border-bottom: 1px solid var(--az-border); display: flex; gap: 0.62rem; padding-bottom: 0.65rem; }
+.profile-panel__header h2 { color: var(--az-text); font-size: 0.9rem; margin: 0; }
+.profile-panel__header p { color: var(--az-text-soft); font-size: 0.7rem; line-height: 1.35; margin: 0.1rem 0 0; }
+.profile-panel__icon { align-items: center; border-radius: 0.58rem; display: inline-flex; flex: 0 0 2rem; height: 2rem; justify-content: center; }
+.profile-panel__icon--blue { background: color-mix(in srgb, #2563eb 12%, var(--az-surface)); color: #2563eb; }
+.profile-panel__icon--green { background: color-mix(in srgb, #10b981 13%, var(--az-surface)); color: #059669; }
+.profile-panel__icon--purple { background: color-mix(in srgb, #8b5cf6 13%, var(--az-surface)); color: #7c3aed; }
+.profile-panel__icon--orange { background: color-mix(in srgb, #f59e0b 14%, var(--az-surface)); color: #d97706; }
+.profile-fields { display: grid; gap: 0.65rem; min-width: 0; }
+.profile-fields--general { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.profile-fields--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.profile-fields label { color: var(--az-text); display: grid; font-size: 0.71rem; font-weight: 800; gap: 0.3rem; min-width: 0; }
+.profile-fields .span-2 { grid-column: span 2; }
+.profile-fields input, .profile-fields select { background: var(--az-surface); border: 1px solid var(--az-border); border-radius: 0.55rem; color: var(--az-text); font: inherit; font-size: 0.78rem; font-weight: 650; height: 2.45rem; min-width: 0; padding: 0 0.65rem; width: 100%; }
+.profile-fields input:focus, .profile-fields select:focus { border-color: var(--az-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--az-blue) 15%, transparent); outline: none; }
+.profile-fields .status-input { background: color-mix(in srgb, #10b981 9%, var(--az-surface)); color: #047857; }
+.logo-help { color: var(--az-text-soft); display: grid; font-size: 0.68rem; gap: 0.12rem; }
 .panel__header { border-bottom: 1px solid var(--az-border); padding-bottom: 0.7rem; }
 .panel__header > div { align-items: center; display: flex; gap: 0.65rem; }
 .panel__header h2 { color: var(--az-text); font-size: 0.95rem; margin: 0; }
@@ -26,7 +48,7 @@
 .panel__icon--sunat { background: color-mix(in srgb, #ef4444 12%, var(--az-surface)); color: #dc2626; }
 .identity-body { display: grid; gap: 0.85rem; grid-template-columns: minmax(16rem, 19rem) 1fr; }
 .logo-grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.logo-card { align-content: start; background: var(--az-surface-hover); border: 1px solid var(--az-border); border-radius: 0.8rem; display: grid; gap: 0.75rem; padding: 0.8rem; }
+.logo-card { align-content: start; border: 1px solid var(--az-border); border-radius: 0.8rem; display: grid; gap: 0.75rem; padding: 0.8rem; }
 .logo-card label, .form-grid label { color: var(--az-text); display: grid; font-size: 0.78rem; font-weight: 800; gap: 0.35rem; }
 .logo-card small, .form-grid small { color: var(--az-text-soft); font-size: 0.72rem; font-weight: 650; }
 .logo-card__header { display: grid; gap: 0.18rem; }
@@ -60,5 +82,6 @@
 .section-title h3 { color: var(--az-text); font-size: 0.9rem; margin: 0; }
 .actions-bar { background: var(--az-surface); border: 1px solid var(--az-border); border-radius: 0.8rem; display: flex; justify-content: flex-end; padding: 0.65rem 0.75rem; position: sticky; bottom: 0.5rem; z-index: 2; }
 :host ::ng-deep { .p-select, .save-btn { width: 100%; } .save-btn { width: auto; } .p-password, .p-password input { width: 100%; } }
-@media (max-width: 980px) { .identity-body, .settings-grid { grid-template-columns: 1fr; } .logo-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .page-header { align-items: stretch; flex-direction: column; } .company-summary, .form-grid { grid-template-columns: 1fr; } .actions-bar, :host ::ng-deep .save-btn { width: 100%; } }
+@media (max-width: 1180px) { .tenant-details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tenant-details-grid .profile-panel:last-child { grid-column: 1 / -1; } .profile-fields--general { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 980px) { .identity-body, .settings-grid, .tenant-profile-grid { grid-template-columns: 1fr; } .logo-grid { grid-template-columns: 1fr; } .tenant-logo-card { grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr); } .tenant-logo-card .profile-panel__header, .tenant-logo-card .logo-help { grid-column: 1 / -1; } .tenant-logo-card .identity-logo { grid-row: 2 / span 3; } .profile-fields--general { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .page-header { align-items: stretch; flex-direction: column; } .page-header h1 { font-size: 1.25rem; } .company-summary, .form-grid, .tenant-details-grid, .profile-fields--general, .profile-fields--two { grid-template-columns: 1fr; } .tenant-details-grid .profile-panel:last-child, .profile-fields .span-2 { grid-column: auto; } .tenant-logo-card { display: grid; grid-template-columns: 1fr; } .tenant-logo-card .profile-panel__header, .tenant-logo-card .logo-help { grid-column: auto; } .tenant-logo-card .identity-logo { grid-row: auto; } .actions-bar, :host ::ng-deep .save-btn { width: 100%; } }

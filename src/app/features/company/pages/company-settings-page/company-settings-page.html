@@ -31,7 +31,7 @@
   <section class="company-summary" aria-label="Resumen de configuracion">
     @if (!isFacturadorView) {
       <article><i class="pi pi-building"></i><div><span>Empresa</span><strong>{{ form.business_name || 'Sin razon social' }}</strong></div></article>
-      <article><i class="pi pi-id-card"></i><div><span>RUC</span><strong>{{ form.ruc || 'No registrado' }}</strong></div></article>
+      <article><i class="pi pi-id-card"></i><div><span>{{ fiscalIdLabel() }}</span><strong>{{ form.ruc || 'No registrado' }}</strong></div></article>
       <article><i class="pi pi-image"></i><div><span>Logo del panel</span><strong>{{ panelLogoStatusLabel() }}</strong></div></article>
     } @else {
       <article><i class="pi pi-send"></i><div><span>Entorno SUNAT</span><strong>{{ isProductionMode() ? 'Produccion' : 'Beta' }}</strong></div></article>
@@ -42,30 +42,24 @@
 
   <div class="settings-grid settings-grid--single">
     @if (!isFacturadorView) {
-      <article class="panel panel--identity">
-      <header class="panel__header">
-        <div><span class="panel__icon"><i class="pi pi-id-card"></i></span><div><h2>Identidad del tenant</h2><p>Datos visibles y marca del panel administrativo.</p></div></div>
-      </header>
-
-      <div class="identity-body">
-        <section class="logo-card">
-          <div class="logo-card__header">
-            <strong>Tenant de la empresa</strong>
-            <small>Este logo aparece arriba a la izquierda en el panel. Si no subes uno, se muestra Azurion por defecto.</small>
-          </div>
+      <div class="tenant-profile-grid">
+        <article class="panel logo-card tenant-logo-card">
+          <header class="profile-panel__header">
+            <span class="profile-panel__icon profile-panel__icon--blue"><i class="pi pi-image"></i></span>
+            <div><h2>Logo de la empresa</h2><p>Aparecera en el sistema y documentos.</p></div>
+          </header>
 
           <div class="identity-logo" [class.identity-logo--fallback]="panelLogoLoadFailed() || !panelLogoPreviewUrl()">
-            <img [src]="panelLogoDisplayUrl()" alt="Logo panel administrativo" (error)="handlePanelLogoError($event)" />
+            <img [src]="panelLogoDisplayUrl()" alt="Logo de la empresa" (error)="handlePanelLogoError($event)" />
           </div>
           @if (panelLogoLoadFailed()) {
-            <small class="logo-warning">El logo guardado no esta disponible. Sube uno nuevo para reemplazarlo.</small>
+            <small class="logo-warning">El logo guardado no esta disponible. Sube uno nuevo.</small>
           }
           @if (clearPanelLogoRequested()) {
-            <small class="logo-warning">El logo actual se quitara cuando guardes la configuracion.</small>
+            <small class="logo-warning">El logo se eliminara cuando guardes.</small>
           }
 
           <label class="logo-upload">
-            <span>Subir logo del tenant</span>
             <input
               type="file"
               name="panel_logo_file"
@@ -73,42 +67,120 @@
               accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
               (change)="onPanelLogoFileSelected($event)"
             />
-            <span class="logo-upload__control">
-              <i class="pi pi-upload"></i>
-              Elegir logo
-            </span>
-            <small>PNG, JPG, JPEG o WEBP (max. 2MB)</small>
-            @if (panelLogoSelectedFileName()) {
-              <small>Archivo: {{ panelLogoSelectedFileName() }}</small>
-            } @else {
-              <small>Ningun archivo seleccionado</small>
-            }
+            <span class="logo-upload__control"><i class="pi pi-upload"></i>Cambiar logo</span>
           </label>
-
           @if (panelLogoPreviewUrl() || panelLogoSelectedFileName()) {
             <button type="button" class="logo-clear-button" [disabled]="saving()" (click)="clearPanelLogoSelection()">
-              <i class="pi pi-trash"></i>
-              Quitar logo
+              <i class="pi pi-trash"></i>Eliminar logo
             </button>
           }
-        </section>
+          <div class="logo-help">
+            <span>PNG, JPG, JPEG o WEBP</span>
+            <span>Tamano maximo: 2 MB</span>
+            <span>Recomendado: 512 x 512 px</span>
+          </div>
+        </article>
 
-        <div class="form-grid form-grid--identity">
-          <label>
-            RUC
-            <input pInputText maxlength="11" [(ngModel)]="form.ruc" name="ruc" [readonly]="true" />
-          </label>
-          <label>
-            Razon social
-            <input pInputText [(ngModel)]="form.business_name" name="business_name" />
-          </label>
-          <label>
-            Direccion fiscal
-            <input pInputText [(ngModel)]="form.direccion_fiscal" name="direccion_fiscal" placeholder="Av. Principal 123" />
-          </label>
-        </div>
+        <article class="panel profile-panel profile-panel--general">
+          <header class="profile-panel__header">
+            <span class="profile-panel__icon profile-panel__icon--green"><i class="pi pi-building"></i></span>
+            <div><h2>Informacion general</h2><p>Identificacion fiscal y domicilio principal del tenant.</p></div>
+          </header>
+          <div class="profile-fields profile-fields--general">
+            <label>
+              Tipo de identificador
+              <select [(ngModel)]="form.fiscal_document_type" name="fiscal_document_type">
+                @for (document of fiscalDocumentOptions; track document) { <option [value]="document">{{ document }}</option> }
+              </select>
+            </label>
+            <label>
+              {{ fiscalIdLabel() }}
+              <input pInputText maxlength="40" [(ngModel)]="form.ruc" name="ruc" autocomplete="off" />
+            </label>
+            <label>
+              Razon social
+              <input pInputText maxlength="180" [(ngModel)]="form.business_name" name="business_name" />
+            </label>
+            <label>
+              Nombre comercial
+              <input pInputText maxlength="180" [(ngModel)]="form.trade_name" name="trade_name" />
+            </label>
+            <label class="span-2">
+              Direccion fiscal
+              <input pInputText maxlength="240" [(ngModel)]="form.fiscal_address" name="fiscal_address" />
+            </label>
+            <label>
+              Distrito / Ciudad
+              <input pInputText maxlength="120" [(ngModel)]="form.district" name="district" />
+            </label>
+            <label>
+              Provincia / Region
+              <input pInputText maxlength="120" [(ngModel)]="form.province" name="province" />
+            </label>
+            <label>
+              Departamento / Estado
+              <input pInputText maxlength="120" [(ngModel)]="form.department" name="department" />
+            </label>
+            <label>
+              Pais
+              <select [ngModel]="form.country_code" (ngModelChange)="onCountryChanged($event)" name="country_code">
+                @for (country of countryOptions; track country.code) { <option [value]="country.code">{{ country.name }}</option> }
+              </select>
+            </label>
+            <label>
+              Estado
+              <input pInputText value="Activa" readonly class="status-input" />
+            </label>
+          </div>
+        </article>
       </div>
-      </article>
+
+      <div class="tenant-details-grid">
+        <article class="panel profile-panel">
+          <header class="profile-panel__header">
+            <span class="profile-panel__icon profile-panel__icon--blue"><i class="pi pi-address-book"></i></span>
+            <div><h2>Informacion de contacto</h2><p>Canales oficiales de la empresa.</p></div>
+          </header>
+          <div class="profile-fields profile-fields--two">
+            <label class="span-2">Correo principal<input pInputText type="email" maxlength="180" [(ngModel)]="form.primary_email" name="primary_email" /></label>
+            <label>Telefono<input pInputText maxlength="40" [(ngModel)]="form.phone" name="phone" /></label>
+            <label>Celular<input pInputText maxlength="40" [(ngModel)]="form.mobile" name="mobile" /></label>
+            <label class="span-2">Sitio web<input pInputText maxlength="220" [(ngModel)]="form.website" name="website" placeholder="https://empresa.com" /></label>
+            <label>Facebook<input pInputText maxlength="220" [(ngModel)]="form.facebook" name="facebook" /></label>
+            <label>Instagram<input pInputText maxlength="220" [(ngModel)]="form.instagram" name="instagram" /></label>
+          </div>
+        </article>
+
+        <article class="panel profile-panel">
+          <header class="profile-panel__header">
+            <span class="profile-panel__icon profile-panel__icon--purple"><i class="pi pi-user"></i></span>
+            <div><h2>Representante legal</h2><p>Persona responsable ante la organizacion.</p></div>
+          </header>
+          <div class="profile-fields profile-fields--two">
+            <label class="span-2">Nombre completo<input pInputText maxlength="180" [(ngModel)]="form.legal_representative_name" name="legal_representative_name" /></label>
+            <label>Tipo de documento<select [(ngModel)]="form.legal_representative_document_type" name="legal_representative_document_type">@for (document of representativeDocumentOptions; track document) { <option [value]="document">{{ document }}</option> }</select></label>
+            <label>Numero de documento<input pInputText maxlength="40" [(ngModel)]="form.legal_representative_document" name="legal_representative_document" /></label>
+            <label class="span-2">Cargo<input pInputText maxlength="120" [(ngModel)]="form.legal_representative_role" name="legal_representative_role" /></label>
+            <label>Correo<input pInputText type="email" maxlength="180" [(ngModel)]="form.legal_representative_email" name="legal_representative_email" /></label>
+            <label>Telefono<input pInputText maxlength="40" [(ngModel)]="form.legal_representative_phone" name="legal_representative_phone" /></label>
+          </div>
+        </article>
+
+        <article class="panel profile-panel">
+          <header class="profile-panel__header">
+            <span class="profile-panel__icon profile-panel__icon--orange"><i class="pi pi-globe"></i></span>
+            <div><h2>Configuracion regional</h2><p>Formatos aplicados en CRM y ERP.</p></div>
+          </header>
+          <div class="profile-fields profile-fields--two">
+            <label class="span-2">Zona horaria<select [(ngModel)]="form.timezone" name="timezone">@for (timezone of timezoneOptions; track timezone) { <option [value]="timezone">{{ timezone }}</option> }</select></label>
+            <label class="span-2">Idioma<select [(ngModel)]="form.language" name="language">@for (language of languageOptions; track language.value) { <option [value]="language.value">{{ language.label }}</option> }</select></label>
+            <label>Formato de fecha<select [(ngModel)]="form.date_format" name="date_format"><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></select></label>
+            <label>Formato de hora<select [(ngModel)]="form.time_format" name="time_format"><option value="24H">24 horas</option><option value="12H">12 horas</option></select></label>
+            <label>Moneda<select [ngModel]="form.currency_code" (ngModelChange)="onCurrencyChanged($event)" name="currency_code">@for (currency of currencyOptions; track currency.code) { <option [value]="currency.code">{{ currency.code }} - {{ currency.symbol }}</option> }</select></label>
+            <label>Simbolo de moneda<input pInputText maxlength="12" [(ngModel)]="form.currency_symbol" name="currency_symbol" /></label>
+          </div>
+        </article>
+      </div>
     }
 
     @if (isFacturadorView) {

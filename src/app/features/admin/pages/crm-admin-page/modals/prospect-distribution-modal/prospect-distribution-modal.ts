@@ -10,6 +10,8 @@ export interface ProspectDistributionPreviewItem {
   readonly assigned: number;
 }
 
+export type ProspectDistributionMode = 'MANUAL' | 'AUTOMATICO';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-prospect-distribution-modal',
@@ -26,10 +28,14 @@ export class ProspectDistributionModal {
   readonly selectedSellerIds = input<readonly string[]>([]);
   readonly preview = input<readonly ProspectDistributionPreviewItem[]>([]);
   readonly saving = input(false);
+  readonly mode = input<ProspectDistributionMode>('MANUAL');
+  readonly automaticEnabled = input(false);
 
   readonly closed = output<void>();
+  readonly modeChange = output<ProspectDistributionMode>();
   readonly sellerToggled = output<{ id: number | string; checked: boolean }>();
   readonly distributeRequested = output<void>();
+  readonly automaticConfigurationRequested = output<boolean>();
 
   protected isSellerSelected(id: number | string): boolean {
     return this.selectedSellerIds().includes(String(id));

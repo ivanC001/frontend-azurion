@@ -168,7 +168,8 @@
   padding-top: 0.4rem;
 
   label { color: var(--az-text); display: grid; font-size: 0.84rem; font-weight: 800; gap: 0.45rem; }
-  input { width: 100%; }
+  input, select { width: 100%; }
+  select { background: var(--az-surface); border: 1px solid var(--az-border); border-radius: 0.55rem; color: var(--az-text); font: inherit; font-weight: 650; min-height: 2.55rem; padding: 0 0.65rem; }
   small { color: var(--az-text-soft); font-weight: 600; }
 
   .check-field {

@@ -59,16 +59,22 @@
 :host-context(html.dark) .nav-link:hover,
 :host-context(html.dark) .nav-link.active-link,
 :host-context(html.dark) .nav-group-trigger:hover,
-:host-context(html.dark) .nav-group-open .nav-group-trigger {
+:host-context(html.dark) .nav-group-active .nav-group-trigger {
   background: rgba(70, 95, 255, 0.12);
   border-color: transparent;
   color: #7592ff;
 }
 
+:host-context(html.dark) .nav-group-open:not(.nav-group-active) .nav-group-trigger {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(148, 163, 184, 0.08);
+  color: #d0d5dd;
+}
+
 :host-context(html.dark) .nav-link:hover .nav-icon-wrap,
 :host-context(html.dark) .nav-link.active-link .nav-icon-wrap,
 :host-context(html.dark) .nav-group-trigger:hover .nav-icon-wrap,
-:host-context(html.dark) .nav-group-open .nav-group-trigger .nav-icon-wrap {
+:host-context(html.dark) .nav-group-active .nav-group-trigger .nav-icon-wrap {
   background: transparent;
   color: #7592ff;
 }
@@ -407,7 +413,12 @@
 }
 
 .nav-group-trigger {
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
   justify-content: space-between;
+  text-align: left;
+  width: 100%;
 }
 
 .nav-link-main {
@@ -449,16 +460,22 @@
 .nav-link:hover,
 .nav-link.active-link,
 .nav-group-trigger:hover,
-.nav-group-open .nav-group-trigger {
+.nav-group-active .nav-group-trigger {
   background: rgba(71, 92, 170, 0.22);
   border-color: rgba(93, 134, 255, 0.18);
   color: #ffffff;
 }
 
+.nav-group-open:not(.nav-group-active) .nav-group-trigger {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(148, 163, 184, 0.08);
+  color: #d7deea;
+}
+
 .nav-link:hover .nav-icon-wrap,
 .nav-link.active-link .nav-icon-wrap,
 .nav-group-trigger:hover .nav-icon-wrap,
-.nav-group-open .nav-group-trigger .nav-icon-wrap {
+.nav-group-active .nav-group-trigger .nav-icon-wrap {
   background: transparent;
   color: #8fb0ff;
 }
@@ -469,6 +486,7 @@
 }
 
 .nav-sub-link {
+  border: 1px solid transparent;
   color: #a7b4c6;
   font-size: 0.84rem;
   font-weight: 700;
@@ -478,8 +496,16 @@
 
 .nav-sub-link:hover,
 .nav-sub-link.active-link {
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(79, 124, 255, 0.14);
+  border-color: rgba(117, 146, 255, 0.2);
   color: #ffffff;
+}
+
+.nav-link:focus-visible,
+.nav-group-trigger:focus-visible,
+.nav-sub-link:focus-visible {
+  outline: 2px solid rgba(117, 146, 255, 0.72);
+  outline-offset: 2px;
 }
 
 .sidebar-footer {

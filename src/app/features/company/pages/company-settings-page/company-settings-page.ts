@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -24,6 +24,32 @@ import {
 interface CompanyConfigForm {
   ruc: string;
   business_name: string;
+  fiscal_document_type: string;
+  trade_name: string;
+  country_code: string;
+  country_name: string;
+  fiscal_address: string;
+  district: string;
+  province: string;
+  department: string;
+  primary_email: string;
+  phone: string;
+  mobile: string;
+  website: string;
+  facebook: string;
+  instagram: string;
+  legal_representative_name: string;
+  legal_representative_document_type: string;
+  legal_representative_document: string;
+  legal_representative_role: string;
+  legal_representative_email: string;
+  legal_representative_phone: string;
+  timezone: string;
+  language: string;
+  date_format: string;
+  time_format: string;
+  currency_code: string;
+  currency_symbol: string;
   sunat_mode: 'beta' | 'production';
   ruc_sol: string;
   usuario_sol: string;
@@ -59,7 +85,7 @@ export class CompanySettingsPage implements OnDestroy {
     : 'Configuracion del tenant';
   protected readonly pageDescription = this.isFacturadorView
     ? 'Configura SUNAT, certificado digital y el logo fiscal de los comprobantes.'
-    : 'Administra la identidad y el logo del panel de tu empresa.';
+    : 'Administra la identidad, contacto, representante legal y configuracion regional de tu empresa.';
   protected readonly saveLabel = this.isFacturadorView
     ? 'Guardar facturador'
     : 'Guardar tenant';
@@ -95,6 +121,46 @@ export class CompanySettingsPage implements OnDestroy {
   protected readonly sessionData = this.session.currentSession;
   protected readonly empresaContext = computed(() => this.sessionData()?.empresa ?? null);
 
+  protected readonly countryOptions = [
+    { code: 'PE', name: 'Peru', document: 'RUC', currency: 'PEN', symbol: 'S/', timezone: 'America/Lima', language: 'es-PE' },
+    { code: 'AR', name: 'Argentina', document: 'CUIT', currency: 'ARS', symbol: '$', timezone: 'America/Argentina/Buenos_Aires', language: 'es-AR' },
+    { code: 'BO', name: 'Bolivia', document: 'NIT', currency: 'BOB', symbol: 'Bs', timezone: 'America/La_Paz', language: 'es-BO' },
+    { code: 'BR', name: 'Brasil', document: 'CNPJ', currency: 'BRL', symbol: 'R$', timezone: 'America/Sao_Paulo', language: 'pt-BR' },
+    { code: 'CA', name: 'Canada', document: 'BN', currency: 'CAD', symbol: 'C$', timezone: 'America/Toronto', language: 'en-CA' },
+    { code: 'CL', name: 'Chile', document: 'RUT', currency: 'CLP', symbol: '$', timezone: 'America/Santiago', language: 'es-CL' },
+    { code: 'CO', name: 'Colombia', document: 'NIT', currency: 'COP', symbol: '$', timezone: 'America/Bogota', language: 'es-CO' },
+    { code: 'CR', name: 'Costa Rica', document: 'CEDULA', currency: 'CRC', symbol: 'CRC', timezone: 'America/Costa_Rica', language: 'es-CR' },
+    { code: 'EC', name: 'Ecuador', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Guayaquil', language: 'es-EC' },
+    { code: 'ES', name: 'Espana', document: 'NIF', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Madrid', language: 'es-ES' },
+    { code: 'US', name: 'Estados Unidos', document: 'EIN', currency: 'USD', symbol: '$', timezone: 'America/New_York', language: 'en-US' },
+    { code: 'FR', name: 'Francia', document: 'TVA', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Paris', language: 'fr-FR' },
+    { code: 'GT', name: 'Guatemala', document: 'NIT', currency: 'GTQ', symbol: 'Q', timezone: 'America/Guatemala', language: 'es-GT' },
+    { code: 'MX', name: 'Mexico', document: 'RFC', currency: 'MXN', symbol: '$', timezone: 'America/Mexico_City', language: 'es-MX' },
+    { code: 'PA', name: 'Panama', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Panama', language: 'es-PA' },
+    { code: 'PY', name: 'Paraguay', document: 'RUC', currency: 'PYG', symbol: 'Gs.', timezone: 'America/Asuncion', language: 'es-PY' },
+    { code: 'DO', name: 'Republica Dominicana', document: 'RNC', currency: 'DOP', symbol: 'RD$', timezone: 'America/Santo_Domingo', language: 'es-DO' },
+    { code: 'GB', name: 'Reino Unido', document: 'VAT', currency: 'GBP', symbol: 'GBP', timezone: 'Europe/London', language: 'en-GB' },
+    { code: 'UY', name: 'Uruguay', document: 'RUT', currency: 'UYU', symbol: '$U', timezone: 'America/Montevideo', language: 'es-UY' },
+    { code: 'VE', name: 'Venezuela', document: 'RIF', currency: 'VES', symbol: 'Bs', timezone: 'America/Caracas', language: 'es-VE' },
+  ] as const;
+  protected readonly fiscalDocumentOptions = ['RUC', 'NIT', 'RFC', 'RUT', 'CUIT', 'CNPJ', 'EIN', 'NIF', 'VAT', 'RNC', 'RIF', 'BN', 'OTRO'];
+  protected readonly representativeDocumentOptions = ['DNI', 'CE', 'PASAPORTE', 'NATIONAL ID', 'OTRO'];
+  protected readonly timezoneOptions = [...new Set(this.countryOptions.map((country) => country.timezone))];
+  protected readonly languageOptions = [
+    { value: 'es-PE', label: 'Espanol (Peru)' },
+    { value: 'es-MX', label: 'Espanol (Mexico)' },
+    { value: 'es-CO', label: 'Espanol (Colombia)' },
+    { value: 'es-AR', label: 'Espanol (Argentina)' },
+    { value: 'es-CL', label: 'Espanol (Chile)' },
+    { value: 'es-ES', label: 'Espanol (Espana)' },
+    { value: 'en-US', label: 'English (US)' },
+    { value: 'en-CA', label: 'English (Canada)' },
+    { value: 'en-GB', label: 'English (UK)' },
+    { value: 'pt-BR', label: 'Portugues (Brasil)' },
+    { value: 'fr-FR', label: 'Francais (France)' },
+  ] as const;
+  protected readonly currencyOptions = [...new Map(this.countryOptions.map((country) => [country.currency, { code: country.currency, symbol: country.symbol }])).values()];
+
   protected form: CompanyConfigForm = this.createEmptyForm();
 
   constructor() {
@@ -129,12 +195,22 @@ export class CompanySettingsPage implements OnDestroy {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: ({ empresa, facturador }) => {
-          this.hydrateBrandingFromEmpresa(empresa);
+          this.hydrateCompanyFromEmpresa(empresa);
           if (empresa) {
             this.session.updateEmpresaData({
               id: empresa.id,
               ruc: empresa.ruc,
               razonSocial: empresa.razonSocial,
+              tipoDocumentoFiscal: empresa.tipoDocumentoFiscal,
+              nombreComercial: empresa.nombreComercial,
+              paisCodigo: empresa.paisCodigo,
+              paisNombre: empresa.paisNombre,
+              zonaHoraria: empresa.zonaHoraria,
+              idioma: empresa.idioma,
+              formatoFecha: empresa.formatoFecha,
+              formatoHora: empresa.formatoHora,
+              monedaCodigo: empresa.monedaCodigo,
+              monedaSimbolo: empresa.monedaSimbolo,
               tenantId: empresa.tenantId,
               schemaName: empresa.schemaName,
               logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl),
@@ -174,6 +250,19 @@ export class CompanySettingsPage implements OnDestroy {
       this.errorMessage.set('Debes indicar la razon social.');
       return;
     }
+    if (!this.isValidInternationalProfile()) {
+      this.errorMessage.set('Completa el identificador fiscal, pais, zona horaria, idioma y moneda con valores validos.');
+      return;
+    }
+    if (
+      this.isFacturadorView &&
+      (this.form.country_code !== 'PE' || !/^\d{11}$/.test(this.form.ruc.trim()))
+    ) {
+      this.errorMessage.set(
+        'La configuracion SUNAT solo esta disponible para empresas de Peru con RUC de 11 digitos.',
+      );
+      return;
+    }
     if (
       this.isFacturadorView &&
       this.form.sunat_mode === 'production' &&
@@ -197,12 +286,34 @@ export class CompanySettingsPage implements OnDestroy {
 
   private saveTenantSettings(): void {
     this.saving.set(true);
-    this.persistPanelBranding()
+    this.companyApi
+      .updateCurrentEmpresaProfile(this.buildProfileRequest())
+      .pipe(
+        switchMap((profile) =>
+          this.form.panel_logo_file || this.clearPanelLogoRequested()
+            ? this.persistPanelBranding()
+            : of(profile),
+        ),
+      )
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (empresa) => {
-          this.hydrateBrandingFromEmpresa(empresa);
-          this.session.updateEmpresaData({ logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl) });
+          this.hydrateCompanyFromEmpresa(empresa);
+          this.session.updateEmpresaData({
+            ruc: empresa.ruc,
+            razonSocial: empresa.razonSocial,
+            tipoDocumentoFiscal: empresa.tipoDocumentoFiscal,
+            nombreComercial: empresa.nombreComercial,
+            paisCodigo: empresa.paisCodigo,
+            paisNombre: empresa.paisNombre,
+            zonaHoraria: empresa.zonaHoraria,
+            idioma: empresa.idioma,
+            formatoFecha: empresa.formatoFecha,
+            formatoHora: empresa.formatoHora,
+            monedaCodigo: empresa.monedaCodigo,
+            monedaSimbolo: empresa.monedaSimbolo,
+            logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl),
+          });
           this.form.panel_logo_file = null;
           this.panelLogoSelectedFileName.set(null);
           this.clearPanelLogoRequested.set(false);
@@ -245,6 +356,32 @@ export class CompanySettingsPage implements OnDestroy {
 
   protected onPanelLogoFileSelected(event: Event): void {
     this.handleLogoFileSelection(event, 'panel');
+  }
+
+  protected onCountryChanged(countryCode: string): void {
+    const country = this.countryOptions.find((item) => item.code === countryCode);
+    if (!country) {
+      return;
+    }
+    this.form.country_code = country.code;
+    this.form.country_name = country.name;
+    this.form.fiscal_document_type = country.document;
+    this.form.currency_code = country.currency;
+    this.form.currency_symbol = country.symbol;
+    this.form.timezone = country.timezone;
+    this.form.language = country.language;
+  }
+
+  protected onCurrencyChanged(currencyCode: string): void {
+    this.form.currency_code = currencyCode;
+    const currency = this.currencyOptions.find((item) => item.code === currencyCode);
+    if (currency) {
+      this.form.currency_symbol = currency.symbol;
+    }
+  }
+
+  protected fiscalIdLabel(): string {
+    return this.form.fiscal_document_type || 'Identificador fiscal';
   }
 
   protected clearPanelLogoSelection(): void {
@@ -336,6 +473,39 @@ export class CompanySettingsPage implements OnDestroy {
     return this.facturadorApi.createTenant(payload);
   }
 
+  private buildProfileRequest() {
+    return {
+      ruc: this.form.ruc.trim().toUpperCase(),
+      razonSocial: this.form.business_name.trim(),
+      tipoDocumentoFiscal: this.form.fiscal_document_type.trim().toUpperCase(),
+      nombreComercial: this.optional(this.form.trade_name),
+      direccionFiscal: this.optional(this.form.fiscal_address),
+      distrito: this.optional(this.form.district),
+      provincia: this.optional(this.form.province),
+      departamento: this.optional(this.form.department),
+      paisCodigo: this.form.country_code.trim().toUpperCase(),
+      paisNombre: this.form.country_name.trim(),
+      correoPrincipal: this.optional(this.form.primary_email),
+      telefono: this.optional(this.form.phone),
+      celular: this.optional(this.form.mobile),
+      sitioWeb: this.optional(this.form.website),
+      facebook: this.optional(this.form.facebook),
+      instagram: this.optional(this.form.instagram),
+      representanteNombre: this.optional(this.form.legal_representative_name),
+      representanteTipoDocumento: this.optional(this.form.legal_representative_document_type),
+      representanteNumeroDocumento: this.optional(this.form.legal_representative_document),
+      representanteCargo: this.optional(this.form.legal_representative_role),
+      representanteCorreo: this.optional(this.form.legal_representative_email),
+      representanteTelefono: this.optional(this.form.legal_representative_phone),
+      zonaHoraria: this.form.timezone,
+      idioma: this.form.language,
+      formatoFecha: this.form.date_format,
+      formatoHora: this.form.time_format,
+      monedaCodigo: this.form.currency_code,
+      monedaSimbolo: this.form.currency_symbol.trim(),
+    } as const;
+  }
+
   private loadTenantDetail(tenantId: number): void {
     this.facturadorApi
       .getTenant(tenantId)
@@ -349,11 +519,39 @@ export class CompanySettingsPage implements OnDestroy {
       });
   }
 
-  private hydrateBrandingFromEmpresa(empresa: Empresa | null): void {
+  private hydrateCompanyFromEmpresa(empresa: Empresa | null): void {
     if (!empresa) {
       return;
     }
 
+    this.form.ruc = empresa.ruc || '';
+    this.form.business_name = empresa.razonSocial || '';
+    this.form.fiscal_document_type = empresa.tipoDocumentoFiscal || 'RUC';
+    this.form.trade_name = empresa.nombreComercial || '';
+    this.form.fiscal_address = empresa.direccionFiscal || '';
+    this.form.district = empresa.distrito || '';
+    this.form.province = empresa.provincia || '';
+    this.form.department = empresa.departamento || '';
+    this.form.country_code = empresa.paisCodigo || 'PE';
+    this.form.country_name = empresa.paisNombre || 'Peru';
+    this.form.primary_email = empresa.correoPrincipal || '';
+    this.form.phone = empresa.telefono || '';
+    this.form.mobile = empresa.celular || '';
+    this.form.website = empresa.sitioWeb || '';
+    this.form.facebook = empresa.facebook || '';
+    this.form.instagram = empresa.instagram || '';
+    this.form.legal_representative_name = empresa.representanteNombre || '';
+    this.form.legal_representative_document_type = empresa.representanteTipoDocumento || '';
+    this.form.legal_representative_document = empresa.representanteNumeroDocumento || '';
+    this.form.legal_representative_role = empresa.representanteCargo || '';
+    this.form.legal_representative_email = empresa.representanteCorreo || '';
+    this.form.legal_representative_phone = empresa.representanteTelefono || '';
+    this.form.timezone = empresa.zonaHoraria || 'America/Lima';
+    this.form.language = empresa.idioma || 'es-PE';
+    this.form.date_format = empresa.formatoFecha || 'DD/MM/YYYY';
+    this.form.time_format = empresa.formatoHora || '24H';
+    this.form.currency_code = empresa.monedaCodigo || 'PEN';
+    this.form.currency_symbol = empresa.monedaSimbolo || 'S/';
     this.panelLogoLoadFailed.set(false);
     this.panelLogoSelectedFileName.set(null);
     this.clearPanelLogoRequested.set(false);
@@ -420,6 +618,32 @@ export class CompanySettingsPage implements OnDestroy {
     return {
       ruc: '',
       business_name: '',
+      fiscal_document_type: 'RUC',
+      trade_name: '',
+      country_code: 'PE',
+      country_name: 'Peru',
+      fiscal_address: '',
+      district: '',
+      province: '',
+      department: '',
+      primary_email: '',
+      phone: '',
+      mobile: '',
+      website: '',
+      facebook: '',
+      instagram: '',
+      legal_representative_name: '',
+      legal_representative_document_type: 'DNI',
+      legal_representative_document: '',
+      legal_representative_role: '',
+      legal_representative_email: '',
+      legal_representative_phone: '',
+      timezone: 'America/Lima',
+      language: 'es-PE',
+      date_format: 'DD/MM/YYYY',
+      time_format: '24H',
+      currency_code: 'PEN',
+      currency_symbol: 'S/',
       sunat_mode: 'beta',
       ruc_sol: '',
       usuario_sol: '',
@@ -518,7 +742,7 @@ export class CompanySettingsPage implements OnDestroy {
     const empresa = this.empresaContext();
     const ruc = (empresa?.ruc || '').trim();
 
-    if (!/^[0-9]{11}$/.test(ruc)) {
+    if (!ruc) {
       return false;
     }
 
@@ -531,6 +755,24 @@ export class CompanySettingsPage implements OnDestroy {
     }
 
     return true;
+  }
+
+  private isValidInternationalProfile(): boolean {
+    return (
+      /^[A-Za-z0-9][A-Za-z0-9._/-]{2,39}$/.test(this.form.ruc.trim()) &&
+      /^[A-Z]{2}$/.test(this.form.country_code.trim().toUpperCase()) &&
+      this.form.country_name.trim().length >= 2 &&
+      this.form.fiscal_document_type.trim().length >= 2 &&
+      this.form.timezone.trim().includes('/') &&
+      /^[a-z]{2}(?:-[A-Z]{2})?$/.test(this.form.language.trim()) &&
+      /^[A-Z]{3}$/.test(this.form.currency_code.trim().toUpperCase()) &&
+      this.form.currency_symbol.trim().length > 0
+    );
+  }
+
+  private optional(value: string): string | null {
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
   }
 
   private resolveErrorMessage(error: unknown, fallback: string): string {

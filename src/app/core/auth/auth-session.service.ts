@@ -29,6 +29,16 @@ export interface LoginResponse {
     readonly id: number;
     readonly ruc: string;
     readonly razonSocial: string;
+    readonly tipoDocumentoFiscal?: string | null;
+    readonly nombreComercial?: string | null;
+    readonly paisCodigo?: string | null;
+    readonly paisNombre?: string | null;
+    readonly zonaHoraria?: string | null;
+    readonly idioma?: string | null;
+    readonly formatoFecha?: string | null;
+    readonly formatoHora?: string | null;
+    readonly monedaCodigo?: string | null;
+    readonly monedaSimbolo?: string | null;
     readonly tenantId: string;
     readonly schemaName: string;
     readonly logoPanelUrl?: string | null;

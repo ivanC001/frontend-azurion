@@ -39,9 +39,7 @@
 }
 
 .access-panel--tenant {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 247, 255, 0.9)),
-    #ffffff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 247, 255, 0.9)), #ffffff;
   border: 1px solid #dbe7f5;
   box-shadow: 0 24px 60px rgba(30, 64, 175, 0.08);
   display: grid;
@@ -534,5 +532,563 @@
 @media (max-width: 420px) {
   .admin-features {
     grid-template-columns: 1fr;
+  }
+}
+
+// Tenant access: product story and authentication stay visually separate.
+.login-page--tenant {
+  background: #f2f6fc;
+  display: block;
+  padding: 0;
+}
+
+.login-page--tenant .access-panel--tenant {
+  background: #f2f6fc;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: minmax(620px, 1.08fr) minmax(440px, 0.92fr);
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+  place-items: stretch;
+}
+
+.tenant-product-story {
+  background:
+    linear-gradient(90deg, rgba(2, 13, 34, 0.92), rgba(3, 22, 50, 0.72)),
+    url('/assets/auth/azurion-rain.webp') center / cover no-repeat,
+    #04142d;
+  color: #ffffff;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: clamp(1.5rem, 3vw, 3.25rem);
+  position: relative;
+
+  &::before {
+    border: 1px solid rgba(91, 141, 239, 0.16);
+    border-radius: 50%;
+    content: '';
+    height: min(72vw, 980px);
+    left: 30%;
+    pointer-events: none;
+    position: absolute;
+    top: -42%;
+    width: min(72vw, 980px);
+  }
+
+  &::after {
+    background: rgba(43, 111, 255, 0.11);
+    bottom: 0;
+    content: '';
+    height: 34%;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+  }
+}
+
+.tenant-brand {
+  align-items: center;
+  color: #ffffff;
+  display: inline-flex;
+  gap: 0.65rem;
+  position: relative;
+  text-decoration: none;
+  z-index: 2;
+
+  img {
+    height: 2.35rem;
+    object-fit: contain;
+    width: 2.35rem;
+  }
+
+  strong {
+    font-size: 1.28rem;
+    font-weight: 900;
+  }
+}
+
+.tenant-story-layout {
+  align-items: center;
+  display: grid;
+  gap: clamp(1.5rem, 2.5vw, 3rem);
+  grid-template-columns: minmax(290px, 0.88fr) minmax(270px, 1.12fr);
+  min-height: calc(100dvh - 7rem);
+  position: relative;
+  z-index: 1;
+}
+
+.tenant-story-copy {
+  min-width: 0;
+
+  h1 {
+    font-size: clamp(2.15rem, 3.6vw, 4.25rem);
+    font-weight: 900;
+    line-height: 1.04;
+    margin: 0;
+    max-width: 660px;
+
+    span {
+      color: #27a4ff;
+    }
+  }
+}
+
+.tenant-eyebrow {
+  color: #68c5ff;
+  font-size: 0.73rem;
+  font-weight: 900;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.tenant-story-intro {
+  color: #c6d5ea;
+  font-size: clamp(0.86rem, 1vw, 1rem);
+  line-height: 1.55;
+  margin: 1rem 0 1.35rem;
+  max-width: 570px;
+}
+
+.tenant-capabilities {
+  display: grid;
+  gap: 0.72rem;
+
+  article {
+    align-items: flex-start;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+  }
+
+  strong {
+    display: block;
+    font-size: 0.88rem;
+    line-height: 1.2;
+  }
+
+  p {
+    color: #9fb1cb;
+    font-size: 0.73rem;
+    line-height: 1.4;
+    margin: 0.22rem 0 0;
+  }
+}
+
+.tenant-capability-icon {
+  align-items: center;
+  border-radius: 0.4rem;
+  display: inline-flex;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+
+  &--crm {
+    background: #1557b7;
+    color: #dbeafe;
+  }
+
+  &--erp {
+    background: #057d71;
+    color: #ccfbf1;
+  }
+
+  &--payments {
+    background: #8045d3;
+    color: #f3e8ff;
+  }
+
+  &--reports {
+    background: #c25c17;
+    color: #ffedd5;
+  }
+}
+
+.tenant-security-note {
+  align-items: flex-start;
+  background: rgba(17, 51, 96, 0.72);
+  border: 1px solid rgba(147, 197, 253, 0.17);
+  border-radius: 0.45rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  margin-top: 1.25rem;
+  max-width: 520px;
+  padding: 0.85rem;
+
+  > i {
+    align-items: center;
+    background: #1d5ec5;
+    border-radius: 0.4rem;
+    color: #dbeafe;
+    display: inline-flex;
+    height: 2.35rem;
+    justify-content: center;
+    width: 2.35rem;
+  }
+
+  strong {
+    font-size: 0.78rem;
+  }
+
+  p {
+    color: #9fb1cb;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    margin: 0.2rem 0 0;
+  }
+}
+
+.tenant-product-preview {
+  align-self: center;
+  border: 1px solid rgba(147, 197, 253, 0.2);
+  border-radius: 0.5rem;
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.38);
+  margin: 0;
+  max-width: 610px;
+  overflow: hidden;
+  position: relative;
+  transform: perspective(950px) rotateY(-5deg);
+
+  img {
+    display: block;
+    height: clamp(310px, 45dvh, 510px);
+    object-fit: cover;
+    object-position: center;
+    width: 100%;
+  }
+
+  figcaption {
+    align-items: center;
+    background: #092040;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    padding: 0.7rem 0.85rem;
+
+    span {
+      color: #9fb1cb;
+      font-size: 0.7rem;
+    }
+
+    i {
+      color: #13c28b;
+      font-size: 0.45rem;
+      margin-right: 0.3rem;
+    }
+
+    strong {
+      font-size: 0.72rem;
+    }
+  }
+}
+
+.tenant-auth-area {
+  align-items: center;
+  background: #f3f7fd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: clamp(2rem, 5vh, 4rem) clamp(1.5rem, 5vw, 5rem) 2rem;
+  position: relative;
+
+  &::before {
+    background-image: radial-gradient(#bed3ee 1px, transparent 1px);
+    background-size: 14px 14px;
+    content: '';
+    height: 170px;
+    opacity: 0.42;
+    position: absolute;
+    right: 5%;
+    top: 0;
+    width: 170px;
+  }
+}
+
+.tenant-auth-card {
+  background: #ffffff;
+  border: 1px solid #e1eaf5;
+  border-radius: 0.5rem;
+  box-shadow: 0 24px 62px rgba(30, 64, 175, 0.12);
+  max-width: 455px;
+  padding: clamp(1.35rem, 3vw, 2.2rem);
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.tenant-auth-header {
+  text-align: center;
+
+  a {
+    display: inline-flex;
+  }
+
+  img {
+    height: 3.2rem;
+    object-fit: contain;
+    width: 3.2rem;
+  }
+
+  > strong {
+    color: #08142e;
+    display: block;
+    font-size: 1.45rem;
+    font-weight: 950;
+    margin-top: 0.35rem;
+  }
+
+  h2 {
+    color: #17233b;
+    font-size: 1rem;
+    margin: 0.65rem 0 0;
+  }
+
+  p {
+    color: #6b7890;
+    font-size: 0.74rem;
+    margin: 0.24rem 0 1.1rem;
+  }
+}
+
+.tenant-auth-card .login-box--tenant {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  gap: 0.42rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.tenant-field-label {
+  color: #34435c;
+  font-size: 0.7rem;
+  font-weight: 850;
+  margin-top: 0.38rem;
+}
+
+.login-page--tenant .field-shell > i {
+  font-size: 0.84rem;
+  left: 0.85rem;
+}
+
+:host ::ng-deep .login-page--tenant .field-shell {
+  input,
+  .p-password-input {
+    border-color: #d2deed;
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    min-height: 2.7rem;
+    padding-left: 2.55rem;
+  }
+
+  input:focus,
+  .p-password-input:focus {
+    border-color: #2c72ef;
+    box-shadow: 0 0 0 3px rgba(44, 114, 239, 0.1);
+  }
+}
+
+.login-options--light {
+  margin: 0.35rem 0;
+
+  .remember,
+  a {
+    font-size: 0.7rem;
+  }
+
+  a {
+    color: #1459d9;
+  }
+}
+
+.login-submit--tenant {
+  background: #1769e8;
+  border-radius: 0.4rem;
+  box-shadow: 0 12px 24px rgba(23, 105, 232, 0.2);
+  font-size: 0.82rem;
+  min-height: 2.75rem;
+}
+
+.tenant-support {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+
+  > span {
+    align-items: center;
+    color: #8894a8;
+    display: flex;
+    font-size: 0.66rem;
+    gap: 0.65rem;
+    justify-content: center;
+
+    &::before,
+    &::after {
+      background: #e1e8f2;
+      content: '';
+      height: 1px;
+      width: 28%;
+    }
+  }
+
+  a {
+    align-items: center;
+    border: 1px solid #d9e4f1;
+    border-radius: 0.4rem;
+    color: #365173;
+    display: grid;
+    font-size: 0.72rem;
+    font-weight: 750;
+    gap: 0.55rem;
+    grid-template-columns: auto 1fr auto;
+    padding: 0.72rem 0.8rem;
+    text-decoration: none;
+  }
+
+  a > i:first-child {
+    color: #1769e8;
+  }
+}
+
+.tenant-auth-footer {
+  color: #8a96aa;
+  display: flex;
+  font-size: 0.66rem;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+  position: relative;
+  z-index: 1;
+
+  a {
+    color: #466994;
+    text-decoration: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .login-page--tenant .access-panel--tenant {
+    grid-template-columns: minmax(540px, 1fr) minmax(410px, 0.82fr);
+  }
+
+  .tenant-story-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-product-preview {
+    display: none;
+  }
+
+  .tenant-story-copy {
+    margin-inline: auto;
+    max-width: 620px;
+  }
+}
+
+@media (min-width: 1181px) and (max-height: 780px) {
+  .tenant-product-story {
+    padding-block: 1.5rem;
+  }
+
+  .tenant-story-layout {
+    min-height: calc(100dvh - 4.75rem);
+  }
+
+  .tenant-story-copy h1 {
+    font-size: 2.45rem;
+  }
+
+  .tenant-story-intro {
+    margin: 0.65rem 0 0.85rem;
+  }
+
+  .tenant-capabilities {
+    gap: 0.45rem;
+
+    p {
+      line-height: 1.3;
+    }
+  }
+
+  .tenant-security-note {
+    margin-top: 0.7rem;
+    padding: 0.6rem;
+  }
+
+  .tenant-product-preview img {
+    height: 300px;
+  }
+
+  .tenant-auth-card {
+    padding: 1.4rem 2rem;
+  }
+
+  .tenant-auth-footer {
+    margin-top: 0.7rem;
+  }
+}
+
+@media (max-width: 940px) {
+  .login-page--tenant .access-panel--tenant {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-auth-area {
+    min-height: 100dvh;
+    order: -1;
+  }
+
+  .tenant-product-story {
+    min-height: auto;
+  }
+
+  .tenant-story-layout {
+    min-height: auto;
+    padding: clamp(2.5rem, 7vw, 5rem) 0 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .tenant-auth-area {
+    justify-content: flex-start;
+    padding: 1rem;
+  }
+
+  .tenant-auth-card {
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.1);
+    padding: 1.2rem;
+  }
+
+  .tenant-product-story {
+    padding: 1.35rem 1.1rem 2rem;
+  }
+
+  .tenant-story-copy h1 {
+    font-size: 2.15rem;
+  }
+
+  .tenant-capabilities {
+    gap: 0.9rem;
+  }
+
+  .tenant-auth-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-product-story {
+    background-image:
+      linear-gradient(90deg, rgba(2, 13, 34, 0.92), rgba(3, 22, 50, 0.72)),
+      url('/assets/auth/azurion-rain-poster.webp');
   }
 }

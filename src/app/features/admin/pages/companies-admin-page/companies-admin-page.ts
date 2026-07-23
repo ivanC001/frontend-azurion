@@ -23,6 +23,14 @@ import {
 interface EmpresaForm {
   ruc: string;
   razonSocial: string;
+  tipoDocumentoFiscal: string;
+  nombreComercial: string;
+  paisCodigo: string;
+  paisNombre: string;
+  monedaCodigo: string;
+  monedaSimbolo: string;
+  zonaHoraria: string;
+  idioma: string;
   tenantId: string;
   schemaName: string;
   planId: number | null;
@@ -141,6 +149,20 @@ export class CompaniesAdminPage {
     { label: 'Activas', value: 'ACTIVAS' },
     { label: 'Inactivas', value: 'INACTIVAS' },
   ];
+  protected readonly countryOptions = [
+    { code: 'PE', name: 'Peru', document: 'RUC', currency: 'PEN', symbol: 'S/', timezone: 'America/Lima', language: 'es-PE' },
+    { code: 'AR', name: 'Argentina', document: 'CUIT', currency: 'ARS', symbol: '$', timezone: 'America/Argentina/Buenos_Aires', language: 'es-AR' },
+    { code: 'BO', name: 'Bolivia', document: 'NIT', currency: 'BOB', symbol: 'Bs', timezone: 'America/La_Paz', language: 'es-BO' },
+    { code: 'BR', name: 'Brasil', document: 'CNPJ', currency: 'BRL', symbol: 'R$', timezone: 'America/Sao_Paulo', language: 'pt-BR' },
+    { code: 'CL', name: 'Chile', document: 'RUT', currency: 'CLP', symbol: '$', timezone: 'America/Santiago', language: 'es-CL' },
+    { code: 'CO', name: 'Colombia', document: 'NIT', currency: 'COP', symbol: '$', timezone: 'America/Bogota', language: 'es-CO' },
+    { code: 'EC', name: 'Ecuador', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Guayaquil', language: 'es-EC' },
+    { code: 'ES', name: 'Espana', document: 'NIF', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Madrid', language: 'es-ES' },
+    { code: 'US', name: 'Estados Unidos', document: 'EIN', currency: 'USD', symbol: '$', timezone: 'America/New_York', language: 'en-US' },
+    { code: 'MX', name: 'Mexico', document: 'RFC', currency: 'MXN', symbol: '$', timezone: 'America/Mexico_City', language: 'es-MX' },
+    { code: 'GB', name: 'Reino Unido', document: 'VAT', currency: 'GBP', symbol: 'GBP', timezone: 'Europe/London', language: 'en-GB' },
+    { code: 'UY', name: 'Uruguay', document: 'RUT', currency: 'UYU', symbol: '$U', timezone: 'America/Montevideo', language: 'es-UY' },
+  ] as const;
   protected readonly filteredCompanies = computed(() => {
     const query = this.searchTerm().trim().toLocaleLowerCase();
     const status = this.statusFilter();
@@ -189,6 +211,23 @@ export class CompaniesAdminPage {
     this.form.schemaName = `tenant_${base}`;
   }
 
+  protected onCountryChanged(countryCode: string): void {
+    const country = this.countryOptions.find((item) => item.code === countryCode);
+    if (!country) {
+      return;
+    }
+    this.form.paisCodigo = country.code;
+    this.form.paisNombre = country.name;
+    this.form.tipoDocumentoFiscal = country.document;
+    this.form.monedaCodigo = country.currency;
+    this.form.monedaSimbolo = country.symbol;
+    this.form.zonaHoraria = country.timezone;
+    this.form.idioma = country.language;
+    if (country.code !== 'PE') {
+      this.form.syncFacturador = false;
+    }
+  }
+
   protected onPlanChanged(planId: number | null): void {
     this.form.planId = planId;
     const selectedPlan = this.planes().find((plan) => plan.id === planId) ?? null;
@@ -227,12 +266,18 @@ export class CompaniesAdminPage {
 
     if (!this.isValidForm()) {
       this.errorMessage.set(
-        'Completa RUC, razon social, tenantId, schemaName y al menos un modulo inicial.',
+        'Completa identificador fiscal, pais, razon social, tenantId, schemaName y al menos un modulo inicial.',
       );
       return;
     }
 
     const syncFacturador = this.shouldSyncFacturador();
+    if (this.form.syncFacturador && !syncFacturador) {
+      this.errorMessage.set(
+        'El facturador SUNAT solo puede sincronizar empresas de Peru con RUC de 11 digitos.',
+      );
+      return;
+    }
     if (syncFacturador && !this.form.logoFile) {
       this.errorMessage.set(
         'Adjunta el logo de la empresa para registrar tambien en facturador, o desmarca esa opcion.',
@@ -243,6 +288,14 @@ export class CompaniesAdminPage {
     const request: CreateEmpresaRequest = {
       ruc: this.form.ruc.trim(),
       razonSocial: this.form.razonSocial.trim(),
+      tipoDocumentoFiscal: this.form.tipoDocumentoFiscal,
+      nombreComercial: this.form.nombreComercial.trim() || undefined,
+      paisCodigo: this.form.paisCodigo,
+      paisNombre: this.form.paisNombre,
+      monedaCodigo: this.form.monedaCodigo,
+      monedaSimbolo: this.form.monedaSimbolo,
+      zonaHoraria: this.form.zonaHoraria,
+      idioma: this.form.idioma,
       tenantId: this.form.tenantId.trim(),
       schemaName: this.form.schemaName.trim(),
       moduloCodigos: [...this.form.moduloCodigos],
@@ -408,7 +461,8 @@ export class CompaniesAdminPage {
 
   private isValidForm(): boolean {
     return (
-      /^[0-9]{11}$/.test(this.form.ruc.trim()) &&
+      /^[A-Za-z0-9][A-Za-z0-9._/-]{2,39}$/.test(this.form.ruc.trim()) &&
+      /^[A-Z]{2}$/.test(this.form.paisCodigo) &&
       this.form.razonSocial.trim().length > 0 &&
       /^[a-z][a-z0-9_]{2,62}$/.test(this.form.tenantId.trim()) &&
       /^[a-z][a-z0-9_]{2,62}$/.test(this.form.schemaName.trim()) &&
@@ -420,6 +474,14 @@ export class CompaniesAdminPage {
     return {
       ruc: '',
       razonSocial: '',
+      tipoDocumentoFiscal: 'RUC',
+      nombreComercial: '',
+      paisCodigo: 'PE',
+      paisNombre: 'Peru',
+      monedaCodigo: 'PEN',
+      monedaSimbolo: 'S/',
+      zonaHoraria: 'America/Lima',
+      idioma: 'es-PE',
       tenantId: '',
       schemaName: '',
       planId: null,
@@ -437,7 +499,12 @@ export class CompaniesAdminPage {
   }
 
   private shouldSyncFacturador(): boolean {
-    return this.form.syncFacturador && this.form.moduloCodigos.includes('FACTURACION');
+    return (
+      this.form.syncFacturador &&
+      this.form.moduloCodigos.includes('FACTURACION') &&
+      this.form.paisCodigo === 'PE' &&
+      /^\d{11}$/.test(this.form.ruc.trim())
+    );
   }
 
   private normalizeAssignableModuleSelection(moduloCodigos: readonly string[]): string[] {

@@ -1,5 +1,6 @@
 import type {
   CrmProspecto,
+  CrmLeadAssignmentConfig,
   CreateCrmProspectoRequest,
   RepartirCrmProspectosRequest,
   RepartirCrmProspectosResponse,
@@ -11,6 +12,7 @@ export type CreateCrmProspectRequest = CreateCrmProspectoRequest;
 export type UpdateCrmProspectRequest = UpdateCrmProspectoRequest;
 export type DistributeCrmProspectsRequest = RepartirCrmProspectosRequest;
 export type DistributeCrmProspectsResponse = RepartirCrmProspectosResponse;
+export type LeadAssignmentConfig = CrmLeadAssignmentConfig;
 
 export interface ProspectFilters {
   readonly query: string;

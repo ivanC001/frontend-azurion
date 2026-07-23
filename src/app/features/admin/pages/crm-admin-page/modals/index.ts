@@ -1,5 +1,6 @@
 export * from './complete-client-data-modal/complete-client-data-modal';
 export * from './prospect-distribution-modal/prospect-distribution-modal';
+export * from './delete-prospect-modal/delete-prospect-modal';
 export * from './register-payment-modal/register-payment-modal';
 export * from './followup-detail-modal/followup-detail-modal';
 export * from './opportunity-detail-modal/opportunity-detail-modal';

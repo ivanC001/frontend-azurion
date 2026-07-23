@@ -28,6 +28,29 @@
   transform: none;
 }
 
+.prospect-delete-action {
+  align-items: center;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 0.62rem;
+  color: #dc2626;
+  cursor: pointer;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.prospect-delete-action:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.prospect-delete-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 @media (max-width: 640px) {
   .prospect-titlebar-actions,
   .prospect-primary-button {

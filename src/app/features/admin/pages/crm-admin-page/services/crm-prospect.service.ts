@@ -36,6 +36,18 @@ export class CrmProspectService {
     return this.api.repartirCrmProspectos(request);
   }
 
+  getAssignmentConfiguration() {
+    return this.api.getCrmLeadAssignmentConfig();
+  }
+
+  updateAssignmentConfiguration(automatico: boolean, responsableIds: readonly string[]) {
+    return this.api.updateCrmLeadAssignmentConfig({ automatico, responsableIds });
+  }
+
+  delete(id: number) {
+    return this.api.deleteCrmProspecto(id);
+  }
+
   convertToCustomer(id: number) {
     return this.api.convertirCrmProspectoCliente(id);
   }

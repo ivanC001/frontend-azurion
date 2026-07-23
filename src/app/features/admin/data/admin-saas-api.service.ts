@@ -10,6 +10,32 @@ export interface Empresa {
   readonly id: number;
   readonly ruc: string;
   readonly razonSocial: string;
+  readonly tipoDocumentoFiscal?: string | null;
+  readonly nombreComercial?: string | null;
+  readonly direccionFiscal?: string | null;
+  readonly distrito?: string | null;
+  readonly provincia?: string | null;
+  readonly departamento?: string | null;
+  readonly paisCodigo?: string | null;
+  readonly paisNombre?: string | null;
+  readonly correoPrincipal?: string | null;
+  readonly telefono?: string | null;
+  readonly celular?: string | null;
+  readonly sitioWeb?: string | null;
+  readonly facebook?: string | null;
+  readonly instagram?: string | null;
+  readonly representanteNombre?: string | null;
+  readonly representanteTipoDocumento?: string | null;
+  readonly representanteNumeroDocumento?: string | null;
+  readonly representanteCargo?: string | null;
+  readonly representanteCorreo?: string | null;
+  readonly representanteTelefono?: string | null;
+  readonly zonaHoraria?: string | null;
+  readonly idioma?: string | null;
+  readonly formatoFecha?: string | null;
+  readonly formatoHora?: string | null;
+  readonly monedaCodigo?: string | null;
+  readonly monedaSimbolo?: string | null;
   readonly tenantId: string;
   readonly schemaName: string;
   readonly logoPanelUrl?: string | null;
@@ -19,6 +45,14 @@ export interface Empresa {
 export interface CreateEmpresaRequest {
   readonly ruc: string;
   readonly razonSocial: string;
+  readonly tipoDocumentoFiscal?: string | null;
+  readonly nombreComercial?: string | null;
+  readonly paisCodigo?: string | null;
+  readonly paisNombre?: string | null;
+  readonly monedaCodigo?: string | null;
+  readonly monedaSimbolo?: string | null;
+  readonly zonaHoraria?: string | null;
+  readonly idioma?: string | null;
   readonly tenantId: string;
   readonly schemaName: string;
   readonly moduloCodigos?: readonly string[] | null;
@@ -1403,10 +1437,94 @@ export interface CrmCanalTokenConfig {
   readonly metadataJson?: string | null;
 }
 
+export type CrmLandingProductMode = 'REQUERIDO' | 'OPCIONAL' | 'SIN_CATALOGO';
+
+export interface CrmLandingConfig {
+  readonly id: number;
+  readonly nombre: string;
+  readonly landingKey: string;
+  readonly campania?: string | null;
+  readonly canalIngreso: string;
+  readonly activa: boolean;
+  readonly recibirLeads: boolean;
+  readonly modoProducto: CrmLandingProductMode;
+  readonly crearActividadInicial: boolean;
+  readonly responsableId?: string | null;
+  readonly catalogoItemIds: readonly number[];
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export interface SaveCrmLandingConfigRequest {
+  readonly nombre: string;
+  readonly campania?: string | null;
+  readonly modoProducto: CrmLandingProductMode;
+  readonly activa: boolean;
+  readonly recibirLeads: boolean;
+  readonly crearActividadInicial: boolean;
+  readonly responsableId?: string | null;
+  readonly catalogoItemIds: readonly number[];
+}
+
+export interface UpdateCurrentEmpresaProfileRequest {
+  readonly ruc: string;
+  readonly razonSocial: string;
+  readonly tipoDocumentoFiscal: string;
+  readonly nombreComercial?: string | null;
+  readonly direccionFiscal?: string | null;
+  readonly distrito?: string | null;
+  readonly provincia?: string | null;
+  readonly departamento?: string | null;
+  readonly paisCodigo: string;
+  readonly paisNombre: string;
+  readonly correoPrincipal?: string | null;
+  readonly telefono?: string | null;
+  readonly celular?: string | null;
+  readonly sitioWeb?: string | null;
+  readonly facebook?: string | null;
+  readonly instagram?: string | null;
+  readonly representanteNombre?: string | null;
+  readonly representanteTipoDocumento?: string | null;
+  readonly representanteNumeroDocumento?: string | null;
+  readonly representanteCargo?: string | null;
+  readonly representanteCorreo?: string | null;
+  readonly representanteTelefono?: string | null;
+  readonly zonaHoraria: string;
+  readonly idioma: string;
+  readonly formatoFecha: string;
+  readonly formatoHora: string;
+  readonly monedaCodigo: string;
+  readonly monedaSimbolo: string;
+}
+
+export interface CrmLeadAssignmentConfig {
+  readonly automatico: boolean;
+  readonly estrategia: 'MENOR_CARGA' | string;
+  readonly responsableIds: readonly string[];
+}
+
+export interface UpdateCrmLeadAssignmentConfigRequest {
+  readonly automatico: boolean;
+  readonly responsableIds: readonly string[];
+}
+
 export interface CrmInboxChannelAvailability {
   readonly canal: 'WHATSAPP' | 'FACEBOOK' | 'INSTAGRAM' | 'CORREO' | string;
   readonly nombre: string;
   readonly activo: boolean;
+}
+
+export interface CrmSentEmail {
+  readonly cotizacionId: number;
+  readonly oportunidadId?: number | null;
+  readonly destinatarioNombre: string;
+  readonly destinatarioCorreo?: string | null;
+  readonly asunto: string;
+  readonly moneda: string;
+  readonly total: number;
+  readonly estado: string;
+  readonly enviadoPor: string;
+  readonly enviadoEn: string;
 }
 
 export interface UpdateCrmCanalTokenConfigRequest {
@@ -1489,6 +1607,15 @@ export interface CrmWhatsappConversationFilters {
   readonly estado?: string | null;
   readonly soloNoLeidas?: boolean;
   readonly soloMias?: boolean;
+}
+
+export interface WhatsappUnreadSummary {
+  readonly mensajesNoLeidos: number;
+  readonly conversacionesNoLeidas: number;
+  readonly ultimoProspectoId?: number | null;
+  readonly ultimoContacto?: string | null;
+  readonly ultimoMensaje?: string | null;
+  readonly ultimoMensajeEn?: string | null;
 }
 
 export interface SendCrmWhatsappMessageRequest {
@@ -2492,11 +2619,78 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listCrmLandingConfigurations() {
+    return this.http
+      .get<ApiResponse<CrmLandingConfig[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  createCrmLandingConfiguration(request: SaveCrmLandingConfigRequest) {
+    return this.http
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmLandingConfiguration(id: number, request: SaveCrmLandingConfigRequest) {
+    return this.http
+      .put<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  regenerateCrmLandingKey(id: number) {
+    return this.http
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-key`),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCurrentEmpresaProfile(request: UpdateCurrentEmpresaProfileRequest) {
+    return this.http
+      .put<ApiResponse<Empresa>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/current'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(
+        map((response) => response.data),
+        tap(() => this.invalidateCache('empresas')),
+      );
+  }
+
   listCrmInboxChannels() {
     return this.http
       .get<ApiResponse<CrmInboxChannelAvailability[]>>(
         this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/canales'),
         { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  pageCrmSentEmails(query = '', page = 0, size = 20) {
+    let params = new HttpParams()
+      .set('page', Math.max(0, page))
+      .set('size', Math.min(100, Math.max(1, size)));
+    if (query.trim()) {
+      params = params.set('query', query.trim());
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<CrmSentEmail>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/correo/enviados'),
+        { headers: this.session.apiHeaders(), params },
       )
       .pipe(map((response) => response.data));
   }
@@ -2711,6 +2905,41 @@ export class AdminSaasApiService {
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
+  }
+
+  getCrmWhatsappUnreadSummary() {
+    return this.http
+      .get<ApiResponse<WhatsappUnreadSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/notificaciones'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmLeadAssignmentConfig() {
+    return this.http
+      .get<ApiResponse<CrmLeadAssignmentConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmLeadAssignmentConfig(request: UpdateCrmLeadAssignmentConfigRequest) {
+    return this.http
+      .put<ApiResponse<CrmLeadAssignmentConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  deleteCrmProspecto(id: number) {
+    return this.http.delete<ApiResponse<null>>(
+      this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${id}`),
+      { headers: this.session.apiHeaders() },
+    );
   }
 
   convertirCrmProspectoCliente(id: number) {

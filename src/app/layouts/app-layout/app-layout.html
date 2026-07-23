@@ -47,7 +47,7 @@
       </div>
     }
 
-    <nav class="sidebar-nav">
+    <nav #sidebarNav class="sidebar-nav" (scroll)="rememberSidebarScroll($event)">
       @for (section of navSections(); track $index) {
         <section class="nav-section">
           @if (section.groupTitle) {
@@ -62,8 +62,17 @@
           <div class="nav-section-items">
             @for (item of section.items; track item.label) {
               @if (item.children?.length) {
-                <div class="nav-group" [class.nav-group-open]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)">
-                  <button type="button" class="nav-link nav-group-trigger" (click)="toggleGroup(item.groupId || '')">
+                <div
+                  class="nav-group"
+                  [class.nav-group-open]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
+                  [class.nav-group-active]="groupHasActiveRoute(item)"
+                >
+                  <button
+                    type="button"
+                    class="nav-link nav-group-trigger"
+                    [attr.aria-expanded]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
+                    (click)="toggleGroup(item.groupId || '')"
+                  >
                     <span class="nav-link-main">
                       @if (item.icon) {
                         <span class="nav-icon-wrap">
@@ -86,6 +95,7 @@
                           class="nav-sub-link"
                           [routerLink]="child.route"
                           routerLinkActive="active-link"
+                          [routerLinkActiveOptions]="exactRouteMatchOptions"
                           (click)="handleNavSelection(child.route)"
                         >
                           @if (child.icon) {
@@ -102,6 +112,7 @@
                   class="nav-link"
                   [routerLink]="item.route"
                   routerLinkActive="active-link"
+                  [routerLinkActiveOptions]="exactRouteMatchOptions"
                   (click)="handleNavSelection(item.route)"
                 >
                   @if (item.icon) {
@@ -174,8 +185,8 @@
               (click)="showNotificationsHint()"
             >
               <i class="pi pi-bell"></i>
-              @if (notificationItems().length) {
-                <span class="header-mini-badge">{{ notificationItems().length }}</span>
+              @if (notificationBadgeCount()) {
+                <span class="header-mini-badge">{{ notificationBadgeCount() > 99 ? '99+' : notificationBadgeCount() }}</span>
               }
             </button>
           </div>
@@ -193,9 +204,9 @@
               <div class="header-popover-head">
                 <div>
                   <strong>Notificaciones</strong>
-                  <small>{{ notificationItems().length }} activas</small>
+                  <small>{{ notificationBadgeCount() }} activas</small>
                 </div>
-                <button type="button" class="header-popover-action" (click)="markAllNotificationsRead()">Marcar leidas</button>
+                <button type="button" class="header-popover-action" (click)="markAllNotificationsRead()">{{ hasWhatsappNotifications() ? 'Abrir WhatsApp' : 'Marcar leidas' }}</button>
               </div>
 
               <div class="header-popover-list">

@@ -1,0 +1,28 @@
+<p-dialog
+  [showHeader]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="visible()"
+  (visibleChange)="closeFromVisibility($event)"
+  [style]="{ width: 'min(28rem, calc(100vw - 1rem))' }"
+  [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+  appendTo="body"
+>
+  <section class="delete-prospect">
+    <span class="delete-prospect__icon"><i class="pi pi-trash"></i></span>
+    <div class="delete-prospect__copy">
+      <h2>Eliminar prospecto</h2>
+      <p>Se eliminara a <strong>{{ prospect()?.nombre }}</strong> de la bandeja de leads nuevos.</p>
+      <small>Esta accion tambien retira su actividad inicial e intereses captados. No puede deshacerse.</small>
+    </div>
+    <button type="button" class="delete-prospect__close" aria-label="Cerrar" [disabled]="deleting()" (click)="closed.emit()"><i class="pi pi-times"></i></button>
+    <footer>
+      <button type="button" class="delete-prospect__cancel" [disabled]="deleting()" (click)="closed.emit()">Cancelar</button>
+      <button type="button" class="delete-prospect__confirm" [disabled]="deleting()" (click)="confirmed.emit()">
+        <i [class]="deleting() ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+        {{ deleting() ? 'Eliminando...' : 'Eliminar definitivamente' }}
+      </button>
+    </footer>
+  </section>
+</p-dialog>

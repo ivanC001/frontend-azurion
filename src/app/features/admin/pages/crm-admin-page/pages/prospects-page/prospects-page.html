@@ -71,6 +71,9 @@
               <td><div class="prospect-modern-actions">
                 <button type="button" class="prospect-edit-action" title="Editar prospecto" aria-label="Editar prospecto" (click)="editRequested.emit(row.prospect)"><i class="pi pi-pencil"></i></button>
                 <button type="button" class="prospect-follow-action" title="Pasar a seguimiento" aria-label="Pasar a seguimiento" [disabled]="!row.canMoveToFollowUp || actionId() === row.prospect.id" (click)="moveToFollowUpRequested.emit(row.prospect)"><i class="pi pi-arrow-right"></i></button>
+                @if (canDelete()) {
+                  <button type="button" class="prospect-delete-action" title="Eliminar prospecto" aria-label="Eliminar prospecto" [disabled]="actionId() === row.prospect.id" (click)="deleteRequested.emit(row.prospect)"><i class="pi pi-trash"></i></button>
+                }
               </div></td>
             </tr>
           } @empty {

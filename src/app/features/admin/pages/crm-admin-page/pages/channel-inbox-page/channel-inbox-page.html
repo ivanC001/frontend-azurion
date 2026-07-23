@@ -4,38 +4,119 @@
     <div>
       <small>Bandeja CRM</small>
       <h1>{{ view().title }}</h1>
-      <p>{{ active() ? view().description : 'Este canal no se mostrará en Bandeja hasta que su configuración quede activa.' }}</p>
+      <p>{{ view().description }}</p>
     </div>
+    @if (channelCode() === 'CORREO') {
+      <a class="channel-settings-link" [routerLink]="view().configurationRoute" title="Configurar correo">
+        <i class="pi pi-cog"></i>
+        Configuracion
+      </a>
+    }
   </header>
 
-  <article>
-    @if (loading()) {
-      <div class="channel-copy channel-copy--loading">
-        <span><i class="pi pi-spin pi-spinner"></i></span>
-        <h2>Comprobando configuración</h2>
+  @if (channelCode() === 'CORREO') {
+    <article class="sent-email-inbox">
+      <div class="sent-email-toolbar">
+        <div>
+          <strong><i class="pi pi-send"></i> Enviados</strong>
+          <small>Solo se muestran entregas salientes confirmadas por el servidor SMTP.</small>
+        </div>
+        <label>
+          <i class="pi pi-search"></i>
+          <input
+            type="search"
+            [ngModel]="emailQuery()"
+            (ngModelChange)="updateEmailQuery($event)"
+            placeholder="Buscar cliente, correo o documento..."
+          />
+        </label>
+        <button type="button" (click)="reloadSentEmails()" [disabled]="emailLoading()" title="Actualizar enviados">
+          <i [class]="emailLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+        </button>
       </div>
-    } @else if (active()) {
-      <div class="channel-status">
-        <i class="pi pi-check-circle"></i>
-        <span><strong>Canal activo</strong><small>Visible porque su configuración está habilitada.</small></span>
+
+      <div class="sent-email-notice">
+        <i class="pi pi-info-circle"></i>
+        <span><strong>Recepcion desactivada</strong> Esta bandeja no consulta ni simula correos entrantes porque todavia no se ha habilitado un webhook de correo.</span>
       </div>
-      <div class="channel-copy">
-        <span><i class="pi pi-comments"></i></span>
-        <h2>Bandeja preparada</h2>
-        <p>{{ view().detail }}</p>
-        <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Revisar configuración</a>
-      </div>
-    } @else {
-      <div class="channel-status channel-status--inactive">
-        <i class="pi pi-eye-slash"></i>
-        <span><strong>Canal no disponible</strong><small>La configuración de este canal no está activa.</small></span>
-      </div>
-      <div class="channel-copy">
-        <span><i class="pi pi-cog"></i></span>
-        <h2>Activa el canal para mostrarlo en Bandeja</h2>
-        <p>Cuando la configuración quede activa para este tenant, el acceso aparecerá automáticamente en el menú CRM.</p>
-        <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Ir a configuración</a>
-      </div>
-    }
-  </article>
+
+      @if (emailError()) {
+        <div class="sent-email-feedback sent-email-feedback--error">{{ emailError() }}</div>
+      } @else if (emailLoading() && !sentEmails().length) {
+        <div class="sent-email-feedback"><i class="pi pi-spin pi-spinner"></i> Cargando correos enviados...</div>
+      } @else if (!sentEmails().length) {
+        <div class="sent-email-empty">
+          <span><i class="pi pi-envelope"></i></span>
+          <h2>No hay correos enviados</h2>
+          <p>Las cotizaciones confirmadas por SMTP apareceran aqui automaticamente.</p>
+        </div>
+      } @else {
+        <div class="sent-email-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Destinatario</th>
+                <th>Asunto</th>
+                <th>Cotizacion</th>
+                <th>Total</th>
+                <th>Enviado por</th>
+                <th>Fecha de envio</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (email of sentEmails(); track email.cotizacionId) {
+                <tr>
+                  <td><strong>{{ email.destinatarioNombre }}</strong><small>{{ email.destinatarioCorreo || 'Correo no disponible' }}</small></td>
+                  <td><strong>{{ email.asunto }}</strong><small>Entrega SMTP confirmada</small></td>
+                  <td><span class="sent-email-code">COT-{{ email.cotizacionId }}</span></td>
+                  <td><strong>{{ email.moneda }} {{ email.total | number:'1.2-2' }}</strong></td>
+                  <td>{{ email.enviadoPor }}</td>
+                  <td><strong>{{ email.enviadoEn | date:'dd/MM/yyyy' }}</strong><small>{{ email.enviadoEn | date:'HH:mm' }}</small></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="sent-email-pagination">
+          <span>Mostrando {{ emailRangeLabel() }}</span>
+          <div>
+            <button type="button" (click)="previousEmailPage()" [disabled]="emailPage() === 0 || emailLoading()" title="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+            <b>{{ emailPage() + 1 }} / {{ emailTotalPages() }}</b>
+            <button type="button" (click)="nextEmailPage()" [disabled]="emailPage() >= emailTotalPages() - 1 || emailLoading()" title="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+          </div>
+        </footer>
+      }
+    </article>
+  } @else {
+    <article>
+      @if (loading()) {
+        <div class="channel-copy channel-copy--loading">
+          <span><i class="pi pi-spin pi-spinner"></i></span>
+          <h2>Comprobando configuracion</h2>
+        </div>
+      } @else if (active()) {
+        <div class="channel-status">
+          <i class="pi pi-check-circle"></i>
+          <span><strong>Canal activo</strong><small>Las credenciales requeridas quedaron guardadas.</small></span>
+        </div>
+        <div class="channel-copy">
+          <span><i class="pi pi-comments"></i></span>
+          <h2>Webhook preparado</h2>
+          <p>{{ view().detail }}</p>
+          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Revisar configuracion</a>
+        </div>
+      } @else {
+        <div class="channel-status channel-status--inactive">
+          <i class="pi pi-eye-slash"></i>
+          <span><strong>Canal no disponible</strong><small>Faltan credenciales o el canal esta inactivo.</small></span>
+        </div>
+        <div class="channel-copy">
+          <span><i class="pi pi-cog"></i></span>
+          <h2>Completa la configuracion del webhook</h2>
+          <p>Meta requiere access token, App ID, App secret, verify token y una URL publica HTTPS antes de activar este canal.</p>
+          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Ir a configuracion</a>
+        </div>
+      }
+    </article>
+  }
 </section>

@@ -1,0 +1,83 @@
+.delete-prospect {
+  align-items: start;
+  background: #ffffff;
+  color: #172033;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 1.15rem;
+}
+
+.delete-prospect__icon {
+  align-items: center;
+  background: #fee2e2;
+  border-radius: 0.75rem;
+  color: #dc2626;
+  display: inline-flex;
+  height: 2.7rem;
+  justify-content: center;
+  width: 2.7rem;
+}
+
+.delete-prospect__copy h2 {
+  font-size: 1rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.delete-prospect__copy p {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0.35rem 0 0;
+}
+
+.delete-prospect__copy small {
+  color: #64748b;
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  margin-top: 0.45rem;
+}
+
+.delete-prospect__close {
+  background: transparent;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.35rem;
+}
+
+.delete-prospect footer {
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 0.55rem;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  padding-top: 0.85rem;
+}
+
+.delete-prospect footer button {
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 850;
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+}
+
+.delete-prospect__cancel {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.delete-prospect__confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+}
+
+.delete-prospect footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

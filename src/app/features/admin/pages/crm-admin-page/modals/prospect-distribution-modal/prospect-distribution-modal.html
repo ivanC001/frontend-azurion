@@ -21,15 +21,29 @@
       </button>
     </header>
 
+    <div class="distribution-mode" role="tablist" aria-label="Modo de reparto">
+      <button type="button" [class.is-active]="mode() === 'MANUAL'" (click)="modeChange.emit('MANUAL')">
+        <i class="pi pi-users"></i>
+        <span><strong>Reparto manual</strong><small>Distribuye los leads visibles ahora</small></span>
+      </button>
+      <button type="button" [class.is-active]="mode() === 'AUTOMATICO'" (click)="modeChange.emit('AUTOMATICO')">
+        <i class="pi pi-bolt"></i>
+        <span><strong>Reparto automatico</strong><small>Asigna cada lead nuevo al llegar</small></span>
+      </button>
+    </div>
+
     <div class="distribution-modal__summary">
-      <span><i class="pi pi-megaphone"></i></span>
+      <span><i [class]="mode() === 'AUTOMATICO' ? 'pi pi-sync' : 'pi pi-megaphone'"></i></span>
       <div>
-        <strong>{{ leadCount() }} leads listos para repartir</strong>
-        <small>
-          {{ selectedProspectCount() ? 'Se usaran solo los leads seleccionados.' : 'Se usaran todos los leads nuevos filtrados actualmente.' }}
-        </small>
+        @if (mode() === 'AUTOMATICO') {
+          <strong>Asignacion equilibrada por menor carga</strong>
+          <small>Los nuevos leads de landing y WhatsApp se entregaran al vendedor con menos prospectos nuevos.</small>
+        } @else {
+          <strong>{{ leadCount() }} leads listos para repartir</strong>
+          <small>{{ selectedProspectCount() ? 'Se usaran solo los leads seleccionados.' : 'Se usaran todos los leads nuevos filtrados actualmente.' }}</small>
+        }
       </div>
-      <b>{{ selectedProspectCount() || leadCount() }}</b>
+      <b>{{ mode() === 'AUTOMATICO' ? (automaticEnabled() ? 'Activo' : 'Inactivo') : (selectedProspectCount() || leadCount()) }}</b>
     </div>
 
     <div class="distribution-modal__grid">
@@ -81,12 +95,17 @@
       <button
         type="button"
         class="distribution-action distribution-action--primary"
-        [disabled]="saving() || !selectedSellerIds().length"
-        (click)="distributeRequested.emit()"
+        [disabled]="saving() || !selectedSellerIds().length || (mode() === 'MANUAL' && !leadCount())"
+        (click)="mode() === 'AUTOMATICO' ? automaticConfigurationRequested.emit(true) : distributeRequested.emit()"
       >
-        <i class="pi pi-check"></i>
-        Repartir ahora
+        <i [class]="saving() ? 'pi pi-spin pi-spinner' : (mode() === 'AUTOMATICO' ? 'pi pi-bolt' : 'pi pi-check')"></i>
+        {{ saving() ? 'Guardando...' : (mode() === 'AUTOMATICO' ? 'Activar reparto automatico' : 'Repartir ahora') }}
       </button>
+      @if (mode() === 'AUTOMATICO' && automaticEnabled()) {
+        <button type="button" class="distribution-action distribution-action--danger" [disabled]="saving()" (click)="automaticConfigurationRequested.emit(false)">
+          <i class="pi pi-pause"></i> Desactivar
+        </button>
+      }
     </footer>
   </section>
 </p-dialog>

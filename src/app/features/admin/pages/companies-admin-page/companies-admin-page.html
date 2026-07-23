@@ -51,7 +51,7 @@
       <div class="company-filters">
         <span class="search-control">
           <i class="pi pi-search"></i>
-          <input pInputText type="search" [value]="searchTerm()" (input)="setSearch($event)" placeholder="Empresa, RUC o tenant" />
+          <input pInputText type="search" [value]="searchTerm()" (input)="setSearch($event)" placeholder="Empresa, identificador o tenant" />
         </span>
         <p-select
           [options]="statusOptions"
@@ -74,7 +74,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Empresa</th>
-          <th>RUC</th>
+          <th>Identificador fiscal</th>
           <th>Tenant</th>
           <th>Schema</th>
           <th>Plan</th>
@@ -89,7 +89,7 @@
             <strong>{{ empresa.razonSocial }}</strong>
             <small>ID {{ empresa.id }}</small>
           </td>
-          <td>{{ empresa.ruc }}</td>
+          <td><strong>{{ empresa.tipoDocumentoFiscal || 'Fiscal' }}</strong><small>{{ empresa.ruc }} · {{ empresa.paisCodigo || 'PE' }}</small></td>
           <td><code>{{ empresa.tenantId }}</code></td>
           <td><code>{{ empresa.schemaName }}</code></td>
           <td>
@@ -139,8 +139,22 @@
 >
   <form class="company-form">
     <label>
-      RUC
-      <input pInputText name="ruc" maxlength="11" [(ngModel)]="form.ruc" placeholder="20123456789" />
+      Pais
+      <select [ngModel]="form.paisCodigo" (ngModelChange)="onCountryChanged($event)" name="paisCodigo">
+        @for (country of countryOptions; track country.code) {
+          <option [value]="country.code">{{ country.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Tipo de identificador fiscal
+      <input pInputText name="tipoDocumentoFiscal" [(ngModel)]="form.tipoDocumentoFiscal" maxlength="20" />
+    </label>
+
+    <label>
+      {{ form.tipoDocumentoFiscal || 'Identificador fiscal' }}
+      <input pInputText name="ruc" maxlength="40" [(ngModel)]="form.ruc" placeholder="Identificador tributario" />
     </label>
 
     <label>
@@ -152,6 +166,11 @@
         placeholder="Empresa Demo SAC"
         (blur)="generateTenantFields()"
       />
+    </label>
+
+    <label>
+      Nombre comercial
+      <input pInputText name="nombreComercial" [(ngModel)]="form.nombreComercial" placeholder="Nombre visible" />
     </label>
 
     <label>
@@ -225,9 +244,9 @@
         type="checkbox"
         name="syncFacturador"
         [(ngModel)]="form.syncFacturador"
-        [disabled]="!isModuleSelected('FACTURACION')"
+        [disabled]="!isModuleSelected('FACTURACION') || form.paisCodigo !== 'PE'"
       />
-      <span>Registrar tambien en facturador (solo si FACTURACION esta activa)</span>
+      <span>Registrar tambien en facturador SUNAT (solo Peru con modulo FACTURACION)</span>
     </label>
   </form>
 

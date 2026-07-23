@@ -15,7 +15,7 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { ApiUrlService } from '@core/api/api-url.service';
-import { CompleteClientDataModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, PipelineStageModal, ActivityFormModal, QuoteFormModal } from './modals';
+import { CompleteClientDataModal, DeleteProspectModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, PipelineStageModal, ActivityFormModal, QuoteFormModal } from './modals';
 import {
   CrmClientCompletionAction,
   CrmClientCompletionDraft,
@@ -47,16 +47,17 @@ import {
   CrmStorageCompanyIdentity,
 } from './services';
 import { EmailSettings } from './settings/email-settings/email-settings';
+import { LandingChannelConfig } from './components/landing-channel-config/landing-channel-config';
 import {
   AdminSaasApiService,
   Cliente,
   Cotizacion,
-  CotizacionDetalle,
   CrmActividad,
   CrmCanalTokenConfig,
   CrmCatalogoItem,
   CrmCurrencyConfig,
   CrmDashboard,
+  CrmLeadAssignmentConfig,
   CrmEtapaPipeline,
   CrmNegociacion,
   CrmOportunidad,
@@ -223,13 +224,6 @@ interface CatalogField {
   type?: 'text' | 'number' | 'date';
 }
 
-interface OpportunityViewOption {
-  value: OpportunityView;
-  label: string;
-  detail: string;
-  count: number;
-}
-
 interface OpportunitySummaryCard {
   label: string;
   value: string;
@@ -246,15 +240,6 @@ interface OpportunityMessageTemplate {
   body: string;
   audioName?: string | null;
   audioDataUrl?: string | null;
-}
-
-interface OpportunityMessageTemplateForm {
-  id: string | null;
-  channel: 'WHATSAPP' | 'CORREO' | 'AUDIO';
-  title: string;
-  body: string;
-  audioName: string;
-  audioDataUrl: string;
 }
 
 interface OpportunityRequirementRecord {
@@ -373,15 +358,6 @@ interface OpportunityHistoryEvent {
   tone: 'blue' | 'green' | 'amber' | 'red' | 'violet' | 'slate';
 }
 
-interface CrmDashboardMetricCard {
-  label: string;
-  value: number;
-  detail: string;
-  icon: string;
-  tone: 'blue' | 'green' | 'violet' | 'amber' | 'teal' | 'slate';
-  prefix?: string;
-}
-
 interface CrmPageMeta {
   eyebrow: string;
   title: string;
@@ -395,25 +371,6 @@ interface CrmSectionTab {
   icon: string;
   route: string;
   count: number;
-}
-
-interface CrmProcessCard {
-  tab: CrmTab;
-  label: string;
-  detail: string;
-  icon: string;
-  count: number;
-  amount: number;
-  conversion: number;
-  tone: 'blue' | 'green' | 'violet' | 'amber' | 'teal' | 'slate';
-}
-
-interface CrmLeadSourceSlice {
-  code: string;
-  label: string;
-  count: number;
-  percent: number;
-  color: string;
 }
 
 interface CrmExecutiveKpi {
@@ -440,44 +397,6 @@ interface CrmExecutiveRevenueChart {
   realPoints: string;
   targetPoints: string;
   areaPoints: string;
-}
-
-interface CrmConversionItem {
-  label: string;
-  converted: number;
-  total: number;
-  rate: number;
-  detail: string;
-}
-
-interface CrmRecentEvent {
-  title: string;
-  subtitle: string;
-  timestamp: string;
-  icon: string;
-  tone: 'blue' | 'green' | 'amber' | 'violet';
-}
-
-interface CrmTaskCard {
-  title: string;
-  subtitle: string;
-  dueAt: string;
-  tone: 'high' | 'medium' | 'low';
-  toneLabel: string;
-}
-
-interface FollowUpStatCard {
-  label: string;
-  value: number;
-  detail: string;
-  tone: 'blue' | 'red' | 'amber' | 'green';
-}
-
-interface FollowUpFilterOption {
-  value: FollowUpFilter;
-  label: string;
-  icon: string;
-  count: number;
 }
 
 interface FollowUpStageCard {
@@ -517,21 +436,6 @@ interface FollowUpQualification {
   canConvert: boolean;
   missing: string[];
   status: 'CALIFICADO' | 'SEGUIR' | 'ESPERA' | 'PERDIDO' | 'CONVERTIDO';
-}
-
-interface FollowUpTimelineEvent {
-  title: string;
-  subtitle: string;
-  date: string;
-  icon: string;
-  tone: 'blue' | 'green' | 'amber' | 'red' | 'slate';
-}
-
-interface ProspectMetricCard {
-  label: string;
-  value: string;
-  delta: string;
-  detail: string;
 }
 
 interface CrmStageMetricCard {
@@ -696,6 +600,7 @@ interface PromotionForm {
     PipelinePage,
     ProspectsPage,
     CompleteClientDataModal,
+    DeleteProspectModal,
     FollowupDetailModal,
     OpportunityDetailModal,
     OpportunityRequirementModal,
@@ -712,6 +617,7 @@ interface PromotionForm {
     ProspectDistributionModal,
     RegisterPaymentModal,
     EmailSettings,
+    LandingChannelConfig,
   ],
   templateUrl: './crm-admin-page.html',
   styleUrl: './crm-admin-page.scss',
@@ -782,6 +688,10 @@ export class CrmAdminPage {
   protected readonly showProspectFilters = signal(false);
   protected readonly prospectDistributionDialogOpen = signal(false);
   protected readonly prospectDistributionSelectedSellerIds = signal<string[]>([]);
+  protected readonly prospectDistributionMode = signal<'MANUAL' | 'AUTOMATICO'>('MANUAL');
+  protected readonly leadAssignmentConfig = signal<CrmLeadAssignmentConfig>({ automatico: false, estrategia: 'MENOR_CARGA', responsableIds: [] });
+  protected readonly prospectDeleteTarget = signal<CrmProspecto | null>(null);
+  protected readonly prospectDeleting = signal(false);
   protected readonly selectedProspectIds = signal<Set<number>>(new Set());
   protected readonly prospectPage = signal(0);
   protected readonly clientPage = signal(0);
@@ -814,7 +724,6 @@ export class CrmAdminPage {
   protected readonly successMessage = signal<string | null>(null);
   public readonly selectedOpportunity = signal<CrmOportunidad | null>(null);
   public readonly opportunityDetailTab = signal<OpportunityDetailTab>('resumen');
-  protected readonly opportunityMessageTemplates = signal<OpportunityMessageTemplate[]>(this.loadOpportunityMessageTemplates());
   protected readonly opportunityRequirementRecords = signal<OpportunityRequirementRecord[]>(this.loadOpportunityRecords<OpportunityRequirementRecord>(this.opportunityRequirementStorageKey()));
   protected readonly opportunityNegotiationRecords = signal<OpportunityNegotiationRecord[]>([]);
   protected readonly opportunityPaymentRecords = signal<OpportunityPaymentRecord[]>(this.loadOpportunityRecords<OpportunityPaymentRecord>(this.opportunityPaymentStorageKey()));
@@ -840,8 +749,8 @@ export class CrmAdminPage {
   public readonly canMoveCrmOpportunities = computed(() => this.hasCrmPermission('CRM_OPPORTUNITIES_STAGE', 'CRM_PIPELINE_WRITE', 'CRM_OPPORTUNITY_MOVE_STAGE'));
   protected readonly canCloseCrmOpportunities = computed(() => this.hasCrmPermission('CRM_OPPORTUNITIES_CLOSE', 'CRM_CONVERT_SALE', 'CRM_OPPORTUNITY_MARK_WON', 'CRM_OPPORTUNITY_MARK_LOST'));
   protected readonly canCreateCrmQuotes = computed(() => this.hasCrmPermission('CRM_QUOTES_CREATE', 'CRM_CONVERT_SALE'));
-  protected readonly canConvertCrmProspects = computed(() => this.hasCrmPermission('CRM_PROSPECTS_CONVERT', 'CRM_CONVERT_CLIENT'));
   protected readonly canAssignCrmProspects = computed(() => this.hasCrmPermission('CRM_ASSIGN', 'CRM_VIEW_ALL'));
+  protected readonly canDeleteCrmProspects = computed(() => this.hasCrmPermission('CRM_DELETE'));
   protected readonly dashboardNow = new Date();
 
   public prospectForm: ProspectForm = this.emptyProspectForm();
@@ -851,7 +760,6 @@ export class CrmAdminPage {
   public quoteForm: QuoteForm = this.emptyQuoteForm();
   protected promotionForm: PromotionForm = this.emptyPromotionForm();
   public stageForm: StageForm = this.emptyStageForm();
-  protected messageTemplateForm: OpportunityMessageTemplateForm = this.emptyMessageTemplateForm();
   public requirementForm: OpportunityRequirementForm = this.emptyOpportunityRequirementForm();
   public negotiationForm: OpportunityNegotiationForm = this.emptyOpportunityNegotiationForm();
   protected paymentForm: OpportunityPaymentForm = this.emptyOpportunityPaymentForm();
@@ -1439,53 +1347,6 @@ export class CrmAdminPage {
     this.toRate(this.wonAmount(), this.dashboardTargetAmount()),
   );
 
-  protected readonly dashboardMetrics = computed<CrmDashboardMetricCard[]>(() => [
-    {
-      label: 'Leads nuevos',
-      value: this.automaticLeads().length,
-      detail: 'Captados desde landing y canales conectados',
-      icon: 'pi pi-megaphone',
-      tone: 'violet',
-    },
-    {
-      label: 'Prospectos',
-      value: this.prospectos().length,
-      detail: 'Contactos que ya estan dentro del CRM',
-      icon: 'pi pi-users',
-      tone: 'blue',
-    },
-    {
-      label: 'Oportunidades',
-      value: this.metrics().oportunidades,
-      detail: 'Negocios abiertos en seguimiento comercial',
-      icon: 'pi pi-briefcase',
-      tone: 'green',
-    },
-    {
-      label: 'Ventas ganadas',
-      value: this.wonOpportunities().length,
-      detail: 'Cierres exitosos del pipeline',
-      icon: 'pi pi-check-circle',
-      tone: 'teal',
-    },
-    {
-      label: 'Monto ganado',
-      value: this.wonAmount(),
-      detail: 'Cierre acumulado en oportunidades ganadas',
-      icon: 'pi pi-wallet',
-      tone: 'amber',
-      prefix: 'S/ ',
-    },
-    {
-      label: 'Monto en pipeline',
-      value: this.metrics().pipeline,
-      detail: 'Valor activo en juego dentro del embudo',
-      icon: 'pi pi-chart-line',
-      tone: 'slate',
-      prefix: 'S/ ',
-    },
-  ]);
-
   protected readonly pipelineColumns = computed(() =>
     this.activePipelineStageOptions().map((stage) => {
       const items = this.oportunidades().filter((item) => item.etapa === stage.value && this.isActiveOpportunity(item));
@@ -1687,23 +1548,6 @@ export class CrmAdminPage {
     return { labels, guides, realPoints, targetPoints, areaPoints };
   });
 
-  protected readonly upcomingActivities = computed(() =>
-    [...this.actividades()]
-      .filter((item) => item.estado === 'PENDIENTE')
-      .sort((a, b) => new Date(a.fechaProgramada).getTime() - new Date(b.fechaProgramada).getTime())
-      .slice(0, 6),
-  );
-
-  protected readonly priorityProspects = computed(() =>
-    this.prospectos()
-      .filter((item) => ['NUEVO', 'CONTACTADO', 'EN_ESPERA', 'CALIFICADO'].includes(item.estado))
-      .slice(0, 6),
-  );
-
-  protected readonly newProspects = computed(() =>
-    this.prospectos().filter((item) => item.estado === 'NUEVO' && (!this.hasProspectActivity(item.id) || this.isAutomaticLead(item))),
-  );
-
   protected readonly followUpProspects = computed(() =>
     this.prospectos().filter((item) =>
       !this.hasClosedSaleForProspect(item.id) &&
@@ -1721,44 +1565,6 @@ export class CrmAdminPage {
   protected readonly wonOpportunities = computed(() =>
     this.oportunidades().filter((item) => item.estado === 'GANADA' || item.etapa === 'GANADO'),
   );
-
-  protected readonly commercialJourney = computed(() => [
-    {
-      icon: 'pi pi-user-plus',
-      label: 'Prospectos',
-      detail: 'Prospectos y leads',
-      count: this.captationProspectItems().length,
-      tab: 'captacion' as CrmTab,
-    },
-    {
-      icon: 'pi pi-comments',
-      label: 'Seguimiento',
-      detail: 'Llamadas y tareas',
-      count: this.followUpProspects().length + this.metrics().actividadesPendientes,
-      tab: 'seguimiento' as CrmTab,
-    },
-    {
-      icon: 'pi pi-briefcase',
-      label: 'Oportunidades',
-      detail: 'Negocios completos',
-      count: this.oportunidades().length,
-      tab: 'oportunidades' as CrmTab,
-    },
-    {
-      icon: 'pi pi-trophy',
-      label: 'Clientes',
-      detail: 'Postventa',
-      count: this.clientsWonItems().length,
-      tab: 'clientes' as CrmTab,
-    },
-    {
-      icon: 'pi pi-credit-card',
-      label: 'Seguimiento de pagos',
-      detail: 'Cuotas y deuda',
-      count: this.paymentFollowUpItems().length,
-      tab: 'seguimientoPagos' as CrmTab,
-    },
-  ]);
 
   protected readonly sectionTabs = computed<CrmSectionTab[]>(() => {
     const items: CrmSectionTab[] = [
@@ -1901,262 +1707,6 @@ export class CrmAdminPage {
     return meta[this.activeTab()];
   });
 
-  protected readonly commercialProcess = computed<CrmProcessCard[]>(() => {
-    const oportunidades = this.oportunidades().filter((item) => this.isActiveOpportunity(item));
-    const cotizadas = oportunidades.filter((item) => item.etapa === 'COTIZADO' || item.estado === 'COTIZADA');
-    const negociacion = oportunidades.filter((item) => item.etapa === 'NEGOCIACION');
-    const captacionItems = [...new Map([...this.newProspects(), ...this.automaticLeads()].map((item) => [item.id, item])).values()];
-    const seguimientoItems = this.followUpProspects();
-    const captacionCount = captacionItems.length;
-    const seguimientoCount = seguimientoItems.length;
-    const ganadasCount = this.wonOpportunities().length;
-    const clientesCerrados = this.clientsWonItems();
-
-    return [
-      {
-        tab: 'captacion' as CrmTab,
-        label: 'Captacion',
-        detail: 'Leads nuevos',
-        icon: 'pi pi-user-plus',
-        count: captacionCount,
-        amount: captacionItems.reduce((sum, item) => sum + Number(item.presupuestoEstimado || 0), 0),
-        conversion: this.toRate(seguimientoCount, Math.max(captacionCount, 1)),
-        tone: 'blue' as const,
-      },
-      {
-        tab: 'seguimiento' as CrmTab,
-        label: 'Seguimiento',
-        detail: 'Contactados',
-        icon: 'pi pi-phone',
-        count: seguimientoCount,
-        amount: seguimientoItems.reduce((sum, item) => sum + Number(item.presupuestoEstimado || 0), 0),
-        conversion: this.toRate(oportunidades.length, Math.max(seguimientoCount, 1)),
-        tone: 'green' as const,
-      },
-      {
-        tab: 'oportunidades' as CrmTab,
-        label: 'Oportunidades',
-        detail: 'Activas',
-        icon: 'pi pi-briefcase',
-        count: oportunidades.length,
-        amount: oportunidades.reduce((sum, item) => sum + Number(item.montoEstimado || 0), 0),
-        conversion: this.toRate(cotizadas.length, Math.max(oportunidades.length, 1)),
-        tone: 'violet' as const,
-      },
-      {
-        tab: 'cotizaciones' as CrmTab,
-        label: 'Cotizaciones',
-        detail: 'Enviadas',
-        icon: 'pi pi-file-edit',
-        count: cotizadas.length,
-        amount: cotizadas.reduce((sum, item) => sum + Number(item.montoEstimado || 0), 0),
-        conversion: this.toRate(negociacion.length, Math.max(cotizadas.length, 1)),
-        tone: 'amber' as const,
-      },
-      {
-        tab: 'negociacion' as CrmTab,
-        label: 'Negociacion',
-        detail: 'En negociacion',
-        icon: 'pi pi-handshake',
-        count: negociacion.length,
-        amount: negociacion.reduce((sum, item) => sum + Number(item.montoEstimado || 0), 0),
-        conversion: this.toRate(ganadasCount, Math.max(negociacion.length, 1)),
-        tone: 'slate' as const,
-      },
-      {
-        tab: 'clientes' as CrmTab,
-        label: 'Clientes',
-        detail: 'Ventas cerradas',
-        icon: 'pi pi-trophy',
-        count: clientesCerrados.length,
-        amount: this.sumOpportunityAmount(clientesCerrados, true),
-        conversion: this.toRate(clientesCerrados.length, Math.max(this.oportunidades().length, 1)),
-        tone: 'teal' as const,
-      },
-    ];
-  });
-
-  protected readonly stageSummary = computed(() =>
-    {
-      const columns = this.pipelineColumns();
-      return columns.map((stage, index) => ({
-        ...stage,
-        index,
-        percent: columns.length <= 1 ? 0 : Math.round((index / (columns.length - 1)) * 100),
-      }));
-    },
-  );
-
-  protected readonly funnelSummary = computed(() => {
-    const stageColorMap = new Map(
-      this.etapaOptions().map((item) => [item.value, item.color] as const),
-    );
-    const source = this.dashboard()?.embudo?.length
-      ? this.dashboard()!.embudo.map((item, index) => ({
-          code: item.etapa,
-          label: this.stageName(item.etapa),
-          quantity: item.cantidad,
-          total: item.monto,
-          color: stageColorMap.get(item.etapa) || this.stageColor(item.etapa),
-          visualWidth: Math.max(34, 100 - index * 12),
-        }))
-      : this.stageSummary().map((item, index) => ({
-          code: item.value,
-          label: item.label,
-          quantity: item.items.length,
-          total: item.total,
-          color: item.color,
-          visualWidth: Math.max(34, 100 - index * 12),
-        }));
-
-    const maxQuantity = Math.max(...source.map((item) => item.quantity), 0);
-    return source.map((item) => ({
-      ...item,
-      quantityPercent: maxQuantity > 0 ? Math.round((item.quantity / maxQuantity) * 100) : 0,
-    }));
-  });
-
-  protected readonly pipelineBarSummary = computed(() => {
-    const max = Math.max(...this.stageSummary().map((item) => item.total), 0);
-    return this.stageSummary().map((item) => ({
-      ...item,
-      height: max > 0 ? Math.max(18, Math.round((item.total / max) * 100)) : 18,
-    }));
-  });
-
-  protected readonly leadSourceSummary = computed<CrmLeadSourceSlice[]>(() => {
-    const palette = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6'];
-    const grouped = new Map<string, number>();
-
-    for (const item of this.automaticLeads()) {
-      const label = item.campania?.trim() || this.humanize(item.canalIngreso || item.origen || 'WEB');
-      grouped.set(label, (grouped.get(label) || 0) + 1);
-    }
-
-    const total = Math.max([...grouped.values()].reduce((sum, value) => sum + value, 0), 0);
-    return [...grouped.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([label, count], index) => ({
-        code: label.toUpperCase().replace(/\s+/g, '_'),
-        label,
-        count,
-        percent: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
-        color: palette[index % palette.length],
-      }));
-  });
-
-  protected readonly leadDonutBackground = computed(() => {
-    const slices = this.leadSourceSummary();
-    if (!slices.length) {
-      return 'conic-gradient(#cbd5e1 0 360deg)';
-    }
-
-    let offset = 0;
-    const stops = slices.map((slice) => {
-      const next = offset + (slice.percent * 3.6);
-      const segment = `${slice.color} ${offset}deg ${next}deg`;
-      offset = next;
-      return segment;
-    });
-
-    if (offset < 360) {
-      stops.push(`#e2e8f0 ${offset}deg 360deg`);
-    }
-
-    return `conic-gradient(${stops.join(', ')})`;
-  });
-
-  protected readonly conversionSummary = computed<CrmConversionItem[]>(() => {
-    const leadBase = Math.max(this.automaticLeads().length, this.prospectos().length, 1);
-    const prospectBase = Math.max(this.prospectos().length, 1);
-    const opportunityBase = Math.max(this.oportunidades().length, 1);
-
-    return [
-      {
-        label: 'Lead a prospecto',
-        converted: this.prospectos().length,
-        total: leadBase,
-        rate: this.toRate(this.prospectos().length, leadBase),
-        detail: `${this.prospectos().length} de ${leadBase} registros captados`,
-      },
-      {
-        label: 'Prospecto a oportunidad',
-        converted: this.oportunidades().length,
-        total: prospectBase,
-        rate: this.toRate(this.oportunidades().length, prospectBase),
-        detail: `${this.oportunidades().length} de ${prospectBase} avanzaron al embudo`,
-      },
-      {
-        label: 'Oportunidad a ganada',
-        converted: this.wonOpportunities().length,
-        total: opportunityBase,
-        rate: this.toRate(this.wonOpportunities().length, opportunityBase),
-        detail: `${this.wonOpportunities().length} de ${opportunityBase} cerraron venta`,
-      },
-    ];
-  });
-
-  protected readonly featuredOpportunities = computed(() =>
-    [...this.oportunidades()]
-      .sort((a, b) => Number(b.montoEstimado || 0) - Number(a.montoEstimado || 0))
-      .slice(0, 5),
-  );
-
-  protected readonly pendingTasks = computed<CrmTaskCard[]>(() =>
-    this.upcomingActivities().map((item) => {
-      const tone = this.activityPriorityTone(item.fechaProgramada);
-      return {
-        title: item.asunto,
-        subtitle: item.oportunidadTitulo || item.prospectoNombre || item.clienteNombre || 'Sin relacion',
-        dueAt: item.fechaProgramada,
-        tone,
-        toneLabel: tone === 'high' ? 'Alta' : tone === 'medium' ? 'Media' : 'Baja',
-      };
-    }),
-  );
-
-  protected readonly recentEvents = computed<CrmRecentEvent[]>(() => {
-    const prospectEvents = this.prospectos().map((item) => ({
-      title: 'Nuevo prospecto captado',
-      subtitle: `${item.nombre} • ${this.humanize(item.origen)}`,
-      timestamp: item.updatedAt || item.createdAt || '',
-      icon: 'pi pi-user-plus',
-      tone: 'blue' as const,
-    }));
-
-    const opportunityEvents = this.oportunidades().map((item) => ({
-      title: 'Oportunidad actualizada',
-      subtitle: `${item.titulo} • ${this.stageName(item.etapa)}`,
-      timestamp: item.fechaUltimaActualizacion || item.updatedAt || item.createdAt || '',
-      icon: 'pi pi-briefcase',
-      tone: 'green' as const,
-    }));
-
-    const activityEvents = this.actividades().map((item) => ({
-      title: 'Actividad programada',
-      subtitle: `${item.asunto} • ${this.humanize(item.tipoActividad)}`,
-      timestamp: item.updatedAt || item.createdAt || item.fechaProgramada || '',
-      icon: 'pi pi-calendar-plus',
-      tone: 'violet' as const,
-    }));
-
-    return [...prospectEvents, ...opportunityEvents, ...activityEvents]
-      .filter((item) => !!item.timestamp)
-      .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
-      .slice(0, 5);
-  });
-
-  protected readonly filteredNewProspects = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.newProspects().filter((item) =>
-      !query ||
-      `${item.nombre} ${item.numeroDocumento ?? ''} ${item.telefono ?? ''} ${item.correo ?? ''} ${item.tipoInteres ?? ''} ${item.interesPrincipal ?? ''} ${item.estado}`
-        .toLowerCase()
-        .includes(query),
-    );
-  });
-
   protected readonly automaticLeads = computed(() =>
     this.prospectos().filter((item) => this.isAutomaticLead(item)),
   );
@@ -2164,16 +1714,6 @@ export class CrmAdminPage {
   protected readonly incomingNewLeads = computed(() =>
     this.automaticLeads().filter((item) => item.estado === 'NUEVO'),
   );
-
-  protected readonly filteredLeads = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.automaticLeads().filter((item) =>
-      !query ||
-      `${item.nombre} ${item.razonSocial ?? ''} ${item.correo ?? ''} ${item.telefono ?? ''} ${item.campania ?? ''} ${item.tipoInteres ?? ''} ${item.interesPrincipal ?? ''} ${item.mensaje ?? ''} ${item.estado}`
-        .toLowerCase()
-        .includes(query),
-    );
-  });
 
   protected readonly prospectSummaryCards = computed(() => {
     const leads = this.incomingNewLeads();
@@ -2189,11 +1729,6 @@ export class CrmAdminPage {
       { label: 'Campanias activas', value: String(campaigns), icon: 'pi pi-filter', tone: 'rose' },
     ];
   });
-
-  protected readonly prospectEstadoFilterOptions = computed(() => [
-    { label: 'Estado', value: 'TODOS' },
-    ...this.uniqueProspectValues('estado').map((value) => ({ label: this.humanize(value), value })),
-  ]);
 
   protected readonly prospectOrigenFilterOptions = computed(() => [
     { label: 'Origen', value: 'TODOS' },
@@ -2357,54 +1892,6 @@ export class CrmAdminPage {
 
   protected readonly crmLargeListPageSize = 20;
 
-  protected readonly prospectMetricCards = computed<ProspectMetricCard[]>(() => {
-    const prospects = this.prospectos();
-    const newItems = this.newProspects();
-    const today = newItems.filter((item) => this.isToday(item.createdAt || item.updatedAt)).length;
-    const yesterday = newItems.filter((item) => this.isYesterday(item.createdAt || item.updatedAt)).length;
-    const week = newItems.filter((item) => this.isWithinLastDays(item.createdAt || item.updatedAt, 7)).length;
-    const previousWeek = newItems.filter((item) => this.isWithinRangeDays(item.createdAt || item.updatedAt, 8, 14)).length;
-    const month = newItems.filter((item) => this.isCurrentMonth(item.createdAt || item.updatedAt)).length;
-    const previousMonth = newItems.filter((item) => this.isPreviousMonth(item.createdAt || item.updatedAt)).length;
-    const converted = prospects.filter((item) => item.estado === 'CONVERTIDO' || !!item.clienteId).length;
-    const conversion = prospects.length ? Math.round((converted / prospects.length) * 1000) / 10 : 0;
-    const previousBase = Math.max(prospects.length - today, 1);
-    const previousConversion = Math.round((Math.max(converted - 1, 0) / previousBase) * 1000) / 10;
-
-    return [
-      {
-        label: 'Nuevos hoy',
-        value: String(today),
-        delta: this.deltaLabel(today, yesterday),
-        detail: 'vs ayer',
-      },
-      {
-        label: 'Esta semana',
-        value: String(week),
-        delta: this.deltaLabel(week, previousWeek),
-        detail: 'vs semana anterior',
-      },
-      {
-        label: 'Este mes',
-        value: String(month),
-        delta: this.deltaLabel(month, previousMonth),
-        detail: 'vs mes anterior',
-      },
-      {
-        label: 'Tasa conversion',
-        value: `${conversion}%`,
-        delta: this.deltaLabel(conversion, previousConversion, true),
-        detail: 'vs periodo anterior',
-      },
-    ];
-  });
-
-  protected readonly recentProspects = computed(() =>
-    [...this.filteredNewProspects()]
-      .sort((a, b) => Date.parse(b.createdAt || b.updatedAt || '') - Date.parse(a.createdAt || a.updatedAt || ''))
-      .slice(0, 6),
-  );
-
   protected readonly filteredCatalogo = computed(() => {
     const query = this.query().trim().toLowerCase();
     return this.catalogoItems().filter((item) =>
@@ -2413,20 +1900,6 @@ export class CrmAdminPage {
         .toLowerCase()
         .includes(query),
     );
-  });
-
-  protected readonly filteredOportunidades = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.oportunidades().filter((item) =>
-      this.matchesOpportunityQuery(item, query),
-    );
-  });
-
-  protected readonly filteredQuotedOpportunities = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.oportunidades()
-      .filter((item) => item.etapa === 'COTIZADO' && this.isActiveOpportunity(item))
-      .filter((item) => this.matchesOpportunityQuery(item, query));
   });
 
   protected readonly quoteDashboardItems = computed(() => {
@@ -2704,12 +2177,6 @@ export class CrmAdminPage {
     return Array.from(byId.values());
   });
 
-  protected readonly clientsLostNegotiationItems = computed(() =>
-    this.oportunidades()
-      .filter((item) => (item.estado === 'PERDIDA' || item.etapa === 'PERDIDO') && this.hasNegotiationContext(item))
-      .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || '') - Date.parse(a.updatedAt || a.createdAt || '')),
-  );
-
   protected readonly clientsDashboardMetrics = computed(() => {
     const items = this.clientsDashboardItems();
     const amount = this.sumOpportunityAmount(items, true);
@@ -2777,33 +2244,6 @@ export class CrmAdminPage {
       .join(', ');
     return `conic-gradient(${stops})`;
   });
-
-  protected readonly opportunityViewOptions = computed<OpportunityViewOption[]>(() => [
-    {
-      value: 'ABIERTAS',
-      label: 'Activas',
-      detail: 'En seguimiento comercial',
-      count: this.oportunidades().filter((item) => this.isActiveOpportunity(item)).length,
-    },
-    {
-      value: 'COTIZADAS',
-      label: 'Cotizadas',
-      detail: 'Propuestas enviadas',
-      count: this.oportunidades().filter((item) => item.etapa === 'COTIZADO' && this.isActiveOpportunity(item)).length,
-    },
-    {
-      value: 'NEGOCIACION',
-      label: 'Negociacion',
-      detail: 'Precio y cierre',
-      count: this.negotiationOpportunities().length,
-    },
-    {
-      value: 'GANADAS',
-      label: 'Ganadas',
-      detail: 'Cierres exitosos',
-      count: this.wonOpportunities().length,
-    },
-  ]);
 
   protected readonly opportunitySummaryCards = computed<OpportunitySummaryCard[]>(() => {
     const all = this.oportunidades();
@@ -2985,8 +2425,6 @@ export class CrmAdminPage {
       .filter((item) => item.estado === 'PENDIENTE')
       .sort((a, b) => Date.parse(a.fechaProgramada || '') - Date.parse(b.fechaProgramada || ''))[0] ?? null,
   );
-
-  protected readonly selectedOpportunityLastActivity = computed(() => this.selectedOpportunityActivities()[0] ?? null);
 
   public readonly selectedOpportunityHistory = computed<OpportunityHistoryEvent[]>(() => {
     const opportunity = this.selectedOpportunity();
@@ -3188,19 +2626,6 @@ export class CrmAdminPage {
     };
   });
 
-  protected readonly opportunityPanelTitle = computed(() => {
-    switch (this.opportunityView()) {
-      case 'COTIZADAS':
-        return 'Cotizaciones enviadas';
-      case 'NEGOCIACION':
-        return 'Negociaciones activas';
-      case 'GANADAS':
-        return 'Oportunidades ganadas';
-      default:
-        return 'Oportunidades activas';
-    }
-  });
-
   protected readonly opportunityPanelDescription = computed(() => {
     switch (this.opportunityView()) {
       case 'COTIZADAS':
@@ -3212,60 +2637,6 @@ export class CrmAdminPage {
       default:
         return 'Vista unificada de negocios abiertos antes del cierre comercial.';
     }
-  });
-
-  protected readonly opportunityEmptyMessage = computed(() => {
-    switch (this.opportunityView()) {
-      case 'COTIZADAS':
-        return 'No hay cotizaciones en seguimiento.';
-      case 'NEGOCIACION':
-        return 'No hay oportunidades en negociacion.';
-      case 'GANADAS':
-        return 'Todavia no hay oportunidades ganadas.';
-      default:
-        return 'Todavia no hay oportunidades activas.';
-    }
-  });
-
-  protected readonly filteredActividades = computed(() => {
-    const query = this.query().trim().toLowerCase();
-    return this.actividades().filter((item) =>
-      !query ||
-      `${item.asunto} ${item.prospectoNombre ?? ''} ${item.oportunidadTitulo ?? ''} ${item.tipoActividad} ${item.estado}`
-        .toLowerCase()
-        .includes(query),
-    );
-  });
-
-  protected readonly followUpStatCards = computed<FollowUpStatCard[]>(() => {
-    const pending = this.actividades().filter((item) => item.estado === 'PENDIENTE');
-    const completed = this.actividades().filter((item) => item.estado === 'REALIZADA');
-    return [
-      {
-        label: 'Pendientes hoy',
-        value: pending.filter((item) => this.isToday(item.fechaProgramada)).length,
-        detail: 'Acciones que vencen durante el dia',
-        tone: 'blue',
-      },
-      {
-        label: 'Vencidas',
-        value: pending.filter((item) => this.isOverdue(item.fechaProgramada)).length,
-        detail: 'Requieren atencion inmediata',
-        tone: 'red',
-      },
-      {
-        label: 'Esta semana',
-        value: pending.filter((item) => this.isThisWeek(item.fechaProgramada)).length,
-        detail: 'Tareas comerciales programadas',
-        tone: 'amber',
-      },
-      {
-        label: 'Completadas',
-        value: completed.length,
-        detail: 'Historial de gestiones realizadas',
-        tone: 'green',
-      },
-    ];
   });
 
   protected readonly commercialInbox = computed<CommercialInboxCard[]>(() =>
@@ -3301,21 +2672,6 @@ export class CrmAdminPage {
       })
       .sort((a, b) => this.followUpPriorityOrder(a.priority) - this.followUpPriorityOrder(b.priority)),
   );
-
-  protected readonly followUpFilters = computed<FollowUpFilterOption[]>(() => {
-    const inbox = this.commercialInbox();
-    return [
-      { value: 'TODAS', label: 'Todas', icon: 'pi pi-list', count: inbox.length },
-      { value: 'MIS', label: 'Mis actividades', icon: 'pi pi-user', count: inbox.filter((item) => item.prospecto.responsableId === this.currentUserKey()).length },
-      { value: 'PENDIENTES', label: 'Pendientes', icon: 'pi pi-calendar-clock', count: inbox.filter((item) => Boolean(item.nextActivity)).length },
-      { value: 'HOY', label: 'Hoy', icon: 'pi pi-clock', count: inbox.filter((item) => item.priority === 'today').length },
-      { value: 'VENCIDAS', label: 'Vencidas', icon: 'pi pi-exclamation-triangle', count: inbox.filter((item) => item.priority === 'overdue').length },
-      { value: 'SIN_ACTIVIDAD', label: 'Sin actividad', icon: 'pi pi-minus-circle', count: inbox.filter((item) => !item.nextActivity && !item.lastActivity).length },
-      { value: 'LLAMADAS', label: 'Llamadas', icon: 'pi pi-phone', count: inbox.filter((item) => this.followUpHasActivityType(item, 'LLAMADA')).length },
-      { value: 'VISITAS', label: 'Visitas', icon: 'pi pi-building', count: inbox.filter((item) => this.followUpHasActivityType(item, 'VISITA', 'REUNION')).length },
-      { value: 'CORREOS', label: 'Correos', icon: 'pi pi-envelope', count: inbox.filter((item) => this.followUpHasActivityType(item, 'CORREO')).length },
-    ];
-  });
 
   protected readonly followUpStageCards = computed<FollowUpStageCard[]>(() => [
     {
@@ -3537,19 +2893,6 @@ export class CrmAdminPage {
     }),
   );
 
-  protected readonly followUpTimeline = computed<FollowUpTimelineEvent[]>(() =>
-    [...this.actividades()]
-      .sort((a, b) => Date.parse(this.activityEffectiveDate(b)) - Date.parse(this.activityEffectiveDate(a)))
-      .slice(0, 8)
-      .map((item) => ({
-        title: this.humanize(item.tipoActividad),
-        subtitle: `${item.asunto} - ${item.prospectoNombre || item.oportunidadTitulo || item.clienteNombre || 'Sin relacion'}`,
-        date: this.activityEffectiveDate(item),
-        icon: this.activityIcon(item.tipoActividad),
-        tone: item.estado === 'REALIZADA' ? 'green' : this.isOverdue(item.fechaProgramada) ? 'red' : this.isToday(item.fechaProgramada) ? 'amber' : 'blue',
-      })),
-  );
-
   public readonly selectedFollowUpCard = computed(() => {
     const selectedId = this.selectedFollowUpProspectId();
     if (!selectedId) {
@@ -3579,14 +2922,6 @@ export class CrmAdminPage {
       .sort((a, b) => Date.parse(a.fechaProgramada) - Date.parse(b.fechaProgramada))
       .slice(0, 5),
   );
-
-  protected readonly selectedFollowUpOpportunities = computed(() => {
-    const prospectId = this.selectedFollowUpCard()?.prospecto.id;
-    if (!prospectId) {
-      return [];
-    }
-    return this.oportunidades().filter((item) => item.prospectoId === prospectId);
-  });
 
   public readonly prospectoOptions = computed(() =>
     this.prospectos()
@@ -3691,12 +3026,15 @@ export class CrmAdminPage {
       integraciones: this.api.listCrmIntegraciones().pipe(catchError(() => of([] as CrmCanalTokenConfig[]))),
       whatsappStatus: this.api.getCrmWhatsappConnectionStatus().pipe(catchError(() => of(null))),
       monedas: this.api.listCrmCurrencyConfig().pipe(catchError(() => of([] as CrmCurrencyConfig[]))),
+      assignmentConfig: this.canAssignCrmProspects()
+        ? this.crmProspects.getAssignmentConfiguration().pipe(catchError(() => of({ automatico: false, estrategia: 'MENOR_CARGA', responsableIds: [] } as CrmLeadAssignmentConfig)))
+        : of({ automatico: false, estrategia: 'MENOR_CARGA', responsableIds: [] } as CrmLeadAssignmentConfig),
       dashboard: this.api.getCrmDashboard().pipe(catchError(() => of(null))),
       resources: this.crmOpportunities.listResources(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, whatsappStatus, monedas, dashboard, resources }) => {
+        next: ({ prospectos, oportunidades, etapas, catalogo, actividades, clientes, productos, sucursales, usuarios, cotizaciones, promociones, integraciones, whatsappStatus, monedas, assignmentConfig, dashboard, resources }) => {
           this.prospectos.set(prospectos);
           this.reconcileProspectSelection(prospectos);
           this.oportunidades.set(oportunidades);
@@ -3714,6 +3052,7 @@ export class CrmAdminPage {
           this.crmIntegraciones.set(this.withDefaultCrmIntegrations(integraciones));
           this.whatsappConnectionStatus.set(whatsappStatus);
           this.crmCurrencyConfigs.set(this.withDefaultCrmCurrencies(monedas));
+          this.leadAssignmentConfig.set(assignmentConfig);
           this.dashboard.set(dashboard);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -3961,29 +3300,6 @@ export class CrmAdminPage {
     return 'new';
   }
 
-  private hasProspectCompletedContact(prospectoId: number | null | undefined): boolean {
-    return !!prospectoId && this.actividades().some((item) =>
-      item.prospectoId === prospectoId &&
-      item.estado === 'REALIZADA' &&
-      ['LLAMADA', 'WHATSAPP', 'CORREO', 'REUNION', 'VISITA'].includes(item.tipoActividad),
-    );
-  }
-
-  private hasProspectConfirmedInterest(prospectoId: number | null | undefined): boolean {
-    return !!prospectoId && this.actividades().some((item) =>
-      item.prospectoId === prospectoId &&
-      item.estado === 'REALIZADA' &&
-      (
-        ['INTERESADO', 'MUY_INTERESADO', 'SOLICITA_PROPUESTA', 'COTIZACION_SOLICITADA'].includes(String(item.resultadoContacto || '')) ||
-        ['MEDIO', 'ALTO', 'TIBIO', 'CALIENTE'].includes(String(item.nivelInteres || '').toUpperCase())
-      ),
-    );
-  }
-
-  protected setOpportunityView(view: OpportunityView): void {
-    this.opportunityView.set(view);
-  }
-
   protected openCreateProspect(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -4096,20 +3412,6 @@ export class CrmAdminPage {
       },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
     });
-  }
-
-  protected convertProspect(item: CrmProspecto): void {
-    this.actionId.set(item.id);
-    this.api
-      .convertirCrmProspectoCliente(item.id)
-      .pipe(finalize(() => this.actionId.set(null)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set('Prospecto convertido a cliente.');
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
   }
 
   protected moveProspectToFollowUp(item: CrmProspecto): void {
@@ -4408,12 +3710,6 @@ export class CrmAdminPage {
     return catalogo?.descripcion || prospecto?.interesDetalle || this.opportunityForm.detalleSecundario || 'Sin detalle registrado.';
   }
 
-  protected opportunityResponsibleLabel(): string {
-    const id = this.opportunityForm.responsableId;
-    const user = this.usuarios().find((item) => String(item.id) === String(id) || item.username === id);
-    return user?.nombres || user?.username || id || 'Sin responsable';
-  }
-
   protected updateCrmCloseDays(value: number | string): void {
     const days = Math.min(365, Math.max(1, Number(value || 15)));
     this.crmLocalConfig.set({ ...this.crmLocalConfig(), cierreEstimadoDias: days });
@@ -4440,22 +3736,6 @@ export class CrmAdminPage {
       INSTAGRAM: 'Conexion para leads y mensajes captados desde Instagram.',
       FACEBOOK: 'Configuracion para Facebook Lead Ads y formularios.',
     }[canal] ?? 'Canal externo conectado al CRM.';
-  }
-
-  protected landingLeadJsonExample(): string {
-    const ruc = this.auth.currentSession()?.empresa?.ruc || '20000000012';
-    const item = this.catalogoItems().find((catalogo) => catalogo.publicEnabled && catalogo.estado === 'ACTIVO') ?? this.catalogoItems()[0];
-    const payload = {
-      Ruc_tenant: ruc,
-      catalogoItemId: item?.id ?? 2,
-      catalogoToken: item?.publicToken || 'TOKEN_DEL_CURSO',
-      nombre: 'Juan Perez',
-      emai: 'juan@perez.com',
-      telefono: '999999999',
-      campania: 'municipios',
-      website: '',
-    };
-    return JSON.stringify(payload, null, 2);
   }
 
   protected whatsappWebhookUrl(): string {
@@ -4529,6 +3809,39 @@ export class CrmAdminPage {
       });
   }
 
+  protected metaWebhookUrl(canal: string): string {
+    const tenant = this.auth.currentSession()?.tenantId || 'TU_TENANT';
+    const channel = canal.toLowerCase();
+    const configuredUrl = this.apiUrl.url(
+      'saasCore',
+      `/v1/public/crm/meta/${encodeURIComponent(tenant)}/${encodeURIComponent(channel)}/webhook`,
+    );
+    return new URL(configuredUrl, window.location.origin).toString();
+  }
+
+  protected metaWebhookIsPublicHttps(canal: string): boolean {
+    try {
+      const url = new URL(this.metaWebhookUrl(canal));
+      return url.protocol === 'https:' && !['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  protected metaIntegrationReady(integration: CrmCanalTokenConfig): boolean {
+    return Boolean(
+      (integration.accessToken?.trim() || integration.accessTokenConfigured)
+      && integration.appId?.trim()
+      && (integration.appSecret?.trim() || integration.appSecretConfigured)
+      && (integration.verifyToken?.trim() || integration.verifyTokenConfigured)
+      && this.metaWebhookIsPublicHttps(integration.canal),
+    );
+  }
+
+  protected metaAccountIdLabel(canal: string): string {
+    return canal === 'INSTAGRAM' ? 'Instagram account ID' : 'Facebook Page ID';
+  }
+
   protected subscribeWhatsappApp(): void {
     if (!this.canManageCrmConfig() || this.whatsappSubscribing()) {
       return;
@@ -4570,12 +3883,17 @@ export class CrmAdminPage {
     }
     const isWeb = integration.canal === 'WEB';
     const isWhatsapp = integration.canal === 'WHATSAPP';
+    const isMetaWebhook = integration.canal === 'FACEBOOK' || integration.canal === 'INSTAGRAM';
+    if (isMetaWebhook && integration.activo && !this.metaIntegrationReady(integration)) {
+      this.errorMessage.set('Completa token de acceso, App ID, App secret y Verify token. El callback tambien debe ser HTTPS publico.');
+      return;
+    }
     const request: UpdateCrmCanalTokenConfigRequest = {
       canal: integration.canal,
       nombre: integration.nombre?.trim() || integration.canal,
       accessToken: isWeb ? null : integration.accessToken?.trim() || null,
       verifyToken: isWeb ? null : integration.verifyToken?.trim() || null,
-      webhookUrl: isWeb || isWhatsapp ? null : integration.webhookUrl?.trim() || null,
+      webhookUrl: isMetaWebhook ? this.metaWebhookUrl(integration.canal) : (isWeb || isWhatsapp ? null : integration.webhookUrl?.trim() || null),
       appId: isWeb ? null : integration.appId?.trim() || null,
       appSecret: isWeb ? null : integration.appSecret?.trim() || null,
       phoneNumberId: isWeb ? null : integration.phoneNumberId?.trim() || null,
@@ -5067,15 +4385,6 @@ export class CrmAdminPage {
     return hasPayment || hasDocument;
   }
 
-  protected hasRequiredPaymentProof(item: CrmOportunidad): boolean {
-    return this.opportunityPaymentRecords().some((payment) =>
-      payment.oportunidadId === item.id &&
-      payment.estado === 'PAGADO' &&
-      Number(payment.monto || 0) > 0 &&
-      Boolean(payment.archivoDataUrl || payment.archivoNombre),
-    );
-  }
-
   public canCloseWon(item: CrmOportunidad): boolean {
     if (!this.hasFinalAgreement(item)) {
       return false;
@@ -5182,17 +4491,6 @@ export class CrmAdminPage {
       });
   }
 
-  protected clientOutcomeLabel(item: CrmOportunidad): string {
-    if (item.estado === 'PERDIDA' || item.etapa === 'PERDIDO') {
-      return 'Perdido';
-    }
-    return 'Ganado';
-  }
-
-  protected clientOutcomeTone(item: CrmOportunidad): 'won' | 'lost' {
-    return item.estado === 'PERDIDA' || item.etapa === 'PERDIDO' ? 'lost' : 'won';
-  }
-
   protected clientClosureRecord(item: CrmOportunidad): OpportunityClosureRecord | null {
     return this.opportunityClosureRecords()
       .filter((record) => record.oportunidadId === item.id)
@@ -5230,13 +4528,6 @@ export class CrmAdminPage {
       return;
     }
     this.openOpportunityLostDialog(item);
-  }
-
-  protected openProspectLostDialog(item: CrmProspecto, event?: Event): void {
-    event?.stopPropagation();
-    this.lossDialog.set({ type: 'PROSPECTO', prospecto: item });
-    this.lossReason.set('');
-    this.lossObservation.set('');
   }
 
   protected openOpportunityLostDialog(item: CrmOportunidad, event?: Event): void {
@@ -5505,33 +4796,9 @@ export class CrmAdminPage {
     return !!page.length && page.every((item) => this.selectedProspectIds().has(item.id));
   }
 
-  protected toggleProspectSelection(id: number, event: Event): void {
-    const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
-    const selected = new Set(this.selectedProspectIds());
-    if (checked) {
-      selected.add(id);
-    } else {
-      selected.delete(id);
-    }
-    this.selectedProspectIds.set(selected);
-  }
-
   protected setProspectSelection(id: number, checked: boolean): void {
     const selected = new Set(this.selectedProspectIds());
     checked ? selected.add(id) : selected.delete(id);
-    this.selectedProspectIds.set(selected);
-  }
-
-  protected togglePagedProspectSelection(event: Event): void {
-    const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
-    const selected = new Set(this.selectedProspectIds());
-    for (const item of this.pagedProspectTable()) {
-      if (checked) {
-        selected.add(item.id);
-      } else {
-        selected.delete(item.id);
-      }
-    }
     this.selectedProspectIds.set(selected);
   }
 
@@ -5557,11 +4824,6 @@ export class CrmAdminPage {
       this.errorMessage.set('No tienes permisos para repartir prospectos.');
       return;
     }
-    const leads = this.distributionCandidateLeads();
-    if (!leads.length) {
-      this.errorMessage.set('No hay leads nuevos para repartir con los filtros actuales.');
-      return;
-    }
     const sellers = this.crmSellerUsers();
     if (!sellers.length) {
       this.errorMessage.set('No hay vendedores activos para asignar prospectos.');
@@ -5569,17 +4831,10 @@ export class CrmAdminPage {
     }
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.prospectDistributionSelectedSellerIds.set(sellers.map((user) => String(user.id)));
+    const configuredIds = this.leadAssignmentConfig().responsableIds.filter((id) => sellers.some((user) => String(user.id) === String(id)));
+    this.prospectDistributionSelectedSellerIds.set(configuredIds.length ? [...configuredIds] : sellers.map((user) => String(user.id)));
+    this.prospectDistributionMode.set(this.leadAssignmentConfig().automatico ? 'AUTOMATICO' : 'MANUAL');
     this.prospectDistributionDialogOpen.set(true);
-  }
-
-  protected isDistributionSellerSelected(id: number | string): boolean {
-    return this.prospectDistributionSelectedSellerIds().includes(String(id));
-  }
-
-  protected toggleDistributionSeller(id: number | string, event: Event): void {
-    const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
-    this.updateDistributionSellerSelection({ id, checked });
   }
 
   protected updateDistributionSellerSelection(event: { id: number | string; checked: boolean }): void {
@@ -5622,6 +4877,57 @@ export class CrmAdminPage {
       });
   }
 
+  protected saveAutomaticLeadAssignment(automatico: boolean): void {
+    const responsableIds = this.prospectDistributionSelectedSellerIds();
+    if (automatico && !responsableIds.length) {
+      this.errorMessage.set('Selecciona al menos un vendedor para activar el reparto automatico.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.crmProspects.updateAssignmentConfiguration(automatico, responsableIds)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (config) => {
+          this.leadAssignmentConfig.set(config);
+          this.prospectDistributionDialogOpen.set(false);
+          this.successMessage.set(config.automatico
+            ? 'Reparto automatico activado. Los nuevos leads se asignaran por menor carga.'
+            : 'Reparto automatico desactivado. Los nuevos leads quedaran en la bandeja general.');
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected openDeleteProspect(prospect: CrmProspecto): void {
+    this.errorMessage.set(null);
+    this.prospectDeleteTarget.set(prospect);
+  }
+
+  protected deleteProspect(): void {
+    const prospect = this.prospectDeleteTarget();
+    if (!prospect || this.prospectDeleting()) {
+      return;
+    }
+
+    this.prospectDeleting.set(true);
+    this.errorMessage.set(null);
+    this.crmProspects.delete(prospect.id)
+      .pipe(finalize(() => this.prospectDeleting.set(false)))
+      .subscribe({
+        next: () => {
+          this.prospectos.update((items) => items.filter((item) => item.id !== prospect.id));
+          const selected = new Set(this.selectedProspectIds());
+          selected.delete(prospect.id);
+          this.selectedProspectIds.set(selected);
+          this.prospectDeleteTarget.set(null);
+          this.successMessage.set(`Prospecto ${prospect.nombre} eliminado correctamente.`);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
   protected resetFollowUpAdvancedFilters(): void {
     this.followUpContactFilter.set('TODOS');
     this.followUpResponsibleFilter.set('TODOS');
@@ -5648,22 +4954,6 @@ export class CrmAdminPage {
     return this.selectedFollowUpCard()?.prospecto.id === card.prospecto.id;
   }
 
-  protected advanceFollowUpProspect(card: CommercialInboxCard, event?: Event): void {
-    event?.stopPropagation();
-    if (card.hasActiveOpportunity && card.oportunidad) {
-      this.openExistingOpportunity(card.oportunidad, 'Este prospecto ya esta en oportunidad. No se creo duplicado.');
-      return;
-    }
-    this.confirmInterestAndOpenOpportunity(card.prospecto);
-  }
-
-  protected followUpAdvanceLabel(card: CommercialInboxCard): string {
-    if (card.hasActiveOpportunity) {
-      return 'Ver oportunidad';
-    }
-    return 'Confirmar interes';
-  }
-
   public openFollowUpOpportunity(card: CommercialInboxCard, event?: Event): void {
     event?.stopPropagation();
     if (card.hasActiveOpportunity && card.oportunidad) {
@@ -5671,23 +4961,6 @@ export class CrmAdminPage {
       return;
     }
     this.confirmInterestAndOpenOpportunity(card.prospecto);
-  }
-
-  protected confirmProspectInterest(prospecto: CrmProspecto, event?: Event): void {
-    event?.stopPropagation();
-    const activeOpportunity = this.activeOpportunityForProspect(prospecto.id);
-    if (activeOpportunity) {
-      this.openExistingOpportunity(activeOpportunity, 'Este prospecto ya esta en oportunidad.');
-      return;
-    }
-    if (!this.hasProspectConfirmedInterest(prospecto.id)) {
-      this.openQuickActivity(prospecto, 'LLAMADA', `Confirmar interes de ${prospecto.nombre}`);
-      this.activityForm.estadoActividad = 'REALIZADA';
-      this.onActivityResultChange('INTERESADO');
-      this.errorMessage.set('Primero registra la actividad realizada que confirma el interes del cliente.');
-      return;
-    }
-    this.confirmInterestAndOpenOpportunity(prospecto);
   }
 
   private confirmInterestAndOpenOpportunity(prospecto: CrmProspecto): void {
@@ -5735,21 +5008,6 @@ export class CrmAdminPage {
     }
     const days = Math.max(1, Math.round(absHours / 24));
     return days === 1 ? 'Manana' : `En ${days} dias`;
-  }
-
-  protected followUpPriorityIcon(priority: CommercialInboxCard['priority']): string {
-    switch (priority) {
-      case 'overdue':
-        return 'pi pi-exclamation-triangle';
-      case 'today':
-        return 'pi pi-clock';
-      case 'upcoming':
-        return 'pi pi-calendar';
-      case 'done':
-        return 'pi pi-check-circle';
-      default:
-        return 'pi pi-minus-circle';
-    }
   }
 
   public followUpActivityIcon(type: string | null | undefined): string {
@@ -5987,49 +5245,8 @@ export class CrmAdminPage {
       .join('') || 'PR';
   }
 
-  protected userInitials(item: UsuarioTenant): string {
-    const source = item.nombres || item.username || 'US';
-    return source
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() || '')
-      .join('') || 'US';
-  }
-
   protected prospectAvatarTone(index: number): string {
     return ['green', 'violet', 'amber', 'blue', 'rose', 'teal'][index % 6];
-  }
-
-  protected maskedContact(value: string | null | undefined): string {
-    if (!value) {
-      return 'Sin correo registrado';
-    }
-    const [user, domain] = value.split('@');
-    if (!domain) {
-      return value.length <= 5 ? value : `${value.slice(0, 3)}***${value.slice(-2)}`;
-    }
-    return `${user.slice(0, 2)}***@${domain}`;
-  }
-
-  protected relativePastLabel(dateValue: string | null | undefined): string {
-    const timestamp = Date.parse(dateValue || '');
-    if (!Number.isFinite(timestamp)) {
-      return 'Sin fecha';
-    }
-    const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
-    if (diffMinutes < 1) {
-      return 'Ahora';
-    }
-    if (diffMinutes < 60) {
-      return `Hace ${diffMinutes} min`;
-    }
-    const diffHours = Math.round(diffMinutes / 60);
-    if (diffHours < 24) {
-      return `Hace ${diffHours} hora(s)`;
-    }
-    const diffDays = Math.round(diffHours / 24);
-    return `Hace ${diffDays} dia(s)`;
   }
 
   public saveActivity(): void {
@@ -6160,22 +5377,6 @@ export class CrmAdminPage {
       .pipe(finalize(() => this.actionId.set(null)))
       .subscribe({
         next: (saved) => this.upsertActivity(saved, 'Actividad cancelada.'),
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
-  }
-
-  private updateProspectStatus(item: CrmProspecto, estado: string, message: string): void {
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-    this.actionId.set(item.id);
-    this.api
-      .updateCrmProspecto(item.id, { estado })
-      .pipe(finalize(() => this.actionId.set(null)))
-      .subscribe({
-        next: (saved) => {
-          this.upsertProspect(saved);
-          this.successMessage.set(message);
-        },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
   }
@@ -6937,80 +6138,6 @@ export class CrmAdminPage {
     });
   }
 
-  protected addOpportunityMessageTemplate(): void {
-    const title = this.messageTemplateForm.title.trim();
-    const body = this.messageTemplateForm.body.trim();
-    const isAudio = this.messageTemplateForm.channel === 'AUDIO';
-    if (!title || (!isAudio && !body) || (isAudio && !this.messageTemplateForm.audioDataUrl)) {
-      this.errorMessage.set(isAudio ? 'Indica titulo y selecciona un audio.' : 'Indica titulo y mensaje para guardar la plantilla.');
-      return;
-    }
-    const template: OpportunityMessageTemplate = {
-      id: this.messageTemplateForm.id || `${Date.now()}-${Math.round(Math.random() * 1000)}`,
-      channel: this.messageTemplateForm.channel,
-      title,
-      body,
-      audioName: isAudio ? this.messageTemplateForm.audioName : null,
-      audioDataUrl: isAudio ? this.messageTemplateForm.audioDataUrl : null,
-    };
-    const current = this.opportunityMessageTemplates();
-    const next = current.some((item) => item.id === template.id)
-      ? current.map((item) => item.id === template.id ? template : item)
-      : [template, ...current];
-    this.opportunityMessageTemplates.set(next);
-    this.persistOpportunityMessageTemplates(next);
-    this.messageTemplateForm = this.emptyMessageTemplateForm();
-    this.successMessage.set('Plantilla guardada para oportunidades.');
-  }
-
-  protected editOpportunityMessageTemplate(template: OpportunityMessageTemplate): void {
-    this.messageTemplateForm = {
-      id: template.id,
-      channel: template.channel,
-      title: template.title,
-      body: template.body,
-      audioName: template.audioName || '',
-      audioDataUrl: template.audioDataUrl || '',
-    };
-  }
-
-  protected resetOpportunityMessageTemplate(): void {
-    this.messageTemplateForm = this.emptyMessageTemplateForm();
-  }
-
-  protected onTemplateAudioSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-    if (!file.type.startsWith('audio/')) {
-      this.errorMessage.set('Selecciona un archivo de audio valido.');
-      input.value = '';
-      return;
-    }
-    if (file.size > 1_500_000) {
-      this.errorMessage.set('El audio debe pesar 1.5 MB como maximo para guardarse rapido.');
-      input.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.messageTemplateForm.audioName = file.name;
-      this.messageTemplateForm.audioDataUrl = String(reader.result || '');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  protected deleteOpportunityMessageTemplate(id: string): void {
-    const next = this.opportunityMessageTemplates().filter((item) => item.id !== id);
-    this.opportunityMessageTemplates.set(next);
-    this.persistOpportunityMessageTemplates(next);
-    if (this.messageTemplateForm.id === id) {
-      this.resetOpportunityMessageTemplate();
-    }
-  }
-
   public addQuoteLine(): void {
     this.quoteForm.detalles.push({
       catalogoItemId: null,
@@ -7292,14 +6419,6 @@ export class CrmAdminPage {
     return normalized === 'STRICT' || normalized === 'FREE' ? normalized : 'WARNING';
   }
 
-  protected stageChecklistPreview(item: CrmOportunidad, stage: PipelineStageOption): PipelineChecklistItem[] {
-    return this.stageChecklistFor(item, stage.value);
-  }
-
-  protected stageChecklistDoneCount(item: CrmOportunidad, stage: PipelineStageOption): number {
-    return this.stageChecklistPreview(item, stage).filter((check) => check.done).length;
-  }
-
   protected opportunityRiskBadges(item: CrmOportunidad): string[] {
     const badges: string[] = [];
     if (!this.nextOpportunityActivity(item) && this.isActiveOpportunity(item)) {
@@ -7379,11 +6498,6 @@ export class CrmAdminPage {
   public setOpportunityFormTemperature(value: string | null): void {
     const temperature = value === 'CALIENTE' || value === 'MEDIO' || value === 'FRIO' ? value : 'MEDIO';
     this.opportunityForm.probabilidad = temperature === 'CALIENTE' ? 85 : temperature === 'MEDIO' ? 60 : 25;
-  }
-
-  protected opportunityRingBackground(item: CrmOportunidad): string {
-    const progress = this.opportunityProgress(item);
-    return `conic-gradient(${this.stageColor(item.etapa)} 0 ${progress}%, #e5e7eb ${progress}% 100%)`;
   }
 
   public opportunityFinancialSummary(item: CrmOportunidad): {
@@ -7574,19 +6688,6 @@ export class CrmAdminPage {
         return fromOk && toOk;
       })
       .sort((a, b) => this.paymentFollowUpPriority(b) - this.paymentFollowUpPriority(a));
-  });
-
-  protected readonly paymentFollowUpMetrics = computed(() => {
-    const items = this.filteredPaymentFollowUpItems();
-    const pendingAmount = items.reduce((sum, item) => sum + this.opportunityPaymentPlan(item).pendingAmount, 0);
-    const overdue = items.filter((item) => this.opportunityPaymentPlan(item).overdueInstallments.length > 0).length;
-    const installments = items.reduce((sum, item) => sum + this.opportunityPaymentPlan(item).pendingInstallments.length, 0);
-    return [
-      { label: 'Clientes con deuda', value: String(items.length), detail: 'requieren seguimiento' },
-      { label: 'Saldo pendiente', value: `S/ ${this.formatCompactAmount(pendingAmount)}`, detail: 'por cobrar' },
-      { label: 'Cuotas pendientes', value: String(installments), detail: 'programadas' },
-      { label: 'Vencidos', value: String(overdue), detail: 'atencion inmediata' },
-    ];
   });
 
   protected readonly paymentFollowUpRows = computed(() => {
@@ -8437,13 +7538,6 @@ export class CrmAdminPage {
     );
   }
 
-  private isStageAtOrAfter(current: string | null | undefined, target: string): boolean {
-    const stages = this.etapaOptions();
-    const currentIndex = stages.findIndex((stage) => stage.value === current);
-    const targetIndex = stages.findIndex((stage) => stage.value === target);
-    return currentIndex >= 0 && targetIndex >= 0 && currentIndex >= targetIndex;
-  }
-
   private normalizedOpportunityStages(): CrmEtapaPipeline[] {
     const order = new Map<string, number>(CRM_OPPORTUNITY_FLOW_STAGES.map((stage, index) => [stage, index]));
     return this.etapas()
@@ -8610,10 +7704,6 @@ export class CrmAdminPage {
     const subject = encodeURIComponent(template?.title || `Seguimiento: ${item.titulo}`);
     const body = encodeURIComponent(this.renderOpportunityMessage(template, item));
     return `mailto:${email}?subject=${subject}&body=${body}`;
-  }
-
-  protected templatesByChannel(channel: OpportunityMessageTemplate['channel']): OpportunityMessageTemplate[] {
-    return this.opportunityMessageTemplates().filter((item) => item.channel === channel);
   }
 
   private renderOpportunityMessage(template: OpportunityMessageTemplate | undefined, item: CrmOportunidad): string {
@@ -8880,18 +7970,6 @@ export class CrmAdminPage {
     return 'secondary';
   }
 
-  protected dashboardUserName(): string {
-    const raw =
-      this.auth.currentSession()?.nombres ||
-      this.auth.currentSession()?.username ||
-      'Equipo';
-    return raw.split(' ')[0] || raw;
-  }
-
-  protected dashboardCompanyName(): string {
-    return this.auth.currentSession()?.empresa?.razonSocial || 'Operacion comercial activa';
-  }
-
   private normalizeOpportunityType(value: string | null | undefined): OpportunityType {
     const allowed = this.opportunityTypeOptions.map((item) => item.value);
     return allowed.includes(value as OpportunityType) ? (value as OpportunityType) : 'PRODUCTO';
@@ -8949,22 +8027,6 @@ export class CrmAdminPage {
     return Math.max(0, Math.min(100, Math.round((value / total) * 100)));
   }
 
-  private activityPriorityTone(dateValue: string | null | undefined): 'high' | 'medium' | 'low' {
-    const timestamp = Date.parse(dateValue || '');
-    if (!Number.isFinite(timestamp)) {
-      return 'low';
-    }
-
-    const diffHours = (timestamp - Date.now()) / 36e5;
-    if (diffHours <= 24) {
-      return 'high';
-    }
-    if (diffHours <= 72) {
-      return 'medium';
-    }
-    return 'low';
-  }
-
   public activityEffectiveDate(item: CrmActividad): string {
     return item.fechaRealizada || item.updatedAt || item.fechaProgramada || item.createdAt || '';
   }
@@ -8999,80 +8061,14 @@ export class CrmAdminPage {
       date.getDate() === now.getDate();
   }
 
-  private isYesterday(dateValue: string | null | undefined): boolean {
-    const date = this.toValidDate(dateValue);
-    if (!date) {
-      return false;
-    }
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return date.getFullYear() === yesterday.getFullYear() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getDate() === yesterday.getDate();
-  }
-
   private isOverdue(dateValue: string | null | undefined): boolean {
     const date = this.toValidDate(dateValue);
     return !!date && date.getTime() < Date.now();
   }
 
-  private isThisWeek(dateValue: string | null | undefined): boolean {
-    const date = this.toValidDate(dateValue);
-    if (!date) {
-      return false;
-    }
-    const now = new Date();
-    const nextWeek = new Date(now);
-    nextWeek.setDate(now.getDate() + 7);
-    return date.getTime() >= now.getTime() && date.getTime() <= nextWeek.getTime();
-  }
-
-  private isWithinLastDays(dateValue: string | null | undefined, days: number): boolean {
-    const date = this.toValidDate(dateValue);
-    if (!date) {
-      return false;
-    }
-    const now = new Date();
-    const start = new Date(now);
-    start.setDate(now.getDate() - days + 1);
-    start.setHours(0, 0, 0, 0);
-    return date.getTime() >= start.getTime() && date.getTime() <= now.getTime();
-  }
-
   private paymentFollowUpPriority(item: CrmOportunidad): number {
     const plan = this.opportunityPaymentPlan(item);
     return (plan.overdueInstallments.length ? 1_000_000 : 0) + Math.round(plan.pendingAmount * 100);
-  }
-
-  private isWithinRangeDays(dateValue: string | null | undefined, fromDaysAgo: number, toDaysAgo: number): boolean {
-    const date = this.toValidDate(dateValue);
-    if (!date) {
-      return false;
-    }
-    const now = new Date();
-    const start = new Date(now);
-    start.setDate(now.getDate() - toDaysAgo);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setDate(now.getDate() - fromDaysAgo + 1);
-    end.setHours(23, 59, 59, 999);
-    return date.getTime() >= start.getTime() && date.getTime() <= end.getTime();
-  }
-
-  private isCurrentMonth(dateValue: string | null | undefined): boolean {
-    const date = this.toValidDate(dateValue);
-    const now = new Date();
-    return !!date && date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
-  }
-
-  private isPreviousMonth(dateValue: string | null | undefined): boolean {
-    const date = this.toValidDate(dateValue);
-    if (!date) {
-      return false;
-    }
-    const previous = new Date();
-    previous.setMonth(previous.getMonth() - 1);
-    return date.getFullYear() === previous.getFullYear() && date.getMonth() === previous.getMonth();
   }
 
   private toValidDate(dateValue: string | null | undefined): Date | null {
@@ -9254,10 +8250,6 @@ export class CrmAdminPage {
       missing.push('interes medio o alto');
     }
     return missing;
-  }
-
-  protected canConvertProspectToOpportunity(prospecto: CrmProspecto): boolean {
-    return this.prospectQualification(prospecto).canConvert && !this.activeOpportunityForProspect(prospecto.id);
   }
 
   public qualificationTemperatureLabel(value: number | string | null | undefined): string {
@@ -9609,17 +8601,6 @@ export class CrmAdminPage {
     };
   }
 
-  private emptyMessageTemplateForm(): OpportunityMessageTemplateForm {
-    return {
-      id: null,
-      channel: 'WHATSAPP',
-      title: '',
-      audioName: '',
-      audioDataUrl: '',
-      body: 'Hola {{cliente}}, te escribo por {{oportunidad}}. Valor estimado: {{monto}}. ¿Coordinamos el siguiente paso?',
-    };
-  }
-
   private emptyOpportunityNegotiationForm(): OpportunityNegotiationForm {
     return {
       id: null,
@@ -9967,40 +8948,8 @@ export class CrmAdminPage {
     reader.readAsDataURL(file);
   }
 
-  private loadOpportunityMessageTemplates(): OpportunityMessageTemplate[] {
-    return this.crmLocalStorage.loadMessageTemplates(
-      this.opportunityTemplateStorageKey(),
-      this.defaultOpportunityMessageTemplates(),
-    );
-  }
-
-  private persistOpportunityMessageTemplates(items: OpportunityMessageTemplate[]): void {
-    this.crmLocalStorage.persistMessageTemplates(this.opportunityTemplateStorageKey(), items);
-  }
-
-  private opportunityTemplateStorageKey(): string {
-    return this.crmLocalStorage.opportunityTemplatesKey(this.crmStorageCompany());
-  }
-
   private crmStorageCompany(): CrmStorageCompanyIdentity | undefined {
     return this.auth.currentSession()?.empresa as CrmStorageCompanyIdentity | undefined;
-  }
-
-  private defaultOpportunityMessageTemplates(): OpportunityMessageTemplate[] {
-    return [
-      {
-        id: 'default-whatsapp-next-step',
-        channel: 'WHATSAPP',
-        title: 'Coordinar siguiente paso',
-        body: 'Hola {{cliente}}, soy {{responsable}} de AZURION. Te escribo por {{oportunidad}}. Podemos coordinar el siguiente paso y resolver tus dudas.',
-      },
-      {
-        id: 'default-email-proposal',
-        channel: 'CORREO',
-        title: 'Seguimiento de propuesta',
-        body: 'Hola {{cliente}},\n\nTe comparto seguimiento sobre {{oportunidad}}.\nValor estimado: {{monto}}.\nEtapa actual: {{etapa}}.\nCierre estimado: {{cierre}}.\n\nQuedo atento para coordinar el siguiente paso.\n\nSaludos.',
-      },
-    ];
   }
 
   private upsertProspect(item: CrmProspecto): void {

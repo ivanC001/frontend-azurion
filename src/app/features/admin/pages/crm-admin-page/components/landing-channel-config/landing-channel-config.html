@@ -1,0 +1,128 @@
+<section class="landing-config">
+  <header class="landing-config__heading">
+    <div>
+      <span>CONEXIONES DE LANDING</span>
+      <h4>Landings autorizadas</h4>
+      <p>Cada formulario utiliza una clave propia. Puedes revocarla sin afectar las demas landings.</p>
+    </div>
+    <button type="button" class="landing-button landing-button--secondary" (click)="startCreate()" [disabled]="!canManage() || saving()">
+      <i class="pi pi-plus"></i> Nueva landing
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="landing-config__loading"><i class="pi pi-spin pi-spinner"></i> Cargando landings...</div>
+  } @else {
+    @if (configurations().length) {
+      <nav class="landing-config__tabs" aria-label="Landings configuradas">
+        @for (configuration of configurations(); track configuration.id) {
+          <button type="button" [class.active]="configuration.id === selectedId()" (click)="selectConfiguration(configuration)">
+            <i class="pi pi-globe"></i>
+            <span>{{ configuration.nombre }}<small>{{ configuration.activa && configuration.recibirLeads ? 'Recibiendo leads' : 'Pausada' }}</small></span>
+          </button>
+        }
+      </nav>
+    }
+
+    @if (message()) {
+      <div class="landing-alert landing-alert--ok"><i class="pi pi-check-circle"></i>{{ message() }}</div>
+    }
+    @if (error()) {
+      <div class="landing-alert landing-alert--error"><i class="pi pi-exclamation-triangle"></i>{{ error() }}</div>
+    }
+
+    <div class="landing-config__grid">
+      <section class="landing-panel landing-panel--form">
+        <div class="landing-panel__title">
+          <i class="pi pi-sliders-h"></i>
+          <div><strong>{{ creating() ? 'Nueva landing' : 'Reglas de recepcion' }}</strong><small>Define como ingresaran sus leads al CRM.</small></div>
+        </div>
+
+        <div class="landing-form-grid">
+          <label>Nombre de la landing
+            <input type="text" [(ngModel)]="form.nombre" name="landingName" maxlength="160" placeholder="Landing municipios" [disabled]="!canManage()" />
+          </label>
+          <label>Campana por defecto
+            <input type="text" [(ngModel)]="form.campania" name="landingCampaign" maxlength="120" placeholder="municipios" [disabled]="!canManage()" />
+          </label>
+          <label>Uso del producto
+            <select [(ngModel)]="form.modoProducto" name="landingProductMode" [disabled]="!canManage()">
+              <option value="OPCIONAL">Producto opcional</option>
+              <option value="REQUERIDO">Producto obligatorio</option>
+              <option value="SIN_CATALOGO">Sin catalogo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="landing-switches">
+          <label><input type="checkbox" [(ngModel)]="form.activa" name="landingActive" [disabled]="!canManage()" /><span><b>Landing activa</b><small>Permite usar esta configuracion.</small></span></label>
+          <label><input type="checkbox" [(ngModel)]="form.recibirLeads" name="landingReceive" [disabled]="!canManage()" /><span><b>Recibir leads</b><small>Pausa ingresos sin borrar la clave.</small></span></label>
+          <label><input type="checkbox" [(ngModel)]="form.crearActividadInicial" name="landingInitialActivity" [disabled]="!canManage()" /><span><b>Actividad inicial</b><small>Programa el primer contacto.</small></span></label>
+        </div>
+
+        @if (form.modoProducto !== 'SIN_CATALOGO') {
+          <div class="landing-products">
+            <header><strong>Productos permitidos</strong><small>{{ form.modoProducto === 'OPCIONAL' ? 'El lead puede llegar sin producto.' : 'Selecciona al menos uno.' }}</small></header>
+            @if (publicCatalogItems().length) {
+              <div>
+                @for (item of publicCatalogItems(); track item.id) {
+                  <label>
+                    <input type="checkbox" [checked]="isCatalogItemSelected(item.id)" (change)="toggleCatalogItem(item.id, $any($event.target).checked)" [disabled]="!canManage()" />
+                    <span><b>{{ item.nombre }}</b><small>{{ item.tipoItem }} · {{ item.precioReferencial }}</small></span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <p>No hay productos publicos activos. Puedes guardar esta landing con producto opcional.</p>
+            }
+          </div>
+        }
+
+        <button type="button" class="landing-button landing-button--primary" (click)="save()" [disabled]="!canManage() || saving()">
+          <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+          {{ saving() ? 'Guardando...' : (creating() ? 'Crear y generar landing key' : 'Guardar configuracion') }}
+        </button>
+      </section>
+
+      <section class="landing-panel landing-panel--connection">
+        <div class="landing-panel__title">
+          <i class="pi pi-code"></i>
+          <div><strong>Datos para conectar</strong><small>Copia estos valores en el formulario publicado.</small></div>
+        </div>
+
+        <label class="landing-copy-field">URL de envio (POST)
+          <span><input readonly [value]="endpoint()" /><button type="button" title="Copiar URL" (click)="copy(endpoint(), 'URL')"><i class="pi pi-copy"></i></button></span>
+        </label>
+
+        <label class="landing-copy-field">Landing key
+          <span><input readonly [value]="selected()?.landingKey || 'Se genera al guardar'" /><button type="button" title="Copiar landing key" [disabled]="!selected()" (click)="copy(selected()?.landingKey || '', 'Landing key')"><i class="pi pi-copy"></i></button></span>
+        </label>
+
+        @if (selected()) {
+          <button type="button" class="landing-rotate" (click)="regenerateKey()" [disabled]="!canManage() || rotating()">
+            <i [class]="rotating() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+            {{ rotating() ? 'Regenerando...' : 'Regenerar landing key' }}
+          </button>
+        }
+
+        <div class="landing-security-note">
+          <i class="pi pi-shield"></i>
+          <p><b>La landing key identifica el formulario; no es una contrasena privada.</b> El servidor tambien aplica limite de solicitudes, honeypot y validacion de duplicados. Regenerala si detectas abuso.</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="landing-contract">
+      <header>
+        <div><strong>JSON listo para integrar</strong><small>El campo <code>website</code> es un honeypot y debe enviarse vacio.</small></div>
+        <button type="button" (click)="copy(jsonExample(), 'JSON')"><i class="pi pi-copy"></i> Copiar JSON</button>
+      </header>
+      <pre>{{ jsonExample() }}</pre>
+      <details>
+        <summary>Ver ejemplo JavaScript con fetch</summary>
+        <div><button type="button" (click)="copy(fetchExample(), 'Ejemplo JavaScript')"><i class="pi pi-copy"></i> Copiar</button><pre>{{ fetchExample() }}</pre></div>
+      </details>
+      <footer><i class="pi pi-info-circle"></i> Obligatorios: <b>Ruc_tenant</b>, <b>landingKey</b>, <b>nombre</b> y al menos <b>telefono o email</b>. El producto es opcional salvo que cambies la regla.</footer>
+    </section>
+  }
+</section>

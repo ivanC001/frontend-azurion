@@ -1,8 +1,0 @@
-<ol class="crm-stage-bar">
-  @for (stage of stages(); track stage.label; let index = $index) {
-    <li [class.is-active]="index === activeIndex()" [class.is-done]="stage.done || index < activeIndex()">
-      <span><i [class]="stage.icon || 'pi pi-circle'"></i></span>
-      <b>{{ stage.label }}</b>
-    </li>
-  }
-</ol>

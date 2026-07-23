@@ -1,17 +1,30 @@
 import {
+  afterNextRender,
   Component,
+  ElementRef,
   HostListener,
   computed,
   inject,
   signal,
   ChangeDetectionStrategy,
+  DestroyRef,
+  viewChild,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  IsActiveMatchOptions,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { timer } from 'rxjs';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { SessionModuleSyncService } from '@core/auth/session-module-sync.service';
 import { UiToastService } from '@core/services/ui-toast.service';
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { CrmWhatsappNotificationService } from '@core/services/crm-whatsapp-notification.service';
 import { CrmInboxChannelStateService } from '@features/admin/pages/crm-admin-page/services/crm-inbox-channel-state.service';
 
 interface NavLinkItem {
@@ -64,13 +77,17 @@ interface AccountMenuItem {
   styleUrl: './app-layout.css',
 })
 export class AppLayout {
+  private readonly sidebarNav = viewChild<ElementRef<HTMLElement>>('sidebarNav');
   private readonly authSession = inject(AuthSessionService);
   private readonly sessionModuleSync = inject(SessionModuleSyncService);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
   private readonly lowStockAlerts = inject(LowStockAlertService);
+  private readonly whatsappNotifications = inject(CrmWhatsappNotificationService);
   private readonly crmInboxChannels = inject(CrmInboxChannelStateService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly erpModules = ['ERP'] as const;
+  private readonly sidebarScrollStoragePrefix = 'azurion.sidebar.scroll';
 
   protected readonly sidebarCollapsed = signal(false);
   protected readonly sidebarHovered = signal(false);
@@ -82,6 +99,13 @@ export class AppLayout {
   protected readonly accountPanelOpen = signal(false);
   protected readonly activeWorkspace = signal<WorkspaceMode>(this.resolveInitialWorkspace());
   private readonly failedBrandLogoUrl = signal<string | null>(null);
+
+  protected readonly exactRouteMatchOptions: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
 
   private readonly expandedGroups = signal<Record<string, boolean>>({
     'crm-bandeja': true,
@@ -248,8 +272,8 @@ export class AppLayout {
   );
   protected readonly themeButtonIcon = computed(() => (this.isDarkTheme() ? 'pi-sun' : 'pi-moon'));
 
-  protected readonly notificationItems = computed<HeaderActionItem[]>(() =>
-    this.lowStockAlerts.alerts().map((alert) => ({
+  protected readonly notificationItems = computed<HeaderActionItem[]>(() => {
+    const items: HeaderActionItem[] = this.lowStockAlerts.alerts().map((alert) => ({
       title: alert.title,
       detail: alert.detail,
       icon: alert.critical
@@ -259,8 +283,25 @@ export class AppLayout {
           : 'pi-box',
       route: `/admin/inventarios?productoId=${alert.productId}`,
       tone: alert.critical ? 'danger' : 'warn',
-    })),
+    }));
+    const whatsapp = this.whatsappNotifications.summary();
+    if (whatsapp.mensajesNoLeidos > 0) {
+      items.unshift({
+        title: `${whatsapp.mensajesNoLeidos} mensaje(s) nuevo(s) en WhatsApp`,
+        detail: whatsapp.ultimoContacto
+          ? `${whatsapp.ultimoContacto}: ${whatsapp.ultimoMensaje || 'Mensaje pendiente de lectura'}`
+          : `${whatsapp.conversacionesNoLeidas} conversacion(es) pendientes de lectura.`,
+        icon: 'pi-whatsapp',
+        route: '/admin/crm/whatsapp',
+        tone: 'success',
+      });
+    }
+    return items;
+  });
+  protected readonly notificationBadgeCount = computed(() =>
+    this.lowStockAlerts.alerts().length + this.whatsappNotifications.unreadCount(),
   );
+  protected readonly hasWhatsappNotifications = this.whatsappNotifications.hasUnread;
 
   protected readonly accountMenuItems = computed<AccountMenuItem[]>(() => [
     {
@@ -281,12 +322,21 @@ export class AppLayout {
   ]);
 
   constructor() {
+    afterNextRender(() => this.restoreSidebarScroll());
     this.sessionModuleSync.syncCurrentTenantModules();
     this.applyThemeMode(this.themeMode());
     if (!this.isGeneralAdmin()) {
       this.lowStockAlerts.refresh(true);
       if (this.authSession.hasModule('CRM')) {
         this.crmInboxChannels.refresh();
+        this.whatsappNotifications.refresh(false);
+        timer(10_000, 10_000)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            if (typeof document === 'undefined' || !document.hidden) {
+              this.whatsappNotifications.refresh(true);
+            }
+          });
       }
     }
   }
@@ -332,6 +382,15 @@ export class AppLayout {
       ...current,
       [groupId]: !current[groupId],
     });
+  }
+
+  protected rememberSidebarScroll(event: Event): void {
+    const nav = event.currentTarget;
+    if (!(nav instanceof HTMLElement) || typeof sessionStorage === 'undefined') {
+      return;
+    }
+
+    sessionStorage.setItem(this.sidebarScrollStorageKey(), String(nav.scrollTop));
   }
 
   protected selectWorkspace(workspace: WorkspaceMode): void {
@@ -463,8 +522,43 @@ export class AppLayout {
 
   protected markAllNotificationsRead(): void {
     this.lowStockAlerts.clear();
+    if (this.whatsappNotifications.hasUnread()) {
+      this.notificationsPanelOpen.set(false);
+      void this.router.navigate(['/admin/crm/whatsapp']);
+      return;
+    }
     this.toast.success('Notificaciones marcadas como leidas.', 'Notificaciones');
     this.notificationsPanelOpen.set(false);
+  }
+
+  private restoreSidebarScroll(): void {
+    const nav = this.sidebarNav()?.nativeElement;
+    if (!nav) {
+      return;
+    }
+
+    const savedValue =
+      typeof sessionStorage !== 'undefined'
+        ? sessionStorage.getItem(this.sidebarScrollStorageKey())
+        : null;
+    const savedScrollTop = savedValue === null ? Number.NaN : Number(savedValue);
+
+    globalThis.requestAnimationFrame(() => {
+      if (Number.isFinite(savedScrollTop)) {
+        nav.scrollTop = savedScrollTop;
+        return;
+      }
+
+      nav.querySelector<HTMLElement>('.active-link')?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    });
+  }
+
+  private sidebarScrollStorageKey(): string {
+    const tenantId = this.session()?.tenantId || 'platform';
+    return `${this.sidebarScrollStoragePrefix}.${tenantId}.${this.selectedWorkspace()}`;
   }
 
   protected updateSearchQuery(value: string): void {

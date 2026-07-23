@@ -86,7 +86,7 @@
       </section>
     }
 
-    @if (activeTab() !== 'dashboard' && activeTab() !== 'embudo' && activeTab() !== 'catalogo' && !isCommercialStageTab() && !isCrmConfigTab()) {
+    @if (activeTab() !== 'dashboard' && activeTab() !== 'embudo' && activeTab() !== 'catalogo' && activeTab() !== 'seguimientoPagos' && !isCommercialStageTab() && !isCrmConfigTab()) {
       <nav class="crm-section-nav" aria-label="Submodulos CRM">
         @for (item of sectionTabs(); track item.tab) {
           <button type="button" [class.active]="activeTab() === item.tab" (click)="setTab(item.tab)">
@@ -109,9 +109,21 @@
       [selectedSellerIds]="prospectDistributionSelectedSellerIds()"
       [preview]="prospectDistributionPreview()"
       [saving]="saving()"
+      [mode]="prospectDistributionMode()"
+      [automaticEnabled]="leadAssignmentConfig().automatico"
       (closed)="prospectDistributionDialogOpen.set(false)"
+      (modeChange)="prospectDistributionMode.set($event)"
       (sellerToggled)="updateDistributionSellerSelection($event)"
       (distributeRequested)="distributeProspects()"
+      (automaticConfigurationRequested)="saveAutomaticLeadAssignment($event)"
+    />
+
+    <app-delete-prospect-modal
+      [visible]="!!prospectDeleteTarget()"
+      [prospect]="prospectDeleteTarget()"
+      [deleting]="prospectDeleting()"
+      (closed)="prospectDeleteTarget.set(null)"
+      (confirmed)="deleteProspect()"
     />
 
         <ng-template #prospectActions let-item>
@@ -170,6 +182,7 @@
     @if (activeTab() === 'captacion') {
       <app-prospects-page
         [canAssign]="canAssignCrmProspects()"
+        [canDelete]="canDeleteCrmProspects()"
         [loading]="loading()"
         [actionId]="actionId()"
         [summaryCards]="prospectSummaryCards()"
@@ -195,6 +208,7 @@
         (prospectSelectionChange)="setProspectSelection($event.id, $event.selected)"
         (editRequested)="openEditProspect($event)"
         (moveToFollowUpRequested)="moveProspectToFollowUp($event)"
+        (deleteRequested)="openDeleteProspect($event)"
         (pageChange)="prospectPage.set($event)"
       />
     }
@@ -397,22 +411,11 @@
                     <div class="crm-landing-channel__summary">
                       <i class="pi pi-inbox"></i>
                       <div>
-                        <strong>Landing web no usa credenciales externas</strong>
-                        <p>Solo controla si el CRM acepta leads web. El producto se valida con <b>catalogoItemId</b> y <b>catalogoToken</b> desde el catalogo CRM.</p>
+                        <strong>Recepcion segura de formularios web</strong>
+                        <p>Activa el canal y crea una clave independiente para cada landing que envia leads al CRM.</p>
                       </div>
                     </div>
-
-                    <div class="crm-landing-contract">
-                      <header>
-                        <span>JSON minimo que debe enviar la landing</span>
-                        <small>El campo <b>website</b> debe llegar vacio.</small>
-                      </header>
-                      <pre>{{ landingLeadJsonExample() }}</pre>
-                    </div>
-
-                    <label class="crm-landing-metadata">Metadata JSON por defecto
-                      <textarea pTextarea rows="3" [name]="'crmIntegrationMetadata' + integration.canal" [ngModel]="integration.metadataJson || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'metadataJson', $event)" placeholder='{"utm_source":"landing","utm_medium":"formulario"}' [disabled]="!canManageCrmConfig()"></textarea>
-                    </label>
+                    <app-landing-channel-config [canManage]="canManageCrmConfig()" [catalogItems]="catalogoItems()" />
                   </div>
                 } @else if (integration.canal === 'WHATSAPP') {
                   <div class="crm-integration-fields crm-integration-fields--editor crm-whatsapp-fields">
@@ -505,14 +508,11 @@
                   </div>
                 } @else {
                   <div class="crm-integration-fields crm-integration-fields--editor">
-                    <label>Access token
+                    <label>Token de acceso de Meta
                       <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAccess' + integration.canal" [ngModel]="integration.accessToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'accessToken', $event)" [placeholder]="integration.accessTokenConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Token de acceso'" [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label>Verify token
                       <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationVerify' + integration.canal" [ngModel]="integration.verifyToken || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'verifyToken', $event)" [placeholder]="integration.verifyTokenConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Token de verificacion'" [disabled]="!canManageCrmConfig()" />
-                    </label>
-                    <label class="wide-field">Webhook URL
-                      <input pInputText [name]="'crmIntegrationWebhook' + integration.canal" [ngModel]="integration.webhookUrl || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'webhookUrl', $event)" placeholder="https://..." [disabled]="!canManageCrmConfig()" />
                     </label>
                     <label>App ID
                       <input pInputText [name]="'crmIntegrationApp' + integration.canal" [ngModel]="integration.appId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appId', $event)" placeholder="ID de app" [disabled]="!canManageCrmConfig()" />
@@ -520,9 +520,35 @@
                     <label>App secret
                       <input pInputText type="password" autocomplete="new-password" [name]="'crmIntegrationAppSecret' + integration.canal" [ngModel]="integration.appSecret || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'appSecret', $event)" [placeholder]="integration.appSecretConfigured ? 'Configurado; escribe solo para reemplazarlo' : 'Secreto de la app de Meta'" [disabled]="!canManageCrmConfig()" />
                     </label>
-                    <label>Phone number ID
+                    <label>{{ metaAccountIdLabel(integration.canal) }}
                       <input pInputText [name]="'crmIntegrationPhone' + integration.canal" [ngModel]="integration.phoneNumberId || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)" placeholder="Solo WhatsApp si aplica" [disabled]="!canManageCrmConfig()" />
                     </label>
+                    <section class="wide-field crm-meta-callback">
+                      <header>
+                        <div>
+                          <strong>Callback URL para Meta</strong>
+                          <small>Registra esta URL y el mismo Verify token en Meta Developers.</small>
+                        </div>
+                      </header>
+                      <div class="crm-copy-row">
+                        <input pInputText readonly [value]="metaWebhookUrl(integration.canal)" />
+                        <button type="button" (click)="copyWhatsappValue(metaWebhookUrl(integration.canal), 'Callback URL')"><i class="pi pi-copy"></i> Copiar</button>
+                      </div>
+                      @if (!metaWebhookIsPublicHttps(integration.canal)) {
+                        <p class="crm-whatsapp-warning"><i class="pi pi-exclamation-triangle"></i> Meta exige una URL publica con HTTPS; localhost no puede recibir eventos reales.</p>
+                      }
+                    </section>
+                    <section class="wide-field crm-meta-requirements" [class.ready]="metaIntegrationReady(integration)">
+                      <strong><i class="pi pi-list-check"></i> Requisitos para activar {{ integration.nombre }}</strong>
+                      <div>
+                        <span [class.ok]="integration.accessToken || integration.accessTokenConfigured"><i [class]="integration.accessToken || integration.accessTokenConfigured ? 'pi pi-check-circle' : 'pi pi-circle'"></i> Token de acceso</span>
+                        <span [class.ok]="integration.appId"><i [class]="integration.appId ? 'pi pi-check-circle' : 'pi pi-circle'"></i> App ID</span>
+                        <span [class.ok]="integration.appSecret || integration.appSecretConfigured"><i [class]="integration.appSecret || integration.appSecretConfigured ? 'pi pi-check-circle' : 'pi pi-circle'"></i> App secret</span>
+                        <span [class.ok]="integration.verifyToken || integration.verifyTokenConfigured"><i [class]="integration.verifyToken || integration.verifyTokenConfigured ? 'pi pi-check-circle' : 'pi pi-circle'"></i> Verify token</span>
+                        <span [class.ok]="metaWebhookIsPublicHttps(integration.canal)"><i [class]="metaWebhookIsPublicHttps(integration.canal) ? 'pi pi-check-circle' : 'pi pi-circle'"></i> Callback HTTPS</span>
+                      </div>
+                      <small>En Meta suscribe los campos de mensajes y eventos del canal. El indicador quedara confirmado cuando Azurion reciba el primer webhook valido.</small>
+                    </section>
                     <label class="wide-field">Metadata JSON
                       <textarea pTextarea rows="3" [name]="'crmIntegrationMetadata' + integration.canal" [ngModel]="integration.metadataJson || ''" (ngModelChange)="updateCrmIntegrationField(integration.canal, 'metadataJson', $event)" placeholder='{"utm_source":"landing"}' [disabled]="!canManageCrmConfig()"></textarea>
                     </label>
@@ -532,7 +558,7 @@
                 <footer class="crm-integration-editor__footer">
                   <span><i class="pi pi-shield"></i> {{ integration.canal === 'WEB' ? 'La landing envia JSON publico y el servidor valida tenant, producto y token.' : 'Las credenciales se almacenan de forma segura para este tenant.' }}</span>
                   @if (integration.canal !== 'WHATSAPP') {
-                    <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal" (click)="saveCrmIntegration(integration)">
+                    <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal || (integration.activo && (integration.canal === 'FACEBOOK' || integration.canal === 'INSTAGRAM') && !metaIntegrationReady(integration))" (click)="saveCrmIntegration(integration)">
                       <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
                       {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
                     </button>

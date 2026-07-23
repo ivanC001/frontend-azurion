@@ -57,6 +57,7 @@ export interface ProspectFilterState {
 })
 export class ProspectsPage {
   readonly canAssign = input(false);
+  readonly canDelete = input(false);
   readonly loading = input(false);
   readonly actionId = input<number | null>(null);
   readonly summaryCards = input.required<ProspectSummaryCard[]>();
@@ -83,6 +84,7 @@ export class ProspectsPage {
   readonly prospectSelectionChange = output<{ id: number; selected: boolean }>();
   readonly editRequested = output<CrmProspecto>();
   readonly moveToFollowUpRequested = output<CrmProspecto>();
+  readonly deleteRequested = output<CrmProspecto>();
   readonly pageChange = output<number>();
 
   protected updateFilter(key: keyof ProspectFilterState, value: string): void {
