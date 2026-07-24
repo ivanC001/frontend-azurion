@@ -471,12 +471,13 @@ export class WhatsappInboxPage implements OnInit {
         this.loadingList.set(false);
         const selectedId = this.selectedProspectId();
         const stillVisible = conversations.some((item) => item.prospectoId === selectedId);
-        if ((!selectedId || !stillVisible) && conversations.length > 0) {
-          this.selectConversation(conversations[0]);
-        }
-        if (conversations.length === 0) {
+        if (selectedId && !stillVisible) {
           this.selectedProspectId.set(null);
           this.messages.set([]);
+          this.quotes.set([]);
+          this.selectedQuoteIds.set(new Set<number>());
+          this.quotePickerOpen.set(false);
+          this.mobilePanel.set('LIST');
         }
       },
       error: (error) => {
