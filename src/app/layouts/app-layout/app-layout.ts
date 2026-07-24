@@ -18,13 +18,15 @@ import {
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
-import { timer } from 'rxjs';
+import { finalize, timer } from 'rxjs';
 
+import { AuthApiService } from '@core/auth/auth-api.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { SessionModuleSyncService } from '@core/auth/session-module-sync.service';
 import { UiToastService } from '@core/services/ui-toast.service';
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
 import { CrmWhatsappNotificationService } from '@core/services/crm-whatsapp-notification.service';
+import { InternalMessageNotificationService } from '@core/services/internal-message-notification.service';
 import { CrmInboxChannelStateService } from '@features/admin/pages/crm-admin-page/services/crm-inbox-channel-state.service';
 
 interface NavLinkItem {
@@ -53,6 +55,7 @@ interface SearchableRoute {
 }
 
 interface HeaderActionItem {
+  key: string;
   title: string;
   detail: string;
   icon: string;
@@ -79,11 +82,13 @@ interface AccountMenuItem {
 export class AppLayout {
   private readonly sidebarNav = viewChild<ElementRef<HTMLElement>>('sidebarNav');
   private readonly authSession = inject(AuthSessionService);
+  private readonly authApi = inject(AuthApiService);
   private readonly sessionModuleSync = inject(SessionModuleSyncService);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
   private readonly lowStockAlerts = inject(LowStockAlertService);
   private readonly whatsappNotifications = inject(CrmWhatsappNotificationService);
+  private readonly internalMessages = inject(InternalMessageNotificationService);
   private readonly crmInboxChannels = inject(CrmInboxChannelStateService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly erpModules = ['ERP'] as const;
@@ -166,12 +171,21 @@ export class AppLayout {
           ],
         },
         {
-          label: 'Gestion',
+          label: 'Administracion',
           items: [
             { label: 'Usuarios Tenant', route: '/admin/usuarios', icon: 'pi-users' },
-            { label: 'Clientes', route: '/admin/clientes', icon: 'pi-id-card' },
             {
-              label: 'Seguridad Plataforma',
+              label: 'Mensajes',
+              route: '/admin/mensajes',
+              icon: 'pi-inbox',
+            },
+            {
+              label: 'Correo y avisos',
+              route: '/admin/correo-azurion',
+              icon: 'pi-envelope',
+            },
+            {
+              label: 'Seguridad y accesos',
               route: '/admin/seguridad-plataforma',
               icon: 'pi-shield',
             },
@@ -193,7 +207,13 @@ export class AppLayout {
 
     const sections =
       this.selectedWorkspace() === 'crm' ? this.crmMenuSections() : this.erpMenuSections();
-    return this.filterNavSections(sections);
+    return [
+      {
+        label: 'Comunicacion',
+        items: [{ label: 'Mis mensajes', route: '/admin/mensajes', icon: 'pi-inbox' }],
+      },
+      ...this.filterNavSections(sections),
+    ];
   });
 
   protected readonly searchableRoutes = computed<SearchableRoute[]>(() =>
@@ -274,6 +294,7 @@ export class AppLayout {
 
   protected readonly notificationItems = computed<HeaderActionItem[]>(() => {
     const items: HeaderActionItem[] = this.lowStockAlerts.alerts().map((alert) => ({
+      key: `stock-${alert.productId}-${alert.type}`,
       title: alert.title,
       detail: alert.detail,
       icon: alert.critical
@@ -287,6 +308,7 @@ export class AppLayout {
     const whatsapp = this.whatsappNotifications.summary();
     if (whatsapp.mensajesNoLeidos > 0) {
       items.unshift({
+        key: 'whatsapp-unread',
         title: `${whatsapp.mensajesNoLeidos} mensaje(s) nuevo(s) en WhatsApp`,
         detail: whatsapp.ultimoContacto
           ? `${whatsapp.ultimoContacto}: ${whatsapp.ultimoMensaje || 'Mensaje pendiente de lectura'}`
@@ -296,12 +318,38 @@ export class AppLayout {
         tone: 'success',
       });
     }
+    const internal = this.internalMessages.inboxPreview()
+      .filter((message) => !message.leido)
+      .slice(0, 3)
+      .map<HeaderActionItem>((message) => ({
+        key: `internal-${message.recipientId}`,
+        title: message.asunto,
+        detail: message.contenido,
+        icon: message.prioridad === 'CRITICAL' ? 'pi-exclamation-triangle' : 'pi-envelope',
+        route: '/admin/mensajes',
+        tone:
+          message.prioridad === 'CRITICAL'
+            ? 'danger'
+            : message.prioridad === 'WARNING'
+              ? 'warn'
+              : 'info',
+      }));
+    items.unshift(...internal);
     return items;
   });
   protected readonly notificationBadgeCount = computed(() =>
-    this.lowStockAlerts.alerts().length + this.whatsappNotifications.unreadCount(),
+    this.lowStockAlerts.alerts().length +
+    this.whatsappNotifications.unreadCount() +
+    this.internalMessages.unreadCount(),
   );
   protected readonly hasWhatsappNotifications = this.whatsappNotifications.hasUnread;
+  protected readonly hasInternalMessages = this.internalMessages.hasUnread;
+  protected readonly notificationActionLabel = computed(() => {
+    if (this.hasInternalMessages()) {
+      return 'Abrir mensajes';
+    }
+    return this.hasWhatsappNotifications() ? 'Abrir WhatsApp' : 'Marcar leidas';
+  });
 
   protected readonly accountMenuItems = computed<AccountMenuItem[]>(() => [
     {
@@ -325,6 +373,14 @@ export class AppLayout {
     afterNextRender(() => this.restoreSidebarScroll());
     this.sessionModuleSync.syncCurrentTenantModules();
     this.applyThemeMode(this.themeMode());
+    this.internalMessages.refresh();
+    timer(30_000, 30_000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (typeof document === 'undefined' || !document.hidden) {
+          this.internalMessages.refresh();
+        }
+      });
     if (!this.isGeneralAdmin()) {
       this.lowStockAlerts.refresh(true);
       if (this.authSession.hasModule('CRM')) {
@@ -521,6 +577,11 @@ export class AppLayout {
   }
 
   protected markAllNotificationsRead(): void {
+    if (this.internalMessages.hasUnread()) {
+      this.notificationsPanelOpen.set(false);
+      void this.router.navigate(['/admin/mensajes']);
+      return;
+    }
     this.lowStockAlerts.clear();
     if (this.whatsappNotifications.hasUnread()) {
       this.notificationsPanelOpen.set(false);
@@ -568,8 +629,15 @@ export class AppLayout {
   protected logout(): void {
     this.closeHeaderPanels();
     const loginUrl = this.authSession.currentSession()?.adminGeneral ? '/auth/login' : '/auth';
-    this.authSession.clearSession();
-    void this.router.navigate([loginUrl]);
+    this.authApi
+      .logout()
+      .pipe(
+        finalize(() => {
+          this.authSession.clearSession();
+          void this.router.navigate([loginUrl]);
+        }),
+      )
+      .subscribe({ error: () => undefined });
   }
 
   private setThemeMode(mode: ThemeMode): void {

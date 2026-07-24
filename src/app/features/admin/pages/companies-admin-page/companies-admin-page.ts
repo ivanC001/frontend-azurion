@@ -1,3 +1,4 @@
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,6 +16,7 @@ import {
   AdminSaasApiService,
   CreateEmpresaRequest,
   Empresa,
+  EmpresaOperationalSummary,
   ModuloGlobal,
   Plan,
   Suscripcion,
@@ -71,6 +73,9 @@ interface TenantInitialCredentials {
   selector: 'app-companies-admin-page',
   imports: [
     FormsModule,
+    CurrencyPipe,
+    DatePipe,
+    DecimalPipe,
     ButtonModule,
     DialogModule,
     InputTextModule,
@@ -86,16 +91,16 @@ export class CompaniesAdminPage {
   private readonly facturadorApi = inject(FacturadorApiService);
   private readonly router = inject(Router);
 
-  protected readonly empresas = signal<Empresa[]>([]);
+  protected readonly companySummaries = signal<EmpresaOperationalSummary[]>([]);
   protected readonly planes = signal<Plan[]>([]);
   protected readonly modulos = signal<ModuloGlobal[]>([]);
-  protected readonly suscripciones = signal<Suscripcion[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly dialogVisible = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly initialCredentials = signal<TenantInitialCredentials | null>(null);
+  protected readonly selectedCompanySummary = signal<EmpresaOperationalSummary | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<'TODAS' | 'ACTIVAS' | 'INACTIVAS'>('TODAS');
   private readonly assignableModuleCodes = new Set([
@@ -114,11 +119,34 @@ export class CompaniesAdminPage {
   protected form: EmpresaForm = this.createEmptyForm();
 
   protected readonly activeCompanies = computed(
-    () => this.empresas().filter((empresa) => empresa.activo).length,
+    () => this.companySummaries().filter((summary) => summary.empresa.activo).length,
   );
 
   protected readonly activeSubscriptions = computed(
-    () => this.suscripciones().filter((suscripcion) => suscripcion.estado === 'ACTIVA').length,
+    () =>
+      this.companySummaries().filter(
+        (summary) => summary.suscripcionVigente,
+      ).length,
+  );
+
+  protected readonly activeUsers = computed(
+    () =>
+      this.companySummaries().reduce(
+        (total, summary) => total + (summary.usuariosActivos ?? 0),
+        0,
+      ),
+  );
+
+  protected readonly contractedSeats = computed(
+    () =>
+      this.companySummaries().reduce(
+        (total, summary) =>
+          total +
+          (summary.suscripcionVigente && summary.suscripcion
+            ? summary.suscripcion.limiteUsuarios
+            : 0),
+        0,
+      ),
   );
 
   protected readonly planOptions = computed(() =>
@@ -127,22 +155,6 @@ export class CompaniesAdminPage {
       value: plan.id,
     })),
   );
-
-  protected readonly planById = computed(() => {
-    const map = new Map<number, Plan>();
-    for (const plan of this.planes()) {
-      map.set(plan.id, plan);
-    }
-    return map;
-  });
-
-  protected readonly subscriptionByEmpresaId = computed(() => {
-    const map = new Map<number, Suscripcion>();
-    for (const subscription of this.suscripciones()) {
-      map.set(subscription.empresaId, subscription);
-    }
-    return map;
-  });
 
   protected readonly assignableModules = computed(() =>
     this.modulos().filter((modulo) =>
@@ -170,17 +182,26 @@ export class CompaniesAdminPage {
     { code: 'GB', name: 'Reino Unido', document: 'VAT', currency: 'GBP', symbol: 'GBP', timezone: 'Europe/London', language: 'en-GB' },
     { code: 'UY', name: 'Uruguay', document: 'RUT', currency: 'UYU', symbol: '$U', timezone: 'America/Montevideo', language: 'es-UY' },
   ] as const;
-  protected readonly filteredCompanies = computed(() => {
+  protected readonly filteredCompanySummaries = computed(() => {
     const query = this.searchTerm().trim().toLocaleLowerCase();
     const status = this.statusFilter();
-    return this.empresas().filter((empresa) => {
+    return this.companySummaries().filter((summary) => {
+      const empresa = summary.empresa;
       const matchesStatus =
         status === 'TODAS' ||
         (status === 'ACTIVAS' && empresa.activo) ||
         (status === 'INACTIVAS' && !empresa.activo);
       const matchesQuery =
         !query ||
-        [empresa.razonSocial, empresa.ruc, empresa.tenantId, empresa.schemaName]
+        [
+          empresa.razonSocial,
+          empresa.nombreComercial,
+          empresa.ruc,
+          empresa.tenantId,
+          empresa.schemaName,
+          summary.suscripcion?.planNombre,
+          ...summary.moduloCodigos,
+        ]
           .filter(Boolean)
           .some((value) => String(value).toLocaleLowerCase().includes(query));
       return matchesStatus && matchesQuery;
@@ -211,6 +232,14 @@ export class CompaniesAdminPage {
     void this.router.navigate(['/admin/control-empresas'], {
       queryParams: { empresaId: empresa.id },
     });
+  }
+
+  protected openCompanyDetails(summary: EmpresaOperationalSummary): void {
+    this.selectedCompanySummary.set(summary);
+  }
+
+  protected closeCompanyDetails(): void {
+    this.selectedCompanySummary.set(null);
   }
 
   protected generateTenantFields(): void {
@@ -394,14 +423,6 @@ export class CompaniesAdminPage {
       });
   }
 
-  protected planName(planId: number): string {
-    return this.planById().get(planId)?.nombre ?? 'Sin plan';
-  }
-
-  protected subscriptionFor(empresaId: number): Suscripcion | undefined {
-    return this.subscriptionByEmpresaId().get(empresaId);
-  }
-
   protected statusSeverity(active: boolean): 'success' | 'danger' {
     return active ? 'success' : 'danger';
   }
@@ -417,6 +438,15 @@ export class CompaniesAdminPage {
       return 'danger';
     }
     return 'info';
+  }
+
+  protected userUsagePercentage(summary: EmpresaOperationalSummary): number {
+    const limit = summary.suscripcion?.limiteUsuarios ?? 0;
+    const active = summary.usuariosActivos ?? 0;
+    if (limit <= 0) {
+      return 0;
+    }
+    return Math.min(Math.round((active / limit) * 100), 100);
   }
 
   protected onLogoFileSelected(event: Event): void {
@@ -455,18 +485,16 @@ export class CompaniesAdminPage {
     this.errorMessage.set(null);
 
     forkJoin({
-      empresas: this.api.listEmpresas(),
+      summaries: this.api.listEmpresaOperationalSummaries(),
       planes: this.api.listPlanes().pipe(catchError(() => of([] as Plan[]))),
       modulos: this.api.listModulos().pipe(catchError(() => of([] as ModuloGlobal[]))),
-      suscripciones: this.api.listSuscripciones().pipe(catchError(() => of([] as Suscripcion[]))),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ empresas, planes, modulos, suscripciones }) => {
-          this.empresas.set(empresas);
+        next: ({ summaries, planes, modulos }) => {
+          this.companySummaries.set(summaries);
           this.planes.set(planes);
           this.modulos.set(modulos);
-          this.suscripciones.set(suscripciones);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });

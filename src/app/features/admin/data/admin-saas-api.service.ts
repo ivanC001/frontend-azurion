@@ -69,6 +69,7 @@ export interface Plan {
   readonly codigo: string;
   readonly descripcion?: string | null;
   readonly limiteMensualBolsa: number;
+  readonly limiteUsuarios: number;
   readonly precioMensual: number;
   readonly estado: string;
   readonly moduloCodigos?: readonly string[];
@@ -79,6 +80,7 @@ export interface CreatePlanRequest {
   readonly codigo: string;
   readonly descripcion?: string | null;
   readonly limiteMensualBolsa: number;
+  readonly limiteUsuarios: number;
   readonly precioMensual: number;
   readonly moduloCodigos?: readonly string[];
 }
@@ -87,6 +89,7 @@ export interface UpdatePlanRequest {
   readonly nombre: string;
   readonly descripcion?: string | null;
   readonly limiteMensualBolsa: number;
+  readonly limiteUsuarios: number;
   readonly precioMensual: number;
   readonly estado: string;
   readonly moduloCodigos?: readonly string[];
@@ -150,15 +153,38 @@ export interface Suscripcion {
   readonly id: number;
   readonly empresaId: number;
   readonly planId: number;
+  readonly planNombre: string;
+  readonly planCodigo: string;
+  readonly limiteUsuariosPlan: number;
+  readonly limiteUsuarios: number;
+  readonly limiteUsuariosPersonalizado: boolean;
   readonly estado: string;
   readonly fechaInicio: string | null;
   readonly fechaFin: string | null;
+}
+
+export interface EmpresaOperationalSummary {
+  readonly empresa: Empresa;
+  readonly suscripcion: Suscripcion | null;
+  readonly suscripcionVigente: boolean;
+  readonly precioMensual: number | null;
+  readonly limiteMensualBolsa: number | null;
+  readonly usuariosTotal: number | null;
+  readonly usuariosActivos: number | null;
+  readonly usuariosInactivos: number | null;
+  readonly cuposDisponibles: number | null;
+  readonly cupoExcedido: boolean;
+  readonly conteoUsuariosDisponible: boolean;
+  readonly moduloCodigos: readonly string[];
+  readonly creadaEn: string | null;
+  readonly actualizadaEn: string | null;
 }
 
 export interface CreateSuscripcionRequest {
   readonly empresaId: number;
   readonly planId: number;
   readonly fechaInicio?: string | null;
+  readonly limiteUsuarios?: number | null;
 }
 
 export interface UpdateSuscripcionEstadoRequest {
@@ -1157,6 +1183,9 @@ export interface CrmCatalogoItem {
   readonly landingSlug?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
+  readonly prospectosCount: number;
+  readonly oportunidadesCount: number;
+  readonly landingsCount: number;
 }
 
 export interface CreateCrmCatalogoItemRequest {
@@ -1437,6 +1466,11 @@ export interface CrmCanalTokenConfig {
   readonly metadataJson?: string | null;
 }
 
+export interface UpdateEmpresaSubscriptionPlanRequest {
+  readonly planId: number;
+  readonly limiteUsuarios?: number | null;
+}
+
 export type CrmLandingProductMode = 'REQUERIDO' | 'OPCIONAL' | 'SIN_CATALOGO';
 
 export interface CrmLandingConfig {
@@ -1580,6 +1614,14 @@ export interface CrmWhatsappMessage {
   readonly createdAt?: string | null;
 }
 
+export interface CrmWhatsappInternalNote {
+  readonly id: number;
+  readonly slot: number;
+  readonly contenido: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
 export interface CrmWhatsappConversation {
   readonly id: number;
   readonly prospectoId: number;
@@ -1600,6 +1642,7 @@ export interface CrmWhatsappConversation {
   readonly ultimaDireccion?: string | null;
   readonly ultimoMensajeEn?: string | null;
   readonly notaInterna?: string | null;
+  readonly notasInternas: CrmWhatsappInternalNote[];
 }
 
 export interface CrmWhatsappConversationFilters {
@@ -1621,6 +1664,11 @@ export interface WhatsappUnreadSummary {
 export interface SendCrmWhatsappMessageRequest {
   readonly mensaje: string;
   readonly previewUrl?: boolean | null;
+}
+
+export interface SendCrmWhatsappQuoteResponse {
+  readonly mensaje: CrmWhatsappMessage;
+  readonly cotizacion: Cotizacion;
 }
 
 export interface CrmCurrencyConfig {
@@ -1666,6 +1714,13 @@ export interface UpdateUsuarioTenantRequest {
   readonly email?: string | null;
   readonly activo?: boolean;
   readonly sucursalIds?: number[];
+}
+
+export interface TenantUserQuota {
+  readonly activeUsers: number;
+  readonly limit: number;
+  readonly remaining: number;
+  readonly planCode: string;
 }
 
 export interface UpdateUsuarioPasswordRequest {
@@ -2623,6 +2678,32 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  listEmpresaOperationalSummaries() {
+    return this.http
+      .get<ApiResponse<EmpresaOperationalSummary[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/resumen-operativo'),
+        {
+          headers: this.session.apiHeaders(),
+        },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateEmpresaSubscriptionPlan(
+    empresaId: number,
+    request: UpdateEmpresaSubscriptionPlanRequest,
+  ) {
+    return this.http
+      .put<ApiResponse<Suscripcion>>(
+        this.apiUrl.url('saasCore', `/v1/saas/suscripciones/empresa/${empresaId}/plan`),
+        request,
+        {
+          headers: this.session.apiHeaders(),
+        },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   listCrmLandingConfigurations() {
     return this.http
       .get<ApiResponse<CrmLandingConfig[]>>(
@@ -2809,6 +2890,35 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  createCrmWhatsappConversationNote(prospectoId: number, nota: string) {
+    return this.http
+      .post<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas`),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmWhatsappSavedNote(prospectoId: number, noteId: number, nota: string) {
+    return this.http
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  deleteCrmWhatsappSavedNote(prospectoId: number, noteId: number) {
+    return this.http
+      .delete<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   listCrmWhatsappMessages(prospectoId: number) {
     return this.http
       .get<ApiResponse<CrmWhatsappMessage[]>>(
@@ -2823,6 +2933,28 @@ export class AdminSaasApiService {
       .post<ApiResponse<CrmWhatsappMessage>>(
         this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
         request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listCrmWhatsappQuotes(prospectoId: number) {
+    return this.http
+      .get<ApiResponse<Cotizacion[]>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones`),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  sendCrmWhatsappQuote(prospectoId: number, quoteId: number, mensaje?: string | null) {
+    return this.http
+      .post<ApiResponse<SendCrmWhatsappQuoteResponse>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones/${quoteId}/enviar`,
+        ),
+        { mensaje: mensaje?.trim() || null },
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
@@ -3331,6 +3463,16 @@ export class AdminSaasApiService {
         {
           headers: this.session.apiHeaders(tenantId),
         },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getUsuarioQuota(options: TenantScopedOptions = {}) {
+    const tenantId = options.tenantId?.trim() || null;
+    return this.http
+      .get<ApiResponse<TenantUserQuota>>(
+        this.apiUrl.url('saasCore', '/v1/saas/usuarios/quota'),
+        { headers: this.session.apiHeaders(tenantId) },
       )
       .pipe(map((response) => response.data));
   }

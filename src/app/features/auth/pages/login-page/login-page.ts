@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,14 +7,30 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
+import { DialogModule } from 'primeng/dialog';
 
 import { AuthApiService } from '@core/auth/auth-api.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { ApiErrorPayload } from '@core/api/api-error.interceptor';
+
+interface ActiveSessionConflict {
+  replacementToken: string;
+  deviceName: string;
+  lastActivityAt: string | null;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-login-page',
-  imports: [RouterLink, FormsModule, ButtonModule, CheckboxModule, InputTextModule, PasswordModule],
+  imports: [
+    RouterLink,
+    FormsModule,
+    ButtonModule,
+    CheckboxModule,
+    InputTextModule,
+    PasswordModule,
+    DialogModule,
+  ],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })
@@ -28,6 +44,8 @@ export class LoginPage implements OnInit {
   protected rememberTenant = false;
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly sessionConflict = signal<ActiveSessionConflict | null>(null);
+  protected readonly replacingSession = signal(false);
   protected loginMode: 'general' | 'tenant' = 'general';
   protected adminCredentials = {
     username: '',
@@ -39,13 +57,17 @@ export class LoginPage implements OnInit {
     tenantId: '',
   };
 
+  constructor() {
+    effect(() => {
+      if (this.session.currentSession() && this.session.hasActiveSession()) {
+        void this.router.navigateByUrl(this.resolvePostLoginUrl(), { replaceUrl: true });
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.loginMode = this.route.snapshot.data['loginMode'] === 'tenant' ? 'tenant' : 'general';
-
-    if (this.session.currentSession() && this.session.hasActiveSession()) {
-      void this.router.navigateByUrl(this.resolvePostLoginUrl(), { replaceUrl: true });
-      return;
-    }
+    this.errorMessage.set(this.session.consumeSessionNotice());
 
     if (this.session.currentSession() && !this.session.hasActiveSession()) {
       this.session.clearSession();
@@ -58,6 +80,7 @@ export class LoginPage implements OnInit {
     }
 
     this.errorMessage.set(null);
+    this.sessionConflict.set(null);
     this.loginMode = mode;
 
     const credentials = mode === 'general' ? this.adminCredentials : this.tenantCredentials;
@@ -92,7 +115,7 @@ export class LoginPage implements OnInit {
 
     this.resolveLoginRequest(username, password, tenantId)
       .pipe(
-        timeout({ first: 3500 }),
+        timeout({ first: 10_000 }),
         finalize(() => {
           clearTimeout(loadingSafetyTimer);
           this.loading.set(false);
@@ -107,13 +130,14 @@ export class LoginPage implements OnInit {
             return;
           }
 
-          this.session.setSession(
-            response,
-            mode === 'general' ? this.rememberAdmin : this.rememberTenant,
-          );
-          void this.router.navigateByUrl(this.resolvePostLoginUrl(), { replaceUrl: true });
+          this.completeLogin(response);
         },
         error: (error: unknown) => {
+          const conflict = this.resolveSessionConflict(error);
+          if (conflict) {
+            this.sessionConflict.set(conflict);
+            return;
+          }
           this.errorMessage.set(this.resolveError(error));
           if (error instanceof HttpErrorResponse) {
             console.error('[AUTH][LOGIN] Error backend', {
@@ -126,6 +150,48 @@ export class LoginPage implements OnInit {
           }
         },
       });
+  }
+
+  protected replaceActiveSession(): void {
+    const conflict = this.sessionConflict();
+    if (!conflict || this.replacingSession()) {
+      return;
+    }
+
+    this.replacingSession.set(true);
+    this.errorMessage.set(null);
+    this.authApi
+      .replaceSession(conflict.replacementToken)
+      .pipe(
+        timeout({ first: 10_000 }),
+        finalize(() => this.replacingSession.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.sessionConflict.set(null);
+          this.completeLogin(response);
+        },
+        error: (error: unknown) => {
+          this.sessionConflict.set(null);
+          this.errorMessage.set(this.resolveError(error));
+        },
+      });
+  }
+
+  protected cancelSessionReplacement(): void {
+    if (!this.replacingSession()) {
+      this.sessionConflict.set(null);
+    }
+  }
+
+  protected formatLastActivity(value: string | null): string {
+    if (!value) {
+      return 'Actividad reciente';
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? 'Actividad reciente'
+      : parsed.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
   }
 
   protected switchMode(mode: 'general' | 'tenant'): void {
@@ -232,6 +298,36 @@ export class LoginPage implements OnInit {
     }
 
     return 'No se pudo iniciar sesion.';
+  }
+
+  private resolveSessionConflict(error: unknown): ActiveSessionConflict | null {
+    if (!(error instanceof HttpErrorResponse) || error.status !== 409) {
+      return null;
+    }
+    const payload = error.error as ApiErrorPayload | null;
+    if (payload?.code !== 'ACTIVE_SESSION_EXISTS' || !payload.replacementToken) {
+      return null;
+    }
+    return {
+      replacementToken: payload.replacementToken,
+      deviceName: payload.activeSession?.deviceName || 'Otro navegador o dispositivo',
+      lastActivityAt: payload.activeSession?.lastActivityAt || null,
+    };
+  }
+
+  private completeLogin(
+    response: import('@core/auth/auth-session.service').LoginResponse,
+  ): void {
+    if (!response?.accessToken) {
+      this.errorMessage.set(
+        'La respuesta del servidor no incluyo token. Verifica las credenciales y la empresa.',
+      );
+      return;
+    }
+    this.session.setSession(
+      response,
+      this.loginMode === 'general' ? this.rememberAdmin : this.rememberTenant,
+    );
   }
 
   private extractBackendMessage(errorBody: unknown): string {

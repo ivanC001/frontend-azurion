@@ -27,6 +27,8 @@ describe('AuthSessionService', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    FakeBroadcastChannel.reset();
+    vi.unstubAllGlobals();
     window.sessionStorage.clear();
     window.localStorage.clear();
   });
@@ -109,6 +111,17 @@ describe('AuthSessionService', () => {
     });
   });
 
+  it('shares one session with another tab in the same browser', () => {
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    const firstTab = TestBed.inject(AuthSessionService);
+    firstTab.setSession(validSession());
+
+    const secondTab = TestBed.runInInjectionContext(() => new AuthSessionService());
+
+    expect(secondTab.currentSession()?.accessToken).toBe('opaque-token');
+    expect(secondTab.currentSession()?.tenantId).toBe('20123456789');
+  });
+
   function validSession(): LoginResponse {
     return {
       accessToken: 'opaque-token',
@@ -131,3 +144,30 @@ describe('AuthSessionService', () => {
     return `${encode({ alg: 'none' })}.${encode({ exp })}.signature`;
   }
 });
+
+class FakeBroadcastChannel {
+  private static readonly channels = new Map<string, Set<FakeBroadcastChannel>>();
+  onmessage: ((event: MessageEvent) => void) | null = null;
+
+  constructor(private readonly name: string) {
+    const members = FakeBroadcastChannel.channels.get(name) ?? new Set();
+    members.add(this);
+    FakeBroadcastChannel.channels.set(name, members);
+  }
+
+  postMessage(data: unknown): void {
+    for (const member of FakeBroadcastChannel.channels.get(this.name) ?? []) {
+      if (member !== this) {
+        member.onmessage?.({ data } as MessageEvent);
+      }
+    }
+  }
+
+  close(): void {
+    FakeBroadcastChannel.channels.get(this.name)?.delete(this);
+  }
+
+  static reset(): void {
+    FakeBroadcastChannel.channels.clear();
+  }
+}

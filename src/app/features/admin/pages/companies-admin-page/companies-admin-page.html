@@ -3,7 +3,7 @@
     <div>
       <p class="page-header__eyebrow">Panel administrativo</p>
       <h1>Registro de empresas</h1>
-      <p>Alta de tenants, esquemas y suscripciones SaaS en AZURION con sincronizacion al facturador.</p>
+      <p>Control de tenants, usuarios, planes, cupos, suscripciones y modulos contratados.</p>
     </div>
 
     <p-button label="Nueva empresa" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateDialog()" />
@@ -31,9 +31,9 @@
         <p>
           Tenant <code>{{ credentials.tenantId }}</code>
           · Usuario <code>{{ credentials.username }}</code>
-          · Contrasena temporal <code>{{ credentials.password }}</code>
+          · Contraseña temporal <code>{{ credentials.password }}</code>
         </p>
-        <small>Cambia esta contrasena desde Usuarios antes de entregar el acceso.</small>
+        <small>Cambia esta contraseña desde Usuarios antes de entregar el acceso.</small>
       </div>
     </section>
   }
@@ -55,18 +55,32 @@
       <i class="pi pi-th-large"></i>
       <div><span>Modulos contratables</span><strong>{{ moduleCount() }}</strong></div>
     </article>
+    <article class="metric metric--cyan">
+      <i class="pi pi-users"></i>
+      <div><span>Usuarios activos</span><strong>{{ activeUsers() }}</strong></div>
+    </article>
+    <article class="metric metric--rose">
+      <i class="pi pi-id-card"></i>
+      <div><span>Cupos contratados</span><strong>{{ contractedSeats() }}</strong></div>
+    </article>
   </div>
 
   <section class="table-panel">
     <div class="table-panel__head">
       <div>
         <h2>Empresas registradas</h2>
-        <p>Busca un tenant y abre su suscripcion, usuarios y modulos contratados.</p>
+        <p>Consulta identidad, plan, usuarios, cupos y modulos; abre el detalle para ver toda la informacion.</p>
       </div>
       <div class="company-filters">
         <span class="search-control">
           <i class="pi pi-search"></i>
-          <input pInputText type="search" [value]="searchTerm()" (input)="setSearch($event)" placeholder="Empresa, identificador o tenant" />
+          <input
+            pInputText
+            type="search"
+            [value]="searchTerm()"
+            (input)="setSearch($event)"
+            placeholder="Empresa, plan, modulo o tenant"
+          />
         </span>
         <p-select
           [options]="statusOptions"
@@ -79,9 +93,9 @@
     </div>
 
     <p-table
-      [value]="filteredCompanies()"
+      [value]="filteredCompanySummaries()"
       [loading]="loading()"
-      [paginator]="filteredCompanies().length > 10"
+      [paginator]="filteredCompanySummaries().length > 10"
       [rows]="10"
       responsiveLayout="scroll"
       styleClass="companies-table"
@@ -90,58 +104,320 @@
         <tr>
           <th>Empresa</th>
           <th>Identificador fiscal</th>
-          <th>Tenant</th>
-          <th>Schema</th>
-          <th>Plan</th>
+          <th>Tenant tecnico</th>
+          <th>Plan y suscripcion</th>
+          <th>Usuarios y cupos</th>
+          <th>Modulos</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-empresa>
+      <ng-template pTemplate="body" let-summary>
         <tr>
           <td>
-            <strong>{{ empresa.razonSocial }}</strong>
-            <small>ID {{ empresa.id }}</small>
+            <strong>{{ summary.empresa.razonSocial }}</strong>
+            <small>{{ summary.empresa.nombreComercial || 'Sin nombre comercial' }}</small>
+            <small>ID {{ summary.empresa.id }} · {{ summary.empresa.correoPrincipal || 'Sin correo' }}</small>
           </td>
-          <td><strong>{{ empresa.tipoDocumentoFiscal || 'Fiscal' }}</strong><small>{{ empresa.ruc }} · {{ empresa.paisCodigo || 'PE' }}</small></td>
-          <td><code>{{ empresa.tenantId }}</code></td>
-          <td><code>{{ empresa.schemaName }}</code></td>
           <td>
-            @if (subscriptionFor(empresa.id); as subscription) {
+            <strong>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</strong>
+            <small>{{ summary.empresa.paisNombre || summary.empresa.paisCodigo || 'Pais no registrado' }}</small>
+          </td>
+          <td>
+            <code>{{ summary.empresa.tenantId }}</code>
+            <small><code>{{ summary.empresa.schemaName }}</code></small>
+          </td>
+          <td>
+            @if (summary.suscripcion; as subscription) {
               <div class="plan-cell">
-                <strong>{{ planName(subscription.planId) }}</strong>
+                <strong>{{ subscription.planNombre }}</strong>
                 <p-tag [value]="subscription.estado" [severity]="subscriptionSeverity(subscription.estado)" />
+                @if (!summary.suscripcionVigente) {
+                  <span class="subscription-not-current">No vigente</span>
+                }
               </div>
+              <small>
+                {{ summary.precioMensual | currency:(summary.empresa.monedaCodigo || 'PEN'):'symbol-narrow':'1.2-2' }}
+                / mes
+              </small>
+              <small>
+                Desde {{ subscription.fechaInicio | date:'dd/MM/yyyy' }}
+                @if (subscription.fechaFin) {
+                  · hasta {{ subscription.fechaFin | date:'dd/MM/yyyy' }}
+                }
+              </small>
             } @else {
               <span class="muted">Sin suscripcion</span>
             }
           </td>
           <td>
-            <p-tag [value]="empresa.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(empresa.activo)" />
+            @if (summary.conteoUsuariosDisponible) {
+              <div class="user-quota">
+                <strong>
+                  {{ summary.usuariosActivos }} / {{ summary.suscripcion?.limiteUsuarios ?? '—' }} activos
+                </strong>
+                <small>
+                  {{ summary.usuariosTotal }} registrados · {{ summary.usuariosInactivos }} inhabilitados
+                </small>
+                @if (summary.suscripcion) {
+                  <span class="seat-meter" [class.seat-meter--danger]="summary.cupoExcedido">
+                    <span [style.width.%]="userUsagePercentage(summary)"></span>
+                  </span>
+                  <small [class.quota-danger]="summary.cupoExcedido">
+                    @if (summary.cupoExcedido) {
+                      Cupo excedido
+                    } @else {
+                      {{ summary.cuposDisponibles }} cupos disponibles
+                    }
+                  </small>
+                } @else {
+                  <small class="quota-danger">Sin cupo contratado</small>
+                }
+              </div>
+            } @else {
+              <span class="count-unavailable">
+                <i class="pi pi-exclamation-circle"></i>
+                No disponible
+              </span>
+            }
           </td>
           <td>
-            <button
-              type="button"
-              class="company-action"
-              title="Administrar empresa"
-              aria-label="Administrar empresa"
-              (click)="manageCompany(empresa)"
-            >
-              <i class="pi pi-arrow-right"></i>
-            </button>
+            <div class="module-chips">
+              @for (moduleCode of summary.moduloCodigos.slice(0, 3); track moduleCode) {
+                <span>{{ moduleCode }}</span>
+              }
+              @if (summary.moduloCodigos.length > 3) {
+                <span>+{{ summary.moduloCodigos.length - 3 }}</span>
+              }
+              @if (!summary.moduloCodigos.length) {
+                <small class="muted">Sin modulos activos</small>
+              }
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="summary.empresa.activo ? 'Activo' : 'Inactivo'"
+              [severity]="statusSeverity(summary.empresa.activo)"
+            />
+          </td>
+          <td>
+            <div class="company-actions">
+              <button
+                type="button"
+                class="company-action company-action--details"
+                title="Ver todos los detalles"
+                aria-label="Ver todos los detalles"
+                (click)="openCompanyDetails(summary)"
+              >
+                <i class="pi pi-eye"></i>
+              </button>
+              <button
+                type="button"
+                class="company-action"
+                title="Administrar empresa"
+                aria-label="Administrar empresa"
+                (click)="manageCompany(summary.empresa)"
+              >
+                <i class="pi pi-arrow-right"></i>
+              </button>
+            </div>
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7">No hay empresas que coincidan con la busqueda.</td>
+          <td colspan="8">No hay empresas que coincidan con la busqueda.</td>
         </tr>
       </ng-template>
     </p-table>
   </section>
 </section>
+
+<p-dialog
+  header="Detalle completo de la empresa"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="selectedCompanySummary() !== null"
+  (visibleChange)="!$event && closeCompanyDetails()"
+  styleClass="company-details-dialog"
+>
+  @if (selectedCompanySummary(); as summary) {
+    <div class="company-details">
+      <header class="company-details__hero">
+        <div>
+          <span>Empresa ID {{ summary.empresa.id }}</span>
+          <h2>{{ summary.empresa.razonSocial }}</h2>
+          <p>{{ summary.empresa.nombreComercial || 'Sin nombre comercial registrado' }}</p>
+        </div>
+        <div class="company-details__status">
+          <p-tag
+            [value]="summary.empresa.activo ? 'Empresa activa' : 'Empresa inactiva'"
+            [severity]="statusSeverity(summary.empresa.activo)"
+          />
+          @if (summary.suscripcion) {
+            <p-tag
+              [value]="'Suscripcion ' + summary.suscripcion.estado"
+              [severity]="subscriptionSeverity(summary.suscripcion.estado)"
+            />
+          }
+        </div>
+      </header>
+
+      <div class="detail-grid">
+        <article class="detail-card">
+          <h3><i class="pi pi-building"></i> Identidad fiscal</h3>
+          <dl>
+            <div><dt>Razon social</dt><dd>{{ summary.empresa.razonSocial }}</dd></div>
+            <div><dt>Nombre comercial</dt><dd>{{ summary.empresa.nombreComercial || 'No registrado' }}</dd></div>
+            <div><dt>Documento</dt><dd>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</dd></div>
+            <div><dt>Pais</dt><dd>{{ summary.empresa.paisNombre || 'No registrado' }} ({{ summary.empresa.paisCodigo || '—' }})</dd></div>
+            <div><dt>Direccion</dt><dd>{{ summary.empresa.direccionFiscal || 'No registrada' }}</dd></div>
+            <div>
+              <dt>Ubicacion</dt>
+              <dd>
+                {{ summary.empresa.distrito || '—' }},
+                {{ summary.empresa.provincia || '—' }},
+                {{ summary.empresa.departamento || '—' }}
+              </dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="detail-card">
+          <h3><i class="pi pi-address-book"></i> Contacto</h3>
+          <dl>
+            <div><dt>Correo</dt><dd>{{ summary.empresa.correoPrincipal || 'No registrado' }}</dd></div>
+            <div><dt>Telefono</dt><dd>{{ summary.empresa.telefono || 'No registrado' }}</dd></div>
+            <div><dt>Celular</dt><dd>{{ summary.empresa.celular || 'No registrado' }}</dd></div>
+            <div><dt>Sitio web</dt><dd>{{ summary.empresa.sitioWeb || 'No registrado' }}</dd></div>
+            <div><dt>Facebook</dt><dd>{{ summary.empresa.facebook || 'No registrado' }}</dd></div>
+            <div><dt>Instagram</dt><dd>{{ summary.empresa.instagram || 'No registrado' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="detail-card">
+          <h3><i class="pi pi-user"></i> Representante</h3>
+          <dl>
+            <div><dt>Nombre</dt><dd>{{ summary.empresa.representanteNombre || 'No registrado' }}</dd></div>
+            <div><dt>Cargo</dt><dd>{{ summary.empresa.representanteCargo || 'No registrado' }}</dd></div>
+            <div>
+              <dt>Documento</dt>
+              <dd>
+                {{ summary.empresa.representanteTipoDocumento || '—' }}
+                {{ summary.empresa.representanteNumeroDocumento || 'No registrado' }}
+              </dd>
+            </div>
+            <div><dt>Correo</dt><dd>{{ summary.empresa.representanteCorreo || 'No registrado' }}</dd></div>
+            <div><dt>Telefono</dt><dd>{{ summary.empresa.representanteTelefono || 'No registrado' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="detail-card">
+          <h3><i class="pi pi-database"></i> Tenant y localizacion</h3>
+          <dl>
+            <div><dt>Tenant ID</dt><dd><code>{{ summary.empresa.tenantId }}</code></dd></div>
+            <div><dt>Schema</dt><dd><code>{{ summary.empresa.schemaName }}</code></dd></div>
+            <div><dt>Zona horaria</dt><dd>{{ summary.empresa.zonaHoraria || 'No registrada' }}</dd></div>
+            <div><dt>Idioma</dt><dd>{{ summary.empresa.idioma || 'No registrado' }}</dd></div>
+            <div><dt>Fecha / hora</dt><dd>{{ summary.empresa.formatoFecha || '—' }} · {{ summary.empresa.formatoHora || '—' }}</dd></div>
+            <div><dt>Moneda</dt><dd>{{ summary.empresa.monedaCodigo || '—' }} ({{ summary.empresa.monedaSimbolo || '—' }})</dd></div>
+          </dl>
+        </article>
+
+        <article class="detail-card detail-card--subscription">
+          <h3><i class="pi pi-wallet"></i> Plan y suscripcion</h3>
+          @if (summary.suscripcion; as subscription) {
+            <dl>
+              <div><dt>Plan</dt><dd>{{ subscription.planNombre }} ({{ subscription.planCodigo }})</dd></div>
+              <div>
+                <dt>Precio mensual</dt>
+                <dd>{{ summary.precioMensual | currency:(summary.empresa.monedaCodigo || 'PEN'):'symbol-narrow':'1.2-2' }}</dd>
+              </div>
+              <div><dt>Estado</dt><dd>{{ subscription.estado }}</dd></div>
+              <div><dt>Inicio</dt><dd>{{ subscription.fechaInicio | date:'dd/MM/yyyy' }}</dd></div>
+              <div><dt>Fin</dt><dd>{{ (subscription.fechaFin | date:'dd/MM/yyyy') || 'Sin fecha de fin' }}</dd></div>
+              <div><dt>Cupo base del plan</dt><dd>{{ subscription.limiteUsuariosPlan }} usuarios</dd></div>
+              <div>
+                <dt>Cupo efectivo</dt>
+                <dd>
+                  {{ subscription.limiteUsuarios }} usuarios
+                  @if (subscription.limiteUsuariosPersonalizado) {
+                    <span class="inline-badge">Personalizado</span>
+                  }
+                </dd>
+              </div>
+              <div><dt>Bolsa mensual</dt><dd>{{ summary.limiteMensualBolsa | number:'1.0-0' }}</dd></div>
+            </dl>
+          } @else {
+            <p class="detail-empty">La empresa no tiene una suscripcion registrada.</p>
+          }
+        </article>
+
+        <article class="detail-card detail-card--users">
+          <h3><i class="pi pi-users"></i> Usuarios y capacidad</h3>
+          @if (summary.conteoUsuariosDisponible) {
+            <div class="user-summary">
+              <div><strong>{{ summary.usuariosTotal }}</strong><span>Registrados</span></div>
+              <div><strong>{{ summary.usuariosActivos }}</strong><span>Activos</span></div>
+              <div><strong>{{ summary.usuariosInactivos }}</strong><span>Inhabilitados</span></div>
+              <div>
+                <strong [class.quota-danger]="summary.cupoExcedido">{{ summary.cuposDisponibles ?? 0 }}</strong>
+                <span>Disponibles</span>
+              </div>
+            </div>
+            @if (summary.suscripcion) {
+              <span class="seat-meter seat-meter--large" [class.seat-meter--danger]="summary.cupoExcedido">
+                <span [style.width.%]="userUsagePercentage(summary)"></span>
+              </span>
+              <p>
+                Uso: {{ summary.usuariosActivos }} de {{ summary.suscripcion.limiteUsuarios }} cupos
+                ({{ userUsagePercentage(summary) }}%).
+              </p>
+            }
+          } @else {
+            <p class="detail-empty">No fue posible consultar los usuarios del schema de este tenant.</p>
+          }
+        </article>
+
+        <article class="detail-card detail-card--wide">
+          <h3><i class="pi pi-th-large"></i> Modulos activos ({{ summary.moduloCodigos.length }})</h3>
+          <div class="module-chips module-chips--large">
+            @for (moduleCode of summary.moduloCodigos; track moduleCode) {
+              <span>{{ moduleCode }}</span>
+            } @empty {
+              <p class="detail-empty">No hay modulos activos asignados.</p>
+            }
+          </div>
+        </article>
+
+        <article class="detail-card detail-card--wide">
+          <h3><i class="pi pi-history"></i> Registro y marca</h3>
+          <dl class="audit-details">
+            <div><dt>Creada</dt><dd>{{ (summary.creadaEn | date:'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd></div>
+            <div><dt>Ultima actualizacion</dt><dd>{{ (summary.actualizadaEn | date:'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd></div>
+            <div><dt>Logo del panel</dt><dd>{{ summary.empresa.logoPanelUrl ? 'Configurado' : 'No configurado' }}</dd></div>
+          </dl>
+        </article>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cerrar" severity="secondary" styleClass="az-secondary" (onClick)="closeCompanyDetails()" />
+    @if (selectedCompanySummary(); as summary) {
+      <p-button
+        label="Administrar empresa"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        styleClass="az-primary"
+        (onClick)="manageCompany(summary.empresa)"
+      />
+    }
+  </ng-template>
+</p-dialog>
 
 <p-dialog
   header="Registrar empresa"

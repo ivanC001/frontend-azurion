@@ -132,7 +132,12 @@ export class AdminDashboardPage {
   protected readonly generalRows = computed<GeneralRow[]>(() => {
     const q = this.searchTerm().trim().toLowerCase();
     const planById = new Map(this.planes().map((plan) => [plan.id, plan]));
-    const suscripcionByEmpresa = new Map(this.suscripciones().map((s) => [s.empresaId, s]));
+    const suscripcionByEmpresa = new Map<number, Suscripcion>();
+    for (const subscription of this.suscripciones()) {
+      if (!suscripcionByEmpresa.has(subscription.empresaId)) {
+        suscripcionByEmpresa.set(subscription.empresaId, subscription);
+      }
+    }
 
     const rows = this.empresas().map<GeneralRow>((empresa) => {
       const sub = suscripcionByEmpresa.get(empresa.id);

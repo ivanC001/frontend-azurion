@@ -18,3 +18,20 @@ describe('authentication routes', () => {
     expect(administratorLogin?.loadComponent).toBeTypeOf('function');
   });
 });
+
+describe('platform administration routes', () => {
+  const adminRoute = routes.find((route) => route.path === 'admin');
+
+  it('exposes the Azurion global email configuration as a lazy administrative view', () => {
+    const emailRoute = adminRoute?.children?.find((route) => route.path === 'correo-azurion');
+
+    expect(emailRoute?.canActivate?.length).toBeGreaterThan(0);
+    expect(emailRoute?.loadComponent).toBeTypeOf('function');
+  });
+
+  it('exposes a shared authenticated message inbox', () => {
+    const messagesRoute = adminRoute?.children?.find((route) => route.path === 'mensajes');
+
+    expect(messagesRoute?.loadComponent).toBeTypeOf('function');
+  });
+});

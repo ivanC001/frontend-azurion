@@ -1,0 +1,402 @@
+.crm-page .catalog-metrics {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.crm-page .catalog-metrics article {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  box-shadow: 0 0.35rem 1rem rgba(15, 23, 42, 0.04);
+  display: flex;
+  gap: 0.8rem;
+  min-height: 5rem;
+  padding: 0.85rem 1rem;
+}
+
+.crm-page .catalog-metrics article > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.crm-page .catalog-metrics small {
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.crm-page .catalog-metrics strong {
+  color: var(--az-text);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.crm-page .catalog-metric-icon {
+  align-items: center;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  flex: 0 0 2.65rem;
+  font-size: 1.05rem;
+  height: 2.65rem;
+  justify-content: center;
+}
+
+.crm-page .catalog-metric-icon--blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.crm-page .catalog-metric-icon--green {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.crm-page .catalog-metric-icon--violet {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.crm-page .catalog-metric-icon--amber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.catalog-help--warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.catalog-help--warning i,
+.catalog-help--warning b {
+  color: #d97706;
+}
+
+.crm-page .catalog-crm-table .p-datatable-table {
+  min-width: 92rem;
+}
+
+.crm-page .catalog-col-offer,
+.crm-page .catalog-offer-cell {
+  min-width: 19rem;
+  width: 22%;
+}
+
+.crm-page .catalog-col-type {
+  min-width: 9rem;
+  width: 9rem;
+}
+
+.crm-page .catalog-col-price,
+.crm-page .money-cell {
+  min-width: 8rem;
+  width: 8rem;
+}
+
+.crm-page .catalog-col-usage,
+.crm-page .catalog-usage-cell {
+  min-width: 15rem;
+  width: 15rem;
+}
+
+.crm-page .catalog-col-publication,
+.crm-page .catalog-publication-cell {
+  min-width: 13rem;
+  width: 13rem;
+}
+
+.crm-page .catalog-col-access,
+.crm-page .catalog-access-cell {
+  min-width: 17rem;
+  width: 19%;
+}
+
+.crm-page .catalog-col-status,
+.crm-page .catalog-status-cell {
+  min-width: 9.5rem;
+  width: 9.5rem;
+}
+
+.crm-page .catalog-offer-main {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.crm-page .catalog-product-icon {
+  align-items: center;
+  background: #dbeafe;
+  border-radius: 0.7rem;
+  color: #2563eb !important;
+  display: inline-flex !important;
+  flex: 0 0 2.4rem;
+  height: 2.4rem;
+  justify-content: center;
+  margin: 0 !important;
+}
+
+.crm-page .catalog-offer-main > div {
+  min-width: 0;
+}
+
+.crm-page .catalog-offer-main > div > span {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box !important;
+  overflow: hidden;
+  overflow-wrap: normal !important;
+  word-break: break-word;
+}
+
+.crm-page .catalog-attribute-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+}
+
+.crm-page .catalog-attribute-chips > span {
+  background: color-mix(in srgb, var(--az-primary) 7%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-primary) 13%, var(--az-border));
+  border-radius: 999px;
+  color: var(--az-text-soft) !important;
+  display: inline-flex !important;
+  font-size: 0.66rem !important;
+  font-weight: 750;
+  margin: 0 !important;
+  max-width: 9rem;
+  overflow: hidden;
+  padding: 0.18rem 0.45rem;
+  text-overflow: ellipsis;
+  white-space: nowrap !important;
+}
+
+.crm-page .catalog-attribute-chips > .catalog-attribute-empty {
+  background: transparent;
+  border-style: dashed;
+}
+
+.crm-page .catalog-type-cell {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.crm-page .catalog-type-cell > i {
+  align-items: center;
+  background: #ecfeff;
+  border-radius: 0.55rem;
+  color: #0891b2;
+  display: inline-flex;
+  flex: 0 0 2rem;
+  height: 2rem;
+  justify-content: center;
+}
+
+.crm-page .catalog-type-cell strong {
+  color: var(--az-text);
+  font-size: 0.8rem;
+}
+
+.crm-page .catalog-type-cell small,
+.crm-page .money-cell small,
+.crm-page .catalog-status-cell small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.68rem;
+  margin-top: 0.15rem;
+}
+
+.crm-page .money-cell {
+  font-weight: 400;
+}
+
+.crm-page .money-cell > i {
+  color: #d97706;
+  margin-right: 0.3rem;
+}
+
+.crm-page .money-cell strong {
+  display: inline !important;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.crm-page .catalog-usage-counts {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.crm-page .catalog-usage-counts > span {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary) 5%, var(--az-surface));
+  border: 1px solid var(--az-border);
+  border-radius: 0.6rem;
+  display: grid !important;
+  gap: 0.08rem;
+  grid-template-columns: auto 1fr;
+  margin: 0 !important;
+  padding: 0.4rem 0.45rem;
+}
+
+.crm-page .catalog-usage-counts i {
+  color: var(--az-primary);
+  font-size: 0.75rem;
+  grid-row: span 2;
+}
+
+.crm-page .catalog-usage-counts strong {
+  color: var(--az-text);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.crm-page .catalog-usage-counts small {
+  color: var(--az-text-soft);
+  font-size: 0.62rem;
+}
+
+.crm-page .catalog-conversion {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.crm-page .catalog-conversion > span {
+  background: color-mix(in srgb, var(--az-border) 70%, transparent);
+  border-radius: 999px;
+  display: block !important;
+  height: 0.32rem;
+  margin: 0 !important;
+  overflow: hidden;
+}
+
+.crm-page .catalog-conversion > span > span {
+  background: linear-gradient(90deg, #2563eb, #10b981);
+  border-radius: inherit;
+  display: block !important;
+  height: 100%;
+  margin: 0 !important;
+}
+
+.crm-page .catalog-conversion small {
+  color: var(--az-text-soft);
+  font-size: 0.65rem;
+}
+
+.crm-page .catalog-publication-cell > strong {
+  align-items: center;
+  display: flex !important;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+}
+
+.crm-page .catalog-public-ready {
+  color: #047857;
+}
+
+.crm-page .catalog-public-off {
+  color: #b45309;
+}
+
+.crm-page .catalog-publication-cell > span {
+  align-items: center;
+  display: flex !important;
+  gap: 0.35rem;
+  margin-top: 0.35rem !important;
+}
+
+.crm-page .catalog-publication-cell > span i {
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
+}
+
+.crm-page .catalog-access-cell > strong {
+  align-items: center;
+  color: var(--az-text);
+  display: flex !important;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+}
+
+.crm-page .catalog-access-cell > strong i {
+  color: #059669;
+}
+
+.crm-page .catalog-access-cell .catalog-url-preview {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: #0f766e !important;
+  display: -webkit-box !important;
+  font-family: Consolas, monospace;
+  font-size: 0.69rem !important;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.crm-page .catalog-access-cell > small {
+  color: var(--az-text-soft);
+  display: block;
+  font-family: Consolas, monospace;
+  font-size: 0.65rem;
+  margin-top: 0.3rem;
+}
+
+.crm-page .catalog-status-cell > small {
+  margin-top: 0.45rem;
+}
+
+.crm-page .catalog-row-actions {
+  gap: 0.35rem;
+}
+
+.crm-page .catalog-row-action {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  cursor: pointer;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  transition: 150ms ease;
+  width: 2rem;
+}
+
+.crm-page .catalog-row-action:not(:disabled):hover {
+  box-shadow: 0 0.4rem 0.8rem rgba(15, 23, 42, 0.1);
+  transform: translateY(-1px);
+}
+
+.crm-page .catalog-row-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.crm-page .catalog-row-action--preview {
+  color: #2563eb;
+}
+
+.crm-page .catalog-row-action--copy {
+  color: #059669;
+}
+
+.crm-page .catalog-row-action--edit {
+  color: #d97706;
+}
+
+@media (max-width: 1180px) {
+  .crm-page .catalog-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .crm-page .catalog-metrics {
+    grid-template-columns: 1fr;
+  }
+}

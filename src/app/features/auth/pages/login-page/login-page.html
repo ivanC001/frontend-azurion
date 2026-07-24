@@ -308,3 +308,46 @@
     </section>
   }
 </main>
+
+<p-dialog
+  header="Sesión activa en otro dispositivo"
+  [visible]="!!sessionConflict()"
+  [modal]="true"
+  [closable]="!replacingSession()"
+  [closeOnEscape]="!replacingSession()"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="session-conflict-dialog"
+  (visibleChange)="$event ? null : cancelSessionReplacement()"
+>
+  @if (sessionConflict(); as conflict) {
+    <div class="session-conflict">
+      <span class="session-conflict__icon"><i class="pi pi-desktop"></i></span>
+      <div>
+        <p>
+          Esta cuenta ya está siendo utilizada en otro dispositivo. Para continuar aquí debes
+          cerrar la sesión anterior.
+        </p>
+        <dl>
+          <div><dt>Dispositivo</dt><dd>{{ conflict.deviceName }}</dd></div>
+          <div><dt>Ultima actividad</dt><dd>{{ formatLastActivity(conflict.lastActivityAt) }}</dd></div>
+        </dl>
+        <small>Si continuas, la sesion anterior se cerrara de inmediato.</small>
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [disabled]="replacingSession()"
+        (onClick)="cancelSessionReplacement()"
+      />
+      <p-button
+        label="Cerrar sesion anterior y continuar"
+        icon="pi pi-sign-out"
+        [loading]="replacingSession()"
+        (onClick)="replaceActiveSession()"
+      />
+    </ng-template>
+  }
+</p-dialog>

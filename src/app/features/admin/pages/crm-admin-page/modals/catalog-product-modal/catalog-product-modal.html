@@ -38,6 +38,16 @@
         </div>
         <label class="wide-field">Nombre <span class="required">*</span><input pInputText name="catNombre" [(ngModel)]="host().catalogoForm.nombre" [placeholder]="host().catalogNamePlaceholder()" /></label>
         <label>Precio referencial<input pInputText type="number" min="0" name="catPrecio" [(ngModel)]="host().catalogoForm.precioReferencial" placeholder="0.00" /></label>
+        <label>
+          Estado de la oferta
+          <p-select
+            name="catEstado"
+            [options]="host().catalogStatusOptions"
+            [(ngModel)]="host().catalogoForm.estado"
+            appendTo="body"
+            placeholder="Selecciona un estado"
+          />
+        </label>
         @for (field of host().catalogFields(); track field.key) {
           <label>
             {{ field.label }}
@@ -55,6 +65,12 @@
           <input type="checkbox" name="catPublicEnabled" [(ngModel)]="host().catalogoForm.publicEnabled" />
           <span>Habilitar esta oferta para recibir leads desde landing</span>
         </label>
+        @if (host().catalogoForm.estado !== 'ACTIVO' && host().catalogoForm.publicEnabled) {
+          <div class="catalog-help catalog-help--warning wide-field">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>Una oferta inactiva o archivada no recibe leads aunque la publicacion este habilitada.</span>
+          </div>
+        }
         <label class="wide-field">Slug landing<input pInputText name="catLandingSlug" [(ngModel)]="host().catalogoForm.landingSlug" placeholder="toyota-hilux-2021, curso-excel..." /></label>
         <label class="wide-field">Detalle rapido<textarea pTextarea name="catDescripcion" rows="3" [(ngModel)]="host().catalogoForm.descripcion" [placeholder]="host().catalogDescriptionPlaceholder()"></textarea></label>
         <div class="catalog-help wide-field">

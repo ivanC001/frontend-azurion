@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -8,20 +9,30 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
-import { AdminSaasApiService, Plan } from '@features/admin/data/admin-saas-api.service';
+import {
+  AdminSaasApiService,
+  ModuloGlobal,
+  Plan,
+} from '@features/admin/data/admin-saas-api.service';
 
 interface PlanForm {
   nombre: string;
   codigo: string;
+  descripcion: string;
   limiteMensualBolsa: number;
+  limiteUsuarios: number;
   precioMensual: number;
+  moduloCodigos: string[];
 }
 
 interface PlanEditForm {
   nombre: string;
+  descripcion: string;
   limiteMensualBolsa: number;
+  limiteUsuarios: number;
   precioMensual: number;
   estado: string;
+  moduloCodigos: string[];
 }
 
 @Component({
@@ -37,6 +48,7 @@ export class PlatformPlansPage {
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly plans = signal<Plan[]>([]);
+  protected readonly modules = signal<ModuloGlobal[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly editPlanId = signal<number | null>(null);
@@ -45,8 +57,11 @@ export class PlatformPlansPage {
   protected form: PlanForm = {
     nombre: '',
     codigo: '',
+    descripcion: '',
     limiteMensualBolsa: 0,
+    limiteUsuarios: 5,
     precioMensual: 0,
+    moduloCodigos: [],
   };
 
   protected readonly activePlans = computed(
@@ -74,11 +89,16 @@ export class PlatformPlansPage {
   protected load(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
-    this.api
-      .listPlanes()
+    forkJoin({
+      plans: this.api.listPlanes(),
+      modules: this.api.listModulos(),
+    })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (items) => this.plans.set(items),
+        next: ({ plans, modules }) => {
+          this.plans.set(plans);
+          this.modules.set(modules);
+        },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
   }
@@ -87,13 +107,21 @@ export class PlatformPlansPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    if (!this.form.nombre.trim() || !this.form.codigo.trim()) {
-      this.errorMessage.set('Completa nombre y codigo del plan.');
+    if (
+      !this.form.nombre.trim() ||
+      !this.form.codigo.trim() ||
+      !this.form.moduloCodigos.length
+    ) {
+      this.errorMessage.set('Completa nombre, codigo y al menos un modulo del plan.');
       return;
     }
 
-    if (this.form.limiteMensualBolsa < 0 || this.form.precioMensual < 0) {
-      this.errorMessage.set('Limite y precio deben ser mayores o iguales a cero.');
+    if (
+      this.form.limiteMensualBolsa < 0 ||
+      this.form.limiteUsuarios < 1 ||
+      this.form.precioMensual < 0
+    ) {
+      this.errorMessage.set('El plan requiere al menos un usuario; capacidad y precio no pueden ser negativos.');
       return;
     }
 
@@ -102,14 +130,25 @@ export class PlatformPlansPage {
       .createPlan({
         nombre: this.form.nombre.trim(),
         codigo: this.form.codigo.trim().toUpperCase(),
+        descripcion: this.form.descripcion.trim() || null,
         limiteMensualBolsa: Math.trunc(this.form.limiteMensualBolsa),
+        limiteUsuarios: Math.trunc(this.form.limiteUsuarios),
         precioMensual: Number(this.form.precioMensual),
+        moduloCodigos: [...this.form.moduloCodigos],
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
           this.successMessage.set('Plan creado correctamente.');
-          this.form = { nombre: '', codigo: '', limiteMensualBolsa: 0, precioMensual: 0 };
+          this.form = {
+            nombre: '',
+            codigo: '',
+            descripcion: '',
+            limiteMensualBolsa: 0,
+            limiteUsuarios: 5,
+            precioMensual: 0,
+            moduloCodigos: [],
+          };
           this.load();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -120,9 +159,12 @@ export class PlatformPlansPage {
     this.editPlanId.set(plan.id);
     this.editForm.set({
       nombre: plan.nombre,
+      descripcion: plan.descripcion ?? '',
       limiteMensualBolsa: plan.limiteMensualBolsa,
+      limiteUsuarios: plan.limiteUsuarios,
       precioMensual: plan.precioMensual,
       estado: plan.estado,
+      moduloCodigos: [...(plan.moduloCodigos ?? [])],
     });
     this.errorMessage.set(null);
     this.successMessage.set(null);
@@ -138,14 +180,29 @@ export class PlatformPlansPage {
     if (!edit) {
       return;
     }
+    if (
+      !edit.nombre.trim() ||
+      edit.limiteMensualBolsa < 0 ||
+      edit.limiteUsuarios < 1 ||
+      edit.precioMensual < 0 ||
+      !edit.moduloCodigos.length
+    ) {
+      this.errorMessage.set(
+        'El plan requiere nombre, al menos un modulo, un usuario y valores no negativos.',
+      );
+      return;
+    }
 
     this.saving.set(true);
     this.api
       .updatePlan(planId, {
         nombre: edit.nombre.trim(),
+        descripcion: edit.descripcion.trim() || null,
         limiteMensualBolsa: Math.trunc(edit.limiteMensualBolsa),
+        limiteUsuarios: Math.trunc(edit.limiteUsuarios),
         precioMensual: Number(edit.precioMensual),
         estado: edit.estado,
+        moduloCodigos: [...edit.moduloCodigos],
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
@@ -170,6 +227,30 @@ export class PlatformPlansPage {
       return 'danger';
     }
     return 'info';
+  }
+
+  protected isCreateModuleSelected(code: string): boolean {
+    return this.form.moduloCodigos.includes(code);
+  }
+
+  protected toggleCreateModule(code: string, checked: boolean): void {
+    const selected = new Set(this.form.moduloCodigos);
+    checked ? selected.add(code) : selected.delete(code);
+    this.form.moduloCodigos = [...selected];
+  }
+
+  protected isEditModuleSelected(code: string): boolean {
+    return this.editForm()?.moduloCodigos.includes(code) ?? false;
+  }
+
+  protected toggleEditModule(code: string, checked: boolean): void {
+    const edit = this.editForm();
+    if (!edit) {
+      return;
+    }
+    const selected = new Set(edit.moduloCodigos);
+    checked ? selected.add(code) : selected.delete(code);
+    this.editForm.set({ ...edit, moduloCodigos: [...selected] });
   }
 
   private resolveError(error: unknown): string {

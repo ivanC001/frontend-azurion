@@ -54,7 +54,7 @@
           <td><div class="next-action-cell"><strong>{{ row.nextAction }}</strong><span>{{ row.nextActionDate }}</span><em [class]="'next-action-pill next-action-pill--' + row.nextActionTone">{{ row.nextActionStatus }}</em></div></td>
           <td><div class="followup-action-cell followup-action-cell--modern">
             @if (row.phoneUrl; as link) { <a [href]="link" title="Llamar" aria-label="Llamar"><i class="pi pi-phone"></i></a> } @else { <button type="button" disabled title="Sin telefono"><i class="pi pi-phone"></i></button> }
-            @if (row.whatsappUrl; as link) { <a [href]="link" target="_blank" rel="noopener" title="Enviar WhatsApp"><i class="pi pi-whatsapp"></i></a> } @else { <button type="button" disabled title="Sin WhatsApp"><i class="pi pi-whatsapp"></i></button> }
+            @if (row.whatsappAvailable) { <button type="button" title="Enviar por WhatsApp integrado" (click)="whatsappRequested.emit(row.source.prospecto)"><i class="pi pi-whatsapp"></i></button> } @else { <button type="button" disabled title="Sin WhatsApp"><i class="pi pi-whatsapp"></i></button> }
             @if (row.emailUrl; as link) { <a [href]="link" title="Enviar correo"><i class="pi pi-envelope"></i></a> } @else { <button type="button" disabled title="Sin correo"><i class="pi pi-envelope"></i></button> }
             <button type="button" title="Programar actividad" (click)="quickActivityRequested.emit(row.source.prospecto)"><i class="pi pi-calendar-plus"></i></button>
             @if (row.source.nextActivity; as activity) { <button type="button" class="followup-done-button" title="Marcar seguimiento cumplido" (click)="completeActivityRequested.emit({ activity, prospect: row.source.prospecto })"><i class="pi pi-check"></i></button> }

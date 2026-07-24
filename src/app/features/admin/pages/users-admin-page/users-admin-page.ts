@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { concatMap, finalize } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, concatMap, finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -18,6 +18,7 @@ import {
   Empresa,
   Rol,
   Sucursal,
+  TenantUserQuota,
   UsuarioTenant,
 } from '../../data/admin-saas-api.service';
 
@@ -81,6 +82,7 @@ export class UsersAdminPage {
   protected readonly empresas = signal<Empresa[]>([]);
   protected readonly roles = signal<Rol[]>([]);
   protected readonly sucursales = signal<Sucursal[]>([]);
+  protected readonly userQuota = signal<TenantUserQuota | null>(null);
   protected readonly loading = signal(false);
   protected readonly loadingEmpresas = signal(false);
   protected readonly loadingRoles = signal(false);
@@ -194,21 +196,31 @@ export class UsersAdminPage {
     if (!tenantId) {
       this.loading.set(false);
       this.usuarios.set([]);
+      this.userQuota.set(null);
       this.errorMessage.set('Selecciona el tenant para ver y registrar usuarios.');
       return;
     }
 
     this.loading.set(true);
+    this.loadRoles();
     forkJoin({
       usuarios: this.api.listUsuarios({ tenantId }),
-      sucursales: this.api.listSucursales({ tenantId }),
+      quota: this.api.getUsuarioQuota({ tenantId }).pipe(catchError(() => of(null))),
+      sucursales: this.api.listSucursales({ tenantId }).pipe(
+        catchError((error: unknown) => {
+          this.errorMessage.set(
+            `Los usuarios se cargaron, pero no fue posible cargar las sucursales. ${this.resolveError(error)}`,
+          );
+          return of([]);
+        }),
+      ),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ usuarios, sucursales }) => {
+        next: ({ usuarios, quota, sucursales }) => {
           this.usuarios.set(usuarios);
+          this.userQuota.set(quota);
           this.sucursales.set(sucursales);
-          this.loadRoles();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -717,6 +729,10 @@ export class UsersAdminPage {
         error?: { message?: string; details?: string[] };
       };
       if (httpError.status === 403) {
+        const apiMessage = httpError.error?.details?.[0] || httpError.error?.message;
+        if (this.isGeneralAdmin()) {
+          return apiMessage || 'El tenant seleccionado no existe, esta inactivo o no esta disponible.';
+        }
         return 'Tu usuario no tiene permisos para esta accion. Solicita al administrador general el rol ADMIN_EMPRESA para tu tenant.';
       }
 
@@ -782,7 +798,6 @@ export class UsersAdminPage {
             this.form.tenantId = items[0]?.tenantId ?? '';
           }
           this.load();
-          this.loadRoles();
         },
         error: (error: unknown) => {
           this.errorMessage.set(this.resolveError(error));

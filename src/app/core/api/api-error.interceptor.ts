@@ -8,6 +8,11 @@ export interface ApiErrorPayload {
   readonly timestamp?: string;
   readonly userActionable: boolean;
   readonly traceId?: string;
+  readonly activeSession?: {
+    readonly deviceName?: string;
+    readonly lastActivityAt?: string;
+  };
+  readonly replacementToken?: string;
 }
 
 export const GENERIC_OPERATION_ERROR =
@@ -96,6 +101,8 @@ function userPayload(
     timestamp: cleanText(payload?.timestamp),
     userActionable: true,
     traceId,
+    activeSession: payload?.activeSession,
+    replacementToken: cleanText(payload?.replacementToken),
   };
 }
 

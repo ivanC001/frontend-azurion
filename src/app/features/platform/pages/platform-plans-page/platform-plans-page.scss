@@ -27,11 +27,20 @@
 .panel-title h2 { color: var(--az-text); font-size: 0.95rem; margin: 0; }
 .panel-title p { color: var(--az-text-soft); font-size: 0.75rem; margin: 0.12rem 0 0; }
 .form-panel label { color: var(--az-text); display: grid; font-size: 0.78rem; font-weight: 800; gap: 0.35rem; }
+.module-selector { border: 1px solid var(--az-border); border-radius: 0.65rem; display: grid; gap: 0.4rem; margin: 0; padding: 0.65rem; }
+.module-selector legend { color: var(--az-text); font-size: 0.78rem; font-weight: 900; padding: 0 0.25rem; }
+.module-selector label, .table-module-selector label { align-items: center; display: flex; gap: 0.4rem; }
+.module-selector input, .table-module-selector input { accent-color: var(--az-blue); min-width: auto !important; width: auto !important; }
 .form-row { display: grid; gap: 0.55rem; grid-template-columns: 1fr 1fr; }
 .table-panel { min-width: 0; overflow: hidden; padding: 0.7rem; }
 .table-panel__title { border-bottom: 1px solid var(--az-border); margin: -0.7rem -0.7rem 0.5rem; padding: 0.75rem; }
 .plan-code { background: var(--az-blue-soft); border-radius: 999px; color: var(--az-blue); display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 0.28rem 0.5rem; }
 .actions-cell { display: flex; gap: 0.35rem; }
+.module-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; min-width: 8rem; }
+.module-chips span { background: var(--az-blue-soft); border-radius: 999px; color: var(--az-blue); font-size: 0.62rem; font-weight: 800; padding: 0.2rem 0.4rem; }
+.module-chips em { color: var(--az-text-soft); font-size: 0.7rem; }
+.table-module-selector { display: grid; gap: 0.25rem; max-height: 8rem; min-width: 9rem; overflow: auto; }
+.table-module-selector label { color: var(--az-text); font-size: 0.65rem; }
 
 :host ::ng-deep {
   .save-btn { justify-content: center; margin-top: 0.15rem; width: 100%; }

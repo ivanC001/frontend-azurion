@@ -60,6 +60,7 @@
     <article class="user-stat"><i class="pi pi-users"></i><div><span>Total usuarios</span><strong>{{ usuarios().length }}</strong></div></article>
     <article class="user-stat user-stat--green"><i class="pi pi-user"></i><div><span>Con acceso</span><strong>{{ activeUsers() }}</strong></div></article>
     <article class="user-stat user-stat--red"><i class="pi pi-user-minus"></i><div><span>Inhabilitados</span><strong>{{ inactiveUsers() }}</strong></div></article>
+    <article class="user-stat user-stat--green"><i class="pi pi-ticket"></i><div><span>Cupo del plan</span><strong>{{ userQuota()?.activeUsers ?? activeUsers() }} / {{ userQuota()?.limit ?? '—' }}</strong></div></article>
     <article class="user-stat user-stat--violet"><i class="pi pi-shield"></i><div><span>Roles disponibles</span><strong>{{ roles().length }}</strong></div></article>
   </section>
 

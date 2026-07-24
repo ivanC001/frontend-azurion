@@ -5396,46 +5396,19 @@
   width: 7rem;
 }
 
-.catalog-col-landing,
-.catalog-link-cell {
-  min-width: 20rem;
-  width: 32%;
-}
-
-.catalog-col-token,
-.catalog-token-cell {
-  min-width: 13rem;
-  width: 15rem;
-}
-
 .catalog-offer-cell strong {
   color: var(--az-text);
   font-size: 0.92rem;
   line-height: 1.2;
 }
 
-.catalog-offer-cell span,
-.catalog-link-cell span,
-.catalog-token-cell span {
+.catalog-offer-cell span {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   display: -webkit-box !important;
   overflow: hidden;
   overflow-wrap: normal !important;
   word-break: break-word;
-}
-
-.catalog-link-cell strong {
-  align-items: center;
-  color: #0f766e;
-  display: flex !important;
-  font-size: 0.82rem;
-  gap: 0.4rem;
-}
-
-.catalog-token-cell strong {
-  color: var(--az-text);
-  font-size: 0.8rem;
 }
 
 .money-cell {
@@ -7618,6 +7591,10 @@ textarea {
   border-top: 4px solid #0f766e;
 }
 
+.catalog-info-strip article:nth-child(3) {
+  border-top: 4px solid #8b5cf6;
+}
+
 .crm-admin-grid article:nth-child(3) {
   border-top: 4px solid #8b5cf6;
 }
@@ -7716,6 +7693,7 @@ textarea {
   .crm-admin-grid,
   .crm-promotion-admin-layout,
   .catalog-info-strip,
+  .catalog-metrics,
   .stage-overview,
   .crm-subfilters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7744,6 +7722,7 @@ textarea {
   .crm-admin-grid,
   .crm-promotion-admin-layout,
   .catalog-info-strip,
+  .catalog-metrics,
   .stage-overview,
   .crm-subfilters,
   .quote-context-grid,
@@ -10587,9 +10566,16 @@ textarea {
   border-radius: 8px;
   color: #0b63e5;
   background: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
   font-size: .74rem;
   font-weight: 850;
   text-decoration: none;
+}
+
+.interest-action:disabled {
+  cursor: wait;
+  opacity: .58;
 }
 
 .interest-action--whatsapp {

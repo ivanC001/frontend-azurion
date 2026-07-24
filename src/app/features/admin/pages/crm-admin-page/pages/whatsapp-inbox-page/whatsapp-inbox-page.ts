@@ -12,20 +12,29 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, timer } from 'rxjs';
+import { catchError, concatMap, forkJoin, from, map, of, timer, toArray } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import {
   AdminSaasApiService,
+  Cotizacion,
   CrmActividad,
   CrmWhatsappConversation,
+  CrmWhatsappInternalNote,
   CrmWhatsappMessage,
+  SendCrmWhatsappQuoteResponse,
   UsuarioTenant,
   WhatsappConnectionStatus,
 } from '../../../../data/admin-saas-api.service';
 
 type InboxFilter = 'TODAS' | 'NO_LEIDAS' | 'MIAS';
+
+interface QuoteSendOutcome {
+  quoteId: number;
+  result?: SendCrmWhatsappQuoteResponse;
+  error?: unknown;
+}
 
 @Component({
   selector: 'app-whatsapp-inbox-page',
@@ -54,6 +63,12 @@ export class WhatsappInboxPage implements OnInit {
   protected readonly query = signal('');
   protected readonly draft = signal('');
   protected readonly noteDraft = signal('');
+  protected readonly selectedNoteId = signal<number | null>(null);
+  protected readonly quotes = signal<Cotizacion[]>([]);
+  protected readonly selectedQuoteIds = signal<ReadonlySet<number>>(new Set<number>());
+  protected readonly quotePickerOpen = signal(false);
+  protected readonly loadingQuotes = signal(false);
+  protected readonly sendingQuotes = signal(false);
   protected readonly loadingList = signal(true);
   protected readonly loadingMessages = signal(false);
   protected readonly sending = signal(false);
@@ -65,6 +80,8 @@ export class WhatsappInboxPage implements OnInit {
   protected readonly selectedConversation = computed(() =>
     this.conversations().find((item) => item.prospectoId === this.selectedProspectId()) ?? null,
   );
+  protected readonly selectedNotes = computed(() => this.selectedConversation()?.notasInternas ?? []);
+  protected readonly selectedQuoteCount = computed(() => this.selectedQuoteIds().size);
   protected readonly unreadTotal = computed(() =>
     this.conversations().reduce((total, item) => total + Number(item.noLeidos || 0), 0),
   );
@@ -129,11 +146,16 @@ export class WhatsappInboxPage implements OnInit {
   protected selectConversation(conversation: CrmWhatsappConversation): void {
     const changed = this.selectedProspectId() !== conversation.prospectoId;
     this.selectedProspectId.set(conversation.prospectoId);
-    this.noteDraft.set(conversation.notaInterna ?? '');
+    this.selectedNoteId.set(null);
+    this.noteDraft.set('');
+    this.quotes.set([]);
+    this.selectedQuoteIds.set(new Set<number>());
+    this.quotePickerOpen.set(false);
     this.mobilePanel.set('CHAT');
     if (changed) {
       this.messages.set([]);
       this.loadMessages();
+      this.loadQuotes();
     }
     if (conversation.noLeidos > 0) {
       this.api.markCrmWhatsappConversationRead(conversation.prospectoId).subscribe({
@@ -218,14 +240,28 @@ export class WhatsappInboxPage implements OnInit {
 
   protected saveInternalNote(): void {
     const prospectId = this.selectedProspectId();
-    if (!prospectId || this.savingAction()) {
+    const content = this.noteDraft().trim();
+    const noteId = this.selectedNoteId();
+    if (!prospectId || !content || this.savingAction()) {
+      return;
+    }
+    if (noteId === null && this.selectedNotes().length >= 3) {
+      this.errorMessage.set('Solo puedes guardar hasta 3 notas internas por conversación.');
       return;
     }
     this.savingAction.set(true);
     this.clearFeedback();
-    this.api.updateCrmWhatsappConversationNote(prospectId, this.noteDraft().trim() || null).subscribe({
+    const request = noteId === null
+      ? this.api.createCrmWhatsappConversationNote(prospectId, content)
+      : this.api.updateCrmWhatsappSavedNote(prospectId, noteId, content);
+    request.subscribe({
       next: (updated) => {
         this.replaceConversation(updated);
+        const saved = updated.notasInternas.find((item) =>
+          noteId === null ? item.contenido === content : item.id === noteId,
+        ) ?? updated.notasInternas.at(-1);
+        this.selectedNoteId.set(saved?.id ?? null);
+        this.noteDraft.set(saved?.contenido ?? '');
         this.savingAction.set(false);
         this.successMessage.set('Nota interna guardada.');
       },
@@ -234,6 +270,137 @@ export class WhatsappInboxPage implements OnInit {
         this.errorMessage.set(this.readError(error, 'No se pudo guardar la nota.'));
       },
     });
+  }
+
+  protected selectInternalNote(note: CrmWhatsappInternalNote): void {
+    this.selectedNoteId.set(note.id);
+    this.noteDraft.set(note.contenido);
+  }
+
+  protected newInternalNote(): void {
+    if (this.selectedNotes().length >= 3) {
+      return;
+    }
+    this.selectedNoteId.set(null);
+    this.noteDraft.set('');
+  }
+
+  protected useNoteAsReply(note: CrmWhatsappInternalNote): void {
+    this.draft.set(note.contenido);
+    this.mobilePanel.set('CHAT');
+    this.successMessage.set(`Nota ${note.slot} cargada como respuesta. Revísala antes de enviar.`);
+  }
+
+  protected deleteInternalNote(note: CrmWhatsappInternalNote, event: Event): void {
+    event.stopPropagation();
+    const prospectId = this.selectedProspectId();
+    if (!prospectId || this.savingAction()) {
+      return;
+    }
+    this.savingAction.set(true);
+    this.clearFeedback();
+    this.api.deleteCrmWhatsappSavedNote(prospectId, note.id).subscribe({
+      next: (updated) => {
+        this.replaceConversation(updated);
+        if (this.selectedNoteId() === note.id) {
+          this.selectedNoteId.set(null);
+          this.noteDraft.set('');
+        }
+        this.savingAction.set(false);
+        this.successMessage.set('Nota interna eliminada.');
+      },
+      error: (error) => {
+        this.savingAction.set(false);
+        this.errorMessage.set(this.readError(error, 'No se pudo eliminar la nota.'));
+      },
+    });
+  }
+
+  protected toggleQuotePicker(): void {
+    this.quotePickerOpen.update((visible) => !visible);
+  }
+
+  protected toggleQuote(quoteId: number): void {
+    this.selectedQuoteIds.update((current) => {
+      const updated = new Set(current);
+      if (updated.has(quoteId)) {
+        updated.delete(quoteId);
+      } else {
+        updated.add(quoteId);
+      }
+      return updated;
+    });
+  }
+
+  protected sendSelectedQuotes(): void {
+    const prospectId = this.selectedProspectId();
+    const quoteIds = [...this.selectedQuoteIds()];
+    if (!prospectId || quoteIds.length === 0 || this.sendingQuotes()) {
+      return;
+    }
+    const caption = this.draft().trim();
+    if (caption.length > 1024) {
+      this.errorMessage.set('El mensaje que acompaña la cotización no puede superar 1024 caracteres.');
+      return;
+    }
+    this.sendingQuotes.set(true);
+    this.clearFeedback();
+    from(quoteIds)
+      .pipe(
+        concatMap((quoteId, index) =>
+          this.api
+            .sendCrmWhatsappQuote(prospectId, quoteId, index === 0 ? caption : null)
+            .pipe(
+              map((result) => ({ quoteId, result }) as QuoteSendOutcome),
+              catchError((error) => of({ quoteId, error } as QuoteSendOutcome)),
+            ),
+        ),
+        toArray(),
+      )
+      .subscribe({
+        next: (outcomes) => {
+          const responses = outcomes.flatMap((item) => item.result ? [item.result] : []);
+          const failedIds = outcomes.filter((item) => item.error).map((item) => item.quoteId);
+          this.messages.update((items) => [...items, ...responses.map((item) => item.mensaje)]);
+          const updatedQuotes = new Map(responses.map((item) => [item.cotizacion.id, item.cotizacion]));
+          this.quotes.update((items) => items.map((item) => updatedQuotes.get(item.id) ?? item));
+          this.selectedQuoteIds.set(new Set(failedIds));
+          this.quotePickerOpen.set(failedIds.length > 0);
+          if (caption && responses.length > 0) {
+            this.draft.set('');
+          }
+          this.sendingQuotes.set(false);
+          if (failedIds.length > 0) {
+            this.errorMessage.set(
+              responses.length > 0
+                ? `${responses.length} cotización(es) enviada(s); ${failedIds.length} no se pudieron enviar.`
+                : 'No se pudo enviar ninguna cotización por WhatsApp.',
+            );
+          } else {
+            this.successMessage.set(
+              responses.length === 1
+                ? 'Cotización enviada por WhatsApp.'
+                : `${responses.length} cotizaciones enviadas por WhatsApp.`,
+            );
+          }
+          this.scrollMessagesToBottom();
+          this.loadConversations(true);
+        },
+      });
+  }
+
+  protected createQuote(): void {
+    const prospectId = this.selectedProspectId();
+    void this.router.navigate(['/admin/crm/cotizaciones'], {
+      queryParams: prospectId ? { prospectoId: prospectId } : undefined,
+    });
+  }
+
+  protected formatQuoteTotal(quote: Cotizacion): string {
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: quote.moneda || 'PEN',
+    }).format(Number(quote.total || 0));
   }
 
   protected openProspect(): void {
@@ -310,11 +477,6 @@ export class WhatsappInboxPage implements OnInit {
         if (conversations.length === 0) {
           this.selectedProspectId.set(null);
           this.messages.set([]);
-        } else if (selectedId) {
-          const selected = conversations.find((item) => item.prospectoId === selectedId);
-          if (selected && this.noteDraft() !== selected.notaInterna && document.activeElement?.id !== 'internal-note') {
-            this.noteDraft.set(selected.notaInterna ?? '');
-          }
         }
       },
       error: (error) => {
@@ -356,6 +518,27 @@ export class WhatsappInboxPage implements OnInit {
     });
   }
 
+  private loadQuotes(): void {
+    const prospectId = this.selectedProspectId();
+    if (!prospectId) {
+      this.quotes.set([]);
+      return;
+    }
+    this.loadingQuotes.set(true);
+    this.api.listCrmWhatsappQuotes(prospectId).subscribe({
+      next: (quotes) => {
+        if (this.selectedProspectId() === prospectId) {
+          this.quotes.set(quotes);
+        }
+        this.loadingQuotes.set(false);
+      },
+      error: () => {
+        this.loadingQuotes.set(false);
+        this.quotes.set([]);
+      },
+    });
+  }
+
   private loadSupportData(): void {
     forkJoin({ users: this.api.listUsuarios(), activities: this.api.listCrmActividades() }).subscribe({
       next: ({ users, activities }) => {
@@ -374,9 +557,6 @@ export class WhatsappInboxPage implements OnInit {
     this.conversations.update((items) =>
       items.map((item) => item.prospectoId === updated.prospectoId ? updated : item),
     );
-    if (this.selectedProspectId() === updated.prospectoId) {
-      this.noteDraft.set(updated.notaInterna ?? '');
-    }
   }
 
   private scrollMessagesToBottom(): void {

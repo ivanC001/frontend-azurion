@@ -8,6 +8,7 @@ const PLATFORM_ADMIN_ROUTES = [
   '/admin/planes',
   '/admin/control-empresas',
   '/admin/seguridad-plataforma',
+  '/admin/correo-azurion',
   '/admin/facturador',
 ] as const;
 

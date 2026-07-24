@@ -200,17 +200,37 @@
           </button>
 
           @if (notificationsPanelOpen()) {
-            <div class="header-popover header-popover-notifications" (click)="$event.stopPropagation()">
+            <div
+              class="header-popover header-popover-notifications"
+              role="dialog"
+              aria-label="Centro de notificaciones"
+              (click)="$event.stopPropagation()"
+            >
               <div class="header-popover-head">
-                <div>
-                  <strong>Notificaciones</strong>
-                  <small>{{ notificationBadgeCount() }} activas</small>
+                <div class="notification-panel-title">
+                  <span class="notification-panel-title__icon">
+                    <i class="pi pi-bell"></i>
+                  </span>
+                  <span>
+                    <strong>Notificaciones</strong>
+                    <small>
+                      {{ notificationBadgeCount() }}
+                      {{ notificationBadgeCount() === 1 ? 'pendiente' : 'pendientes' }}
+                    </small>
+                  </span>
                 </div>
-                <button type="button" class="header-popover-action" (click)="markAllNotificationsRead()">{{ hasWhatsappNotifications() ? 'Abrir WhatsApp' : 'Marcar leidas' }}</button>
+                <button
+                  type="button"
+                  class="header-popover-action"
+                  (click)="markAllNotificationsRead()"
+                >
+                  {{ notificationActionLabel() }}
+                  <i class="pi pi-arrow-right"></i>
+                </button>
               </div>
 
-              <div class="header-popover-list">
-                @for (item of notificationItems(); track item.title) {
+              <div class="header-popover-list" aria-label="Notificaciones recientes">
+                @for (item of notificationItems(); track item.key) {
                   <button type="button" class="header-popover-item" (click)="openHeaderItem(item)">
                     <span
                       class="header-popover-icon"
@@ -225,7 +245,16 @@
                       <strong>{{ item.title }}</strong>
                       <small>{{ item.detail }}</small>
                     </span>
+                    <span class="header-popover-chevron" aria-hidden="true">
+                      <i class="pi pi-chevron-right"></i>
+                    </span>
                   </button>
+                } @empty {
+                  <div class="header-popover-empty">
+                    <span><i class="pi pi-check"></i></span>
+                    <strong>Todo esta al dia</strong>
+                    <small>No tienes notificaciones pendientes.</small>
+                  </div>
                 }
               </div>
             </div>

@@ -70,6 +70,22 @@ describe('api error normalization', () => {
     expect(normalized.error.userActionable).toBe(true);
   });
 
+  it('preserves the active-session replacement challenge', () => {
+    const normalized = normalizeHttpError(errorResponse(409, {
+      code: 'ACTIVE_SESSION_EXISTS',
+      message: 'La cuenta ya tiene una sesion activa en otro dispositivo.',
+      activeSession: {
+        deviceName: 'Edge en Windows',
+        lastActivityAt: '2026-07-23T02:30:00Z',
+      },
+      replacementToken: 'one-use-token',
+    }));
+
+    expect(normalized.error.code).toBe('ACTIVE_SESSION_EXISTS');
+    expect(normalized.error.activeSession?.deviceName).toBe('Edge en Windows');
+    expect(normalized.error.replacementToken).toBe('one-use-token');
+  });
+
   function errorResponse(status: number, error: unknown): HttpErrorResponse {
     return new HttpErrorResponse({
       error,

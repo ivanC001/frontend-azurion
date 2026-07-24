@@ -142,7 +142,7 @@
                     <p>{{ host().quoteNextStep(quote) }}</p>
                     <nav>
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
-                      @if (host().quoteWhatsappUrl(quote)) {
+                      @if (host().canSendQuoteByWhatsapp(quote)) {
                         <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                       } @else {
                         <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
@@ -222,8 +222,8 @@
               <strong>Acciones</strong>
             </header>
             <button type="button" class="interest-action interest-action--primary" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-calendar-plus"></i> Registrar actividad</button>
-            @if (host().opportunityWhatsappUrl(detail); as whatsappLink) {
-              <a class="interest-action interest-action--whatsapp" [href]="whatsappLink" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</a>
+            @if (host().opportunityWhatsappAvailable(detail)) {
+              <button type="button" class="interest-action interest-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</button>
             }
             @if (host().opportunityEmailUrl(detail); as emailLink) {
               <a class="interest-action interest-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
@@ -435,7 +435,7 @@
                   <p>{{ host().quoteNextStep(quote) }}</p>
                   <nav>
                     <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
-                    @if (host().quoteWhatsappUrl(quote)) {
+                    @if (host().canSendQuoteByWhatsapp(quote)) {
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                     } @else {
                       <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
@@ -485,7 +485,7 @@
                             </div>
                             <div class="negotiation-quote-actions">
                               <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
-                              @if (host().quoteWhatsappUrl(quote)) {
+                              @if (host().canSendQuoteByWhatsapp(quote)) {
                                 <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                               }
                               @if (host().canSendQuoteByEmail(quote)) {
@@ -771,7 +771,7 @@
                     <p>{{ host().quoteNextStep(quote) }}</p>
                     <nav>
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
-                      @if (host().quoteWhatsappUrl(quote)) {
+                      @if (host().canSendQuoteByWhatsapp(quote)) {
                         <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                       } @else {
                         <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
@@ -848,8 +848,8 @@
           <button type="button" class="quick-action quick-action--success" (click)="host().openQuoteDialog(detail)"><i class="pi pi-file-edit"></i> Nueva cotizacion</button>
           <button type="button" class="quick-action" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-plus"></i> Nueva actividad</button>
           <button type="button" class="quick-action quick-action--violet" (click)="host().openOpportunityActivity(detail, 'REUNION')"><i class="pi pi-calendar"></i> Programar reunion</button>
-          @if (host().opportunityWhatsappUrl(detail); as whatsappLink) {
-            <a class="quick-action quick-action--whatsapp" [href]="whatsappLink" target="_blank" rel="noopener"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</a>
+          @if (host().opportunityWhatsappAvailable(detail)) {
+            <button type="button" class="quick-action quick-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</button>
           }
           @if (host().opportunityEmailUrl(detail); as emailLink) {
             <a class="quick-action quick-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>

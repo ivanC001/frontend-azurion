@@ -47,6 +47,14 @@ export interface LoginResponse {
 }
 
 const SESSION_KEY = 'azurios.session';
+const SESSION_NOTICE_KEY = 'azurios.session-notice';
+const SESSION_CHANNEL = 'azurios.auth-session';
+
+type SessionChannelMessage =
+  | { type: 'SESSION_UPDATED'; session: LoginResponse; persist: boolean }
+  | { type: 'SESSION_CLEARED' }
+  | { type: 'SESSION_REVOKED'; message: string }
+  | { type: 'SYNC_REQUEST' };
 
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
@@ -56,8 +64,13 @@ export class AuthSessionService {
   private persistAcrossRestarts = false;
   private readonly session = signal<LoginResponse | null>(this.readSession());
   private redirectingToLogin = false;
+  private channel: BroadcastChannel | null = null;
 
   readonly currentSession = this.session.asReadonly();
+
+  constructor() {
+    this.initializeChannel();
+  }
 
   setSession(session: LoginResponse, persist = this.persistAcrossRestarts): void {
     const normalized = this.normalizeSession(session);
@@ -66,12 +79,16 @@ export class AuthSessionService {
     this.session.set(normalized);
     this.removeStoredSession();
     this.storage(persist)?.setItem(SESSION_KEY, JSON.stringify(normalized));
+    this.postMessage({ type: 'SESSION_UPDATED', session: normalized, persist });
   }
 
-  clearSession(): void {
+  clearSession(broadcast = true): void {
     this.session.set(null);
     this.persistAcrossRestarts = false;
     this.removeStoredSession();
+    if (broadcast) {
+      this.postMessage({ type: 'SESSION_CLEARED' });
+    }
   }
 
   hasActiveSession(): boolean {
@@ -99,9 +116,9 @@ export class AuthSessionService {
     return Date.now() >= issuedAtTime + expiresInSeconds * 1000;
   }
 
-  expireSession(): void {
+  expireSession(broadcast = true): void {
     const loginUrl = this.session()?.adminGeneral ? '/auth/login' : '/auth';
-    this.clearSession();
+    this.clearSession(broadcast);
 
     const currentUrl = this.router.url;
     if (this.redirectingToLogin || currentUrl === loginUrl) {
@@ -117,6 +134,19 @@ export class AuthSessionService {
       .finally(() => {
         this.redirectingToLogin = false;
       });
+  }
+
+  revokeSession(message: string): void {
+    this.storeSessionNotice(message);
+    this.postMessage({ type: 'SESSION_REVOKED', message });
+    this.expireSession(false);
+  }
+
+  consumeSessionNotice(): string | null {
+    const storage = this.storage(false);
+    const message = storage?.getItem(SESSION_NOTICE_KEY) ?? null;
+    storage?.removeItem(SESSION_NOTICE_KEY);
+    return message;
   }
 
   hasPermission(permission: string): boolean {
@@ -257,5 +287,57 @@ export class AuthSessionService {
         .map((value) => value.trim().toUpperCase())
         .filter((value) => value.length > 0),
     };
+  }
+
+  private initializeChannel(): void {
+    if (typeof BroadcastChannel === 'undefined') {
+      return;
+    }
+
+    this.channel = new BroadcastChannel(SESSION_CHANNEL);
+    this.channel.onmessage = (event: MessageEvent<SessionChannelMessage>) => {
+      const message = event.data;
+      if (!message || typeof message !== 'object') {
+        return;
+      }
+
+      if (message.type === 'SYNC_REQUEST') {
+        const current = this.session();
+        if (current) {
+          this.postMessage({
+            type: 'SESSION_UPDATED',
+            session: current,
+            persist: this.persistAcrossRestarts,
+          });
+        }
+        return;
+      }
+
+      if (message.type === 'SESSION_UPDATED') {
+        const normalized = this.normalizeSession(message.session);
+        this.persistAcrossRestarts = message.persist;
+        this.session.set(normalized);
+        this.removeStoredSession();
+        this.storage(message.persist)?.setItem(SESSION_KEY, JSON.stringify(normalized));
+        return;
+      }
+
+      if (message.type === 'SESSION_REVOKED') {
+        this.storeSessionNotice(message.message);
+        this.expireSession(false);
+        return;
+      }
+
+      this.expireSession(false);
+    };
+    this.postMessage({ type: 'SYNC_REQUEST' });
+  }
+
+  private postMessage(message: SessionChannelMessage): void {
+    this.channel?.postMessage(message);
+  }
+
+  private storeSessionNotice(message: string): void {
+    this.storage(false)?.setItem(SESSION_NOTICE_KEY, message);
   }
 }

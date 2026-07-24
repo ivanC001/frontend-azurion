@@ -75,7 +75,7 @@ export interface FollowupPageRow {
   nextActionStatus: string;
   nextActionTone: string;
   phoneUrl: string | null;
-  whatsappUrl: string | null;
+  whatsappAvailable: boolean;
   emailUrl: string | null;
 }
 
@@ -118,6 +118,7 @@ export class FollowupsPage {
   readonly nextPageRequested = output<void>();
   readonly quickActivityRequested = output<CrmProspecto>();
   readonly completeActivityRequested = output<{ activity: CrmActividad; prospect: CrmProspecto }>();
+  readonly whatsappRequested = output<CrmProspecto>();
   readonly opportunityRequested = output<FollowupSource>();
   readonly detailRequested = output<FollowupSource>();
 

@@ -190,8 +190,59 @@
         <footer class="composer">
           <div class="composer-tabs">
             <button type="button" class="active"><i class="pi pi-send"></i> Responder</button>
-            <button type="button" title="Usa el panel derecho para guardar una nota interna"><i class="pi pi-file-edit"></i> Nota interna</button>
+            <button type="button" title="Usa una de las notas guardadas del panel derecho"><i class="pi pi-file-edit"></i> Notas guardadas</button>
           </div>
+          @if (quotePickerOpen()) {
+            <section class="quote-picker">
+              <header>
+                <span>
+                  <i class="pi pi-file-pdf"></i>
+                  <strong>Cotizaciones del prospecto</strong>
+                  <small>Selecciona una o varias para enviarlas como PDF.</small>
+                </span>
+                <button type="button" class="quote-create-button" (click)="createQuote()">
+                  <i class="pi pi-plus"></i> Crear cotización
+                </button>
+              </header>
+              @if (loadingQuotes()) {
+                <div class="quote-picker-state"><i class="pi pi-spin pi-spinner"></i> Cargando cotizaciones...</div>
+              } @else if (quotes().length === 0) {
+                <div class="quote-picker-state">
+                  <i class="pi pi-file"></i>
+                  Este prospecto todavía no tiene cotizaciones vinculadas.
+                </div>
+              } @else {
+                <div class="quote-picker-list">
+                  @for (quote of quotes(); track quote.id) {
+                    <label class="quote-option" [class.selected]="selectedQuoteIds().has(quote.id)">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedQuoteIds().has(quote.id)"
+                        (change)="toggleQuote(quote.id)"
+                      />
+                      <span class="quote-icon"><i class="pi pi-file-pdf"></i></span>
+                      <span class="quote-copy">
+                        <strong>COT-{{ quote.id.toString().padStart(6, '0') }}</strong>
+                        <small>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · {{ quote.estado }}</small>
+                      </span>
+                      <b>{{ formatQuoteTotal(quote) }}</b>
+                    </label>
+                  }
+                </div>
+              }
+              <footer>
+                <small>El texto escrito se usará como mensaje de la primera cotización.</small>
+                <button
+                  type="button"
+                  [disabled]="selectedQuoteCount() === 0 || sendingQuotes()"
+                  (click)="sendSelectedQuotes()"
+                >
+                  @if (sendingQuotes()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-whatsapp"></i> }
+                  Enviar seleccionadas ({{ selectedQuoteCount() }})
+                </button>
+              </footer>
+            </section>
+          }
           <div class="composer-box">
             <textarea
               rows="3"
@@ -204,7 +255,16 @@
             <div class="composer-actions">
               <div>
                 <button type="button" title="Emojis disponibles próximamente" disabled><i class="pi pi-face-smile"></i></button>
-                <button type="button" title="Adjuntos disponibles próximamente" disabled><i class="pi pi-paperclip"></i></button>
+                <button
+                  type="button"
+                  class="attach-quote-button"
+                  [class.active]="quotePickerOpen()"
+                  title="Adjuntar cotizaciones del prospecto"
+                  (click)="toggleQuotePicker()"
+                >
+                  <i class="pi pi-paperclip"></i>
+                  @if (selectedQuoteCount() > 0) { <span>{{ selectedQuoteCount() }}</span> }
+                </button>
                 <button type="button" title="Imágenes disponibles próximamente" disabled><i class="pi pi-image"></i></button>
                 <small>Enter para enviar · Shift + Enter para nueva línea</small>
               </div>
@@ -297,18 +357,70 @@
         </section>
 
         <section class="detail-card note-card">
-          <header><strong>Nota interna</strong><i class="pi pi-lock"></i></header>
-          <textarea
-            id="internal-note"
-            rows="4"
-            maxlength="4000"
-            placeholder="Información visible solo para tu equipo..."
-            [ngModel]="noteDraft()"
-            (ngModelChange)="noteDraft.set($event)"
-          ></textarea>
-          <button type="button" [disabled]="savingAction() || noteDraft().trim() === (conversation.notaInterna || '').trim()" (click)="saveInternalNote()">
-            Guardar nota
-          </button>
+          <header>
+            <span><strong>Notas internas</strong><small>{{ selectedNotes().length }}/3</small></span>
+            <i class="pi pi-lock" title="Solo visible para tu equipo"></i>
+          </header>
+
+          <div class="saved-note-list">
+            @if (selectedNotes().length === 0) {
+              <p class="saved-note-empty">Guarda respuestas frecuentes o información interna para este contacto.</p>
+            } @else {
+              @for (note of selectedNotes(); track note.id) {
+                <article
+                  class="saved-note"
+                  [class.active]="selectedNoteId() === note.id"
+                  (click)="selectInternalNote(note)"
+                >
+                  <div>
+                    <strong>Nota {{ note.slot }}</strong>
+                    <span>
+                      <button type="button" title="Usar como respuesta" (click)="useNoteAsReply(note)">
+                        <i class="pi pi-reply"></i>
+                      </button>
+                      <button type="button" title="Eliminar nota" (click)="deleteInternalNote(note, $event)">
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </span>
+                  </div>
+                  <p>{{ note.contenido }}</p>
+                </article>
+              }
+            }
+          </div>
+
+          <div class="note-editor">
+            <label for="internal-note">
+              {{ selectedNoteId() ? 'Editar nota seleccionada' : 'Nueva nota interna' }}
+            </label>
+            <textarea
+              id="internal-note"
+              rows="4"
+              maxlength="4000"
+              placeholder="Información visible solo para tu equipo..."
+              [ngModel]="noteDraft()"
+              (ngModelChange)="noteDraft.set($event)"
+            ></textarea>
+            <footer>
+              <button
+                type="button"
+                class="note-new-button"
+                [disabled]="savingAction() || selectedNotes().length >= 3"
+                (click)="newInternalNote()"
+              >
+                <i class="pi pi-plus"></i> Nueva
+              </button>
+              <button
+                type="button"
+                class="note-save-button"
+                [disabled]="savingAction() || !noteDraft().trim()"
+                (click)="saveInternalNote()"
+              >
+                @if (savingAction()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-save"></i> }
+                Guardar
+              </button>
+            </footer>
+          </div>
         </section>
 
         <section class="detail-card integration-status" [class.integration-status--connected]="connectionStatus()?.conectado">

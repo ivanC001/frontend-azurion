@@ -71,7 +71,7 @@
     <div class="alert alert--success">{{ successMessage() }}</div>
   }
   <section class="crm-shell" [class.crm-shell--followup]="isCommercialStageTab()">
-    @if (isCommercialStageTab()) {
+    @if (isCommercialStageTab() && activeTab() !== 'seguimientoPagos') {
       <section class="followup-stage-strip crm-stage-strip" aria-label="Proceso comercial">
         @for (stage of followUpStageCards(); track stage.tab) {
           <button type="button" [class]="'followup-stage-card followup-stage-card--' + stage.tone" [class.active]="activeTab() === stage.tab" (click)="setTab(stage.tab)">
@@ -229,7 +229,34 @@
             <span>Este catalogo no descuenta stock; sirve para captacion, oportunidades y reportes CRM.</span>
           </div>
         </article>
+        <article>
+          <i class="pi pi-shield"></i>
+          <div>
+            <strong>Acceso publico protegido</strong>
+            <span>El enlace usa tenant, ID y token. Solo las ofertas activas y publicadas pueden captar leads.</span>
+          </div>
+        </article>
       </section>
+
+      <section class="catalog-metrics" aria-label="Resumen del catalogo CRM">
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--blue"><i class="pi pi-tags"></i></span>
+          <div><small>Total ofertas</small><strong>{{ catalogStats().total }}</strong></div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--green"><i class="pi pi-globe"></i></span>
+          <div><small>Publicadas</small><strong>{{ catalogStats().public }}</strong></div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--violet"><i class="pi pi-user-plus"></i></span>
+          <div><small>Leads captados</small><strong>{{ catalogStats().leads }}</strong></div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--amber"><i class="pi pi-chart-line"></i></span>
+          <div><small>Oportunidades</small><strong>{{ catalogStats().opportunities }}</strong></div>
+        </article>
+      </section>
+
       <section class="table-panel flat-panel catalog-panel">
         <div class="table-head catalog-table-head">
           <div>
@@ -244,45 +271,131 @@
           <ng-template pTemplate="header">
             <tr>
               <th class="catalog-col-offer">Oferta</th>
-              <th class="catalog-col-type">Tipo</th>
+              <th class="catalog-col-type">Categoria</th>
               <th class="catalog-col-price">Precio ref.</th>
-              <th class="catalog-col-landing">Landing</th>
-              <th class="catalog-col-token">Token publico</th>
-              <th>Estado</th>
+              <th class="catalog-col-usage">Uso CRM</th>
+              <th class="catalog-col-publication">Publicacion</th>
+              <th class="catalog-col-access">Enlace seguro</th>
+              <th class="catalog-col-status">Estado</th>
               <th>Acciones</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-item>
             <tr>
               <td class="catalog-offer-cell">
-                <strong>{{ item.nombre }}</strong>
-                <span>{{ item.descripcion || 'Sin descripcion' }}</span>
+                <div class="catalog-offer-main">
+                  <span class="catalog-product-icon">
+                    <i [class]="opportunityTypeMeta(item.tipoItem).icon"></i>
+                  </span>
+                  <div>
+                    <strong>{{ item.nombre }}</strong>
+                    <span>{{ item.descripcion || 'Sin descripcion comercial' }}</span>
+                  </div>
+                </div>
+                <div class="catalog-attribute-chips">
+                  @for (attribute of catalogAttributeBadges(item); track attribute) {
+                    <span>{{ attribute }}</span>
+                  } @empty {
+                    <span class="catalog-attribute-empty">Sin atributos adicionales</span>
+                  }
+                </div>
               </td>
-              <td><span class="type-pill">{{ opportunityTypeLabel(item.tipoItem) }}</span></td>
-              <td class="money-cell">S/ {{ item.precioReferencial | number: '1.2-2' }}</td>
-              <td class="catalog-link-cell">
-                <strong>
-                  <i class="pi" [class.pi-lock]="item.publicEnabled !== false" [class.pi-lock-open]="item.publicEnabled === false"></i>
-                  {{ item.publicEnabled === false ? 'Deshabilitada' : 'Landing segura' }}
-                </strong>
-                <span title="{{ catalogLandingUrl(item) }}">{{ catalogLandingUrl(item) }}</span>
-              </td>
-              <td class="catalog-token-cell">
-                <strong>ID #{{ item.id }}</strong>
-                <span title="{{ item.publicToken || 'Sin token' }}">{{ item.publicToken || 'Sin token' }}</span>
-              </td>
-              <td class="catalog-status-cell"><p-tag [value]="humanize(item.estado)" [severity]="statusSeverity(item.estado)" /></td>
               <td>
-                <div class="row-actions">
+                <div class="catalog-type-cell">
+                  <i [class]="opportunityTypeMeta(item.tipoItem).icon"></i>
+                  <div>
+                    <strong>{{ opportunityTypeLabel(item.tipoItem) }}</strong>
+                    <small>{{ item.tipoItem }}</small>
+                  </div>
+                </div>
+              </td>
+              <td class="money-cell">
+                <i class="pi pi-wallet"></i>
+                <strong>S/ {{ item.precioReferencial | number: '1.2-2' }}</strong>
+                <small>Valor referencial</small>
+              </td>
+              <td class="catalog-usage-cell">
+                <div class="catalog-usage-counts">
+                  <span title="Prospectos asociados">
+                    <i class="pi pi-users"></i>
+                    <strong>{{ item.prospectosCount || 0 }}</strong>
+                    <small>Leads</small>
+                  </span>
+                  <span title="Oportunidades generadas">
+                    <i class="pi pi-chart-line"></i>
+                    <strong>{{ item.oportunidadesCount || 0 }}</strong>
+                    <small>Oportunidades</small>
+                  </span>
+                </div>
+                <div class="catalog-conversion">
+                  <span><span [style.width.%]="catalogConversionRate(item)"></span></span>
+                  <small>{{ catalogConversionRate(item) }}% conversion a oportunidad</small>
+                </div>
+              </td>
+              <td class="catalog-publication-cell">
+                <strong [class.catalog-public-ready]="catalogIsPublic(item)" [class.catalog-public-off]="!catalogIsPublic(item)">
+                  <i class="pi" [class.pi-globe]="catalogIsPublic(item)" [class.pi-eye-slash]="!catalogIsPublic(item)"></i>
+                  {{ catalogIsPublic(item) ? 'Publicada' : 'No publicada' }}
+                </strong>
+                <span><i class="pi pi-link"></i> /{{ item.landingSlug || 'sin-slug' }}</span>
+                <span>
+                  <i class="pi pi-sitemap"></i>
+                  {{ item.landingsCount || 0 }} {{ (item.landingsCount || 0) === 1 ? 'landing configurada' : 'landings configuradas' }}
+                </span>
+              </td>
+              <td class="catalog-access-cell">
+                <strong><i class="pi pi-lock"></i> ID #{{ item.id }} · token protegido</strong>
+                <span class="catalog-url-preview" [title]="catalogLandingAbsoluteUrl(item)">
+                  {{ catalogLandingUrl(item) }}
+                </span>
+                <small>{{ catalogTokenMask(item) }}</small>
+              </td>
+              <td class="catalog-status-cell">
+                <p-tag [value]="humanize(item.estado)" [severity]="statusSeverity(item.estado)" />
+                <small>
+                  <i class="pi pi-clock"></i>
+                  {{ (item.updatedAt | date: 'dd/MM/yyyy HH:mm') || 'Sin fecha' }}
+                </small>
+              </td>
+              <td>
+                <div class="row-actions catalog-row-actions">
+                  <button
+                    type="button"
+                    class="catalog-row-action catalog-row-action--preview"
+                    title="Abrir vista publica"
+                    aria-label="Abrir vista publica"
+                    [disabled]="!catalogIsPublic(item)"
+                    (click)="openCatalogLandingPreview(item)"
+                  >
+                    <i class="pi pi-external-link"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="catalog-row-action catalog-row-action--copy"
+                    title="Copiar enlace seguro"
+                    aria-label="Copiar enlace seguro"
+                    [disabled]="!catalogIsPublic(item)"
+                    (click)="copyCatalogLandingUrl(item)"
+                  >
+                    <i class="pi pi-copy"></i>
+                  </button>
                   @if (canManageCrmCatalog()) {
-                    <button type="button" pButton class="p-button-text p-button-rounded" icon="pi pi-pencil" title="Editar oferta" aria-label="Editar oferta" (click)="openEditCatalogo(item)"></button>
+                    <button
+                      type="button"
+                      class="catalog-row-action catalog-row-action--edit"
+                      title="Editar oferta"
+                      aria-label="Editar oferta"
+                      (click)="openEditCatalogo(item)"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
                   }
                 </div>
               </td>
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
-            <tr><td colspan="7" class="empty-cell">Aun no hay ofertas comerciales CRM.</td></tr>
+            <tr><td colspan="8" class="empty-cell">Aun no hay ofertas comerciales CRM.</td></tr>
           </ng-template>
         </p-table>
       </section>
@@ -1069,6 +1182,7 @@
         (nextPageRequested)="followUpPage.set(followUpPage() + 1)"
         (quickActivityRequested)="openQuickActivity($event, 'LLAMADA', 'Llamar a ' + $event.nombre)"
         (completeActivityRequested)="openCompleteActivity($event.activity, $event.prospect)"
+        (whatsappRequested)="sendProspectWhatsapp($event)"
         (opportunityRequested)="openFollowUpOpportunity($event)"
         (detailRequested)="selectFollowUpProspect($event)"
       />

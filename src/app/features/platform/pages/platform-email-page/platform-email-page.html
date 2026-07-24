@@ -1,0 +1,203 @@
+<section class="platform-email-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Administracion Azurion</p>
+      <h1>Correo, avisos y verificacion</h1>
+      <p>Define el remitente oficial de la plataforma para avisos administrativos, informes y codigos de seguridad.</p>
+    </div>
+    <p-button
+      label="Recargar"
+      icon="pi pi-refresh"
+      styleClass="az-secondary"
+      [loading]="loading()"
+      (onClick)="load()"
+    />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success"><i class="pi pi-check-circle"></i>{{ successMessage() }}</div>
+  }
+
+  <section class="email-metrics" aria-label="Estado del correo de plataforma">
+    <article class="metric metric--status">
+      <i class="pi pi-send"></i>
+      <div><span>Estado SMTP</span><strong>{{ statusLabel() }}</strong><small>conexion de la plataforma</small></div>
+    </article>
+    <article class="metric metric--green">
+      <i class="pi pi-envelope"></i>
+      <div><span>Remitente</span><strong>{{ config()?.correoRemitente || 'Sin configurar' }}</strong><small>correo oficial de Azurion</small></div>
+    </article>
+    <article class="metric metric--violet">
+      <i class="pi pi-sliders-h"></i>
+      <div><span>Usos habilitados</span><strong>{{ enabledChannels() }} de 3</strong><small>avisos, reportes y seguridad</small></div>
+    </article>
+    <article class="metric metric--amber">
+      <i class="pi pi-verified"></i>
+      <div>
+        <span>Ultima verificacion</span>
+        <strong>{{ config()?.fechaVerificacion ? (config()?.fechaVerificacion | date: 'dd/MM/yyyy HH:mm') : 'Sin verificar' }}</strong>
+        <small>prueba SMTP satisfactoria</small>
+      </div>
+    </article>
+  </section>
+
+  <form class="email-workspace" (submit)="$event.preventDefault(); save()">
+    <div class="configuration-column">
+      <article class="panel">
+        <header class="panel-title">
+          <span><i class="pi pi-id-card"></i></span>
+          <div><h2>Identidad del remitente</h2><p>Datos que vera el destinatario en cada mensaje.</p></div>
+        </header>
+        <div class="fields fields--two">
+          <label>Nombre del remitente
+            <input pInputText name="nombreRemitente" maxlength="160" [(ngModel)]="form.nombreRemitente" placeholder="Azurion" />
+          </label>
+          <label>Correo remitente
+            <input pInputText type="email" name="correoRemitente" maxlength="180" [(ngModel)]="form.correoRemitente" placeholder="notificaciones@azurion.com" />
+          </label>
+          <label class="span-two">Responder a (opcional)
+            <input pInputText type="email" name="replyTo" maxlength="180" [(ngModel)]="form.replyTo" placeholder="soporte@azurion.com" />
+          </label>
+        </div>
+      </article>
+
+      <article class="panel">
+        <header class="panel-title">
+          <span><i class="pi pi-server"></i></span>
+          <div><h2>Servidor de salida SMTP</h2><p>Usa una clave de aplicacion cuando el proveedor tenga doble factor.</p></div>
+        </header>
+        <div class="fields fields--two">
+          <label>Proveedor
+            <p-select
+              [options]="providerOptions"
+              optionLabel="label"
+              optionValue="value"
+              name="provider"
+              [ngModel]="provider"
+              (ngModelChange)="applyProvider($event)"
+              appendTo="body"
+            />
+          </label>
+          <label>Seguridad
+            <p-select
+              [options]="securityOptions"
+              optionLabel="label"
+              optionValue="value"
+              name="smtpSecurity"
+              [(ngModel)]="form.smtpSecurity"
+              appendTo="body"
+            />
+          </label>
+          <label>Host SMTP
+            <input pInputText name="smtpHost" maxlength="180" [(ngModel)]="form.smtpHost" placeholder="smtp.proveedor.com" />
+          </label>
+          <label>Puerto
+            <input pInputText type="number" name="smtpPort" min="1" max="65535" [(ngModel)]="form.smtpPort" />
+          </label>
+          <label>Usuario SMTP
+            <input pInputText name="smtpUsername" maxlength="180" [(ngModel)]="form.smtpUsername" placeholder="notificaciones@azurion.com" autocomplete="username" />
+          </label>
+          <label>Contrasena o clave de aplicacion
+            <input
+              pInputText
+              type="password"
+              name="smtpPassword"
+              maxlength="500"
+              [(ngModel)]="form.smtpPassword"
+              [placeholder]="config()?.smtpPasswordConfigured ? 'Configurada; escribe solo para cambiarla' : 'Clave SMTP'"
+              autocomplete="new-password"
+            />
+          </label>
+        </div>
+        <p class="secret-note"><i class="pi pi-lock"></i> La clave se cifra en el servidor y nunca vuelve a mostrarse en esta pantalla.</p>
+      </article>
+    </div>
+
+    <aside class="administration-column">
+      <article class="panel delivery-panel">
+        <header class="panel-title">
+          <span><i class="pi pi-megaphone"></i></span>
+          <div><h2>Politicas de envio</h2><p>Controla para que puede utilizarse el correo oficial.</p></div>
+        </header>
+
+        <label class="policy-option">
+          <input type="checkbox" name="avisosHabilitados" [(ngModel)]="form.avisosHabilitados" />
+          <span><b>Avisos administrativos</b><small>Alertas de seguridad, cambios de cuenta y comunicaciones operativas.</small></span>
+          <i class="pi pi-bell"></i>
+        </label>
+        <label class="policy-option">
+          <input type="checkbox" name="reportesHabilitados" [(ngModel)]="form.reportesHabilitados" />
+          <span><b>Informes y reportes</b><small>Reportes generados por la plataforma y entregas programadas.</small></span>
+          <i class="pi pi-chart-bar"></i>
+        </label>
+        <label class="policy-option">
+          <input type="checkbox" name="dobleFactorHabilitado" [(ngModel)]="form.dobleFactorHabilitado" />
+          <span><b>Codigos de doble factor</b><small>Autoriza este canal para enviar codigos 2FA cuando se active el flujo de autenticacion.</small></span>
+          <i class="pi pi-shield"></i>
+        </label>
+      </article>
+
+      <article class="panel verification-panel">
+        <header class="verification-heading">
+          <div>
+            <span>Estado de entrega</span>
+            <strong [class]="'status-badge status-badge--' + statusTone()">{{ statusLabel() }}</strong>
+          </div>
+          <i [class]="config()?.verificado ? 'pi pi-check-circle' : 'pi pi-clock'"></i>
+        </header>
+
+        @if (config()?.ultimoError) {
+          <div class="smtp-error"><i class="pi pi-info-circle"></i><span>{{ config()?.ultimoError }}</span></div>
+        }
+
+        <label>Enviar prueba a
+          <input
+            pInputText
+            type="email"
+            name="testEmailTo"
+            [ngModel]="testEmailTo()"
+            (ngModelChange)="testEmailTo.set($event)"
+            placeholder="admin@azurion.com"
+          />
+        </label>
+
+        <div class="actions">
+          <p-button
+            type="submit"
+            label="Guardar configuracion"
+            icon="pi pi-save"
+            styleClass="az-primary action-button"
+            [loading]="saving()"
+          />
+          <p-button
+            type="button"
+            label="Enviar prueba SMTP"
+            icon="pi pi-send"
+            styleClass="az-secondary action-button"
+            [loading]="testing()"
+            [disabled]="!config()"
+            (onClick)="sendTest()"
+          />
+          <button
+            type="button"
+            class="toggle-button"
+            [class.toggle-button--danger]="config()?.activo"
+            [disabled]="toggling() || !config()"
+            (click)="toggleActive()"
+          >
+            <i [class]="toggling() ? 'pi pi-spin pi-spinner' : (config()?.activo ? 'pi pi-pause' : 'pi pi-play')"></i>
+            {{ config()?.activo ? 'Desactivar correo' : 'Activar correo' }}
+          </button>
+        </div>
+
+        <dl class="audit-details">
+          <div><dt>Clave SMTP</dt><dd>{{ config()?.smtpPasswordConfigured ? 'Configurada' : 'Pendiente' }}</dd></div>
+          <div><dt>Ultima modificacion</dt><dd>{{ config()?.updatedAt ? (config()?.updatedAt | date: 'dd/MM/yyyy HH:mm') : 'Sin registros' }}</dd></div>
+        </dl>
+      </article>
+    </aside>
+  </form>
+</section>

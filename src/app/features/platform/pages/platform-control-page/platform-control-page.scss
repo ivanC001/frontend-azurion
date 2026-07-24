@@ -77,6 +77,14 @@
 .subscription-details div { align-items: center; border-bottom: 1px solid var(--az-border); display: flex; justify-content: space-between; padding: 0.5rem 0.15rem; }
 .subscription-details dt { color: var(--az-text-soft); font-size: 0.75rem; }
 .subscription-details dd { color: var(--az-text); font-size: 0.78rem; font-weight: 800; margin: 0; }
+.subscription-editor { border-top: 1px solid var(--az-border); display: grid; gap: 0.65rem; padding-top: 0.7rem; }
+.subscription-editor label { color: var(--az-text); display: grid; font-size: 0.75rem; font-weight: 800; gap: 0.3rem; }
+.subscription-editor label small { color: var(--az-text-soft); font-weight: 500; }
+.custom-limit-toggle { align-items: center; display: flex !important; grid-template-columns: auto 1fr; }
+.custom-limit-toggle input { accent-color: var(--az-blue); height: 1rem; width: 1rem; }
+.plan-capacity { align-items: center; background: var(--az-surface-hover); border-radius: 0.55rem; display: flex; font-size: 0.73rem; justify-content: space-between; padding: 0.45rem 0.55rem; }
+.plan-capacity span { color: var(--az-text-soft); }
+.plan-capacity strong { color: var(--az-text); }
 
 .actions-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .actions-row--stacked { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }

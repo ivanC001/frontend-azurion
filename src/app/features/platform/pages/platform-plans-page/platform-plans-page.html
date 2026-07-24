@@ -3,7 +3,7 @@
     <div>
       <p class="page-eyebrow">Administracion Azurion</p>
       <h1>Planes y limites SaaS</h1>
-      <p>Administra la oferta comercial, capacidad mensual y disponibilidad de cada plan.</p>
+      <p>Administra la oferta comercial, usuarios incluidos, capacidad mensual y disponibilidad de cada plan.</p>
     </div>
     <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
   </header>
@@ -30,10 +30,27 @@
       </div>
       <label>Nombre<input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Plan Business" /></label>
       <label>Codigo<input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="BUSINESS" /></label>
+      <label>Descripción<input pInputText name="descripcion" [(ngModel)]="form.descripcion" placeholder="Alcance comercial del plan" /></label>
       <div class="form-row">
         <label>Limite mensual<input pInputText type="number" min="0" name="limiteMensualBolsa" [(ngModel)]="form.limiteMensualBolsa" /></label>
+        <label>Usuarios activos<input pInputText type="number" min="1" name="limiteUsuarios" [(ngModel)]="form.limiteUsuarios" /></label>
+      </div>
+      <div class="form-row">
         <label>Precio mensual<input pInputText type="number" min="0" step="0.01" name="precioMensual" [(ngModel)]="form.precioMensual" /></label>
       </div>
+      <fieldset class="module-selector">
+        <legend>Módulos incluidos</legend>
+        @for (module of modules(); track module.id) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isCreateModuleSelected(module.codigo)"
+              (change)="toggleCreateModule(module.codigo, $any($event.target).checked)"
+            />
+            <span>{{ module.nombre }}</span>
+          </label>
+        }
+      </fieldset>
       <p-button type="submit" label="Registrar plan" icon="pi pi-save" styleClass="az-primary save-btn" [loading]="saving()" />
     </form>
 
@@ -44,7 +61,7 @@
       </div>
       <p-table [value]="plans()" [loading]="loading()" [paginator]="plans().length > 10" [rows]="10" responsiveLayout="scroll">
         <ng-template pTemplate="header">
-          <tr><th>Codigo</th><th>Nombre</th><th>Limite</th><th>Precio mensual</th><th>Estado</th><th>Acciones</th></tr>
+          <tr><th>Codigo</th><th>Nombre</th><th>Módulos</th><th>Capacidad mensual</th><th>Usuarios</th><th>Precio mensual</th><th>Estado</th><th>Acciones</th></tr>
         </ng-template>
         <ng-template pTemplate="body" let-plan>
           <tr>
@@ -52,12 +69,45 @@
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
                 <input pInputText [(ngModel)]="edit.nombre" [ngModelOptions]="{ standalone: true }" />
-              } @else { <strong>{{ plan.nombre }}</strong> }
+                <input pInputText [(ngModel)]="edit.descripcion" [ngModelOptions]="{ standalone: true }" placeholder="Descripción" />
+              } @else {
+                <strong>{{ plan.nombre }}</strong>
+                <small>{{ plan.descripcion || 'Sin descripción' }}</small>
+              }
+            </td>
+            <td>
+              @if (editPlanId() === plan.id) {
+                <div class="table-module-selector">
+                  @for (module of modules(); track module.id) {
+                    <label>
+                      <input
+                        type="checkbox"
+                        [checked]="isEditModuleSelected(module.codigo)"
+                        (change)="toggleEditModule(module.codigo, $any($event.target).checked)"
+                      />
+                      <span>{{ module.codigo }}</span>
+                    </label>
+                  }
+                </div>
+              } @else {
+                <div class="module-chips">
+                  @for (code of plan.moduloCodigos || []; track code) {
+                    <span>{{ code }}</span>
+                  } @empty {
+                    <em>Sin módulos</em>
+                  }
+                </div>
+              }
             </td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
                 <input pInputText type="number" min="0" [(ngModel)]="edit.limiteMensualBolsa" [ngModelOptions]="{ standalone: true }" />
               } @else { {{ plan.limiteMensualBolsa | number }} }
+            </td>
+            <td>
+              @if (editPlanId() === plan.id && editForm(); as edit) {
+                <input pInputText type="number" min="1" [(ngModel)]="edit.limiteUsuarios" [ngModelOptions]="{ standalone: true }" />
+              } @else { <strong>{{ plan.limiteUsuarios | number }}</strong> }
             </td>
             <td>
               @if (editPlanId() === plan.id && editForm(); as edit) {
@@ -79,7 +129,7 @@
             </td>
           </tr>
         </ng-template>
-        <ng-template pTemplate="emptymessage"><tr><td colspan="6">Todavia no hay planes registrados.</td></tr></ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td colspan="8">Todavia no hay planes registrados.</td></tr></ng-template>
       </p-table>
     </section>
   </div>

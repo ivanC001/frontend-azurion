@@ -638,6 +638,7 @@ export class CrmAdminPage {
   private readonly crmLocalStorage = inject(CrmLocalStorageService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private quoteRouteHandled = false;
   private readonly destroyRef = inject(DestroyRef);
   private legacyOpportunityMigrationStarted = false;
 
@@ -794,6 +795,12 @@ export class CrmAdminPage {
     { label: 'WhatsApp', value: 'WHATSAPP' },
     { label: 'Facebook', value: 'FACEBOOK' },
     { label: 'Importado', value: 'IMPORTADO' },
+  ];
+
+  public readonly catalogStatusOptions = [
+    { label: 'Activa y disponible', value: 'ACTIVO' },
+    { label: 'Inactiva', value: 'INACTIVO' },
+    { label: 'Archivada', value: 'ARCHIVADO' },
   ];
 
   public readonly negotiationResultOptions = [
@@ -1896,10 +1903,20 @@ export class CrmAdminPage {
     const query = this.query().trim().toLowerCase();
     return this.catalogoItems().filter((item) =>
       !query ||
-      `${item.nombre} ${item.tipoItem} ${item.descripcion ?? ''} ${item.estado} ${item.metadataJson ?? ''}`
+      `${item.nombre} ${item.tipoItem} ${item.descripcion ?? ''} ${item.estado} ${item.landingSlug ?? ''} ${item.metadataJson ?? ''}`
         .toLowerCase()
         .includes(query),
     );
+  });
+
+  protected readonly catalogStats = computed(() => {
+    const items = this.catalogoItems();
+    return {
+      total: items.length,
+      public: items.filter((item) => this.catalogIsPublic(item)).length,
+      leads: items.reduce((total, item) => total + Number(item.prospectosCount || 0), 0),
+      opportunities: items.reduce((total, item) => total + Number(item.oportunidadesCount || 0), 0),
+    };
   });
 
   protected readonly quoteDashboardItems = computed(() => {
@@ -2887,7 +2904,7 @@ export class CrmAdminPage {
         nextActionStatus: this.followUpNextActionStatus(card),
         nextActionTone: this.followUpNextActionTone(card),
         phoneUrl: this.phoneUrl(card.prospecto),
-        whatsappUrl: this.whatsappUrl(card.prospecto),
+        whatsappAvailable: Boolean(this.onlyDigits(card.prospecto.telefono)),
         emailUrl: this.emailUrl(card.prospecto),
       };
     }),
@@ -3054,6 +3071,7 @@ export class CrmAdminPage {
           this.crmCurrencyConfigs.set(this.withDefaultCrmCurrencies(monedas));
           this.leadAssignmentConfig.set(assignmentConfig);
           this.dashboard.set(dashboard);
+          this.openQuoteRequestedFromRoute();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -3588,7 +3606,58 @@ export class CrmAdminPage {
       token: item.publicToken || '',
       campania: 'Landing CRM',
     });
+    if (item.landingSlug) {
+      params.set('slug', item.landingSlug);
+    }
     return `/crm-lead?${params.toString()}`;
+  }
+
+  protected catalogLandingAbsoluteUrl(item: CrmCatalogoItem): string {
+    const relativeUrl = this.catalogLandingUrl(item);
+    return typeof window === 'undefined'
+      ? relativeUrl
+      : new URL(relativeUrl, window.location.origin).toString();
+  }
+
+  protected catalogIsPublic(item: CrmCatalogoItem): boolean {
+    return item.estado === 'ACTIVO' && item.publicEnabled !== false && !!item.publicToken;
+  }
+
+  protected catalogTokenMask(item: CrmCatalogoItem): string {
+    const token = item.publicToken || '';
+    return token ? `••••••••${token.slice(-6)}` : 'Sin token';
+  }
+
+  protected catalogConversionRate(item: CrmCatalogoItem): number {
+    const leads = Number(item.prospectosCount || 0);
+    const opportunities = Number(item.oportunidadesCount || 0);
+    return leads > 0 ? Math.min(Math.round((opportunities / leads) * 100), 100) : 0;
+  }
+
+  protected catalogAttributeBadges(item: CrmCatalogoItem): string[] {
+    const attributes = this.extractCatalogAttributes(item.metadataJson);
+    const fields = this.catalogFieldMap[this.normalizeOpportunityType(item.tipoItem)] ?? [];
+    const labelByKey = new Map(fields.map((field) => [field.key, field.label]));
+    return Object.entries(attributes)
+      .filter(([, value]) => value !== null && value !== undefined && value !== '')
+      .slice(0, 3)
+      .map(([key, value]) => `${labelByKey.get(key) || this.humanize(key)}: ${value}`);
+  }
+
+  protected copyCatalogLandingUrl(item: CrmCatalogoItem): void {
+    if (!this.catalogIsPublic(item)) {
+      this.errorMessage.set('Activa la oferta y su acceso publico antes de copiar el enlace.');
+      return;
+    }
+    this.copyWhatsappValue(this.catalogLandingAbsoluteUrl(item), 'Enlace de landing');
+  }
+
+  protected openCatalogLandingPreview(item: CrmCatalogoItem): void {
+    if (!this.catalogIsPublic(item)) {
+      this.errorMessage.set('Esta oferta no esta disponible publicamente.');
+      return;
+    }
+    window.open(this.catalogLandingAbsoluteUrl(item), '_blank', 'noopener,noreferrer');
   }
 
   public onOpportunityCatalogChange(value: number | null): void {
@@ -3862,6 +3931,31 @@ export class CrmAdminPage {
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveWhatsappEndpointError(error)),
       });
+  }
+
+  private openQuoteRequestedFromRoute(): void {
+    if (this.quoteRouteHandled) {
+      return;
+    }
+    this.quoteRouteHandled = true;
+    const prospectId = Number(this.route.snapshot.queryParamMap.get('prospectoId') || 0);
+    if (!prospectId) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { prospectoId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    const opportunity = this.activeOpportunityForProspect(prospectId);
+    if (!opportunity) {
+      this.errorMessage.set(
+        'El prospecto todavía no tiene una oportunidad activa. Crea la oportunidad antes de generar la cotización.',
+      );
+      return;
+    }
+    this.openQuoteDialog(opportunity);
   }
 
   protected updateCrmIntegrationField(canal: string, field: CrmIntegrationField, value: string): void {
@@ -5217,13 +5311,21 @@ export class CrmAdminPage {
     return phone ? `tel:${phone}` : null;
   }
 
-  protected whatsappUrl(item: CrmProspecto): string | null {
-    const phone = this.onlyDigits(item.telefono);
-    if (!phone) {
-      return null;
+  public sendProspectWhatsapp(item: CrmProspecto): void {
+    if (!this.onlyDigits(item.telefono)) {
+      this.errorMessage.set('El prospecto no tiene un teléfono válido para WhatsApp.');
+      return;
     }
-    const message = encodeURIComponent(`Hola ${item.nombre}, te escribo por ${item.interesPrincipal || 'tu consulta'}.`);
-    return `https://wa.me/${phone}?text=${message}`;
+    const message = `Hola ${item.nombre}, te escribo por ${item.interesPrincipal || 'tu consulta'}.`;
+    this.actionId.set(item.id);
+    this.errorMessage.set(null);
+    this.api
+      .sendCrmWhatsappMessage(item.id, { mensaje: message, previewUrl: true })
+      .pipe(finalize(() => this.actionId.set(null)))
+      .subscribe({
+        next: () => this.successMessage.set('Mensaje enviado por el canal de WhatsApp configurado en Azurion.'),
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected emailUrl(item: CrmProspecto): string | null {
@@ -7160,23 +7262,34 @@ export class CrmAdminPage {
       });
   }
 
-  public quoteWhatsappUrl(item: Cotizacion): string | null {
-    const phone = this.onlyDigits(this.quoteContactPhone(item));
-    if (!phone) {
-      return null;
-    }
-    return `https://wa.me/${phone}?text=${encodeURIComponent(this.quoteShareMessage(item))}`;
+  public canSendQuoteByWhatsapp(item: Cotizacion): boolean {
+    const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
+    return Boolean(opportunity?.prospectoId && this.onlyDigits(this.opportunityContactPhone(opportunity)));
   }
 
   public sendQuoteByWhatsapp(item: Cotizacion): void {
-    const url = this.quoteWhatsappUrl(item);
-    if (!url) {
-      this.errorMessage.set('El contacto no tiene telefono para enviar la cotizacion por WhatsApp.');
+    const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
+    const prospectId = Number(opportunity?.prospectoId || 0);
+    if (!prospectId || !this.onlyDigits(opportunity ? this.opportunityContactPhone(opportunity) : null)) {
+      this.errorMessage.set('La cotización necesita una oportunidad vinculada a un prospecto con teléfono.');
       return;
     }
-    this.downloadQuotePdf(item, 'PDF generado. Adjuntalo al WhatsApp antes de enviar.');
-    globalThis.open(url, '_blank', 'noopener');
-    this.sendQuote(item, 'WHATSAPP');
+    this.actionId.set(item.id);
+    this.errorMessage.set(null);
+    this.api
+      .sendCrmWhatsappQuote(prospectId, item.id, this.quoteShareMessage(item))
+      .pipe(finalize(() => this.actionId.set(null)))
+      .subscribe({
+        next: ({ cotizacion }) => {
+          const saved = opportunity ? this.withQuoteOpportunity(cotizacion, opportunity.id) : cotizacion;
+          this.upsertQuote(saved);
+          if (opportunity) {
+            this.refreshOpportunityQuotes(opportunity.id);
+          }
+          this.successMessage.set('Cotización PDF enviada por el canal de WhatsApp configurado en Azurion.');
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   public canSendQuoteByEmail(item: Cotizacion): boolean {
@@ -7687,13 +7800,28 @@ export class CrmAdminPage {
     };
   }
 
-  public opportunityWhatsappUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
-    const phone = this.onlyDigits(this.opportunityContactPhone(item));
-    if (!phone) {
-      return null;
+  public opportunityWhatsappAvailable(item: CrmOportunidad): boolean {
+    return Boolean(item.prospectoId && this.onlyDigits(this.opportunityContactPhone(item)));
+  }
+
+  public sendOpportunityByWhatsapp(item: CrmOportunidad, template?: OpportunityMessageTemplate): void {
+    const prospectId = Number(item.prospectoId || 0);
+    if (!prospectId || !this.onlyDigits(this.opportunityContactPhone(item))) {
+      this.errorMessage.set('La oportunidad no tiene un prospecto con teléfono para WhatsApp.');
+      return;
     }
-    const message = encodeURIComponent(this.renderOpportunityMessage(template, item));
-    return `https://wa.me/${phone}?text=${message}`;
+    this.actionId.set(item.id);
+    this.errorMessage.set(null);
+    this.api
+      .sendCrmWhatsappMessage(prospectId, {
+        mensaje: this.renderOpportunityMessage(template, item),
+        previewUrl: true,
+      })
+      .pipe(finalize(() => this.actionId.set(null)))
+      .subscribe({
+        next: () => this.successMessage.set('Mensaje enviado por el canal de WhatsApp configurado en Azurion.'),
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   public opportunityEmailUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {

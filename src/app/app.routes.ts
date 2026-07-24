@@ -186,6 +186,21 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'correo-azurion',
+        canActivate: [generalAdminGuard],
+        loadComponent: () =>
+          import('@features/platform/pages/platform-email-page/platform-email-page').then(
+            (component) => component.PlatformEmailPage,
+          ),
+      },
+      {
+        path: 'mensajes',
+        loadComponent: () =>
+          import('@features/platform/pages/platform-messages-page/platform-messages-page').then(
+            (component) => component.PlatformMessagesPage,
+          ),
+      },
+      {
         path: 'seguridad-empresa',
         canActivate: [permissionGuard],
         data: { securityScope: 'company', permission: 'ROLES_READ' },

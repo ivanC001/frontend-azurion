@@ -64,7 +64,7 @@
     <section class="control-panel">
       <div class="panel-title">
         <span class="panel-title__icon panel-title__icon--green"><i class="pi pi-wallet"></i></span>
-        <div><h2>Suscripcion</h2><p>Estado comercial del tenant seleccionado.</p></div>
+        <div><h2>Plan y suscripción</h2><p>Cambia el plan o personaliza el cupo de esta empresa.</p></div>
       </div>
       @if (selectedSubscription(); as suscripcion) {
         <div class="subscription-status">
@@ -72,17 +72,70 @@
           <p-tag [value]="suscripcion.estado" [severity]="statusSeverity(suscripcion.estado)" />
         </div>
         <dl class="subscription-details">
-          <div><dt>Plan</dt><dd>#{{ suscripcion.planId }}</dd></div>
+          <div><dt>Plan</dt><dd>{{ suscripcion.planNombre }} ({{ suscripcion.planCodigo }})</dd></div>
+          <div><dt>Cupo efectivo</dt><dd>{{ suscripcion.limiteUsuarios }} usuarios</dd></div>
           <div><dt>Inicio</dt><dd>{{ suscripcion.fechaInicio || 'Sin fecha' }}</dd></div>
           <div><dt>Fin</dt><dd>{{ suscripcion.fechaFin || 'Vigente' }}</dd></div>
         </dl>
+      } @else {
+        <div class="empty-state"><i class="pi pi-info-circle"></i><p>La empresa no tiene una suscripcion. Selecciona un plan para crearla.</p></div>
+      }
+
+      <div class="subscription-editor">
+        <label>
+          <span>Plan asignado</span>
+          <p-select
+            [options]="planOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="subscriptionPlanId()"
+            (ngModelChange)="onSubscriptionPlanChange($event)"
+            placeholder="Seleccionar plan"
+          />
+        </label>
+        @if (selectedPlan(); as plan) {
+          <div class="plan-capacity">
+            <span>Cupo base del plan</span>
+            <strong>{{ plan.limiteUsuarios }} usuarios</strong>
+          </div>
+        }
+        <label class="custom-limit-toggle">
+          <input
+            type="checkbox"
+            [checked]="customUserLimitEnabled"
+            (change)="toggleCustomUserLimit($any($event.target).checked)"
+          />
+          <span>Personalizar cupo para esta empresa</span>
+        </label>
+        <label>
+          <span>Cupo de usuarios activos</span>
+          <input
+            pInputText
+            type="number"
+            min="1"
+            [disabled]="!customUserLimitEnabled"
+            [ngModel]="subscriptionUserLimit"
+            (ngModelChange)="subscriptionUserLimit = $event"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <small>{{ activeTenantUsers() }} usuarios activos actualmente.</small>
+        </label>
+        <p-button
+          label="Guardar plan y cupo"
+          icon="pi pi-save"
+          size="small"
+          [loading]="saving()"
+          [disabled]="!subscriptionPlanId()"
+          (onClick)="saveSubscriptionPlan()"
+        />
+      </div>
+
+      @if (selectedSubscription(); as suscripcion) {
         <div class="actions-row actions-row--stacked">
           <p-button label="Activar" icon="pi pi-check" size="small" [disabled]="saving() || suscripcion.estado === 'ACTIVA'" (onClick)="updateSubscriptionStatus('ACTIVA')" />
           <p-button label="Suspender" icon="pi pi-pause" size="small" severity="warn" [disabled]="saving() || suscripcion.estado === 'SUSPENDIDA'" (onClick)="updateSubscriptionStatus('SUSPENDIDA')" />
           <p-button label="Cancelar" icon="pi pi-times" size="small" severity="danger" [disabled]="saving() || suscripcion.estado === 'CANCELADA'" (onClick)="updateSubscriptionStatus('CANCELADA')" />
         </div>
-      } @else {
-        <div class="empty-state"><i class="pi pi-info-circle"></i><p>La empresa no tiene una suscripcion registrada.</p></div>
       }
     </section>
 

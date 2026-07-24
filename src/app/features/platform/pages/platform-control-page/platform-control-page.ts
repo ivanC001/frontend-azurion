@@ -14,6 +14,7 @@ import {
   Empresa,
   EmpresaModulo,
   ModuloGlobal,
+  Plan,
   Suscripcion,
   UsuarioTenant,
 } from '@features/admin/data/admin-saas-api.service';
@@ -34,6 +35,7 @@ export class PlatformControlPage {
   protected readonly saving = signal(false);
   protected readonly empresas = signal<Empresa[]>([]);
   protected readonly modulos = signal<ModuloGlobal[]>([]);
+  protected readonly planes = signal<Plan[]>([]);
   protected readonly suscripciones = signal<Suscripcion[]>([]);
   protected readonly usuariosTenant = signal<UsuarioTenant[]>([]);
   protected readonly empresaModulos = signal<EmpresaModulo[]>([]);
@@ -42,6 +44,9 @@ export class PlatformControlPage {
   protected readonly successMessage = signal<string | null>(null);
   protected readonly rolesInputByUser = signal<Record<number, string>>({});
   protected readonly moduleDraft = signal<Record<string, boolean>>({});
+  protected readonly subscriptionPlanId = signal<number | null>(null);
+  protected customUserLimitEnabled = false;
+  protected subscriptionUserLimit = 1;
 
   protected readonly selectedEmpresa = computed(() => {
     const empresaId = this.selectedEmpresaId();
@@ -56,8 +61,36 @@ export class PlatformControlPage {
     if (!empresaId) {
       return null;
     }
-    return this.suscripciones().find((item) => item.empresaId === empresaId) ?? null;
+    const subscriptions = this.suscripciones()
+      .filter((item) => item.empresaId === empresaId)
+      .sort((left, right) => right.id - left.id);
+    return (
+      subscriptions.find((item) => item.estado.toUpperCase() === 'ACTIVA') ??
+      subscriptions[0] ??
+      null
+    );
   });
+
+  protected readonly selectedPlan = computed(() =>
+    this.planes().find((plan) => plan.id === this.subscriptionPlanId()) ?? null,
+  );
+
+  protected readonly planOptions = computed(() => {
+    const currentPlanId = this.selectedSubscription()?.planId;
+    return this.planes()
+      .filter(
+        (plan) =>
+          plan.estado.toUpperCase() === 'ACTIVO' || plan.id === currentPlanId,
+      )
+      .map((plan) => ({
+        label: `${plan.nombre} · ${plan.limiteUsuarios} usuarios · S/ ${Number(plan.precioMensual).toFixed(2)}`,
+        value: plan.id,
+      }));
+  });
+
+  protected readonly activeTenantUsers = computed(
+    () => this.usuariosTenant().filter((user) => user.activo).length,
+  );
 
   protected readonly empresaOptions = computed(() =>
     this.empresas().map((empresa) => ({
@@ -100,13 +133,15 @@ export class PlatformControlPage {
     forkJoin({
       empresas: this.api.listEmpresas(),
       modulos: this.api.listModulos(),
+      planes: this.api.listPlanes(),
       suscripciones: this.api.listSuscripciones(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ empresas, modulos, suscripciones }) => {
+        next: ({ empresas, modulos, planes, suscripciones }) => {
           this.empresas.set(empresas);
           this.modulos.set(modulos);
+          this.planes.set(planes);
           this.suscripciones.set(suscripciones);
 
           const current = this.selectedEmpresaId();
@@ -117,6 +152,7 @@ export class PlatformControlPage {
             this.selectedEmpresaId.set(empresas[0]?.id ?? null);
           }
           this.requestedEmpresaId = null;
+          this.syncSubscriptionDraft();
           this.loadCompanyContext();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -125,7 +161,64 @@ export class PlatformControlPage {
 
   protected onEmpresaChange(): void {
     this.successMessage.set(null);
+    this.syncSubscriptionDraft();
     this.loadCompanyContext();
+  }
+
+  protected onSubscriptionPlanChange(planId: number | null): void {
+    this.subscriptionPlanId.set(planId);
+    if (!this.customUserLimitEnabled) {
+      this.subscriptionUserLimit =
+        this.planes().find((plan) => plan.id === planId)?.limiteUsuarios ?? 1;
+    }
+  }
+
+  protected toggleCustomUserLimit(enabled: boolean): void {
+    this.customUserLimitEnabled = enabled;
+    if (!enabled) {
+      this.subscriptionUserLimit = this.selectedPlan()?.limiteUsuarios ?? 1;
+    }
+  }
+
+  protected saveSubscriptionPlan(): void {
+    const empresa = this.selectedEmpresa();
+    const plan = this.selectedPlan();
+    const planId = this.subscriptionPlanId();
+    if (!empresa || !plan || !planId) {
+      this.errorMessage.set('Selecciona una empresa y un plan activo.');
+      return;
+    }
+
+    const requestedLimit = Math.trunc(Number(this.subscriptionUserLimit));
+    if (
+      this.customUserLimitEnabled &&
+      (!Number.isFinite(requestedLimit) ||
+        requestedLimit < 1 ||
+        requestedLimit < this.activeTenantUsers())
+    ) {
+      this.errorMessage.set(
+        `El cupo debe ser igual o mayor a los ${this.activeTenantUsers()} usuarios activos.`,
+      );
+      return;
+    }
+
+    this.saving.set(true);
+    this.errorMessage.set(null);
+    this.api
+      .updateEmpresaSubscriptionPlan(empresa.id, {
+        planId,
+        limiteUsuarios: this.customUserLimitEnabled ? requestedLimit : null,
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (subscription) => {
+          this.successMessage.set(
+            `Plan ${subscription.planNombre} aplicado con cupo de ${subscription.limiteUsuarios} usuarios.`,
+          );
+          this.load();
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected toggleCompanyModule(codigo: string, checked: boolean): void {
@@ -333,6 +426,20 @@ export class PlatformControlPage {
   private loadCompanyContext(): void {
     this.loadTenantUsers();
     this.loadCompanyModules();
+  }
+
+  private syncSubscriptionDraft(): void {
+    const subscription = this.selectedSubscription();
+    const fallbackPlan =
+      this.planes().find((plan) => plan.estado.toUpperCase() === 'ACTIVO') ?? null;
+    const planId = subscription?.planId ?? fallbackPlan?.id ?? null;
+    const plan = this.planes().find((item) => item.id === planId) ?? fallbackPlan;
+
+    this.subscriptionPlanId.set(planId);
+    this.customUserLimitEnabled =
+      subscription?.limiteUsuariosPersonalizado ?? false;
+    this.subscriptionUserLimit =
+      subscription?.limiteUsuarios ?? plan?.limiteUsuarios ?? 1;
   }
 
   private buildModuleDraft(modulos: EmpresaModulo[]): Record<string, boolean> {

@@ -1,0 +1,171 @@
+<section class="messages-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">Comunicacion interna</p>
+      <h1>Bandeja de mensajes</h1>
+      <p>Consulta avisos enviados directamente a tu cuenta y administra las comunicaciones de la plataforma.</p>
+    </div>
+    <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" [loading]="loading()" (onClick)="load()" />
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success"><i class="pi pi-check-circle"></i>{{ successMessage() }}</div>
+  }
+
+  <section class="message-metrics">
+    <article><i class="pi pi-inbox"></i><div><span>En mi bandeja</span><strong>{{ inbox().length }}</strong><small>mensajes vigentes</small></div></article>
+    <article class="metric--blue"><i class="pi pi-envelope"></i><div><span>Sin leer</span><strong>{{ unreadCount() }}</strong><small>requieren revision</small></div></article>
+    <article class="metric--red"><i class="pi pi-exclamation-triangle"></i><div><span>Criticos</span><strong>{{ criticalCount() }}</strong><small>prioridad alta</small></div></article>
+    @if (isGeneralAdmin()) {
+      <article class="metric--violet"><i class="pi pi-send"></i><div><span>Enviados</span><strong>{{ sentMessages().length }}</strong><small>ultimos mensajes</small></div></article>
+    }
+  </section>
+
+  <nav class="message-tabs" aria-label="Secciones de mensajes">
+    <button type="button" [class.active]="activeTab() === 'INBOX'" (click)="setTab('INBOX')">
+      <i class="pi pi-inbox"></i>Bandeja
+      @if (unreadCount()) { <b>{{ unreadCount() }}</b> }
+    </button>
+    @if (isGeneralAdmin()) {
+      <button type="button" [class.active]="activeTab() === 'COMPOSE'" (click)="setTab('COMPOSE')"><i class="pi pi-pencil"></i>Nuevo mensaje</button>
+      <button type="button" [class.active]="activeTab() === 'SENT'" (click)="setTab('SENT')"><i class="pi pi-history"></i>Historial enviado</button>
+    }
+  </nav>
+
+  @if (activeTab() === 'INBOX') {
+    <section class="inbox-layout">
+      <div class="inbox-list-panel">
+        <header>
+          <div><h2>Mensajes recibidos</h2><p>Los no leidos aparecen resaltados.</p></div>
+          <button type="button" [disabled]="!unreadCount()" (click)="markAllRead()">Marcar todos leidos</button>
+        </header>
+        <div class="inbox-list">
+          @for (message of inbox(); track message.recipientId) {
+            <button
+              type="button"
+              class="message-row"
+              [class.message-row--unread]="!message.leido"
+              [class.message-row--selected]="selectedRecipientId() === message.recipientId"
+              (click)="openMessage(message)"
+            >
+              <span [class]="'priority-dot priority-dot--' + message.prioridad.toLowerCase()"></span>
+              <span class="message-row-copy">
+                <span><strong>{{ message.asunto }}</strong><time>{{ message.publicadoEn | date: 'dd/MM/yyyy HH:mm' }}</time></span>
+                <small>{{ message.contenido }}</small>
+                <em>{{ audienceLabel(message.audiencia) }}</em>
+              </span>
+              @if (!message.leido) { <span class="unread-indicator" title="No leido"></span> }
+            </button>
+          } @empty {
+            <div class="empty-state"><i class="pi pi-inbox"></i><strong>Tu bandeja esta vacia</strong><p>Los avisos administrativos apareceran aqui.</p></div>
+          }
+        </div>
+      </div>
+
+      <article class="message-detail">
+        @if (selectedMessage(); as message) {
+          <header>
+            <div>
+              <span [class]="'priority-chip priority-chip--' + message.prioridad.toLowerCase()">{{ priorityLabel(message.prioridad) }}</span>
+              <h2>{{ message.asunto }}</h2>
+            </div>
+            <i class="pi pi-envelope-open"></i>
+          </header>
+          <dl>
+            <div><dt>Enviado por</dt><dd>{{ message.enviadoPor }}</dd></div>
+            <div><dt>Fecha</dt><dd>{{ message.publicadoEn | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+            <div><dt>Audiencia</dt><dd>{{ audienceLabel(message.audiencia) }}</dd></div>
+            @if (message.tenantId) { <div><dt>Tenant</dt><dd>{{ message.tenantId }}</dd></div> }
+          </dl>
+          <div class="message-body">{{ message.contenido }}</div>
+          @if (message.expiraEn) {
+            <p class="expiration-note"><i class="pi pi-clock"></i>Disponible hasta {{ message.expiraEn | date: 'dd/MM/yyyy HH:mm' }}</p>
+          }
+        } @else {
+          <div class="empty-state"><i class="pi pi-envelope-open"></i><strong>Selecciona un mensaje</strong><p>Aqui podras leer su contenido completo.</p></div>
+        }
+      </article>
+    </section>
+  }
+
+  @if (activeTab() === 'COMPOSE' && isGeneralAdmin()) {
+    <form class="compose-layout" (submit)="$event.preventDefault(); send()">
+      <section class="compose-main panel">
+        <header class="panel-title"><span><i class="pi pi-pencil"></i></span><div><h2>Redactar mensaje</h2><p>El contenido se guardara en la bandeja personal de cada destinatario.</p></div></header>
+        <label>Asunto
+          <input pInputText name="asunto" maxlength="180" [(ngModel)]="form.asunto" placeholder="Mantenimiento programado" />
+        </label>
+        <label>Mensaje
+          <textarea name="contenido" maxlength="5000" rows="12" [(ngModel)]="form.contenido" placeholder="Escribe la comunicacion que recibiran los usuarios..."></textarea>
+          <small>{{ form.contenido.length }} / 5000 caracteres</small>
+        </label>
+      </section>
+
+      <aside class="compose-sidebar">
+        <section class="panel">
+          <header class="panel-title"><span><i class="pi pi-users"></i></span><div><h2>Destinatarios</h2><p>Selecciona exactamente quienes lo recibiran.</p></div></header>
+          <label>Audiencia
+            <p-select [options]="audienceOptions" optionLabel="label" optionValue="value" name="audiencia" [ngModel]="form.audiencia" (ngModelChange)="onAudienceChange($event)" appendTo="body" />
+          </label>
+          @if (audienceNeedsTenant()) {
+            <label>Empresa / tenant
+              <p-select [options]="empresas()" optionLabel="razonSocial" optionValue="tenantId" name="tenantId" [ngModel]="form.tenantId" (ngModelChange)="onTenantChange($event)" appendTo="body" placeholder="Seleccionar tenant" />
+            </label>
+          }
+          @if (audienceNeedsUsers()) {
+            <div class="user-picker">
+              <div><b>Usuarios activos</b><small>{{ form.usuarioIds.length }} seleccionado(s)</small></div>
+              @if (loadingUsers()) {
+                <p><i class="pi pi-spin pi-spinner"></i>Cargando usuarios...</p>
+              } @else {
+                @for (user of tenantUsers(); track user.id) {
+                  <label>
+                    <input type="checkbox" [checked]="isUserSelected(user.id)" (change)="toggleUser(user.id, $event)" />
+                    <span><b>{{ user.nombres }}</b><small>{{ user.username }}{{ user.email ? ' · ' + user.email : '' }}</small></span>
+                  </label>
+                } @empty {
+                  <p>Selecciona un tenant para cargar sus usuarios.</p>
+                }
+              }
+            </div>
+          }
+        </section>
+
+        <section class="panel">
+          <header class="panel-title"><span><i class="pi pi-sliders-h"></i></span><div><h2>Entrega</h2><p>Define importancia y vigencia.</p></div></header>
+          <label>Prioridad
+            <p-select [options]="priorityOptions" optionLabel="label" optionValue="value" name="prioridad" [(ngModel)]="form.prioridad" appendTo="body" />
+          </label>
+          <label>Vigencia
+            <p-select [options]="expirationOptions" optionLabel="label" optionValue="value" name="expirationDays" [(ngModel)]="form.expirationDays" appendTo="body" />
+          </label>
+          <p-button type="submit" label="Enviar a las bandejas" icon="pi pi-send" styleClass="az-primary send-button" [loading]="sending()" />
+        </section>
+      </aside>
+    </form>
+  }
+
+  @if (activeTab() === 'SENT' && isGeneralAdmin()) {
+    <section class="sent-panel">
+      <header><div><h2>Historial de mensajes</h2><p>Audiencia materializada y avance de lectura.</p></div></header>
+      <div class="sent-list">
+        @for (message of sentMessages(); track message.id) {
+          <article>
+            <span [class]="'sent-icon sent-icon--' + message.prioridad.toLowerCase()"><i class="pi pi-send"></i></span>
+            <div class="sent-copy">
+              <div><strong>{{ message.asunto }}</strong><time>{{ message.publicadoEn | date: 'dd/MM/yyyy HH:mm' }}</time></div>
+              <p>{{ message.contenido }}</p>
+              <small>{{ audienceLabel(message.audiencia) }} · {{ tenantLabel(message.tenantId) }}</small>
+            </div>
+            <div class="delivery-count"><strong>{{ message.readCount }} / {{ message.recipientCount }}</strong><span>leidos</span></div>
+          </article>
+        } @empty {
+          <div class="empty-state"><i class="pi pi-send"></i><strong>No hay mensajes enviados</strong><p>Usa “Nuevo mensaje” para crear la primera comunicacion.</p></div>
+        }
+      </div>
+    </section>
+  }
+</section>
