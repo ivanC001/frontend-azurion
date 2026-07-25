@@ -1485,6 +1485,7 @@ export interface CrmLandingConfig {
   readonly crearActividadInicial: boolean;
   readonly responsableId?: string | null;
   readonly catalogoItemIds: readonly number[];
+  readonly relaySecret?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -2737,6 +2738,16 @@ export class AdminSaasApiService {
     return this.http
       .post<ApiResponse<CrmLandingConfig>>(
         this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-key`),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  regenerateCrmLandingRelaySecret(id: number) {
+    return this.http
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-relay-secret`),
         null,
         { headers: this.session.apiHeaders() },
       )

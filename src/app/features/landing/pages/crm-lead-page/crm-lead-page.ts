@@ -66,7 +66,13 @@ export class CrmLeadPage implements OnInit {
   ];
 
   protected readonly hasValidLandingContext = computed(() =>
-    !!this.form.tenantId.trim() && !!this.form.catalogoItemId && !!this.form.catalogoToken.trim() && !!this.catalogoItem(),
+    Boolean(this.form.landingKey.trim())
+    || (
+      Boolean(this.form.tenantId.trim())
+      && Boolean(this.form.catalogoItemId)
+      && Boolean(this.form.catalogoToken.trim())
+      && Boolean(this.catalogoItem())
+    ),
   );
 
   protected readonly offerBadges = computed(() => {
@@ -114,8 +120,8 @@ export class CrmLeadPage implements OnInit {
   protected submit(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    if (!this.form.tenantId.trim() || !this.form.nombre.trim() || !this.form.correo.trim() || !this.form.telefono.trim() || !this.campaignLabel.trim()) {
-      this.errorMessage.set('Completa tenant, nombre, correo, telefono y campania para registrar el lead.');
+    if (!this.form.nombre.trim() || (!this.form.correo.trim() && !this.form.telefono.trim())) {
+      this.errorMessage.set('Completa el nombre y al menos un telefono o correo.');
       return;
     }
     if (!this.hasValidLandingContext()) {
@@ -126,8 +132,8 @@ export class CrmLeadPage implements OnInit {
     this.saving.set(true);
     this.crmApi
       .captureLead({
-        tenantId: this.form.tenantId.trim(),
-        Ruc_tenant: this.form.tenantId.trim(),
+        tenantId: this.form.tenantId.trim() || null,
+        Ruc_tenant: this.form.tenantId.trim() || null,
         landingKey: this.form.landingKey.trim() || null,
         tipoPersona: this.form.tipoPersona,
         tipoDocumento: this.form.tipoDocumento || null,
@@ -184,6 +190,9 @@ export class CrmLeadPage implements OnInit {
   }
 
   private loadCatalogoContext(): void {
+    if (this.form.landingKey.trim() && (!this.form.catalogoItemId || !this.form.catalogoToken.trim())) {
+      return;
+    }
     if (!this.form.tenantId.trim() || !this.form.catalogoItemId || !this.form.catalogoToken.trim()) {
       this.errorMessage.set('Landing no configurada: falta tenant, catalogoItemId o token.');
       return;

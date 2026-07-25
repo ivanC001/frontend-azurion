@@ -528,7 +528,11 @@
                         <p>Activa el canal y crea una clave independiente para cada landing que envia leads al CRM.</p>
                       </div>
                     </div>
-                    <app-landing-channel-config [canManage]="canManageCrmConfig()" [catalogItems]="catalogoItems()" />
+                    <app-landing-channel-config
+                      [canManage]="canManageCrmConfig()"
+                      [catalogItems]="catalogoItems()"
+                      [responsables]="responsableOptions()"
+                    />
                   </div>
                 } @else if (integration.canal === 'WHATSAPP') {
                   <div class="crm-integration-fields crm-integration-fields--editor crm-whatsapp-fields">

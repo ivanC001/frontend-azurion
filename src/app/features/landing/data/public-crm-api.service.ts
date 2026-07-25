@@ -37,12 +37,9 @@ export interface PublicCrmLeadRequest {
 }
 
 export interface PublicCrmLeadResponse {
-  readonly id: number;
-  readonly nombre: string;
-  readonly origen: string;
-  readonly canalIngreso: string;
-  readonly estado: string;
-  readonly productoPendiente?: boolean | null;
+  readonly receiptId: string;
+  readonly status: string;
+  readonly receivedAt: string;
 }
 
 export interface PublicCrmCatalogoItem {
@@ -62,9 +59,31 @@ export class PublicCrmApiService {
 
   captureLead(request: PublicCrmLeadRequest) {
     const tenantReference = (request.tenantId ?? request.Ruc_tenant ?? '').trim();
+    const sourceKey = request.landingKey?.trim() || '';
+    const idempotencyKey = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    if (sourceKey) {
+      const {
+        tenantId: _tenantId,
+        Ruc_tenant: _rucTenant,
+        landingKey: _landingKey,
+        ...publicPayload
+      } = request;
+      return this.http
+        .post<ApiResponse<PublicCrmLeadResponse>>(
+          this.apiUrl.url('saasCore', `/v1/public/forms/${encodeURIComponent(sourceKey)}/submissions`),
+          publicPayload,
+          { headers: new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey }) },
+        )
+        .pipe(map((response) => response.data));
+    }
     const headers = tenantReference
-      ? new HttpHeaders({ [this.settings.tenancy.headerName]: tenantReference })
-      : new HttpHeaders();
+      ? new HttpHeaders({
+        [this.settings.tenancy.headerName]: tenantReference,
+        'X-Idempotency-Key': idempotencyKey,
+      })
+      : new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey });
     const { tenantId: _tenantId, ...payload } = request;
     const body = tenantReference && !payload.Ruc_tenant ? { ...payload, Ruc_tenant: tenantReference } : payload;
     return this.http

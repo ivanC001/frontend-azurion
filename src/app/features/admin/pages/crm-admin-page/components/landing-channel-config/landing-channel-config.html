@@ -52,6 +52,14 @@
               <option value="SIN_CATALOGO">Sin catalogo</option>
             </select>
           </label>
+          <label>Responsable inicial
+            <select [(ngModel)]="form.responsableId" name="landingResponsible" [disabled]="!canManage()">
+              <option value="">Reparto automatico / cola publica</option>
+              @for (responsable of responsables(); track responsable.value) {
+                <option [value]="responsable.value">{{ responsable.label }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="landing-switches">
@@ -86,43 +94,80 @@
 
       <section class="landing-panel landing-panel--connection">
         <div class="landing-panel__title">
-          <i class="pi pi-code"></i>
-          <div><strong>Datos para conectar</strong><small>Copia estos valores en el formulario publicado.</small></div>
+          <i class="pi pi-directions-alt"></i>
+          <div><strong>Metodo de integracion</strong><small>Elige segun la tecnologia de tu landing.</small></div>
         </div>
 
-        <label class="landing-copy-field">URL de envio (POST)
-          <span><input readonly [value]="endpoint()" /><button type="button" title="Copiar URL" (click)="copy(endpoint(), 'URL')"><i class="pi pi-copy"></i></button></span>
-        </label>
+        <div class="landing-integration-selector">
+          <button type="button" [class.active]="integrationMode() === 'BROWSER'" (click)="integrationMode.set('BROWSER')">
+            <i class="pi pi-code"></i>
+            <span><b>JavaScript directo</b><small>HTML, React, Angular o landing estatica</small></span>
+          </button>
+          <button type="button" [class.active]="integrationMode() === 'SERVER'" (click)="integrationMode.set('SERVER')">
+            <i class="pi pi-server"></i>
+            <span><b>Servidor a servidor</b><small>Node, PHP, Java, WordPress o webhook</small></span>
+          </button>
+        </div>
 
-        <label class="landing-copy-field">Landing key
-          <span><input readonly [value]="selected()?.landingKey || 'Se genera al guardar'" /><button type="button" title="Copiar landing key" [disabled]="!selected()" (click)="copy(selected()?.landingKey || '', 'Landing key')"><i class="pi pi-copy"></i></button></span>
+        @if (integrationMode() === 'BROWSER') {
+          <div class="landing-method-summary landing-method-summary--browser">
+            <i class="pi pi-globe"></i>
+            <p><b>Formulario publico con CORS administrado por Azurion.</b><span>Funciona desde cualquier dominio. No utiliza contrasenas ni credenciales del usuario.</span></p>
+          </div>
+          <label class="landing-copy-field">URL publica de envio (POST)
+            <span><input readonly [value]="browserEndpoint()" /><button type="button" title="Copiar URL" (click)="copy(browserEndpoint(), 'URL publica')"><i class="pi pi-copy"></i></button></span>
+          </label>
+        } @else {
+          <div class="landing-method-summary landing-method-summary--server">
+            <i class="pi pi-shield"></i>
+            <p><b>Relay firmado con HMAC-SHA256.</b><span>No depende de CORS. El secreto debe permanecer solamente en el servidor de la landing.</span></p>
+          </div>
+          <label class="landing-copy-field">URL del relay seguro (POST)
+            <span><input readonly [value]="relayEndpoint()" /><button type="button" title="Copiar URL" (click)="copy(relayEndpoint(), 'URL del relay')"><i class="pi pi-copy"></i></button></span>
+          </label>
+          <label class="landing-copy-field landing-copy-field--secret">Secreto del relay
+            <span><input type="password" readonly [value]="selected()?.relaySecret || 'Se genera al guardar'" /><button type="button" title="Copiar secreto" [disabled]="!selected()" (click)="copy(selected()?.relaySecret || '', 'Secreto del relay')"><i class="pi pi-copy"></i></button></span>
+          </label>
+          @if (selected()) {
+            <button type="button" class="landing-rotate" (click)="regenerateRelaySecret()" [disabled]="!canManage() || rotatingSecret()">
+              <i [class]="rotatingSecret() ? 'pi pi-spin pi-spinner' : 'pi pi-key'"></i>
+              {{ rotatingSecret() ? 'Regenerando...' : 'Regenerar secreto del relay' }}
+            </button>
+          }
+        }
+
+        <label class="landing-copy-field">Source key
+          <span><input readonly [value]="selected()?.landingKey || 'Se genera al guardar'" /><button type="button" title="Copiar source key" [disabled]="!selected()" (click)="copy(selected()?.landingKey || '', 'Source key')"><i class="pi pi-copy"></i></button></span>
         </label>
 
         @if (selected()) {
           <button type="button" class="landing-rotate" (click)="regenerateKey()" [disabled]="!canManage() || rotating()">
             <i [class]="rotating() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
-            {{ rotating() ? 'Regenerando...' : 'Regenerar landing key' }}
+            {{ rotating() ? 'Regenerando...' : 'Regenerar source key' }}
           </button>
         }
 
         <div class="landing-security-note">
           <i class="pi pi-shield"></i>
-          <p><b>La landing key identifica el formulario; no es una contrasena privada.</b> El servidor tambien aplica limite de solicitudes, honeypot y validacion de duplicados. Regenerala si detectas abuso.</p>
+          <p><b>La source key identifica y enruta al tenant; no es una contrasena.</b> Azurion aplica limite de solicitudes, honeypot, idempotencia y validacion de duplicados. El secreto HMAC solo corresponde al modo servidor.</p>
         </div>
       </section>
     </div>
 
     <section class="landing-contract">
       <header>
-        <div><strong>JSON listo para integrar</strong><small>El campo <code>website</code> es un honeypot y debe enviarse vacio.</small></div>
-        <button type="button" (click)="copy(jsonExample(), 'JSON')"><i class="pi pi-copy"></i> Copiar JSON</button>
+        <div>
+          <strong>{{ integrationMode() === 'BROWSER' ? 'Integracion JavaScript' : 'Integracion desde backend' }}</strong>
+          <small>{{ integrationMode() === 'BROWSER' ? 'Copia este codigo en el formulario publicado.' : 'Ejemplo Node.js con firma HMAC y proteccion contra reintentos.' }}</small>
+        </div>
+        <button type="button" (click)="copy(integrationMode() === 'BROWSER' ? fetchExample() : serverExample(), 'Codigo de integracion')"><i class="pi pi-copy"></i> Copiar codigo</button>
       </header>
-      <pre>{{ jsonExample() }}</pre>
+      <pre>{{ integrationMode() === 'BROWSER' ? fetchExample() : serverExample() }}</pre>
       <details>
-        <summary>Ver ejemplo JavaScript con fetch</summary>
-        <div><button type="button" (click)="copy(fetchExample(), 'Ejemplo JavaScript')"><i class="pi pi-copy"></i> Copiar</button><pre>{{ fetchExample() }}</pre></div>
+        <summary>Ver solamente el JSON del formulario</summary>
+        <div><button type="button" (click)="copy(jsonExample(), 'JSON')"><i class="pi pi-copy"></i> Copiar</button><pre>{{ jsonExample() }}</pre></div>
       </details>
-      <footer><i class="pi pi-info-circle"></i> Obligatorios: <b>Ruc_tenant</b>, <b>landingKey</b>, <b>nombre</b> y al menos <b>telefono o email</b>. El producto es opcional salvo que cambies la regla.</footer>
+      <footer><i class="pi pi-info-circle"></i> Obligatorios: <b>nombre</b> y al menos <b>telefono o email</b>. No debes enviar RUC ni tenant: la source key selecciona automaticamente la empresa correcta.</footer>
     </section>
   }
 </section>
