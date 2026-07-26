@@ -119,6 +119,17 @@
           <span>Personalizar cupo para esta empresa</span>
         </label>
         <label>
+          <span>Inicio de vigencia</span>
+          <input
+            pInputText
+            type="date"
+            [ngModel]="subscriptionStartDate"
+            (ngModelChange)="subscriptionStartDate = $event"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <small>La suscripcion se considera vigente desde esta fecha.</small>
+        </label>
+        <label>
           <span>Cupo de usuarios activos</span>
           <input
             pInputText
@@ -132,7 +143,7 @@
           <small>{{ activeTenantUsers() }} usuarios activos actualmente.</small>
         </label>
         <p-button
-          label="Guardar plan y cupo"
+          label="Guardar plan, fecha y cupo"
           icon="pi pi-save"
           size="small"
           [loading]="saving()"

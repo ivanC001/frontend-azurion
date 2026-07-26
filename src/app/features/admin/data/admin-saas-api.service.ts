@@ -1489,6 +1489,7 @@ export interface CrmCanalTokenConfig {
 export interface UpdateEmpresaSubscriptionPlanRequest {
   readonly planId: number;
   readonly limiteUsuarios?: number | null;
+  readonly fechaInicio?: string | null;
 }
 
 export type CrmLandingProductMode = 'REQUERIDO' | 'OPCIONAL' | 'SIN_CATALOGO';

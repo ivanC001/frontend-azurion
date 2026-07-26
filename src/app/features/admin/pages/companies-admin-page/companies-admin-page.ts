@@ -11,6 +11,7 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
+import { toLocalDateInputValue } from '@core/utils/local-date';
 import { FacturadorApiService } from '@features/facturador/data/facturador-api.service';
 import {
   AdminSaasApiService,
@@ -303,7 +304,7 @@ export class CompaniesAdminPage {
 
     if (!this.isValidForm()) {
       this.errorMessage.set(
-        'Completa identificador fiscal, pais, razon social, tenantId, schemaName y al menos un modulo inicial.',
+        'Completa identificador fiscal, pais, razon social, tenantId, schemaName, plan, fecha de inicio y al menos un modulo inicial.',
       );
       return;
     }
@@ -507,6 +508,8 @@ export class CompaniesAdminPage {
       this.form.razonSocial.trim().length > 0 &&
       /^[a-z][a-z0-9_]{2,62}$/.test(this.form.tenantId.trim()) &&
       /^[a-z][a-z0-9_]{2,62}$/.test(this.form.schemaName.trim()) &&
+      this.form.planId !== null &&
+      /^\d{4}-\d{2}-\d{2}$/.test(this.form.fechaInicio) &&
       this.form.moduloCodigos.length > 0
     );
   }
@@ -526,7 +529,7 @@ export class CompaniesAdminPage {
       tenantId: '',
       schemaName: '',
       planId: null,
-      fechaInicio: new Date().toISOString().slice(0, 10),
+      fechaInicio: toLocalDateInputValue(),
       moduloCodigos: [],
       syncFacturador: false,
       logoFile: null,

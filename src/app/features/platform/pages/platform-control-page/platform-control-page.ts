@@ -9,6 +9,7 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
+import { toLocalDateInputValue } from '@core/utils/local-date';
 import {
   AdminSaasApiService,
   Empresa,
@@ -47,6 +48,7 @@ export class PlatformControlPage {
   protected readonly subscriptionPlanId = signal<number | null>(null);
   protected customUserLimitEnabled = false;
   protected subscriptionUserLimit = 1;
+  protected subscriptionStartDate = toLocalDateInputValue();
 
   protected readonly selectedEmpresa = computed(() => {
     const empresaId = this.selectedEmpresaId();
@@ -202,6 +204,11 @@ export class PlatformControlPage {
       return;
     }
 
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(this.subscriptionStartDate)) {
+      this.errorMessage.set('Selecciona una fecha de inicio valida para la suscripcion.');
+      return;
+    }
+
     const requestedLimit = Math.trunc(Number(this.subscriptionUserLimit));
     if (
       this.customUserLimitEnabled &&
@@ -221,12 +228,13 @@ export class PlatformControlPage {
       .updateEmpresaSubscriptionPlan(empresa.id, {
         planId,
         limiteUsuarios: this.customUserLimitEnabled ? requestedLimit : null,
+        fechaInicio: this.subscriptionStartDate,
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (subscription) => {
           this.successMessage.set(
-            `Plan ${subscription.planNombre} aplicado con cupo de ${subscription.limiteUsuarios} usuarios.`,
+            `Plan ${subscription.planNombre} aplicado desde ${subscription.fechaInicio} con cupo de ${subscription.limiteUsuarios} usuarios.`,
           );
           this.load();
         },
@@ -255,7 +263,7 @@ export class PlatformControlPage {
           moduloCodigo: modulo.codigo,
           activo,
           estado: activo ? 'ACTIVO' : 'INACTIVO',
-          fechaInicio: activo ? current?.fechaInicio || new Date().toISOString().slice(0, 10) : current?.fechaInicio || null,
+          fechaInicio: activo ? current?.fechaInicio || toLocalDateInputValue() : current?.fechaInicio || null,
           fechaFin: activo ? null : current?.fechaFin || null,
           configuracionExtra: current?.configuracionExtra ?? null,
         };
@@ -289,7 +297,7 @@ export class PlatformControlPage {
     this.api
       .updateSuscripcionEstado(suscripcion.id, {
         estado,
-        fechaFin: estado === 'CANCELADA' ? new Date().toISOString().slice(0, 10) : null,
+        fechaFin: estado === 'CANCELADA' ? toLocalDateInputValue() : null,
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
@@ -453,6 +461,8 @@ export class PlatformControlPage {
       subscription?.limiteUsuariosPersonalizado ?? false;
     this.subscriptionUserLimit =
       subscription?.limiteUsuarios ?? plan?.limiteUsuarios ?? 1;
+    this.subscriptionStartDate =
+      subscription?.fechaInicio ?? toLocalDateInputValue();
   }
 
   private buildModuleDraft(modulos: EmpresaModulo[]): Record<string, boolean> {

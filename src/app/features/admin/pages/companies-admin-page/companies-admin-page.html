@@ -483,9 +483,9 @@
         [ngModel]="form.planId"
         (ngModelChange)="onPlanChanged($event)"
         placeholder="Seleccionar plan"
-        [showClear]="true"
+        [showClear]="false"
       />
-      <small>Si eliges un plan, sus modulos se cargan automaticamente para el provisioning inicial.</small>
+      <small>Obligatorio. Sus modulos se cargan automaticamente para el provisioning inicial.</small>
     </label>
 
     <label>
