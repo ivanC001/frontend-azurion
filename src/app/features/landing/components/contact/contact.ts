@@ -9,9 +9,6 @@ import { TextareaModule } from 'primeng/textarea';
 import { PublicCrmApiService } from '../../data/public-crm-api.service';
 
 const DEFAULT_LANDING_CAMPAIGN = 'municipios';
-const DEFAULT_LANDING_CATALOGO_ITEM_ID = 2;
-const DEFAULT_LANDING_CATALOGO_TOKEN = '17PpDlCo06aCju4Z6iptGGvxzLbMMv9k';
-const DEFAULT_LANDING_TENANT = '20000000012';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,12 +22,13 @@ export class ContactComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly saving = signal(false);
+  private pendingSubmissionKey: string | null = null;
   protected readonly successMessage = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly form = {
-    tenantId: this.route.snapshot.queryParamMap.get('tenant') || DEFAULT_LANDING_TENANT,
-    catalogoItemId: Number(this.route.snapshot.queryParamMap.get('catalogoItemId')) || DEFAULT_LANDING_CATALOGO_ITEM_ID,
-    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || DEFAULT_LANDING_CATALOGO_TOKEN,
+    tenantId: this.route.snapshot.queryParamMap.get('tenant') || '',
+    catalogoItemId: Number(this.route.snapshot.queryParamMap.get('catalogoItemId')) || 0,
+    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || '',
     landingKey: this.route.snapshot.queryParamMap.get('landingKey') || '',
     campania: this.route.snapshot.queryParamMap.get('campania') || DEFAULT_LANDING_CAMPAIGN,
     name: '',
@@ -47,10 +45,13 @@ export class ContactComponent {
   ];
 
   protected submit(): void {
+    if (this.saving()) {
+      return;
+    }
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    if (!this.form.tenantId.trim()) {
-      this.errorMessage.set('Indica el tenant destino para registrar el lead.');
+    if (!this.form.landingKey.trim() && !this.form.tenantId.trim()) {
+      this.errorMessage.set('Este formulario no tiene una landingKey configurada.');
       return;
     }
     if (!this.form.name.trim()) {
@@ -62,14 +63,15 @@ export class ContactComponent {
       return;
     }
 
+    this.pendingSubmissionKey ??= this.crmApi.createSubmissionKey();
     this.saving.set(true);
     this.crmApi
       .captureLead({
         tenantId: this.form.tenantId.trim(),
         Ruc_tenant: this.form.tenantId.trim(),
         landingKey: this.form.landingKey.trim() || null,
-        catalogoItemId: this.form.catalogoItemId,
-        catalogoToken: this.form.catalogoToken.trim(),
+        catalogoItemId: this.form.catalogoItemId || null,
+        catalogoToken: this.form.catalogoToken.trim() || null,
         tipoPersona: this.form.company.trim() ? 'JURIDICA' : 'NATURAL',
         nombre: this.form.name.trim(),
         empresa: this.form.company.trim() || null,
@@ -81,10 +83,11 @@ export class ContactComponent {
         landingUrl: typeof location !== 'undefined' ? location.href : null,
         mensaje: this.form.message.trim() || null,
         website: '',
-      })
+      }, this.pendingSubmissionKey)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
+          this.pendingSubmissionKey = null;
           this.successMessage.set('Solicitud registrada. El equipo comercial te contactara.');
           this.form.name = '';
           this.form.company = '';

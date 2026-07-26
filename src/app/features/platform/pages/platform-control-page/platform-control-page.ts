@@ -74,6 +74,12 @@ export class PlatformControlPage {
   protected readonly selectedPlan = computed(() =>
     this.planes().find((plan) => plan.id === this.subscriptionPlanId()) ?? null,
   );
+  protected readonly selectedPlanModuleCount = computed(
+    () => this.selectedPlan()?.moduloCodigos?.length ?? 0,
+  );
+  protected readonly selectedPlanHasModules = computed(
+    () => this.selectedPlanModuleCount() > 0,
+  );
 
   protected readonly planOptions = computed(() => {
     const currentPlanId = this.selectedSubscription()?.planId;
@@ -83,8 +89,9 @@ export class PlatformControlPage {
           plan.estado.toUpperCase() === 'ACTIVO' || plan.id === currentPlanId,
       )
       .map((plan) => ({
-        label: `${plan.nombre} · ${plan.limiteUsuarios} usuarios · S/ ${Number(plan.precioMensual).toFixed(2)}`,
+        label: `${plan.nombre} · ${plan.moduloCodigos?.length ?? 0} módulos · ${plan.limiteUsuarios} usuarios · S/ ${Number(plan.precioMensual).toFixed(2)}`,
         value: plan.id,
+        disabled: (plan.moduloCodigos?.length ?? 0) === 0,
       }));
   });
 
@@ -186,6 +193,12 @@ export class PlatformControlPage {
     const planId = this.subscriptionPlanId();
     if (!empresa || !plan || !planId) {
       this.errorMessage.set('Selecciona una empresa y un plan activo.');
+      return;
+    }
+    if (!this.selectedPlanHasModules()) {
+      this.errorMessage.set(
+        `El plan ${plan.nombre} no tiene módulos configurados. Complétalo en Planes antes de asignarlo.`,
+      );
       return;
     }
 
@@ -452,9 +465,25 @@ export class PlatformControlPage {
 
   private resolveError(error: unknown): string {
     if (typeof error === 'object' && error !== null && 'error' in error) {
-      const apiError = (error as { error?: { message?: string; details?: string[] } }).error;
-      return apiError?.details?.[0] || apiError?.message || 'No se pudo completar la operacion.';
+      const apiError = (
+        error as {
+          error?: {
+            message?: string;
+            details?: string[];
+            traceId?: string;
+            userActionable?: boolean;
+          };
+        }
+      ).error;
+      const message =
+        apiError?.details?.[0] ||
+        apiError?.message ||
+        'No se pudo completar la operación.';
+      if (apiError?.userActionable === false && apiError.traceId) {
+        return `${message} Código de soporte: ${apiError.traceId}`;
+      }
+      return message;
     }
-    return 'No se pudo completar la operacion.';
+    return 'No se pudo completar la operación.';
   }
 }

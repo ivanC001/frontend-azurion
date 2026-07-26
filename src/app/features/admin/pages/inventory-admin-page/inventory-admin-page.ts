@@ -193,7 +193,7 @@ export class InventoryAdminPage {
     this.errorMessage.set(null);
     forkJoin({
       almacenes: this.api.listAlmacenes(),
-      productos: this.api.listProductos(),
+      productos: this.api.listAllProductos(),
       stock: this.api.listStock(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,

@@ -3035,7 +3035,7 @@ export class CrmAdminPage {
       catalogo: this.api.listCrmCatalogo().pipe(catchError(() => of([] as CrmCatalogoItem[]))),
       actividades: this.crmFollowups.pageActivities({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).pipe(map((page) => page.content)),
       clientes: this.api.listClientes().pipe(catchError(() => of([] as Cliente[]))),
-      productos: this.api.listProductos().pipe(catchError(() => of([] as Producto[]))),
+      productos: this.api.listAllProductos().pipe(catchError(() => of([] as Producto[]))),
       sucursales: this.api.listSucursales().pipe(catchError(() => of([] as Sucursal[]))),
       usuarios: this.api.listUsuarios().pipe(catchError(() => of([] as UsuarioTenant[]))),
       cotizaciones: this.api.listCotizaciones().pipe(catchError(() => of([] as Cotizacion[]))),

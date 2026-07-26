@@ -219,8 +219,9 @@ export class SalesPosPage {
   }
 
   protected addSearchMatch(): void {
-    const query = this.searchTerm().trim().toLowerCase();
-    if (!query) {
+    const rawQuery = this.searchTerm().trim();
+    const query = rawQuery.toLowerCase();
+    if (!rawQuery) {
       return;
     }
 
@@ -229,15 +230,30 @@ export class SalesPosPage {
         (value) => (value || '').trim().toLowerCase() === query,
       ),
     );
-    const product =
-      exact || (this.filteredProducts().length === 1 ? this.filteredProducts()[0] : null);
-    if (!product) {
-      this.toast.info('Selecciona un producto de los resultados o completa su codigo.');
+    if (exact) {
+      this.addProduct(exact);
+      this.searchTerm.set('');
       return;
     }
 
-    this.addProduct(product);
-    this.searchTerm.set('');
+    this.api.lookupProducto(rawQuery).subscribe({
+      next: (remoteProduct) => {
+        const product =
+          remoteProduct ||
+          (this.filteredProducts().length === 1 ? this.filteredProducts()[0] : null);
+        if (!product) {
+          this.toast.info('No se encontró un producto con ese código, SKU o código de barras.');
+          return;
+        }
+        if (!product.activo) {
+          this.toast.info(`${product.nombre} está inactivo y no puede agregarse a la venta.`);
+          return;
+        }
+        this.addProduct(product);
+        this.searchTerm.set('');
+      },
+      error: () => this.toast.error('No se pudo consultar el código escaneado. Intenta nuevamente.'),
+    });
   }
 
   protected addProduct(producto: Producto): void {

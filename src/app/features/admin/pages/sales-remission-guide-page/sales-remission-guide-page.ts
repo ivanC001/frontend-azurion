@@ -105,7 +105,7 @@ export class SalesRemissionGuidePage {
     this.errorMessage.set(null);
     forkJoin({
       sucursales: this.api.listSucursales(),
-      productos: this.api.listProductos(),
+      productos: this.api.listAllProductos(),
       guias: this.api.listGuiasRemision(),
     })
       .pipe(finalize(() => this.loading.set(false)))

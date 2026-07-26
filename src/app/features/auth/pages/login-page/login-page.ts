@@ -210,8 +210,7 @@ export class LoginPage implements OnInit {
     }
 
     const normalized = input.value
-      .toUpperCase()
-      .replace(/[^A-Z0-9._/-]/g, '')
+      .replace(/[^A-Za-z0-9._/-]/g, '')
       .slice(0, 40);
     input.value = normalized;
     this.tenantCredentials.tenantId = normalized;

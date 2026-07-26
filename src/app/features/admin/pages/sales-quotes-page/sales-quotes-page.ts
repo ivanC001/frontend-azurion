@@ -132,7 +132,7 @@ export class SalesQuotesPage {
       cotizaciones: this.api.listCotizaciones(),
       clientes: this.api.listClientes(),
       sucursales: this.api.listSucursales(),
-      productos: this.api.listProductos(),
+      productos: this.api.listAllProductos(),
       cajas: this.api.listCajas('ABIERTA'),
     })
       .pipe(finalize(() => this.loading.set(false)))

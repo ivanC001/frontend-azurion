@@ -7,6 +7,7 @@ import {
   AdminSaasApiService,
   CrmCatalogoItem,
   CrmLandingConfig,
+  CrmLandingDuplicatePolicy,
   CrmLandingProductMode,
   SaveCrmLandingConfigRequest,
 } from '../../../../data/admin-saas-api.service';
@@ -19,6 +20,7 @@ interface LandingConfigForm {
   recibirLeads: boolean;
   crearActividadInicial: boolean;
   responsableId: string;
+  validarDuplicadosPor: CrmLandingDuplicatePolicy;
   catalogoItemIds: number[];
 }
 
@@ -121,6 +123,7 @@ export class LandingChannelConfig implements OnInit {
       recibirLeads: this.form.recibirLeads,
       crearActividadInicial: this.form.crearActividadInicial,
       responsableId: this.form.responsableId || null,
+      validarDuplicadosPor: this.form.validarDuplicadosPor,
       catalogoItemIds: this.form.modoProducto === 'SIN_CATALOGO' ? [] : this.form.catalogoItemIds,
     };
 
@@ -242,7 +245,7 @@ export class LandingChannelConfig implements OnInit {
   }
 
   protected fetchExample(): string {
-    return `const payload = ${this.jsonExample()};\n\nfetch('${this.browserEndpoint()}', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-Idempotency-Key': crypto.randomUUID()\n  },\n  body: JSON.stringify(payload)\n})\n  .then(async response => {\n    const result = await response.json();\n    if (!response.ok) throw new Error(result.message || 'No se pudo enviar');\n    return result.data;\n  })\n  .then(receipt => console.log('Lead recibido:', receipt.receiptId));`;
+    return `const payload = ${this.jsonExample()};\n// Genera una vez por envio y reutiliza esta clave si reintentas la misma solicitud.\nconst idempotencyKey = crypto.randomUUID();\n\nfetch('${this.browserEndpoint()}', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-Idempotency-Key': idempotencyKey\n  },\n  body: JSON.stringify(payload)\n})\n  .then(async response => {\n    const result = await response.json();\n    if (!response.ok) throw new Error(result.message || 'No se pudo enviar');\n    return result.data;\n  })\n  .then(receipt => console.log('Lead recibido:', receipt.receiptId));`;
   }
 
   protected serverExample(): string {
@@ -275,6 +278,7 @@ export class LandingChannelConfig implements OnInit {
       recibirLeads: configuration.recibirLeads,
       crearActividadInicial: configuration.crearActividadInicial,
       responsableId: configuration.responsableId || '',
+      validarDuplicadosPor: configuration.validarDuplicadosPor || 'TELEFONO_CORREO',
       catalogoItemIds: [...(configuration.catalogoItemIds || [])],
     };
   }
@@ -288,6 +292,7 @@ export class LandingChannelConfig implements OnInit {
       recibirLeads: true,
       crearActividadInicial: true,
       responsableId: '',
+      validarDuplicadosPor: 'TELEFONO_CORREO',
       catalogoItemIds: [],
     };
   }

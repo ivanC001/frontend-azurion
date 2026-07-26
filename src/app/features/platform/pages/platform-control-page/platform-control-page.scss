@@ -85,6 +85,9 @@
 .plan-capacity { align-items: center; background: var(--az-surface-hover); border-radius: 0.55rem; display: flex; font-size: 0.73rem; justify-content: space-between; padding: 0.45rem 0.55rem; }
 .plan-capacity span { color: var(--az-text-soft); }
 .plan-capacity strong { color: var(--az-text); }
+.plan-capacity--warning { background: #fff7ed; }
+.plan-capacity--warning strong { color: #c2410c; }
+.plan-warning { align-items: center; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.55rem; color: #9a3412; display: flex; font-size: 0.73rem; gap: 0.45rem; padding: 0.55rem; }
 
 .actions-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .actions-row--stacked { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }

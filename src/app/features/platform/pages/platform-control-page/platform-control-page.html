@@ -1,9 +1,9 @@
 <section class="platform-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">Administracion Azurion</p>
+      <p class="page-eyebrow">Administración Azurion</p>
       <h1>Resumen de plataforma</h1>
-      <p>Supervisa tenants, suscripciones, usuarios y modulos desde una sola vista.</p>
+      <p>Supervisa tenants, suscripciones, usuarios y módulos desde una sola vista.</p>
     </div>
     <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
   </header>
@@ -26,11 +26,11 @@
     </article>
     <article class="metric metric--amber">
       <i class="pi pi-pause-circle"></i>
-      <div><span>Suscripciones suspendidas</span><strong>{{ suspendedSubscriptions() }}</strong><small>requieren revision</small></div>
+      <div><span>Suscripciones suspendidas</span><strong>{{ suspendedSubscriptions() }}</strong><small>requieren revisión</small></div>
     </article>
     <article class="metric metric--violet">
       <i class="pi pi-th-large"></i>
-      <div><span>Modulos disponibles</span><strong>{{ modulos().length }}</strong><small>catalogo de plataforma</small></div>
+      <div><span>Módulos disponibles</span><strong>{{ modulos().length }}</strong><small>catálogo de plataforma</small></div>
     </article>
   </section>
 
@@ -78,7 +78,7 @@
           <div><dt>Fin</dt><dd>{{ suscripcion.fechaFin || 'Vigente' }}</dd></div>
         </dl>
       } @else {
-        <div class="empty-state"><i class="pi pi-info-circle"></i><p>La empresa no tiene una suscripcion. Selecciona un plan para crearla.</p></div>
+        <div class="empty-state"><i class="pi pi-info-circle"></i><p>La empresa no tiene una suscripción. Selecciona un plan para crearla.</p></div>
       }
 
       <div class="subscription-editor">
@@ -88,6 +88,7 @@
             [options]="planOptions()"
             optionLabel="label"
             optionValue="value"
+            optionDisabled="disabled"
             [ngModel]="subscriptionPlanId()"
             (ngModelChange)="onSubscriptionPlanChange($event)"
             placeholder="Seleccionar plan"
@@ -98,6 +99,16 @@
             <span>Cupo base del plan</span>
             <strong>{{ plan.limiteUsuarios }} usuarios</strong>
           </div>
+          <div class="plan-capacity" [class.plan-capacity--warning]="!selectedPlanHasModules()">
+            <span>Módulos incluidos</span>
+            <strong>{{ selectedPlanModuleCount() }}</strong>
+          </div>
+          @if (!selectedPlanHasModules()) {
+            <div class="plan-warning">
+              <i class="pi pi-exclamation-triangle"></i>
+              Este plan no se puede asignar hasta configurar al menos un módulo.
+            </div>
+          }
         }
         <label class="custom-limit-toggle">
           <input
@@ -125,7 +136,7 @@
           icon="pi pi-save"
           size="small"
           [loading]="saving()"
-          [disabled]="!subscriptionPlanId()"
+          [disabled]="!subscriptionPlanId() || !selectedPlanHasModules()"
           (onClick)="saveSubscriptionPlan()"
         />
       </div>

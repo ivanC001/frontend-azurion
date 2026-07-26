@@ -23,6 +23,7 @@ export class CrmLeadPage implements OnInit {
   private readonly crmApi = inject(PublicCrmApiService);
 
   protected readonly saving = signal(false);
+  private pendingSubmissionKey: string | null = null;
   protected readonly loadingCatalog = signal(false);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
@@ -118,6 +119,9 @@ export class CrmLeadPage implements OnInit {
   }
 
   protected submit(): void {
+    if (this.saving()) {
+      return;
+    }
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.form.nombre.trim() || (!this.form.correo.trim() && !this.form.telefono.trim())) {
@@ -129,6 +133,7 @@ export class CrmLeadPage implements OnInit {
       return;
     }
 
+    this.pendingSubmissionKey ??= this.crmApi.createSubmissionKey();
     this.saving.set(true);
     this.crmApi
       .captureLead({
@@ -163,10 +168,11 @@ export class CrmLeadPage implements OnInit {
           ofertaSnapshot: this.querySnapshot(),
           query: typeof location !== 'undefined' ? location.search : '',
         }),
-      })
+      }, this.pendingSubmissionKey)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
+          this.pendingSubmissionKey = null;
           this.successMessage.set('Tu solicitud fue registrada correctamente.');
           this.form.nombre = '';
           this.form.empresa = '';

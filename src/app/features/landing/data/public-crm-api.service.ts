@@ -57,12 +57,10 @@ export class PublicCrmApiService {
   private readonly apiUrl = inject(ApiUrlService);
   private readonly settings = inject(APP_SETTINGS);
 
-  captureLead(request: PublicCrmLeadRequest) {
+  captureLead(request: PublicCrmLeadRequest, submissionKey?: string | null) {
     const tenantReference = (request.tenantId ?? request.Ruc_tenant ?? '').trim();
     const sourceKey = request.landingKey?.trim() || '';
-    const idempotencyKey = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const idempotencyKey = submissionKey || this.createSubmissionKey();
     if (sourceKey) {
       const {
         tenantId: _tenantId,
@@ -93,6 +91,12 @@ export class PublicCrmApiService {
         { headers },
       )
       .pipe(map((response) => response.data));
+  }
+
+  createSubmissionKey(): string {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
   getCatalogoItem(tenantId: string, id: number, token: string) {

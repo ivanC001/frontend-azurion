@@ -297,7 +297,7 @@ export class AdminDashboardPage {
         timeout(AdminDashboardPage.REQUEST_TIMEOUT_MS),
         catchError(() => of([] as Caja[])),
       ),
-      productos: this.api.listProductos().pipe(
+      productos: this.api.listAllProductos().pipe(
         timeout(AdminDashboardPage.REQUEST_TIMEOUT_MS),
         catchError(() => of([] as Producto[])),
       ),

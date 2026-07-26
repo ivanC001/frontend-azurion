@@ -1,5 +1,13 @@
-import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -46,6 +54,10 @@ interface ProductoForm {
   precio: number;
   almacenId: number | null;
   activo: boolean;
+  cantidadInicial: number;
+  codigoLote: string;
+  fechaFabricacion: string;
+  fechaVencimiento: string;
 }
 
 @Component({
@@ -53,6 +65,7 @@ interface ProductoForm {
   selector: 'app-products-admin-page',
   imports: [
     DatePipe,
+    DecimalPipe,
     FormsModule,
     ButtonModule,
     DialogModule,
@@ -67,6 +80,9 @@ interface ProductoForm {
   styleUrl: './products-admin-page.scss',
 })
 export class ProductsAdminPage {
+  @ViewChild('barcodeInput') private barcodeInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('productNameInput') private productNameInput?: ElementRef<HTMLInputElement>;
+
   private readonly api = inject(AdminSaasApiService);
   private readonly router = inject(Router);
   private readonly lowStockAlerts = inject(LowStockAlertService);
@@ -82,6 +98,8 @@ export class ProductsAdminPage {
   protected readonly productDialogVisible = signal(false);
   protected readonly advancedFieldsVisible = signal(false);
   protected readonly selectedPhotoName = signal<string | null>(null);
+  protected readonly checkingBarcode = signal(false);
+  protected readonly barcodeMessage = signal<string | null>(null);
 
   protected productForm: ProductoForm = {
     id: null,
@@ -108,6 +126,10 @@ export class ProductsAdminPage {
     precio: 0,
     almacenId: null,
     activo: true,
+    cantidadInicial: 0,
+    codigoLote: '',
+    fechaFabricacion: '',
+    fechaVencimiento: '',
   };
 
   protected readonly almacenOptions = computed(() =>
@@ -193,7 +215,7 @@ export class ProductsAdminPage {
     this.loading.set(true);
     this.errorMessage.set(null);
     forkJoin({
-      productos: this.api.listProductos(),
+      productos: this.api.listAllProductos(),
       almacenes: this.api.listAlmacenes(),
       categorias: this.api.listCategoriasProducto(),
     })
@@ -219,6 +241,7 @@ export class ProductsAdminPage {
     this.successMessage.set(null);
     this.advancedFieldsVisible.set(false);
     this.selectedPhotoName.set(null);
+    this.barcodeMessage.set(null);
     this.productForm = {
       id: null,
       codigo: '',
@@ -244,14 +267,20 @@ export class ProductsAdminPage {
       precio: 0,
       almacenId: this.almacenes()[0]?.id ?? null,
       activo: true,
+      cantidadInicial: 0,
+      codigoLote: '',
+      fechaFabricacion: '',
+      fechaVencimiento: '',
     };
     this.productDialogVisible.set(true);
+    this.focusBarcode();
   }
 
   protected openEditProductDialog(producto: Producto): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.selectedPhotoName.set(null);
+    this.barcodeMessage.set(null);
     this.advancedFieldsVisible.set(
       Boolean(producto.codigo || producto.codigoBarras || producto.categoriaId || producto.marcaId),
     );
@@ -280,11 +309,15 @@ export class ProductsAdminPage {
       precio: Number(producto.precio),
       almacenId: producto.almacenId,
       activo: producto.activo,
+      cantidadInicial: 0,
+      codigoLote: '',
+      fechaFabricacion: '',
+      fechaVencimiento: '',
     };
     this.productDialogVisible.set(true);
   }
 
-  protected saveProducto(): void {
+  protected saveProducto(keepCreating = false): void {
     if (this.saving()) {
       return;
     }
@@ -296,6 +329,7 @@ export class ProductsAdminPage {
     const precio = this.normalizeNumber(this.productForm.precio);
     const precioCompraBase = this.normalizeNumber(this.productForm.costoPromedio);
     const stockMinimo = this.normalizeNumber(this.productForm.stockMinimo);
+    const cantidadInicial = this.normalizeNumber(this.productForm.cantidadInicial);
     const manejaStock = this.productForm.tipoProducto !== 'SERVICIO';
     if (!nombre) {
       this.errorMessage.set('Completa el nombre del producto.');
@@ -307,7 +341,25 @@ export class ProductsAdminPage {
     }
 
     if (stockMinimo < 0) {
-      this.errorMessage.set('El stock minimo no puede ser negativo.');
+      this.errorMessage.set('El stock mínimo no puede ser negativo.');
+      return;
+    }
+    if (cantidadInicial < 0) {
+      this.errorMessage.set('La cantidad inicial no puede ser negativa.');
+      return;
+    }
+    if (cantidadInicial > 0 && precioCompraBase <= 0) {
+      this.errorMessage.set('Indica un costo inicial mayor a cero para registrar existencias.');
+      return;
+    }
+    if (
+      cantidadInicial > 0 &&
+      this.productForm.vencimiento &&
+      (!this.productForm.codigoLote.trim() || !this.productForm.fechaVencimiento)
+    ) {
+      this.errorMessage.set(
+        'Completa el código de lote y la fecha de vencimiento de las existencias iniciales.',
+      );
       return;
     }
     if (
@@ -361,70 +413,101 @@ export class ProductsAdminPage {
     }
 
     const sku = this.productForm.sku.trim().toUpperCase();
-    if (!sku || !this.productForm.almacenId) {
+    if (!this.productForm.almacenId) {
       this.saving.set(false);
-      this.errorMessage.set(
-        'Completa SKU y registra al menos un almacen antes de crear productos.',
-      );
-      return;
-    }
-    const codigo = (this.productForm.codigo.trim() || sku).toUpperCase();
-    const skuDuplicado = this.productos().some(
-      (producto) => producto.sku.trim().toUpperCase() === sku,
-    );
-    if (skuDuplicado) {
-      this.saving.set(false);
-      this.errorMessage.set(`Ya existe un producto con el SKU ${sku}.`);
-      return;
-    }
-    const codigoDuplicado = this.productos().some(
-      (producto) => (producto.codigo || '').trim().toUpperCase() === codigo,
-    );
-    if (codigoDuplicado) {
-      this.saving.set(false);
-      this.errorMessage.set(`Ya existe un producto con el codigo ${codigo}.`);
+      this.errorMessage.set('Selecciona un almacén antes de crear el producto.');
       return;
     }
 
     this.api
-      .createProducto({
-        sku,
+      .createProductoRapido({
+        sku: sku || null,
         nombre,
-        precio,
+        precioVenta: precio,
+        costoInicial: precioCompraBase,
+        cantidadInicial,
         almacenId: this.productForm.almacenId,
-        codigo,
         codigoBarras: this.productForm.codigoBarras.trim() || null,
         descripcion: this.productForm.descripcion.trim() || null,
         categoriaId: this.productForm.categoriaId || null,
-        marcaId: this.productForm.marcaId || null,
         unidadMedidaId: this.productForm.unidadMedidaId || null,
         tipoProducto: this.productForm.tipoProducto,
-        costoPromedio: precioCompraBase,
-        precioCompraBase,
-        precioVentaBase: precio,
-        afectoIgv: this.productForm.afectoIgv,
-        usaConfiguracionEmpresa: this.productForm.usaConfiguracionEmpresa,
-        tipoAfectacionIgvId: this.productForm.tipoAfectacionIgvId,
-        tributoId: this.productForm.tributoId,
-        porcentajeImpuesto: this.productForm.porcentajeImpuesto,
-        stock: this.productForm.tipoProducto !== 'SERVICIO',
-        lotes: this.productForm.vencimiento || this.productForm.lotes,
-        vencimiento: this.productForm.vencimiento,
+        manejaVencimiento: this.productForm.vencimiento,
         stockMinimo,
         foto: this.productForm.foto.trim() || null,
+        codigoLote: this.productForm.codigoLote.trim() || null,
+        fechaFabricacion: this.productForm.fechaFabricacion || null,
+        fechaVencimiento: this.productForm.fechaVencimiento || null,
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.productDialogVisible.set(false);
-          this.successMessage.set(
-            'Producto creado correctamente. Se activo el control de stock bajo.',
-          );
+          const success =
+            cantidadInicial > 0
+              ? 'Producto, existencias iniciales y movimiento de kardex registrados correctamente.'
+              : 'Producto creado correctamente.';
           this.loadData();
           this.lowStockAlerts.refresh(true);
+          if (keepCreating) {
+            this.openCreateProductDialog();
+            this.successMessage.set(success);
+          } else {
+            this.productDialogVisible.set(false);
+            this.successMessage.set(success);
+          }
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
+  }
+
+  protected onBarcodeChange(value: string): void {
+    this.productForm.codigoBarras = value;
+    this.barcodeMessage.set(null);
+  }
+
+  protected checkBarcodeAndContinue(event?: Event): void {
+    event?.preventDefault();
+    const barcode = this.productForm.codigoBarras.trim();
+    if (!barcode) {
+      this.barcodeMessage.set('Puedes dejar el código vacío; el SKU se generará automáticamente.');
+      this.focusProductName();
+      return;
+    }
+    if (this.checkingBarcode()) {
+      return;
+    }
+
+    this.checkingBarcode.set(true);
+    this.barcodeMessage.set('Verificando código de barras...');
+    this.api
+      .lookupProducto(barcode)
+      .pipe(finalize(() => this.checkingBarcode.set(false)))
+      .subscribe({
+        next: (existing) => {
+          if (existing) {
+            this.openEditProductDialog(existing);
+            this.errorMessage.set(
+              `El código ${barcode} ya pertenece a ${existing.sku} - ${existing.nombre}.`,
+            );
+            this.barcodeMessage.set('Producto existente encontrado. Se abrió para edición.');
+            return;
+          }
+          this.barcodeMessage.set('Código disponible. Continúa con el nombre y los precios.');
+          this.focusProductName();
+        },
+        error: (error: unknown) => {
+          this.barcodeMessage.set(null);
+          this.errorMessage.set(this.resolveError(error));
+        },
+      });
+  }
+
+  private focusBarcode(): void {
+    setTimeout(() => this.barcodeInput?.nativeElement.focus(), 80);
+  }
+
+  private focusProductName(): void {
+    setTimeout(() => this.productNameInput?.nativeElement.focus(), 30);
   }
 
   protected toggleProductoActivo(producto: Producto): void {

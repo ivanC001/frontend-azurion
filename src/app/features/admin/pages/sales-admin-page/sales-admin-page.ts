@@ -362,7 +362,7 @@ export class SalesAdminPage implements OnDestroy {
         timeout(SalesAdminPage.LIST_REQUEST_TIMEOUT_MS),
         catchError(() => of([] as Cliente[])),
       ),
-      productos: this.api.listProductos().pipe(
+      productos: this.api.listAllProductos().pipe(
         timeout(SalesAdminPage.LIST_REQUEST_TIMEOUT_MS),
         catchError(() => of([] as Producto[])),
       ),

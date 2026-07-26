@@ -330,24 +330,24 @@
         </p>
         <dl>
           <div><dt>Dispositivo</dt><dd>{{ conflict.deviceName }}</dd></div>
-          <div><dt>Ultima actividad</dt><dd>{{ formatLastActivity(conflict.lastActivityAt) }}</dd></div>
+          <div><dt>Última actividad</dt><dd>{{ formatLastActivity(conflict.lastActivityAt) }}</dd></div>
         </dl>
-        <small>Si continuas, la sesion anterior se cerrara de inmediato.</small>
+        <small>Si continúas, la sesión anterior se cerrará de inmediato.</small>
       </div>
     </div>
-    <ng-template pTemplate="footer">
-      <p-button
-        label="Cancelar"
-        severity="secondary"
-        [disabled]="replacingSession()"
-        (onClick)="cancelSessionReplacement()"
-      />
-      <p-button
-        label="Cerrar sesion anterior y continuar"
-        icon="pi pi-sign-out"
-        [loading]="replacingSession()"
-        (onClick)="replaceActiveSession()"
-      />
-    </ng-template>
   }
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [disabled]="replacingSession()"
+      (onClick)="cancelSessionReplacement()"
+    />
+    <p-button
+      label="Cerrar sesión anterior y continuar"
+      icon="pi pi-sign-out"
+      [loading]="replacingSession()"
+      (onClick)="replaceActiveSession()"
+    />
+  </ng-template>
 </p-dialog>

@@ -198,7 +198,7 @@ export class CashAdminPage {
         this.sucursalFilter() ?? undefined,
       ),
       sucursales: this.api.listSucursales(),
-      productos: this.api.listProductos(),
+      productos: this.api.listAllProductos(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({

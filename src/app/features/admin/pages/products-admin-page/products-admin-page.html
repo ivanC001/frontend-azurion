@@ -1,9 +1,9 @@
 <section class="admin-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">Catalogo maestro</p>
+      <p class="page-eyebrow">Catálogo maestro</p>
       <h1>Productos y servicios</h1>
-      <p>Administra los datos base del catalogo. Stock, compras, costos y lotes se registran desde inventario.</p>
+      <p>Registra productos rápidamente con lector de barras, precios y existencias iniciales.</p>
     </div>
     <div class="header-actions">
       <p-button label="Nuevo producto" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateProductDialog()" />
@@ -44,14 +44,14 @@
 
   <section class="table-panel">
     <div class="table-head">
-      <h2>Listado del catalogo</h2>
+      <h2>Listado del catálogo</h2>
       <div class="table-tools">
         <input
           pInputText
           type="text"
           [value]="productSearch()"
           (input)="setProductSearch($event)"
-          placeholder="Buscar por codigo, barras, SKU, nombre o unidad"
+          placeholder="Buscar por código, barras, SKU, nombre o unidad"
         />
       </div>
     </div>
@@ -61,8 +61,9 @@
           <th>SKU</th>
           <th>Producto</th>
           <th>Unidad</th>
-          <th>Categoria</th>
+          <th>Categoría</th>
           <th>Tipo</th>
+          <th>Precio</th>
           <th>Stock</th>
           <th>Estado</th>
           <th>Actualizado</th>
@@ -75,7 +76,7 @@
           <td>
             <div class="product-main">{{ item.nombre }}</div>
             <div class="product-meta">
-              {{ item.codigo || 'Sin codigo' }}
+              {{ item.codigo || 'Sin código' }}
               @if (item.codigoBarras) {
                 <span>- Barras: {{ item.codigoBarras }}</span>
               }
@@ -84,11 +85,12 @@
           <td>{{ unidadLabel(item) }}</td>
           <td>{{ categoriaLabel(item) }}</td>
           <td><p-tag [value]="item.tipoProducto || 'PRODUCTO'" severity="info" /></td>
+          <td><strong>S/ {{ item.precio | number: '1.2-2' }}</strong></td>
           <td>
             <div class="stock-cell">
               <p-tag [value]="stockStatus(item)" [severity]="stockSeverity(item)" />
               @if (item.tipoProducto !== 'SERVICIO') {
-                <small>{{ item.stockCantidad || 0 }} disponibles · minimo {{ item.stockMinimo || item.stockMinimoGlobal || 0 }}</small>
+                <small>{{ item.stockCantidad || 0 }} disponibles · mínimo {{ item.stockMinimo || item.stockMinimoGlobal || 0 }}</small>
               }
             </div>
           </td>
@@ -139,10 +141,10 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9">
+          <td colspan="10">
             <div class="empty-state">
               <strong>No hay productos registrados.</strong>
-              <span>Crea el producto en catalogo y luego registra sus ingresos desde inventario.</span>
+              <span>Escanea un código o crea el primer producto con el botón “Nuevo producto”.</span>
             </div>
           </td>
         </tr>
@@ -152,7 +154,7 @@
 </section>
 
 <p-dialog
-  [header]="productForm.id ? 'Editar producto' : 'Nuevo producto'"
+  [header]="productForm.id ? 'Editar producto' : 'Alta rápida de producto'"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
@@ -160,67 +162,142 @@
   (visibleChange)="productDialogVisible.set($event)"
   styleClass="product-dialog"
 >
-  <form class="dialog-form">
+  <form class="dialog-form" (submit)="$event.preventDefault()">
     <div class="section-heading span-2">
       <div>
-        <strong>Datos base</strong>
-        <span>Datos maestros del producto. Las entradas, costos y lotes viven en inventario.</span>
+        <strong>{{ productForm.id ? 'Datos maestros' : 'Escanea, completa y guarda' }}</strong>
+        <span>
+          {{
+            productForm.id
+              ? 'Actualiza la información comercial y tributaria.'
+              : 'El SKU se genera automáticamente. La cantidad inicial crea su entrada de stock y kardex.'
+          }}
+        </span>
       </div>
       <button
         type="button"
         pButton
         class="p-button-text p-button-secondary"
-        [label]="advancedFieldsVisible() ? 'Ocultar opcionales' : 'Mostrar opcionales'"
+        [label]="advancedFieldsVisible() ? 'Ocultar detalles' : 'Mostrar más detalles'"
         (click)="advancedFieldsVisible.set(!advancedFieldsVisible())"
       ></button>
     </div>
+    @if (errorMessage()) {
+      <div class="alert alert--error span-2">{{ errorMessage() }}</div>
+    }
+    <div class="barcode-capture span-2">
+      <span class="barcode-capture__icon"><i class="pi pi-barcode"></i></span>
+      <label>
+        Código de barras
+        <input
+          #barcodeInput
+          pInputText
+          name="codigoBarras"
+          [ngModel]="productForm.codigoBarras"
+          (ngModelChange)="onBarcodeChange($event)"
+          (keydown.enter)="!productForm.id && checkBarcodeAndContinue($event)"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="Escanea o escribe el código"
+        />
+        <small>
+          @if (checkingBarcode()) {
+            <i class="pi pi-spin pi-spinner"></i>
+          }
+          {{ barcodeMessage() || (productForm.id ? 'Identificador usado por el POS.' : 'Los lectores USB escriben el código y finalizan con Enter.') }}
+        </small>
+      </label>
+      @if (!productForm.id) {
+        <button
+          type="button"
+          pButton
+          class="p-button-outlined p-button-secondary"
+          icon="pi pi-search"
+          label="Verificar"
+          [loading]="checkingBarcode()"
+          (click)="checkBarcodeAndContinue()"
+        ></button>
+      }
+    </div>
     <label>
       SKU
-      <input pInputText name="sku" [(ngModel)]="productForm.sku" placeholder="SKU-0001" [disabled]="!!productForm.id" />
+      <input pInputText name="sku" [(ngModel)]="productForm.sku" placeholder="Automático: PRD-000001" [disabled]="!!productForm.id" />
+      @if (!productForm.id) {
+        <small>Opcional. Déjalo vacío para generarlo automáticamente.</small>
+      }
     </label>
     <label>
-      Nombre
-      <input pInputText name="nombre" [(ngModel)]="productForm.nombre" placeholder="Producto base" />
+      Nombre del producto
+      <input #productNameInput pInputText name="nombre" [(ngModel)]="productForm.nombre" placeholder="Ej. Arroz extra 1 kg" autocomplete="off" />
     </label>
     <label class="span-2">
-      Descripcion
-      <textarea pTextarea name="descripcion" rows="3" [(ngModel)]="productForm.descripcion" placeholder="Descripcion interna del producto"></textarea>
+      Descripción
+      <textarea pTextarea name="descripcion" rows="3" [(ngModel)]="productForm.descripcion" placeholder="Presentación, características o notas internas"></textarea>
     </label>
     <label>
-      Tipo producto
+      Tipo de registro
       <p-select
         name="tipoProducto"
         [options]="tipoProductoOptions()"
         [(ngModel)]="productForm.tipoProducto"
         (ngModelChange)="onTipoProductoChange($event)"
-        placeholder="Tipo producto"
+        placeholder="Selecciona el tipo"
       />
     </label>
     <label>
-      Unidad de medida
+      Unidad de medida SUNAT
       <p-select
         name="unidadMedidaId"
         [options]="unidadMedidaOptions()"
         [(ngModel)]="productForm.unidadMedidaId"
-        placeholder="Sugerir unidad"
+        placeholder="NIU - Unidad"
       />
     </label>
-    @if (productForm.tipoProducto !== 'SERVICIO') {
+    <label>
+      Precio de venta (S/)
+      <input pInputText type="number" min="0" step="0.01" name="precio" [(ngModel)]="productForm.precio" placeholder="0.00" />
+    </label>
+    @if (!productForm.id) {
       <label>
-        Categoria
+        Almacén inicial
         <p-select
-          name="categoriaId"
-          [options]="categoriaOptions()"
-          [(ngModel)]="productForm.categoriaId"
-          placeholder="Alimento, ropa, repuesto..."
+          name="almacenId"
+          [options]="almacenOptions()"
+          [(ngModel)]="productForm.almacenId"
+          placeholder="Selecciona un almacén"
           [filter]="true"
           filterBy="label"
         />
       </label>
+    }
+    @if (productForm.tipoProducto !== 'SERVICIO') {
+      <label>
+        Categoría
+        <p-select
+          name="categoriaId"
+          [options]="categoriaOptions()"
+          [(ngModel)]="productForm.categoriaId"
+          placeholder="Selecciona una categoría"
+          [filter]="true"
+          filterBy="label"
+        />
+      </label>
+      @if (!productForm.id) {
+        <label>
+          Costo inicial unitario (S/)
+          <input pInputText type="number" min="0" step="0.01" name="costoPromedio" [(ngModel)]="productForm.costoPromedio" placeholder="0.00" />
+          <small>Obligatorio cuando la cantidad inicial es mayor a cero.</small>
+        </label>
+        <label>
+          Cantidad inicial
+          <input pInputText type="number" min="0" step="0.0001" name="cantidadInicial" [(ngModel)]="productForm.cantidadInicial" placeholder="0" />
+          <small>Registra stock y kardex en la misma operación.</small>
+        </label>
+      }
       <div class="expiry-choice">
         <div>
-          <strong>¿El producto tiene fecha de caducidad?</strong>
-          <span>Activalo para alimentos, medicinas u otros productos que vencen.</span>
+          <strong>¿El producto tiene fecha de vencimiento?</strong>
+          <span>Actívalo para alimentos, medicinas u otros productos que vencen.</span>
         </div>
         <label class="expiry-toggle">
           <input
@@ -229,20 +306,34 @@
             [ngModel]="productForm.vencimiento"
             (ngModelChange)="onVencimientoChange($event)"
           />
-          <span>{{ productForm.vencimiento ? 'Si, controlar vencimiento' : 'No tiene vencimiento' }}</span>
+          <span>{{ productForm.vencimiento ? 'Sí, controlar vencimiento' : 'No tiene vencimiento' }}</span>
         </label>
       </div>
+      @if (!productForm.id && productForm.vencimiento && productForm.cantidadInicial > 0) {
+        <label>
+          Código de lote
+          <input pInputText name="codigoLote" [(ngModel)]="productForm.codigoLote" placeholder="LOTE-001" />
+        </label>
+        <label>
+          Fecha de vencimiento
+          <input pInputText type="date" name="fechaVencimiento" [(ngModel)]="productForm.fechaVencimiento" />
+        </label>
+        <label>
+          Fecha de fabricación
+          <input pInputText type="date" name="fechaFabricacion" [(ngModel)]="productForm.fechaFabricacion" />
+        </label>
+      }
       <div class="stock-alert-config span-2">
         <span class="stock-alert-config__icon"><i class="pi pi-bell"></i></span>
         <div>
           <strong>Alerta por stock bajo</strong>
           <span>
-            La campana notificara cuando el stock disponible sea igual o menor al minimo.
-            Con minimo 0, solo avisara cuando el producto se agote.
+            La campana notificará cuando el stock disponible sea igual o menor al mínimo.
+            Con mínimo 0, solo avisará cuando el producto se agote.
           </span>
         </div>
         <label>
-          Stock minimo
+          Stock mínimo
           <input
             pInputText
             type="number"
@@ -258,7 +349,7 @@
     <div class="photo-field span-2">
       <div class="photo-copy">
         <strong>Foto del producto</strong>
-        <span>Opcional. Agrega una foto por URL o sube una imagen del producto.</span>
+        <span>Opcional. Añade una foto por URL o carga una imagen del producto.</span>
       </div>
       <div class="photo-grid">
         <label>
@@ -266,7 +357,7 @@
           <input pInputText name="foto" [(ngModel)]="productForm.foto" placeholder="https://... o ruta de imagen" />
         </label>
         <label>
-          Subir foto
+          Cargar imagen
           <input class="photo-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" (change)="onFotoFileSelected($event)" />
         </label>
       </div>
@@ -278,25 +369,31 @@
         }
         <div>
           <strong>{{ selectedPhotoName() || 'Sin foto seleccionada' }}</strong>
-          <small>PNG, JPG, JPEG, WEBP o SVG. Max. 2 MB.</small>
+          <small>PNG, JPG, JPEG, WEBP o SVG. Máximo 2 MB.</small>
         </div>
       </div>
     </div>
+    @if (!productForm.id) {
+      <div class="tax-inherited span-2">
+        <i class="pi pi-sitemap"></i>
+        <span>La tributación se heredará de la sucursal y de la empresa. Podrás personalizarla al editar.</span>
+      </div>
+    } @else {
     <div class="product-tax-panel span-2">
       <div class="product-tax-panel__head">
         <div>
-          <strong>Tributacion</strong>
-          <span>El POS resolvera estos datos automaticamente. El cajero no los selecciona.</span>
+          <strong>Tributación</strong>
+          <span>El POS resolverá estos datos automáticamente. El cajero no los selecciona.</span>
         </div>
         <label class="expiry-toggle">
           <input type="checkbox" name="usaConfiguracionEmpresa" [(ngModel)]="productForm.usaConfiguracionEmpresa" />
-          <span>Usar configuracion heredada</span>
+          <span>Usar configuración heredada</span>
         </label>
       </div>
       @if (productForm.usaConfiguracionEmpresa) {
         <div class="tax-inherited">
           <i class="pi pi-sitemap"></i>
-          <span>Este producto usara primero la configuracion de su sucursal y luego la configuracion general de empresa.</span>
+          <span>Este producto usará primero la configuración de su sucursal y luego la configuración general de empresa.</span>
         </div>
       } @else {
         <div class="product-tax-grid">
@@ -324,6 +421,7 @@
         </div>
       }
     </div>
+    }
     @if (productForm.id) {
       <label>
         Estado
@@ -338,27 +436,47 @@
     @if (advancedFieldsVisible()) {
       <div class="section-heading span-2 section-heading--subtle">
         <div>
-          <strong>Identificadores opcionales</strong>
-          <span>Usalos para codigos internos, barras o clasificacion del catalogo.</span>
+          <strong>Información adicional</strong>
+          <span>Úsalos para códigos internos o clasificación administrativa del catálogo.</span>
         </div>
       </div>
-      <label>
-        Codigo interno
-        <input pInputText name="codigo" [(ngModel)]="productForm.codigo" placeholder="PROD-0001" />
-      </label>
-      <label>
-        Codigo barras
-        <input pInputText name="codigoBarras" [(ngModel)]="productForm.codigoBarras" placeholder="7750000000000" />
-      </label>
-      <label>
-        Marca ID
-        <input pInputText type="number" name="marcaId" [(ngModel)]="productForm.marcaId" placeholder="ID marca" />
-      </label>
+      @if (productForm.id) {
+        <label>
+          Código interno
+          <input pInputText name="codigo" [(ngModel)]="productForm.codigo" placeholder="PROD-0001" />
+        </label>
+        <label>
+          ID de marca
+          <input pInputText type="number" name="marcaId" [(ngModel)]="productForm.marcaId" placeholder="Opcional" />
+        </label>
+      }
     }
   </form>
 
   <ng-template pTemplate="footer">
     <button type="button" pButton class="az-secondary p-button-outlined" (click)="productDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveProducto()">Guardar</button>
+    @if (!productForm.id) {
+      <button
+        type="button"
+        pButton
+        class="az-secondary p-button-outlined"
+        icon="pi pi-plus"
+        label="Guardar y nuevo"
+        [disabled]="checkingBarcode()"
+        [loading]="saving()"
+        (click)="saveProducto(true)"
+      ></button>
+    }
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [disabled]="checkingBarcode()"
+      [loading]="saving()"
+      (click)="saveProducto()"
+    >
+      {{ productForm.id ? 'Guardar cambios' : 'Guardar producto' }}
+    </button>
   </ng-template>
 </p-dialog>

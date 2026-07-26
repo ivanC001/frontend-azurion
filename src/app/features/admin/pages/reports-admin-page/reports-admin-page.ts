@@ -356,7 +356,7 @@ export class ReportsAdminPage {
       ventas: safeList(this.api.listVentas(), [] as VentaRecord[], 'ventas'),
       compras: safeList(this.api.listCompras(), [] as Compra[], 'compras'),
       almacenes: safeList(this.api.listAlmacenes(), [] as Almacen[], 'almacenes'),
-      productos: safeList(this.api.listProductos(), [] as Producto[], 'productos'),
+      productos: safeList(this.api.listAllProductos(), [] as Producto[], 'productos'),
       stock: safeList(this.api.listStock(), [] as StockItem[], 'stock'),
       kardex: safeList(this.api.listKardex(), [] as KardexMovimiento[], 'kardex'),
       cajas: safeList(this.api.listCajas(), [] as Caja[], 'caja'),

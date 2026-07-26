@@ -47,6 +47,9 @@
 .landing-copy-field span input { border-radius: 6px 0 0 6px; font-family: Consolas, monospace; font-size: .7rem; }
 .landing-copy-field span button { border: 1px solid #cbd8e8; border-left: 0; border-radius: 0 6px 6px 0; background: #f3f7fb; color: #1769d2; }
 .landing-copy-field--secret input { color: #7c3aed; letter-spacing: .08em; }
+.landing-endpoint-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+.landing-endpoint-meta span { display: inline-flex; align-items: center; gap: 5px; min-height: 25px; padding: 0 8px; border: 1px solid #b7dfd0; border-radius: 5px; background: #effaf6; color: #12654e; font-size: .64rem; font-weight: 750; }
+.landing-endpoint-meta i { font-size: .67rem; }
 .landing-security-note { display: flex; gap: 9px; padding: 10px; border: 1px solid #b7dfd0; border-radius: 7px; background: #effaf6; color: #12654e; }
 .landing-security-note p { margin: 0; font-size: .68rem; line-height: 1.45; }
 .landing-button, .landing-rotate, .landing-contract button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border-radius: 6px; padding: 0 13px; font-size: .73rem; font-weight: 750; cursor: pointer; }

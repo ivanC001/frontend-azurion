@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, shareReplay, tap } from 'rxjs';
+import { EMPTY, Observable, expand, map, reduce, shareReplay, tap } from 'rxjs';
 
 import { ApiResponse } from '@core/api/api-response';
 import { ApiUrlService } from '@core/api/api-url.service';
@@ -723,6 +723,26 @@ export interface CreateProductoRequest {
   readonly foto?: string | null;
   readonly precioCompraBase?: number | null;
   readonly precioVentaBase?: number | null;
+}
+
+export interface CreateProductoRapidoRequest {
+  readonly codigoBarras?: string | null;
+  readonly sku?: string | null;
+  readonly nombre: string;
+  readonly descripcion?: string | null;
+  readonly categoriaId?: number | null;
+  readonly unidadMedidaId?: number | null;
+  readonly tipoProducto: 'PRODUCTO' | 'SERVICIO';
+  readonly precioVenta: number;
+  readonly costoInicial: number;
+  readonly cantidadInicial: number;
+  readonly almacenId: number;
+  readonly manejaVencimiento: boolean;
+  readonly stockMinimo: number;
+  readonly codigoLote?: string | null;
+  readonly fechaFabricacion?: string | null;
+  readonly fechaVencimiento?: string | null;
+  readonly foto?: string | null;
 }
 
 export interface UpdateProductoRequest {
@@ -1472,6 +1492,7 @@ export interface UpdateEmpresaSubscriptionPlanRequest {
 }
 
 export type CrmLandingProductMode = 'REQUERIDO' | 'OPCIONAL' | 'SIN_CATALOGO';
+export type CrmLandingDuplicatePolicy = 'TELEFONO_CORREO' | 'TELEFONO' | 'CORREO' | 'NINGUNO';
 
 export interface CrmLandingConfig {
   readonly id: number;
@@ -1484,6 +1505,7 @@ export interface CrmLandingConfig {
   readonly modoProducto: CrmLandingProductMode;
   readonly crearActividadInicial: boolean;
   readonly responsableId?: string | null;
+  readonly validarDuplicadosPor: CrmLandingDuplicatePolicy;
   readonly catalogoItemIds: readonly number[];
   readonly relaySecret?: string | null;
   readonly createdAt?: string | null;
@@ -1498,6 +1520,7 @@ export interface SaveCrmLandingConfigRequest {
   readonly recibirLeads: boolean;
   readonly crearActividadInicial: boolean;
   readonly responsableId?: string | null;
+  readonly validarDuplicadosPor: CrmLandingDuplicatePolicy;
   readonly catalogoItemIds: readonly number[];
 }
 
@@ -2677,6 +2700,60 @@ export class AdminSaasApiService {
         headers: this.session.apiHeaders(),
       })
       .pipe(map((response) => response.data));
+  }
+
+  listAllProductos(almacenId?: number) {
+    const loadPage = (page: number) => {
+      let params = new HttpParams().set('page', page).set('size', 200);
+      if (almacenId) {
+        params = params.set('almacenId', almacenId);
+      }
+      return this.http
+        .get<ApiResponse<PageResponse<Producto>>>(
+          this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'),
+          {
+            headers: this.session.apiHeaders(),
+            params,
+          },
+        )
+        .pipe(map((response) => response.data));
+    };
+
+    return loadPage(0).pipe(
+      expand((response) => (response.last ? EMPTY : loadPage(response.page + 1))),
+      reduce(
+        (products, response) => [...products, ...(response.content ?? [])],
+        [] as Producto[],
+      ),
+    );
+  }
+
+  createProductoRapido(request: CreateProductoRapidoRequest) {
+    return this.http
+      .post<ApiResponse<Producto>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/rapido'),
+        request,
+        {
+          headers: this.session.apiHeaders(),
+        },
+      )
+      .pipe(
+        map((response) => response.data),
+        tap(() => this.invalidateCache('categorias-producto')),
+      );
+  }
+
+  lookupProducto(codigo: string) {
+    const params = new HttpParams().set('codigo', codigo.trim());
+    return this.http
+      .get<ApiResponse<Producto | null>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/lookup'),
+        {
+          headers: this.session.apiHeaders(),
+          params,
+        },
+      )
+      .pipe(map((response) => response.data ?? null));
   }
 
   listEmpresaOperationalSummaries() {

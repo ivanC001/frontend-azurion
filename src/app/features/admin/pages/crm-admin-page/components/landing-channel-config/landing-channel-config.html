@@ -60,6 +60,14 @@
               }
             </select>
           </label>
+          <label>Control de duplicados
+            <select [(ngModel)]="form.validarDuplicadosPor" name="landingDuplicatePolicy" [disabled]="!canManage()">
+              <option value="TELEFONO_CORREO">Telefono o correo</option>
+              <option value="TELEFONO">Solo telefono</option>
+              <option value="CORREO">Solo correo</option>
+              <option value="NINGUNO">No unificar contactos</option>
+            </select>
+          </label>
         </div>
 
         <div class="landing-switches">
@@ -117,6 +125,11 @@
           <label class="landing-copy-field">URL publica de envio (POST)
             <span><input readonly [value]="browserEndpoint()" /><button type="button" title="Copiar URL" (click)="copy(browserEndpoint(), 'URL publica')"><i class="pi pi-copy"></i></button></span>
           </label>
+          <div class="landing-endpoint-meta" aria-label="Caracteristicas del endpoint publico">
+            <span><i class="pi pi-check-circle"></i> CORS publico</span>
+            <span><i class="pi pi-send"></i> POST + JSON</span>
+            <span><i class="pi pi-lock-open"></i> Sin sesion ni tenant header</span>
+          </div>
         } @else {
           <div class="landing-method-summary landing-method-summary--server">
             <i class="pi pi-shield"></i>
@@ -126,7 +139,7 @@
             <span><input readonly [value]="relayEndpoint()" /><button type="button" title="Copiar URL" (click)="copy(relayEndpoint(), 'URL del relay')"><i class="pi pi-copy"></i></button></span>
           </label>
           <label class="landing-copy-field landing-copy-field--secret">Secreto del relay
-            <span><input type="password" readonly [value]="selected()?.relaySecret || 'Se genera al guardar'" /><button type="button" title="Copiar secreto" [disabled]="!selected()" (click)="copy(selected()?.relaySecret || '', 'Secreto del relay')"><i class="pi pi-copy"></i></button></span>
+            <span><input type="password" readonly [value]="selected()?.relaySecret || 'Oculto por seguridad; regenera para obtener uno nuevo'" /><button type="button" title="Copiar secreto" [disabled]="!selected()?.relaySecret" (click)="copy(selected()?.relaySecret || '', 'Secreto del relay')"><i class="pi pi-copy"></i></button></span>
           </label>
           @if (selected()) {
             <button type="button" class="landing-rotate" (click)="regenerateRelaySecret()" [disabled]="!canManage() || rotatingSecret()">
