@@ -15,13 +15,24 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { ApiUrlService } from '@core/api/api-url.service';
-import { CompleteClientDataModal, DeleteProspectModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, PipelineStageModal, ActivityFormModal, QuoteFormModal } from './modals';
+import { CompleteClientDataModal, DeleteProspectModal, ProspectDistributionModal, RegisterPaymentModal, FollowupDetailModal, OpportunityDetailModal, OpportunityRequirementModal, RegisterNegotiationModal, OpportunityDocumentModal, StageMoveReviewModal, MarkLostModal, CatalogProductModal, ProspectFormModal, CreateOpportunityModal, ActivityFormModal, QuoteFormModal } from './modals';
 import {
+  CATALOG_REGISTRATION_TYPES,
+  CATALOG_TYPE_GROUPS,
+  CatalogField,
+  CatalogOpportunityType,
+  CatalogRegistrationType,
   CrmClientCompletionAction,
   CrmClientCompletionDraft,
   CrmPaymentDialogSummary,
   CrmPaymentDraft,
   CrmPaymentInstallment,
+  PROSPECT_COUNTRIES,
+  ProspectDocumentOption,
+  ProspectPersonType,
+  catalogRegistrationType,
+  prospectCountry,
+  prospectDocuments,
 } from './models';
 import {
   CrmDashboardPage,
@@ -100,7 +111,7 @@ type OpportunityDetailTab =
   | 'pagos'
   | 'documentos'
   | 'historial';
-type DialogType = 'prospecto' | 'oportunidad' | 'actividad' | 'cotizacion' | 'etapa' | 'catalogo' | null;
+type DialogType = 'prospecto' | 'oportunidad' | 'actividad' | 'cotizacion' | 'catalogo' | null;
 type CatalogStep = 'select' | 'form';
 type OpportunityView = 'ABIERTAS' | 'COTIZADAS' | 'NEGOCIACION' | 'GANADAS';
 type CrmIntegrationField = 'nombre' | 'accessToken' | 'verifyToken' | 'webhookUrl' | 'appId' | 'appSecret' | 'phoneNumberId' | 'wabaId' | 'metadataJson';
@@ -128,33 +139,12 @@ type FollowUpFilter =
   | 'LLAMADAS'
   | 'VISITAS'
   | 'CORREOS';
-type OpportunityType =
-  | 'PRODUCTO'
-  | 'SERVICIO'
-  | 'VEHICULO'
-  | 'INMUEBLE'
-  | 'PROYECTO'
-  | 'CURSO'
-  | 'SEGURO'
-  | 'SOFTWARE'
-  | 'MARKETING'
-  | 'CLINICA'
-  | 'JURIDICO'
-  | 'TURISMO'
-  | 'MAQUINARIA'
-  | 'FINANCIERO'
-  | 'EDUCACION'
-  | 'HOSPITALIDAD'
-  | 'MANUFACTURA'
-  | 'TELECOMUNICACION'
-  | 'ENERGIA'
-  | 'AGRICULTURA'
-  | 'CONSULTORIA'
-  | 'OTRO';
+type OpportunityType = CatalogOpportunityType;
 
 interface ProspectForm {
   id: number | null;
   tipoPersona: string;
+  paisCodigo: string;
   tipoDocumento: string;
   numeroDocumento: string;
   nombre: string;
@@ -198,6 +188,8 @@ interface OpportunityForm {
   fechaCierreEstimada: string;
   responsableId: string;
   catalogoItemId: number | null;
+  proximaAccion: string;
+  fechaProximaAccion: string;
 }
 
 interface CrmLocalConfig {
@@ -215,13 +207,6 @@ interface CatalogoForm {
   publicEnabled: boolean;
   landingSlug: string;
   atributos: Record<string, string | number | null>;
-}
-
-interface CatalogField {
-  key: string;
-  label: string;
-  placeholder: string;
-  type?: 'text' | 'number' | 'date';
 }
 
 interface OpportunitySummaryCard {
@@ -496,15 +481,6 @@ interface StageMoveReview {
   canContinue: boolean;
 }
 
-interface StageForm {
-  codigo: string;
-  nombre: string;
-  orden: number;
-  color: string;
-  ganado: boolean;
-  perdido: boolean;
-}
-
 interface ActivityForm {
   id: number | null;
   prospectoId: number | null;
@@ -611,7 +587,6 @@ interface PromotionForm {
     CatalogProductModal,
     ProspectFormModal,
     CreateOpportunityModal,
-    PipelineStageModal,
     ActivityFormModal,
     QuoteFormModal,
     ProspectDistributionModal,
@@ -737,13 +712,17 @@ export class CrmAdminPage {
   protected readonly clientCompletionAction = signal<CrmClientCompletionAction>('WON');
   protected readonly clientCompletionOpportunityId = signal<number | null>(null);
   protected readonly clientCompletionEditTarget = signal<'PROSPECT' | 'CLIENT'>('PROSPECT');
+  private readonly clientCompletionQuote = signal<Cotizacion | null>(null);
   public readonly opportunityDocumentDialogOpen = signal(false);
   public readonly activityContext = signal<ActivityContext | null>(null);
   public readonly lossDialog = signal<LossDialogState | null>(null);
   public readonly lossReason = signal('');
   public readonly lossObservation = signal('');
   public readonly actionId = signal<number | null>(null);
+  public readonly sendingQuoteWhatsappIds = signal<ReadonlySet<number>>(new Set<number>());
   public readonly sendingQuoteEmailIds = signal<ReadonlySet<number>>(new Set<number>());
+  public readonly sendingOpportunityEmailIds = signal<ReadonlySet<number>>(new Set<number>());
+  public readonly sendingProspectEmailIds = signal<ReadonlySet<number>>(new Set<number>());
   public readonly crmLocalConfig = signal<CrmLocalConfig>(this.loadCrmLocalConfig());
   protected readonly canManageCrmConfig = computed(() => this.hasCrmPermission('CRM_CONFIG_MANAGE', 'CRM_PIPELINE_MANAGE'));
   protected readonly canManageCrmCatalog = computed(() => this.hasCrmPermission('CRM_CATALOG_MANAGE', 'CRM_CONFIG_MANAGE'));
@@ -760,7 +739,6 @@ export class CrmAdminPage {
   public activityForm: ActivityForm = this.emptyActivityForm();
   public quoteForm: QuoteForm = this.emptyQuoteForm();
   protected promotionForm: PromotionForm = this.emptyPromotionForm();
-  public stageForm: StageForm = this.emptyStageForm();
   public requirementForm: OpportunityRequirementForm = this.emptyOpportunityRequirementForm();
   public negotiationForm: OpportunityNegotiationForm = this.emptyOpportunityNegotiationForm();
   protected paymentForm: OpportunityPaymentForm = this.emptyOpportunityPaymentForm();
@@ -769,10 +747,17 @@ export class CrmAdminPage {
   public documentForm: OpportunityDocumentForm = this.emptyOpportunityDocumentForm();
 
   public readonly tipoPersonaOptions = [
+    { label: 'Por definir', value: 'SIN_DEFINIR' },
     { label: 'Persona natural', value: 'NATURAL' },
     { label: 'Empresa', value: 'JURIDICA' },
   ];
 
+  public readonly prospectCountryOptions = PROSPECT_COUNTRIES.map((country) => ({
+    label: country.name,
+    value: country.code,
+  }));
+
+  // La conversión fiscal actual del módulo de clientes conserva los códigos SUNAT.
   public readonly documentoOptions = [
     { label: 'DNI', value: '1' },
     { label: 'RUC', value: '6' },
@@ -1101,124 +1086,12 @@ export class CrmAdminPage {
     },
   ];
 
-  public readonly catalogTypeCards = this.opportunityTypeOptions;
+  public readonly catalogTypeCards = CATALOG_REGISTRATION_TYPES;
+  public readonly catalogTypeGroups = CATALOG_TYPE_GROUPS.map((group) => ({
+    ...group,
+    types: CATALOG_REGISTRATION_TYPES.filter((type) => type.group === group.code),
+  }));
 
-  private readonly catalogFieldMap: Partial<Record<OpportunityType, CatalogField[]>> = {
-    PRODUCTO: [
-      { key: 'categoria', label: 'Categoria', placeholder: 'Repuesto, ropa, alimento...' },
-      { key: 'marca', label: 'Marca', placeholder: 'Marca o fabricante' },
-      { key: 'modelo', label: 'Modelo / presentacion', placeholder: 'Modelo, tamano o version' },
-    ],
-    SERVICIO: [
-      { key: 'servicio', label: 'Servicio', placeholder: 'Instalacion, mantenimiento, asesoria...' },
-      { key: 'duracion', label: 'Duracion estimada', placeholder: '2 horas, 3 dias, mensual' },
-      { key: 'modalidad', label: 'Modalidad', placeholder: 'Presencial, remoto, a domicilio' },
-    ],
-    VEHICULO: [
-      { key: 'marca', label: 'Marca', placeholder: 'Toyota, Hyundai, Nissan...' },
-      { key: 'modelo', label: 'Modelo', placeholder: 'Hilux, Tucson, Sentra...' },
-      { key: 'anio', label: 'Anio', placeholder: '2021', type: 'number' },
-      { key: 'kilometraje', label: 'Kilometraje', placeholder: '45000', type: 'number' },
-    ],
-    INMUEBLE: [
-      { key: 'ubicacion', label: 'Ubicacion', placeholder: 'Distrito, ciudad o direccion' },
-      { key: 'operacion', label: 'Operacion', placeholder: 'Venta, alquiler, anticresis' },
-      { key: 'area', label: 'Area', placeholder: '120 m2' },
-      { key: 'dormitorios', label: 'Dormitorios', placeholder: '3', type: 'number' },
-    ],
-    PROYECTO: [
-      { key: 'alcance', label: 'Alcance', placeholder: 'Implementacion, obra, evento...' },
-      { key: 'duracion', label: 'Duracion', placeholder: '3 meses' },
-      { key: 'fechaInicio', label: 'Inicio estimado', placeholder: '', type: 'date' },
-    ],
-    CURSO: [
-      { key: 'duracion', label: 'Tiempo de estudio', placeholder: '3 meses, 40 horas...' },
-      { key: 'modalidad', label: 'Modalidad', placeholder: 'Virtual, presencial, mixto' },
-      { key: 'horario', label: 'Horario', placeholder: 'Sabatino, noche, flexible' },
-      { key: 'fechaInicio', label: 'Fecha de inicio', placeholder: '', type: 'date' },
-    ],
-    SEGURO: [
-      { key: 'tipoSeguro', label: 'Tipo de seguro', placeholder: 'Vehicular, salud, vida...' },
-      { key: 'cobertura', label: 'Cobertura', placeholder: 'Todo riesgo, basico, premium' },
-      { key: 'vigencia', label: 'Vigencia', placeholder: '1 anio, mensual' },
-    ],
-    SOFTWARE: [
-      { key: 'solucion', label: 'Solucion / modulo', placeholder: 'CRM, POS, inventario...' },
-      { key: 'usuarios', label: 'Usuarios', placeholder: '10', type: 'number' },
-      { key: 'modalidad', label: 'Modalidad', placeholder: 'SaaS, licencia, desarrollo' },
-    ],
-    MARKETING: [
-      { key: 'servicio', label: 'Servicio', placeholder: 'Ads, branding, contenidos...' },
-      { key: 'canal', label: 'Canal', placeholder: 'Facebook, Google, TikTok...' },
-      { key: 'duracion', label: 'Duracion', placeholder: 'Mensual, campania 30 dias' },
-    ],
-    CLINICA: [
-      { key: 'especialidad', label: 'Especialidad', placeholder: 'Dental, dermatologia, cirugia...' },
-      { key: 'tratamiento', label: 'Tratamiento', placeholder: 'Consulta, paquete, control...' },
-      { key: 'sede', label: 'Sede', placeholder: 'Sede centro, norte...' },
-    ],
-    JURIDICO: [
-      { key: 'materia', label: 'Materia legal', placeholder: 'Laboral, civil, tributario...' },
-      { key: 'etapa', label: 'Etapa', placeholder: 'Consulta, demanda, contrato...' },
-      { key: 'urgencia', label: 'Urgencia', placeholder: 'Normal, urgente, audiencia' },
-    ],
-    TURISMO: [
-      { key: 'destino', label: 'Destino', placeholder: 'Cusco, Cancun, Europa...' },
-      { key: 'personas', label: 'Personas', placeholder: '2', type: 'number' },
-      { key: 'dias', label: 'Dias / noches', placeholder: '4 dias / 3 noches' },
-      { key: 'fechaViaje', label: 'Fecha de viaje', placeholder: '', type: 'date' },
-    ],
-    MAQUINARIA: [
-      { key: 'equipo', label: 'Equipo', placeholder: 'Excavadora, compresora...' },
-      { key: 'marca', label: 'Marca', placeholder: 'CAT, Komatsu, Volvo...' },
-      { key: 'modelo', label: 'Modelo', placeholder: 'Modelo o serie' },
-      { key: 'horasUso', label: 'Horas de uso', placeholder: '1200', type: 'number' },
-    ],
-    FINANCIERO: [
-      { key: 'productoFinanciero', label: 'Producto financiero', placeholder: 'Credito, factoring, leasing...' },
-      { key: 'monto', label: 'Monto', placeholder: '50000', type: 'number' },
-      { key: 'plazo', label: 'Plazo', placeholder: '12 meses' },
-    ],
-    CONSULTORIA: [
-      { key: 'tema', label: 'Tema', placeholder: 'Procesos, auditoria, ventas...' },
-      { key: 'alcance', label: 'Alcance', placeholder: 'Diagnostico, implementacion...' },
-      { key: 'duracion', label: 'Duracion', placeholder: '4 semanas' },
-    ],
-    EDUCACION: [
-      { key: 'programa', label: 'Programa', placeholder: 'Diplomado, carrera, taller...' },
-      { key: 'nivel', label: 'Nivel', placeholder: 'Basico, intermedio, avanzado' },
-      { key: 'modalidad', label: 'Modalidad', placeholder: 'Virtual, presencial, mixto' },
-    ],
-    HOSPITALIDAD: [
-      { key: 'servicio', label: 'Servicio', placeholder: 'Habitacion, evento, restaurante...' },
-      { key: 'personas', label: 'Personas', placeholder: '20', type: 'number' },
-      { key: 'fechaReserva', label: 'Fecha de reserva', placeholder: '', type: 'date' },
-    ],
-    MANUFACTURA: [
-      { key: 'material', label: 'Material', placeholder: 'Acero, plastico, tela...' },
-      { key: 'volumen', label: 'Volumen', placeholder: '1000 unidades' },
-      { key: 'fechaEntrega', label: 'Fecha de entrega', placeholder: '', type: 'date' },
-    ],
-    TELECOMUNICACION: [
-      { key: 'servicio', label: 'Servicio', placeholder: 'Internet, fibra, enlace...' },
-      { key: 'velocidad', label: 'Velocidad / plan', placeholder: '300 Mbps' },
-      { key: 'direccionInstalacion', label: 'Direccion de instalacion', placeholder: 'Direccion o zona' },
-    ],
-    ENERGIA: [
-      { key: 'solucion', label: 'Solucion', placeholder: 'Paneles solares, mantenimiento...' },
-      { key: 'potencia', label: 'Potencia / consumo', placeholder: '5 kW, consumo mensual' },
-      { key: 'ubicacion', label: 'Ubicacion', placeholder: 'Lugar del proyecto' },
-    ],
-    AGRICULTURA: [
-      { key: 'cultivo', label: 'Cultivo', placeholder: 'Arroz, palta, cafe...' },
-      { key: 'hectareas', label: 'Hectareas', placeholder: '10', type: 'number' },
-      { key: 'temporada', label: 'Temporada', placeholder: 'Campania 2026' },
-    ],
-    OTRO: [
-      { key: 'categoria', label: 'Categoria', placeholder: 'Tipo de oferta' },
-      { key: 'detalle', label: 'Detalle clave', placeholder: 'Dato principal para vender' },
-    ],
-  };
 
   public readonly etapaOptions = computed<PipelineStageOption[]>(() =>
     this.normalizedOpportunityStages().length
@@ -1403,6 +1276,16 @@ export class CrmAdminPage {
     ),
   );
 
+  protected readonly pipelineForecastAmount = computed(() =>
+    this.pipelineBoardColumns().reduce(
+      (total, column) => total + column.items.reduce(
+        (sum, item) => sum + (Number(item.montoEstimado || 0) * Number(item.probabilidad || 0) / 100),
+        0,
+      ),
+      0,
+    ),
+  );
+
   protected readonly pipelineConversionRate = computed(() => {
     const closedCount = this.oportunidades().filter((item) => ['GANADA', 'PERDIDA'].includes(item.estado)).length;
     return this.toRate(this.wonOpportunities().length, Math.max(closedCount, 1));
@@ -1410,31 +1293,24 @@ export class CrmAdminPage {
 
   protected readonly pipelineSummaryCards = computed(() => [
     {
-      label: 'Total oportunidades',
+      label: 'Pipeline activo',
+      value: `S/ ${this.formatCompactAmount(this.pipelineBoardTotal())}`,
+      detail: 'Valor total estimado',
+      icon: 'pi pi-sitemap',
+      tone: 'blue',
+    },
+    {
+      label: 'Oportunidades',
       value: String(this.pipelineBoardCount()),
-      detail: 'Activas en el pipeline',
+      detail: 'Total activas',
       icon: 'pi pi-users',
       tone: 'violet',
     },
     {
-      label: 'Valor total del pipeline',
-      value: `S/ ${this.formatCompactAmount(this.pipelineBoardTotal())}`,
-      detail: 'Valor estimado',
-      icon: 'pi pi-dollar',
-      tone: 'green',
-    },
-    {
-      label: 'Tasa de conversion',
-      value: `${this.pipelineConversionRate()}%`,
-      detail: 'Promedio general',
+      label: 'Pronostico de cierre',
+      value: `S/ ${this.formatCompactAmount(this.pipelineForecastAmount())}`,
+      detail: 'Monto ponderado por probabilidad',
       icon: 'pi pi-chart-line',
-      tone: 'blue',
-    },
-    {
-      label: 'Oportunidades ganadas',
-      value: String(this.wonOpportunities().length),
-      detail: 'Este mes',
-      icon: 'pi pi-trophy',
       tone: 'emerald',
     },
     {
@@ -2159,19 +2035,35 @@ export class CrmAdminPage {
       value: column.value,
       total: column.total,
       color: this.pipelineStageColor(column.value),
-      items: column.items.map((item) => ({
-        opportunity: item,
-        title: item.titulo,
-        amount: Number(item.montoEstimado || 0),
-        company: this.opportunityCompanyLabel(item),
-        campaign: this.opportunityCampaignLabel(item),
-        origin: this.opportunityOriginLabel(item),
-        temperatureLabel: this.opportunityTemperatureLabel(item),
-        temperatureTone: this.opportunityTemperatureTone(item),
-        closingDate: item.fechaCierreEstimada || null,
-        won: item.estado === 'GANADA' || item.etapa === 'GANADO',
-        lost: item.estado === 'PERDIDA' || item.etapa === 'PERDIDO',
-      })),
+      icon: this.pipelineStageIcon(column.value),
+      averageProbability: column.items.length
+        ? Math.round(column.items.reduce((sum, item) => sum + Number(item.probabilidad || 0), 0) / column.items.length)
+        : 0,
+      items: column.items.map((item) => {
+        const nextActivity = this.nextOpportunityActivity(item);
+        return {
+          opportunity: item,
+          title: item.titulo,
+          amount: Number(item.montoEstimado || 0),
+          company: this.opportunityCompanyLabel(item),
+          campaign: this.opportunityCampaignLabel(item),
+          origin: this.opportunityOriginLabel(item),
+          temperatureLabel: this.opportunityTemperatureLabel(item),
+          temperatureTone: this.opportunityTemperatureTone(item),
+          closingDate: item.fechaCierreEstimada || null,
+          probability: Number(item.probabilidad || 0),
+          ownerName: this.responsibleName(item.responsableId),
+          ownerInitials: this.ownerInitials(item.responsableId),
+          nextAction: nextActivity?.asunto || 'Sin proxima accion',
+          nextActionDue: nextActivity ? this.activityRelativeLabel(nextActivity.fechaProgramada) : 'Programar ahora',
+          nextActionTone: this.pipelineActivityTone(nextActivity),
+          priorityLabel: this.pipelinePriorityLabel(item),
+          priorityTone: this.pipelinePriorityTone(item),
+          riskBadges: this.opportunityRiskBadges(item),
+          won: item.estado === 'GANADA' || item.etapa === 'GANADO',
+          lost: item.estado === 'PERDIDA' || item.etapa === 'PERDIDO',
+        };
+      }),
     })),
   );
 
@@ -2905,7 +2797,8 @@ export class CrmAdminPage {
         nextActionTone: this.followUpNextActionTone(card),
         phoneUrl: this.phoneUrl(card.prospecto),
         whatsappAvailable: Boolean(this.onlyDigits(card.prospecto.telefono)),
-        emailUrl: this.emailUrl(card.prospecto),
+        emailAvailable: Boolean(card.prospecto.correo),
+        emailSending: this.sendingProspectEmailIds().has(card.prospecto.id),
       };
     }),
   );
@@ -3006,7 +2899,7 @@ export class CrmAdminPage {
 
   private startLiveUpdates(): void {
     const liveTabs: readonly CrmTab[] = ['captacion', 'seguimiento', 'embudo', 'oportunidades'];
-    this.crmLiveUpdates.watch(12_000, () => liveTabs.includes(this.activeTab()) && !this.loading())
+    this.crmLiveUpdates.watch(30_000, () => liveTabs.includes(this.activeTab()) && !this.loading())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((snapshot) => {
         this.prospectos.set(snapshot.prospectos);
@@ -3272,7 +3165,14 @@ export class CrmAdminPage {
   }
 
   protected prospectCompanyLabel(item: CrmProspecto): string {
-    return item.razonSocial || item.nombreComercial || 'Sin empresa';
+    const personType = this.normalizeProspectPersonType(item.tipoPersona);
+    if (personType === 'SIN_DEFINIR') {
+      return item.razonSocial || item.nombreComercial || 'Persona o empresa por confirmar';
+    }
+    if (personType === 'JURIDICA') {
+      return item.razonSocial || item.nombreComercial || 'Empresa sin identificar';
+    }
+    return 'Persona natural';
   }
 
   protected prospectCampaignLabel(item: CrmProspecto): string {
@@ -3330,7 +3230,8 @@ export class CrmAdminPage {
     this.successMessage.set(null);
     this.prospectForm = {
       id: item.id,
-      tipoPersona: item.tipoPersona || 'NATURAL',
+      tipoPersona: this.normalizeProspectPersonType(item.tipoPersona),
+      paisCodigo: item.paisCodigo || this.defaultProspectCountryCode(),
       tipoDocumento: item.tipoDocumento || '',
       numeroDocumento: item.numeroDocumento || '',
       nombre: item.nombre || '',
@@ -3365,7 +3266,43 @@ export class CrmAdminPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.prospectForm.nombre.trim()) {
-      this.errorMessage.set('El nombre del prospecto es obligatorio.');
+      this.errorMessage.set(
+        this.isCompanyProspect()
+          ? 'El nombre de la persona de contacto es obligatorio.'
+          : 'El nombre completo del prospecto es obligatorio.',
+      );
+      return;
+    }
+    if (this.prospectForm.tipoPersona !== 'SIN_DEFINIR') {
+      if (!this.prospectForm.paisCodigo.trim()) {
+        this.errorMessage.set('Selecciona el país del prospecto.');
+        return;
+      }
+      const document = this.selectedProspectDocument();
+      if (!document) {
+        this.errorMessage.set(
+          this.isCompanyProspect()
+            ? 'Selecciona el tipo de identificación fiscal de la empresa.'
+            : 'Selecciona el tipo de identificación de la persona.',
+        );
+        return;
+      }
+      this.normalizeProspectDocumentNumber();
+      if (!this.prospectForm.numeroDocumento) {
+        this.errorMessage.set(`Ingresa el número de ${document.label}.`);
+        return;
+      }
+      if (!document.pattern.test(this.prospectForm.numeroDocumento)) {
+        this.errorMessage.set(document.validationMessage);
+        return;
+      }
+      if (this.isCompanyProspect() && !this.prospectForm.razonSocial.trim()) {
+        this.errorMessage.set('La razón social de la empresa es obligatoria.');
+        return;
+      }
+    }
+    if (this.prospectForm.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.prospectForm.correo.trim())) {
+      this.errorMessage.set('Ingresa un correo electrónico válido.');
       return;
     }
     if (!this.prospectForm.catalogoItemId && this.catalogoItems().some((item) => item.estado === 'ACTIVO')) {
@@ -3375,11 +3312,12 @@ export class CrmAdminPage {
 
     const request = {
       tipoPersona: this.prospectForm.tipoPersona,
+      paisCodigo: this.prospectForm.paisCodigo || null,
       tipoDocumento: this.prospectForm.tipoDocumento || null,
       numeroDocumento: this.prospectForm.numeroDocumento.trim() || null,
       nombre: this.prospectForm.nombre.trim(),
-      razonSocial: this.prospectForm.razonSocial.trim() || null,
-      nombreComercial: this.prospectForm.nombreComercial.trim() || null,
+      razonSocial: this.isCompanyProspect() ? this.prospectForm.razonSocial.trim() || null : null,
+      nombreComercial: this.isCompanyProspect() ? this.prospectForm.nombreComercial.trim() || null : null,
       telefono: this.prospectForm.telefono.trim() || null,
       correo: this.prospectForm.correo.trim() || null,
       direccion: this.prospectForm.direccion.trim() || null,
@@ -3473,6 +3411,7 @@ export class CrmAdminPage {
       this.errorMessage.set('No tienes permisos para administrar el catalogo CRM.');
       return;
     }
+    this.errorMessage.set(null);
     this.catalogoForm = this.emptyCatalogoForm();
     this.catalogStep.set('select');
     this.catalogDrawerOpen.set(true);
@@ -3493,7 +3432,10 @@ export class CrmAdminPage {
       metadataJson: item.metadataJson || '',
       publicEnabled: item.publicEnabled !== false,
       landingSlug: item.landingSlug || '',
-      atributos: this.extractCatalogAttributes(item.metadataJson),
+      atributos: this.migrateCatalogAttributes(
+        this.normalizeOpportunityType(item.tipoItem),
+        this.extractCatalogAttributes(item.metadataJson),
+      ),
     };
     this.catalogStep.set('form');
     this.catalogDrawerOpen.set(true);
@@ -3506,12 +3448,47 @@ export class CrmAdminPage {
       this.errorMessage.set('No tienes permisos para administrar el catalogo CRM.');
       return;
     }
+    const registration = this.catalogRegistrationDefinition();
     if (!this.catalogoForm.nombre.trim()) {
-      this.errorMessage.set('El nombre del item comercial es obligatorio.');
+      this.errorMessage.set(`Completa el campo "${registration.nameLabel}".`);
+      return;
+    }
+    this.errorMessage.set(null);
+    if (this.catalogoForm.descripcion.trim().length < 10) {
+      this.errorMessage.set('Agrega una descripcion comercial de al menos 10 caracteres para que ventas sepa que incluye la oferta.');
       return;
     }
     if (Number(this.catalogoForm.precioReferencial || 0) < 0) {
       this.errorMessage.set('El precio referencial no puede ser negativo.');
+      return;
+    }
+    const missingField = registration.fields.find((field) => field.required && this.catalogAttributeIsEmpty(field.key));
+    if (missingField) {
+      this.errorMessage.set(`Completa el campo "${missingField.label}" para registrar ${registration.label.toLowerCase()}.`);
+      return;
+    }
+    const invalidNumberField = registration.fields.find((field) => {
+      if (field.type !== 'number' || this.catalogAttributeIsEmpty(field.key)) {
+        return false;
+      }
+      const value = Number(this.catalogAttribute(field.key));
+      return !Number.isFinite(value) || (field.min !== undefined && value < field.min);
+    });
+    if (invalidNumberField) {
+      this.errorMessage.set(`Revisa el valor de "${invalidNumberField.label}".`);
+      return;
+    }
+    if (this.catalogoForm.tipoItem === 'FINANCIERO') {
+      const minimum = Number(this.catalogAttribute('montoMinimo') || 0);
+      const maximum = Number(this.catalogAttribute('montoMaximo') || 0);
+      if (minimum > 0 && maximum > 0 && minimum > maximum) {
+        this.errorMessage.set('El monto minimo no puede ser mayor que el monto maximo.');
+        return;
+      }
+    }
+    this.ensureCatalogLandingSlug();
+    if (this.catalogoForm.publicEnabled && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(this.catalogoForm.landingSlug)) {
+      this.errorMessage.set('El slug de landing solo puede contener letras minusculas, numeros y guiones.');
       return;
     }
     this.catalogoForm.atributos = this.cleanCatalogAttributes();
@@ -3553,6 +3530,7 @@ export class CrmAdminPage {
   }
 
   public selectCatalogType(type: OpportunityType): void {
+    this.errorMessage.set(null);
     this.catalogoForm.tipoItem = type;
     this.catalogoForm.atributos = {};
     this.catalogStep.set('form');
@@ -3562,11 +3540,20 @@ export class CrmAdminPage {
     if (this.catalogoForm.id) {
       return;
     }
+    this.errorMessage.set(null);
     this.catalogStep.set('select');
   }
 
   public catalogFields(): CatalogField[] {
-    return this.catalogFieldMap[this.catalogoForm.tipoItem] ?? this.catalogFieldMap.OTRO ?? [];
+    return [...this.catalogRegistrationDefinition().fields];
+  }
+
+  public catalogFieldOptions(field: CatalogField): Array<{ label: string; value: string }> {
+    return (field.options ?? []).map((option) => ({ label: option, value: option }));
+  }
+
+  public catalogRegistrationDefinition(type: OpportunityType = this.catalogoForm.tipoItem): CatalogRegistrationType {
+    return catalogRegistrationType(type);
   }
 
   public catalogAttribute(key: string): string | number | null {
@@ -3574,28 +3561,61 @@ export class CrmAdminPage {
   }
 
   public setCatalogAttribute(field: CatalogField, value: string | number | null): void {
-    const normalized = field.type === 'number' ? Number(value || 0) || null : String(value ?? '').trim();
+    const normalized = field.type === 'number'
+      ? value === null || value === '' || !Number.isFinite(Number(value)) ? null : Number(value)
+      : String(value ?? '').trim();
     this.catalogoForm.atributos = {
       ...this.catalogoForm.atributos,
-      [field.key]: normalized || null,
+      [field.key]: normalized === '' ? null : normalized,
     };
   }
 
   public catalogNamePlaceholder(): string {
-    const examples: Partial<Record<OpportunityType, string>> = {
-      CURSO: 'Ej. Curso Excel avanzado',
-      VEHICULO: 'Ej. Toyota Hilux 2021',
-      INMUEBLE: 'Ej. Departamento en Miraflores',
-      SEGURO: 'Ej. Seguro vehicular premium',
-      SOFTWARE: 'Ej. Sistema POS mensual',
-      TURISMO: 'Ej. Paquete Cusco 4D/3N',
-      MAQUINARIA: 'Ej. Excavadora CAT 320',
-    };
-    return examples[this.catalogoForm.tipoItem] || 'Ej. Oferta comercial para landing';
+    return this.catalogRegistrationDefinition().namePlaceholder;
   }
 
   public catalogDescriptionPlaceholder(): string {
-    return `Resumen para ventas: ${this.opportunityTypeMeta(this.catalogoForm.tipoItem).secondaryLabel.toLowerCase()}`;
+    return this.catalogRegistrationDefinition().descriptionPlaceholder;
+  }
+
+  public ensureCatalogLandingSlug(): void {
+    if (!this.catalogoForm.publicEnabled) {
+      return;
+    }
+    if (!this.catalogoForm.landingSlug.trim()) {
+      this.catalogoForm.landingSlug = this.toCatalogSlug(this.catalogoForm.nombre);
+    } else {
+      this.normalizeCatalogLandingSlug();
+    }
+  }
+
+  public normalizeCatalogLandingSlug(): void {
+    this.catalogoForm.landingSlug = this.toCatalogSlug(this.catalogoForm.landingSlug);
+  }
+
+  public catalogPricePreview(): string {
+    const value = Number(this.catalogoForm.precioReferencial || 0);
+    if (value <= 0) {
+      return 'Precio por cotizar';
+    }
+    const symbol = this.auth.currentSession()?.empresa?.monedaSimbolo || 'S/';
+    return `${symbol} ${new Intl.NumberFormat('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`;
+  }
+
+  public catalogPreviewAttributes(): Array<{ label: string; value: string }> {
+    return this.catalogFields()
+      .map((field) => ({ label: field.label, value: String(this.catalogAttribute(field.key) ?? '').trim() }))
+      .filter((item) => item.value)
+      .slice(0, 6);
+  }
+
+  public catalogPublicationLabel(): string {
+    if (!this.catalogoForm.publicEnabled) {
+      return 'Solo disponible dentro del CRM';
+    }
+    return this.catalogoForm.estado === 'ACTIVO'
+      ? 'Disponible para CRM y landing'
+      : 'La landing se habilitara al activar la oferta';
   }
 
   protected catalogLandingUrl(item: CrmCatalogoItem): string {
@@ -3610,6 +3630,82 @@ export class CrmAdminPage {
       params.set('slug', item.landingSlug);
     }
     return `/crm-lead?${params.toString()}`;
+  }
+
+  public onProspectPersonTypeChange(value: string): void {
+    const type = this.normalizeProspectPersonType(value);
+    const previousDocumentType = this.prospectForm.tipoDocumento;
+    this.prospectForm.tipoPersona = type;
+    const firstDocument = this.prospectDocumentOptions()[0]?.value || '';
+    this.prospectForm.tipoDocumento = firstDocument;
+    if (type === 'SIN_DEFINIR' || previousDocumentType !== firstDocument) {
+      this.prospectForm.numeroDocumento = '';
+    }
+  }
+
+  public onProspectDocumentTypeChange(value: string | null): void {
+    const documentType = String(value || '').trim().toUpperCase();
+    if (documentType !== this.prospectForm.tipoDocumento) {
+      this.prospectForm.numeroDocumento = '';
+    }
+    this.prospectForm.tipoDocumento = documentType;
+  }
+
+  public onProspectCountryChange(value: string | null): void {
+    const country = prospectCountry(value);
+    const previousDocumentType = this.prospectForm.tipoDocumento;
+    this.prospectForm.paisCodigo = country.code;
+    const firstDocument = this.prospectDocumentOptions()[0]?.value || '';
+    this.prospectForm.tipoDocumento = firstDocument;
+    if (previousDocumentType !== firstDocument) {
+      this.prospectForm.numeroDocumento = '';
+    }
+  }
+
+  public prospectDocumentOptions(): { label: string; value: string }[] {
+    return prospectDocuments(
+      this.prospectForm.paisCodigo,
+      this.normalizeProspectPersonType(this.prospectForm.tipoPersona),
+    ).map((document) => ({ label: document.label, value: document.value }));
+  }
+
+  public selectedProspectDocument(): ProspectDocumentOption | null {
+    return prospectDocuments(
+      this.prospectForm.paisCodigo,
+      this.normalizeProspectPersonType(this.prospectForm.tipoPersona),
+    ).find((document) => document.value === this.prospectForm.tipoDocumento) ?? null;
+  }
+
+  public prospectDocumentPlaceholder(): string {
+    return this.selectedProspectDocument()?.placeholder || 'Selecciona primero el tipo de documento';
+  }
+
+  public prospectDocumentHelp(): string {
+    return this.selectedProspectDocument()?.help || '';
+  }
+
+  public prospectDocumentInputMode(): 'numeric' | 'text' {
+    return this.selectedProspectDocument()?.inputMode || 'text';
+  }
+
+  public prospectCountryName(): string {
+    return prospectCountry(this.prospectForm.paisCodigo).name;
+  }
+
+  public isNaturalProspect(): boolean {
+    return this.prospectForm.tipoPersona === 'NATURAL';
+  }
+
+  public isCompanyProspect(): boolean {
+    return this.prospectForm.tipoPersona === 'JURIDICA';
+  }
+
+  public normalizeProspectDocumentNumber(): void {
+    const document = this.selectedProspectDocument();
+    const current = this.prospectForm.numeroDocumento.trim().toUpperCase();
+    this.prospectForm.numeroDocumento = document?.inputMode === 'numeric'
+      ? current.replace(/\D/g, '')
+      : current.replace(/\s+/g, '');
   }
 
   protected catalogLandingAbsoluteUrl(item: CrmCatalogoItem): string {
@@ -3636,7 +3732,7 @@ export class CrmAdminPage {
 
   protected catalogAttributeBadges(item: CrmCatalogoItem): string[] {
     const attributes = this.extractCatalogAttributes(item.metadataJson);
-    const fields = this.catalogFieldMap[this.normalizeOpportunityType(item.tipoItem)] ?? [];
+    const fields = this.catalogRegistrationDefinition(this.normalizeOpportunityType(item.tipoItem)).fields;
     const labelByKey = new Map(fields.map((field) => [field.key, field.label]));
     return Object.entries(attributes)
       .filter(([, value]) => value !== null && value !== undefined && value !== '')
@@ -4075,40 +4171,6 @@ export class CrmAdminPage {
     return this.opportunityTypeOptions.find((item) => item.value === type) ?? this.opportunityTypeOptions[0];
   }
 
-  protected openCreateStage(): void {
-    this.stageForm = this.emptyStageForm();
-    this.activeDialog.set('etapa');
-  }
-
-  public saveStage(): void {
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-    if (!this.stageForm.codigo.trim() || !this.stageForm.nombre.trim()) {
-      this.errorMessage.set('Codigo y nombre de etapa son obligatorios.');
-      return;
-    }
-    this.saving.set(true);
-    this.api
-      .createCrmEtapa({
-        codigo: this.stageForm.codigo.trim(),
-        nombre: this.stageForm.nombre.trim(),
-        orden: Number(this.stageForm.orden || this.etapas().length + 1),
-        color: this.stageForm.color || '#2563eb',
-        ganado: this.stageForm.ganado,
-        perdido: this.stageForm.perdido,
-        activo: true,
-      })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: (saved) => {
-          this.etapas.set([...this.etapas(), saved].sort((a, b) => a.orden - b.orden));
-          this.activeDialog.set(null);
-          this.successMessage.set('Etapa agregada al embudo.');
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
-  }
-
   public openEditOpportunity(item: CrmOportunidad): void {
     this.opportunityForm = {
       id: item.id,
@@ -4128,6 +4190,8 @@ export class CrmAdminPage {
       etapa: item.etapa || 'NUEVO',
       fechaCierreEstimada: item.fechaCierreEstimada || '',
       responsableId: item.responsableId || this.currentUserKey(),
+      proximaAccion: '',
+      fechaProximaAccion: '',
     };
     this.activeDialog.set('oportunidad');
   }
@@ -4164,10 +4228,11 @@ export class CrmAdminPage {
 
     if (prospect) {
       this.clientCompletionEditTarget.set('PROSPECT');
-      const tipoPersona = prospect.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
+      const tipoPersona = this.normalizeProspectPersonType(prospect.tipoPersona);
       this.clientCompletionForm = {
         tipoPersona,
-        tipoDocumento: this.normalizeClientDocumentType(prospect.tipoDocumento) || (tipoPersona === 'JURIDICA' ? '6' : '1'),
+        tipoDocumento: this.normalizeClientDocumentType(prospect.tipoDocumento)
+          || (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
         numeroDocumento: prospect.numeroDocumento || '',
         nombre: prospect.nombre || '',
         razonSocial: prospect.razonSocial || '',
@@ -4198,24 +4263,55 @@ export class CrmAdminPage {
       this.errorMessage.set('Selecciona una oferta del catalogo CRM para la oportunidad.');
       return;
     }
+    if (Number(this.opportunityForm.montoEstimado || 0) <= 0) {
+      this.errorMessage.set('El monto estimado debe ser mayor que cero.');
+      return;
+    }
+    if (!this.opportunityForm.fechaCierreEstimada) {
+      this.errorMessage.set('Define la fecha estimada de cierre.');
+      return;
+    }
+    if (!this.opportunityForm.responsableId.trim()) {
+      this.errorMessage.set('Asigna un responsable a la oportunidad.');
+      return;
+    }
+    if (!this.opportunityForm.id && !this.opportunityForm.proximaAccion.trim()) {
+      this.errorMessage.set('Define la siguiente accion comercial.');
+      return;
+    }
+    if (!this.opportunityForm.id && !this.opportunityForm.fechaProximaAccion) {
+      this.errorMessage.set('Define cuando se realizara la siguiente accion.');
+      return;
+    }
+    if (
+      !this.opportunityForm.id &&
+      Date.parse(this.opportunityForm.fechaProximaAccion) <= Date.now()
+    ) {
+      this.errorMessage.set('La siguiente accion debe programarse para una fecha futura.');
+      return;
+    }
     const request = {
       prospectoId: this.opportunityForm.prospectoId,
       clienteId: this.opportunityForm.prospectoId ? null : this.opportunityForm.clienteId,
       tipoOportunidad: this.opportunityForm.tipoOportunidad,
-      catalogoItemId: this.opportunityForm.catalogoItemId,
+      catalogoItemId: Number(this.opportunityForm.catalogoItemId),
       titulo: this.opportunityForm.titulo.trim(),
       descripcion: this.buildOpportunityDescription(),
       montoEstimado: Number(this.opportunityForm.montoEstimado || 0),
       probabilidad: Number(this.opportunityForm.probabilidad || 0),
       etapa: this.opportunityForm.etapa,
-      fechaCierreEstimada: this.opportunityForm.fechaCierreEstimada || null,
-      responsableId: this.opportunityForm.responsableId.trim() || null,
+      fechaCierreEstimada: this.opportunityForm.fechaCierreEstimada,
+      responsableId: this.opportunityForm.responsableId.trim(),
     };
 
     this.saving.set(true);
     const operation = this.opportunityForm.id
       ? this.crmOpportunities.update(this.opportunityForm.id, request)
-      : this.crmOpportunities.create(request);
+      : this.crmOpportunities.create({
+          ...request,
+          proximaAccion: this.opportunityForm.proximaAccion.trim(),
+          fechaProximaAccion: new Date(this.opportunityForm.fechaProximaAccion).toISOString(),
+        });
     operation.pipe(finalize(() => this.saving.set(false))).subscribe({
       next: (saved) => {
         this.upsertOpportunity(saved);
@@ -4228,24 +4324,33 @@ export class CrmAdminPage {
 
   private requireClientCompletion(item: CrmOportunidad, action: CrmClientCompletionAction): boolean {
     const prospect = this.prospectForOpportunity(item);
-    if (item.clienteId || prospect?.clienteId || !prospect || this.hasCompleteClientIdentity(prospect)) {
+    const client = this.clientForOpportunity(item);
+    if ((client && this.hasCompleteClientRecord(client)) || (!client && prospect && this.hasCompleteClientIdentity(prospect))) {
       return false;
     }
+    if (!prospect && !client) {
+      this.errorMessage.set('La oportunidad no tiene un prospecto o cliente vinculado para completar la cotizacion.');
+      return true;
+    }
 
-    const tipoPersona = prospect.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
+    const tipoPersona = client
+      ? (this.normalizeClientDocumentType(client.tipoDocumento) === '6' ? 'JURIDICA' : 'NATURAL')
+      : this.normalizeProspectPersonType(prospect?.tipoPersona);
     this.selectedOpportunity.set(item);
     this.clientCompletionOpportunityId.set(item.id);
     this.clientCompletionAction.set(action);
+    this.clientCompletionEditTarget.set(client ? 'CLIENT' : 'PROSPECT');
     this.clientCompletionForm = {
       tipoPersona,
-      tipoDocumento: this.normalizeClientDocumentType(prospect.tipoDocumento) || (tipoPersona === 'JURIDICA' ? '6' : '1'),
-      numeroDocumento: prospect.numeroDocumento || '',
-      nombre: prospect.nombre || '',
-      razonSocial: prospect.razonSocial || '',
-      nombreComercial: prospect.nombreComercial || '',
-      telefono: prospect.telefono || '',
-      correo: prospect.correo || '',
-      direccion: prospect.direccion || '',
+      tipoDocumento: this.normalizeClientDocumentType(client?.tipoDocumento || prospect?.tipoDocumento)
+        || (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
+      numeroDocumento: client?.numeroDocumento || prospect?.numeroDocumento || '',
+      nombre: client?.nombre || prospect?.nombre || '',
+      razonSocial: tipoPersona === 'JURIDICA' ? client?.nombre || prospect?.razonSocial || prospect?.nombre || '' : '',
+      nombreComercial: prospect?.nombreComercial || '',
+      telefono: client?.telefono || prospect?.telefono || '',
+      correo: client?.email || prospect?.correo || '',
+      direccion: client?.direccion || prospect?.direccion || '',
     };
     this.errorMessage.set(null);
     this.clientCompletionDialogOpen.set(true);
@@ -4282,6 +4387,7 @@ export class CrmAdminPage {
     this.clientCompletionDialogOpen.set(false);
     this.clientCompletionOpportunityId.set(null);
     this.clientCompletionEditTarget.set('PROSPECT');
+    this.clientCompletionQuote.set(null);
   }
 
   protected clientCompletionProspectName(): string {
@@ -4299,12 +4405,16 @@ export class CrmAdminPage {
     const opportunity = this.oportunidades().find((item) => item.id === opportunityId) || this.selectedOpportunity();
     const prospect = opportunity ? this.prospectForOpportunity(opportunity) : null;
     const client = opportunity ? this.clientForOpportunity(opportunity) : null;
-    if (!opportunity || (!prospect && !(this.clientCompletionAction() === 'EDIT' && client))) {
+    if (!opportunity || (!prospect && !client)) {
       this.errorMessage.set('No se encontro el contacto asociado a la oportunidad.');
       return;
     }
 
     const form = this.clientCompletionForm;
+    if (form.tipoPersona === 'SIN_DEFINIR') {
+      this.errorMessage.set('Indica si el cliente es una persona natural o una empresa para continuar.');
+      return;
+    }
     const documentType = this.normalizeClientDocumentType(form.tipoDocumento);
     const documentNumber = form.numeroDocumento.replace(/\D/g, '');
     if (!documentType) {
@@ -4331,7 +4441,7 @@ export class CrmAdminPage {
 
     const continuation = this.clientCompletionAction();
     this.saving.set(true);
-    if (continuation === 'EDIT' && this.clientCompletionEditTarget() === 'CLIENT' && client) {
+    if (this.clientCompletionEditTarget() === 'CLIENT' && client) {
       this.api.updateCliente(client.id, {
         tipoDocumento: documentType,
         numeroDocumento: documentNumber,
@@ -4349,7 +4459,7 @@ export class CrmAdminPage {
           this.clientCompletionDialogOpen.set(false);
           this.clientCompletionOpportunityId.set(null);
           this.clientCompletionEditTarget.set('PROSPECT');
-          this.successMessage.set('Datos del cliente actualizados correctamente.');
+          this.continueAfterClientCompletion(continuation, opportunity);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -4378,22 +4488,17 @@ export class CrmAdminPage {
         this.clientCompletionDialogOpen.set(false);
         this.clientCompletionOpportunityId.set(null);
         this.clientCompletionEditTarget.set('PROSPECT');
-        if (continuation === 'EDIT') {
-          this.successMessage.set('Datos del prospecto actualizados correctamente.');
-          return;
-        }
         const currentOpportunity = this.oportunidades().find((item) => item.id === opportunity.id) || opportunity;
-        if (continuation === 'PAYMENT') {
-          this.openOpportunityPaymentDialog(currentOpportunity);
-        } else {
-          this.markWon(currentOpportunity);
-        }
+        this.continueAfterClientCompletion(continuation, currentOpportunity);
       },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
     });
   }
 
   private hasCompleteClientIdentity(prospect: CrmProspecto): boolean {
+    if (!['NATURAL', 'JURIDICA'].includes(prospect.tipoPersona)) {
+      return false;
+    }
     const documentType = this.normalizeClientDocumentType(prospect.tipoDocumento);
     const documentNumber = String(prospect.numeroDocumento || '').replace(/\D/g, '');
     const validDocument = documentType === '6' ? documentNumber.length === 11 : documentType === '1' && documentNumber.length === 8;
@@ -4412,6 +4517,22 @@ export class CrmAdminPage {
       return '6';
     }
     return '';
+  }
+
+  private normalizeProspectPersonType(value: string | null | undefined): 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA' {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized === 'JURIDICA') {
+      return 'JURIDICA';
+    }
+    if (normalized === 'NATURAL') {
+      return 'NATURAL';
+    }
+    return 'SIN_DEFINIR';
+  }
+
+  private defaultProspectCountryCode(): string {
+    const configuredCountry = this.auth.currentSession()?.empresa?.paisCodigo;
+    return prospectCountry(configuredCountry).code;
   }
 
   protected markWon(item: CrmOportunidad): void {
@@ -4971,6 +5092,46 @@ export class CrmAdminPage {
       });
   }
 
+  private hasCompleteClientRecord(client: Cliente): boolean {
+    return Boolean(
+      client.nombre?.trim()
+      && client.numeroDocumento?.trim()
+      && (client.telefono?.trim() || client.email?.trim()),
+    );
+  }
+
+  private continueAfterClientCompletion(action: CrmClientCompletionAction, opportunity: CrmOportunidad): void {
+    const quote = this.clientCompletionQuote();
+    this.clientCompletionQuote.set(null);
+    if (action === 'EDIT') {
+      this.successMessage.set('Datos del contacto actualizados correctamente.');
+      return;
+    }
+    if (action === 'PAYMENT') {
+      this.openOpportunityPaymentDialog(opportunity);
+      return;
+    }
+    if (action === 'WON') {
+      this.markWon(opportunity);
+      return;
+    }
+    if (action === 'QUOTE_CREATE') {
+      this.openQuoteDialog(opportunity, true);
+      return;
+    }
+    if (!quote) {
+      this.errorMessage.set('No se encontro la cotizacion que se iba a emitir.');
+      return;
+    }
+    if (action === 'QUOTE_PDF') {
+      this.downloadQuotePdf(quote, 'Documento PDF generado.', true);
+    } else if (action === 'QUOTE_EMAIL') {
+      this.sendQuoteByEmail(quote, true);
+    } else {
+      this.sendQuoteByWhatsapp(quote, true);
+    }
+  }
+
   protected saveAutomaticLeadAssignment(automatico: boolean): void {
     const responsableIds = this.prospectDistributionSelectedSellerIds();
     if (automatico && !responsableIds.length) {
@@ -5180,6 +5341,14 @@ export class CrmAdminPage {
     return this.tipoActividadOptions.find((item) => item.value === value)?.icon || 'pi pi-calendar-plus';
   }
 
+  public activityTypeLabel(value = this.activityForm.tipoActividad): string {
+    return this.tipoActividadOptions.find((item) => item.value === value)?.label || this.humanize(value);
+  }
+
+  public activityStateLabel(value = this.activityForm.estadoActividad): string {
+    return this.actividadEstadoOptions.find((item) => item.value === value)?.label || this.humanize(value);
+  }
+
   protected followUpNextAction(card: CommercialInboxCard): string {
     if (card.nextActivity) {
       return card.nextActivity.asunto;
@@ -5312,6 +5481,9 @@ export class CrmAdminPage {
   }
 
   public sendProspectWhatsapp(item: CrmProspecto): void {
+    if (this.actionId() === item.id) {
+      return;
+    }
     if (!this.onlyDigits(item.telefono)) {
       this.errorMessage.set('El prospecto no tiene un teléfono válido para WhatsApp.');
       return;
@@ -5328,13 +5500,31 @@ export class CrmAdminPage {
       });
   }
 
-  protected emailUrl(item: CrmProspecto): string | null {
-    if (!item.correo) {
-      return null;
+  public sendProspectByEmail(item: CrmProspecto): void {
+    if (!item.correo || this.sendingProspectEmailIds().has(item.id)) {
+      return;
     }
-    const subject = encodeURIComponent(`Seguimiento ${item.interesPrincipal || 'comercial'}`);
-    const body = encodeURIComponent(`Hola ${item.nombre},\n\nTe escribo para dar seguimiento a tu consulta.\n\nSaludos.`);
-    return `mailto:${item.correo}?subject=${subject}&body=${body}`;
+    const subject = `Seguimiento ${item.interesPrincipal || 'comercial'}`;
+    const message = `Hola ${item.nombre},\n\nTe escribo para dar seguimiento a tu consulta.\n\nSaludos.`;
+    this.sendingProspectEmailIds.update((current) => new Set(current).add(item.id));
+    this.errorMessage.set(null);
+    this.api
+      .sendCrmProspectEmail(item.id, subject, message)
+      .pipe(finalize(() => this.sendingProspectEmailIds.update((current) => {
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      })))
+      .subscribe({
+        next: (response) => {
+          this.successMessage.set(`Correo enviado desde Azurion a ${response.destinatario}.`);
+          this.crmFollowups.pageActivities({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).subscribe({
+            next: (page) => this.actividades.set(page.content),
+            error: () => undefined,
+          });
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected prospectInitials(item: CrmProspecto): string {
@@ -5538,7 +5728,10 @@ export class CrmAdminPage {
     });
   }
 
-  public openQuoteDialog(item: CrmOportunidad): void {
+  public openQuoteDialog(item: CrmOportunidad, clientValidated = false): void {
+    if (!clientValidated && this.requireClientCompletion(item, 'QUOTE_CREATE')) {
+      return;
+    }
     this.selectedOpportunity.set(item);
     this.quoteForm = this.emptyQuoteForm();
     this.quoteForm.oportunidadId = item.id;
@@ -7244,7 +7437,15 @@ export class CrmAdminPage {
     return this.quoteStatusLabel(item);
   }
 
-  public downloadQuotePdf(item: Cotizacion, successMessage = 'Documento PDF generado.'): void {
+  public downloadQuotePdf(item: Cotizacion, successMessage = 'Documento PDF generado.', clientValidated = false): void {
+    const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
+    if (!clientValidated && opportunity) {
+      this.clientCompletionQuote.set(item);
+      if (this.requireClientCompletion(opportunity, 'QUOTE_PDF')) {
+        return;
+      }
+      this.clientCompletionQuote.set(null);
+    }
     this.actionId.set(item.id);
     this.api
       .getCotizacionPdf(item.id)
@@ -7267,18 +7468,28 @@ export class CrmAdminPage {
     return Boolean(opportunity?.prospectoId && this.onlyDigits(this.opportunityContactPhone(opportunity)));
   }
 
-  public sendQuoteByWhatsapp(item: Cotizacion): void {
+  public sendQuoteByWhatsapp(item: Cotizacion, clientValidated = false): void {
+    if (this.isQuoteWhatsappSending(item.id) || this.isQuoteWhatsappLocked(item)) {
+      return;
+    }
     const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
+    if (!clientValidated && opportunity) {
+      this.clientCompletionQuote.set(item);
+      if (this.requireClientCompletion(opportunity, 'QUOTE_WHATSAPP')) {
+        return;
+      }
+      this.clientCompletionQuote.set(null);
+    }
     const prospectId = Number(opportunity?.prospectoId || 0);
     if (!prospectId || !this.onlyDigits(opportunity ? this.opportunityContactPhone(opportunity) : null)) {
       this.errorMessage.set('La cotización necesita una oportunidad vinculada a un prospecto con teléfono.');
       return;
     }
-    this.actionId.set(item.id);
+    this.setQuoteWhatsappSending(item.id, true);
     this.errorMessage.set(null);
     this.api
       .sendCrmWhatsappQuote(prospectId, item.id, this.quoteShareMessage(item))
-      .pipe(finalize(() => this.actionId.set(null)))
+      .pipe(finalize(() => this.setQuoteWhatsappSending(item.id, false)))
       .subscribe({
         next: ({ cotizacion }) => {
           const saved = opportunity ? this.withQuoteOpportunity(cotizacion, opportunity.id) : cotizacion;
@@ -7290,6 +7501,47 @@ export class CrmAdminPage {
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
+  }
+
+  public isQuoteWhatsappSending(id: number): boolean {
+    return this.sendingQuoteWhatsappIds().has(id);
+  }
+
+  public isQuoteWhatsappSent(item: Cotizacion): boolean {
+    return item.whatsappSendStatus === 'SENT';
+  }
+
+  public isQuoteWhatsappLocked(item: Cotizacion): boolean {
+    return ['SENT', 'SENDING', 'UNKNOWN'].includes(item.whatsappSendStatus || '');
+  }
+
+  public isQuoteWhatsappProcessing(item: Cotizacion): boolean {
+    return this.isQuoteWhatsappSending(item.id) || item.whatsappSendStatus === 'SENDING';
+  }
+
+  public quoteWhatsappActionLabel(item: Cotizacion): string {
+    if (this.isQuoteWhatsappProcessing(item)) {
+      return 'Enviando por WhatsApp...';
+    }
+    if (item.whatsappSendStatus === 'SENT') {
+      return 'Enviado por WhatsApp';
+    }
+    if (item.whatsappSendStatus === 'UNKNOWN') {
+      return 'Verificar envio';
+    }
+    return 'WhatsApp';
+  }
+
+  private setQuoteWhatsappSending(id: number, sending: boolean): void {
+    this.sendingQuoteWhatsappIds.update((current) => {
+      const next = new Set(current);
+      if (sending) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
   }
 
   public canSendQuoteByEmail(item: Cotizacion): boolean {
@@ -7312,9 +7564,17 @@ export class CrmAdminPage {
     });
   }
 
-  public sendQuoteByEmail(item: Cotizacion): void {
+  public sendQuoteByEmail(item: Cotizacion, clientValidated = false): void {
     if (this.isQuoteEmailSending(item.id)) {
       return;
+    }
+    const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
+    if (!clientValidated && opportunity) {
+      this.clientCompletionQuote.set(item);
+      if (this.requireClientCompletion(opportunity, 'QUOTE_EMAIL')) {
+        return;
+      }
+      this.clientCompletionQuote.set(null);
     }
     if (!this.quoteContactEmail(item)) {
       this.errorMessage.set('El contacto no tiene correo para enviar la cotizacion.');
@@ -7529,12 +7789,24 @@ export class CrmAdminPage {
   public opportunityCompanyLabel(item: CrmOportunidad): string {
     const prospect = this.prospectForOpportunity(item);
     const cliente = this.clientForOpportunity(item);
-    return prospect?.razonSocial || prospect?.nombreComercial || cliente?.nombre || this.opportunityContactName(item);
+    if (cliente) {
+      return this.normalizeClientDocumentType(cliente.tipoDocumento) === '6'
+        ? cliente.nombre
+        : 'Persona natural';
+    }
+    const personType = this.normalizeProspectPersonType(prospect?.tipoPersona);
+    if (!prospect || personType === 'SIN_DEFINIR') {
+      return prospect?.razonSocial || prospect?.nombreComercial || 'Persona o empresa por confirmar';
+    }
+    if (personType === 'JURIDICA') {
+      return prospect.razonSocial || prospect.nombreComercial || 'Empresa sin identificar';
+    }
+    return 'Persona natural';
   }
 
   protected opportunityCampaignLabel(item: CrmOportunidad): string {
     const prospect = this.prospectForOpportunity(item);
-    return prospect?.campania?.trim() || (prospect ? 'Sin campania' : 'Ingreso manual');
+    return prospect?.campania?.trim() || '';
   }
 
   protected opportunityOriginLabel(item: CrmOportunidad): string {
@@ -7804,7 +8076,60 @@ export class CrmAdminPage {
     return Boolean(item.prospectoId && this.onlyDigits(this.opportunityContactPhone(item)));
   }
 
+  private pipelineStageIcon(stage: string): string {
+    const icons: Record<string, string> = {
+      NUEVO: 'pi pi-sparkles',
+      CONTACTADO: 'pi pi-phone',
+      INTERESADO: 'pi pi-users',
+      COTIZADO: 'pi pi-file',
+      NEGOCIACION: 'pi pi-comments',
+    };
+    return icons[String(stage || '').toUpperCase()] || 'pi pi-flag';
+  }
+
+  private pipelineActivityTone(activity: CrmActividad | null): 'danger' | 'warning' | 'normal' | 'muted' {
+    if (!activity) {
+      return 'muted';
+    }
+    if (this.isOverdue(activity.fechaProgramada)) {
+      return 'danger';
+    }
+    if (this.isToday(activity.fechaProgramada)) {
+      return 'warning';
+    }
+    return 'normal';
+  }
+
+  private pipelinePriorityLabel(item: CrmOportunidad): string | null {
+    if (item.fechaCierreEstimada && this.isOverdue(item.fechaCierreEstimada)) {
+      return 'En riesgo';
+    }
+    if (item.fechaCierreEstimada && this.isToday(item.fechaCierreEstimada)) {
+      return 'Vence hoy';
+    }
+    if (Number(item.probabilidad || 0) >= 75) {
+      return 'Alta prioridad';
+    }
+    return null;
+  }
+
+  private pipelinePriorityTone(item: CrmOportunidad): 'danger' | 'warning' | 'success' | 'info' | null {
+    if (item.fechaCierreEstimada && this.isOverdue(item.fechaCierreEstimada)) {
+      return 'danger';
+    }
+    if (item.fechaCierreEstimada && this.isToday(item.fechaCierreEstimada)) {
+      return 'warning';
+    }
+    if (Number(item.probabilidad || 0) >= 75) {
+      return 'info';
+    }
+    return null;
+  }
+
   public sendOpportunityByWhatsapp(item: CrmOportunidad, template?: OpportunityMessageTemplate): void {
+    if (this.actionId() === item.id) {
+      return;
+    }
     const prospectId = Number(item.prospectoId || 0);
     if (!prospectId || !this.onlyDigits(this.opportunityContactPhone(item))) {
       this.errorMessage.set('La oportunidad no tiene un prospecto con teléfono para WhatsApp.');
@@ -7824,14 +8149,43 @@ export class CrmAdminPage {
       });
   }
 
-  public opportunityEmailUrl(item: CrmOportunidad, template?: OpportunityMessageTemplate): string | null {
-    const email = this.opportunityContactEmail(item);
-    if (!email) {
-      return null;
+  public opportunityEmailAvailable(item: CrmOportunidad): boolean {
+    return Boolean(this.opportunityContactEmail(item));
+  }
+
+  public isOpportunityEmailSending(id: number): boolean {
+    return this.sendingOpportunityEmailIds().has(id);
+  }
+
+  public sendOpportunityByEmail(item: CrmOportunidad, template?: OpportunityMessageTemplate): void {
+    if (this.isOpportunityEmailSending(item.id)) {
+      return;
     }
-    const subject = encodeURIComponent(template?.title || `Seguimiento: ${item.titulo}`);
-    const body = encodeURIComponent(this.renderOpportunityMessage(template, item));
-    return `mailto:${email}?subject=${subject}&body=${body}`;
+    if (!this.opportunityEmailAvailable(item)) {
+      this.errorMessage.set('La oportunidad no tiene un prospecto o cliente con correo.');
+      return;
+    }
+    const subject = template?.title || `Seguimiento: ${item.titulo}`;
+    const message = this.renderOpportunityMessage(template, item);
+    this.sendingOpportunityEmailIds.update((current) => new Set(current).add(item.id));
+    this.errorMessage.set(null);
+    this.api
+      .sendCrmOpportunityEmail(item.id, subject, message)
+      .pipe(finalize(() => this.sendingOpportunityEmailIds.update((current) => {
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      })))
+      .subscribe({
+        next: (response) => {
+          this.successMessage.set(`Correo enviado desde Azurion a ${response.destinatario}.`);
+          this.crmFollowups.pageActivities({ page: 0, size: CRM_INITIAL_PAGE_SIZE }).subscribe({
+            next: (page) => this.actividades.set(page.content),
+            error: () => undefined,
+          });
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   private renderOpportunityMessage(template: OpportunityMessageTemplate | undefined, item: CrmOportunidad): string {
@@ -8456,14 +8810,58 @@ export class CrmAdminPage {
   }
 
   private cleanCatalogAttributes(): Record<string, string | number> {
+    const preserved = Object.entries(this.catalogoForm.atributos).reduce<Record<string, string | number>>((acc, [key, value]) => {
+      if (value === null || value === undefined || String(value).trim() === '') {
+        return acc;
+      }
+      acc[key] = typeof value === 'number' ? value : String(value).trim();
+      return acc;
+    }, {});
     return this.catalogFields().reduce<Record<string, string | number>>((acc, field) => {
       const value = this.catalogoForm.atributos[field.key];
       if (value === null || value === undefined || value === '') {
+        delete acc[field.key];
         return acc;
       }
       acc[field.key] = field.type === 'number' ? Number(value || 0) : String(value).trim();
       return acc;
-    }, {});
+    }, preserved);
+  }
+
+  private migrateCatalogAttributes(
+    type: OpportunityType,
+    attributes: Record<string, string | number | null>,
+  ): Record<string, string | number | null> {
+    const aliases: Partial<Record<OpportunityType, Record<string, string>>> = {
+      SERVICIO: { servicio: 'tipoServicio' },
+      INMUEBLE: { area: 'areaM2' },
+      TURISMO: { personas: 'personasBase', dias: 'diasNoches', fechaViaje: 'fechaDisponible' },
+      CONSULTORIA: { tema: 'area' },
+      HOSPITALIDAD: { personas: 'capacidad', fechaReserva: 'fechaDisponible' },
+      TELECOMUNICACION: { direccionInstalacion: 'cobertura' },
+    };
+    return Object.entries(aliases[type] ?? {}).reduce<Record<string, string | number | null>>((result, [legacyKey, currentKey]) => {
+      if ((result[currentKey] === null || result[currentKey] === undefined || result[currentKey] === '') && result[legacyKey] !== undefined) {
+        result[currentKey] = result[legacyKey];
+      }
+      return result;
+    }, { ...attributes });
+  }
+
+  private catalogAttributeIsEmpty(key: string): boolean {
+    const value = this.catalogAttribute(key);
+    return value === null || value === undefined || String(value).trim() === '';
+  }
+
+  private toCatalogSlug(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80)
+      .replace(/-+$/g, '');
   }
 
   private catalogSnapshot(item: CrmCatalogoItem): string {
@@ -8492,8 +8890,9 @@ export class CrmAdminPage {
   private emptyProspectForm(): ProspectForm {
     return {
       id: null,
-      tipoPersona: 'NATURAL',
-      tipoDocumento: '1',
+      tipoPersona: 'SIN_DEFINIR',
+      paisCodigo: this.defaultProspectCountryCode(),
+      tipoDocumento: '',
       numeroDocumento: '',
       nombre: '',
       razonSocial: '',
@@ -8553,6 +8952,8 @@ export class CrmAdminPage {
       etapa: 'INTERESADO',
       fechaCierreEstimada: this.defaultOpportunityCloseDate(),
       responsableId: this.currentUserKey(),
+      proximaAccion: 'Llamada inicial',
+      fechaProximaAccion: this.defaultOpportunityNextActionDate(),
     };
   }
 
@@ -8582,6 +8983,14 @@ export class CrmAdminPage {
     date.setDate(date.getDate() + this.crmLocalConfig().cierreEstimadoDias);
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     return date.toISOString().slice(0, 10);
+  }
+
+  private defaultOpportunityNextActionDate(): string {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    date.setHours(9, 0, 0, 0);
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    return date.toISOString().slice(0, 16);
   }
 
   private loadCrmLocalConfig(): CrmLocalConfig {
@@ -8705,18 +9114,6 @@ export class CrmAdminPage {
     };
   }
 
-  private emptyStageForm(): StageForm {
-    const nextOrder = this.etapas().length + 1;
-    return {
-      codigo: '',
-      nombre: '',
-      orden: nextOrder,
-      color: '#2563eb',
-      ganado: false,
-      perdido: false,
-    };
-  }
-
   private emptyOpportunityRequirementForm(item: CrmOportunidad | null = this.selectedOpportunity()): OpportunityRequirementForm {
     const base = item ? this.defaultRequirementForOpportunity(item) : null;
     return {
@@ -8767,8 +9164,8 @@ export class CrmAdminPage {
 
   private emptyClientCompletionForm(): CrmClientCompletionDraft {
     return {
-      tipoPersona: 'NATURAL',
-      tipoDocumento: '1',
+      tipoPersona: 'SIN_DEFINIR',
+      tipoDocumento: '',
       numeroDocumento: '',
       nombre: '',
       razonSocial: '',

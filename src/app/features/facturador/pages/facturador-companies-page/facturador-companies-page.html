@@ -97,7 +97,7 @@
               <span class="muted">Oculta</span>
             }
           </td>
-          <td>{{ tenant.logo_pdf_url || '-' }}</td>
+          <td>{{ tenant.logo_pdf_configurado ? 'Configurado' : 'No configurado' }}</td>
           <td>
             <p-tag [value]="tenant.is_active === false ? 'Inactivo' : 'Activo'" [severity]="activeSeverity(tenant.is_active)" />
           </td>
@@ -191,7 +191,7 @@
           <i class="pi pi-image"></i>
           <div>
             <h2>Logo obligatorio</h2>
-            <p>Para registrar tenant debes cargar logo (archivo o URL).</p>
+            <p>El logo se almacena dentro del directorio privado del tenant.</p>
           </div>
         </div>
 
@@ -201,20 +201,15 @@
             <input
               type="file"
               name="logo_file"
-              accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
               (change)="onLogoFileSelected($event)"
             />
-            <small>Formato: PNG, JPG, JPEG, WEBP o SVG. Maximo 2 MB.</small>
+            <small>Formato: PNG, JPG, JPEG o WEBP. Maximo 2 MB.</small>
             @if (form.logo_file) {
               <small>Archivo: {{ form.logo_file.name }}</small>
             }
           </label>
 
-          <label>
-            URL logo
-            <input pInputText name="logo_pdf_url" [(ngModel)]="form.logo_pdf_url" placeholder="https://..." />
-            <small>Puedes usar URL en lugar de archivo.</small>
-          </label>
         </div>
       </div>
 
@@ -223,51 +218,62 @@
           <i class="pi pi-key"></i>
           <div>
             <h2>Credenciales SUNAT</h2>
-            <p>Para production es obligatorio adjuntar certificado digital.</p>
+            <p>
+              {{ form.sunat_mode === 'production'
+                ? 'Para produccion es obligatorio usar credenciales y certificado reales.'
+                : 'En beta Azurion aplica automaticamente las credenciales y el certificado oficiales de prueba.' }}
+            </p>
           </div>
         </div>
 
-        <div class="form-grid">
-          <label>
-            RUC SOL
-            <input pInputText name="ruc_sol" maxlength="11" [(ngModel)]="form.ruc_sol" placeholder="20000000001" />
-          </label>
+        @if (form.sunat_mode === 'production') {
+          <div class="form-grid">
+            <label>
+              RUC SOL real
+              <input pInputText name="ruc_sol" maxlength="11" [(ngModel)]="form.ruc_sol" />
+            </label>
 
-          <label>
-            Usuario SOL
-            <input pInputText name="usuario_sol" [(ngModel)]="form.usuario_sol" placeholder="MODDATOS" />
-          </label>
+            <label>
+              Usuario SOL real
+              <input pInputText name="usuario_sol" [(ngModel)]="form.usuario_sol" />
+            </label>
 
-          <label>
-            Clave SOL
-            <p-password name="clave_sol" [(ngModel)]="form.clave_sol" [feedback]="false" [toggleMask]="true" placeholder="Clave SOL" />
-          </label>
+            <label>
+              Clave SOL real
+              <p-password name="clave_sol" [(ngModel)]="form.clave_sol" [feedback]="false" [toggleMask]="true" placeholder="Clave SOL" />
+            </label>
 
-          <label>
-            Password certificado
-            <p-password
-              name="certificado_password"
-              [(ngModel)]="form.certificado_password"
-              [feedback]="false"
-              [toggleMask]="true"
-              placeholder="Opcional"
-            />
-          </label>
+            <label>
+              Password certificado
+              <p-password
+                name="certificado_password"
+                [(ngModel)]="form.certificado_password"
+                [feedback]="false"
+                [toggleMask]="true"
+                placeholder="Opcional"
+              />
+            </label>
 
-          <label>
-            Archivo firma digital
-            <input
-              type="file"
-              name="certificado_file"
-              accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
-              (change)="onCertificateFileSelected($event)"
-            />
-            <small>Formato: PEM, PFX o P12. Maximo 5 MB.</small>
-            @if (form.certificado_file) {
-              <small>Archivo: {{ form.certificado_file.name }}</small>
-            }
-          </label>
-        </div>
+            <label>
+              Archivo firma digital real
+              <input
+                type="file"
+                name="certificado_file"
+                accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
+                (change)="onCertificateFileSelected($event)"
+              />
+              <small>Formato: PEM, PFX o P12. Maximo 5 MB.</small>
+              @if (form.certificado_file) {
+                <small>Archivo: {{ form.certificado_file.name }}</small>
+              }
+            </label>
+          </div>
+        } @else {
+          <div class="empty-state compact">
+            <i class="pi pi-shield"></i>
+            <span>Beta usa automaticamente 20000000001 / MODDATOS y el certificado de prueba del servidor.</span>
+          </div>
+        }
       </div>
 
       <div class="form-actions">
@@ -399,12 +405,6 @@
       <article><span>Empresa</span><strong>{{ detail.business_name }}</strong></article>
       <article><span>Schema</span><strong>{{ detail.schema }}</strong></article>
       <article class="full"><span>Logo registrado</span><strong>{{ tenantLogoValue(detail) }}</strong></article>
-      @if (hasTenantLogo(detail) && isHttpUrl(tenantLogoValue(detail))) {
-        <article class="full">
-          <span>Preview</span>
-          <img [src]="tenantLogoValue(detail)" alt="Logo tenant" class="logo-preview" />
-        </article>
-      }
     </div>
   }
 

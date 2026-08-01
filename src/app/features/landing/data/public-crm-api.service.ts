@@ -10,7 +10,7 @@ export interface PublicCrmLeadRequest {
   readonly tenantId?: string | null;
   readonly Ruc_tenant?: string | null;
   readonly landingKey?: string | null;
-  readonly tipoPersona?: string | null;
+  readonly tipoPersona?: 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA' | string | null;
   readonly tipoDocumento?: string | null;
   readonly numeroDocumento?: string | null;
   readonly nombre: string;

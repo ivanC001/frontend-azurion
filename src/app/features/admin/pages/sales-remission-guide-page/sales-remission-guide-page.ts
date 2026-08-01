@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
 import {
   AdminSaasApiService,
   GuiaRemisionRecord,
@@ -30,6 +31,7 @@ interface GuiaItemForm {
 export class SalesRemissionGuidePage {
   private readonly api = inject(AdminSaasApiService);
   private readonly session = inject(AuthSessionService);
+  private pendingOperationId: string | null = null;
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -184,7 +186,11 @@ export class SalesRemissionGuidePage {
       return;
     }
 
+    const clientOperationId =
+      this.pendingOperationId ?? createClientOperationId('remission-guide');
+    this.pendingOperationId = clientOperationId;
     const request = {
+      clientOperationId,
       sucursalOrigenId: origen.id,
       sucursalDestinoId: destino.id,
       fechaTraslado: this.fechaTraslado(),
@@ -206,6 +212,9 @@ export class SalesRemissionGuidePage {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (response) => {
+          if (response.facturacion?.success) {
+            this.pendingOperationId = null;
+          }
           const status = response.facturacion?.status ?? 0;
           const message = response.facturacion?.message || 'Guia registrada.';
           if (response.guia) {

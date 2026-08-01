@@ -18,7 +18,7 @@ import { AuthSessionService } from '@core/auth/auth-session.service';
 import { AdminSaasApiService, Empresa } from '@features/admin/data/admin-saas-api.service';
 import {
   FacturadorApiService,
-  FacturadorTenant,
+  FacturadorTenantDetail,
 } from '@features/facturador/data/facturador-api.service';
 
 interface CompanyConfigForm {
@@ -56,7 +56,6 @@ interface CompanyConfigForm {
   direccion_fiscal: string;
   clave_sol: string;
   certificado_password: string;
-  certificado_url: string;
   api_client_name: string;
   panel_logo_file: File | null;
   invoice_logo_file: File | null;
@@ -84,7 +83,7 @@ export class CompanySettingsPage implements OnDestroy {
     ? 'Configuracion del facturador'
     : 'Configuracion del tenant';
   protected readonly pageDescription = this.isFacturadorView
-    ? 'Configura SUNAT, certificado digital y el logo fiscal de los comprobantes.'
+    ? 'Configura tickets y, para empresas de Peru, la emision electronica SUNAT.'
     : 'Administra la identidad, contacto, representante legal y configuracion regional de tu empresa.';
   protected readonly saveLabel = this.isFacturadorView
     ? 'Guardar facturador'
@@ -94,7 +93,7 @@ export class CompanySettingsPage implements OnDestroy {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
-  protected readonly existingConfig = signal<FacturadorTenant | null>(null);
+  protected readonly existingConfig = signal<FacturadorTenantDetail | null>(null);
   protected readonly panelLogoPreviewUrl = signal<string | null>(null);
   protected readonly invoiceLogoPreviewUrl = signal<string | null>(null);
   protected readonly panelLogoLoadFailed = signal(false);
@@ -120,6 +119,9 @@ export class CompanySettingsPage implements OnDestroy {
 
   protected readonly sessionData = this.session.currentSession;
   protected readonly empresaContext = computed(() => this.sessionData()?.empresa ?? null);
+  protected readonly facturadorProvisionStatus = computed(
+    () => this.empresaContext()?.facturadorStatus || 'NO_REQUERIDO',
+  );
 
   protected readonly countryOptions = [
     { code: 'PE', name: 'Peru', document: 'RUC', currency: 'PEN', symbol: 'S/', timezone: 'America/Lima', language: 'es-PE' },
@@ -187,10 +189,8 @@ export class CompanySettingsPage implements OnDestroy {
     forkJoin({
       empresa: this.companyApi.getCurrentEmpresa().pipe(catchError(() => of(null))),
       facturador: this.isFacturadorView
-        ? this.facturadorApi
-            .listTenants()
-            .pipe(catchError(() => of({ total: 0, items: [] as readonly FacturadorTenant[] })))
-        : of({ total: 0, items: [] as readonly FacturadorTenant[] }),
+        ? this.facturadorApi.getCurrentTenant()
+        : of(null),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
@@ -211,6 +211,10 @@ export class CompanySettingsPage implements OnDestroy {
               formatoHora: empresa.formatoHora,
               monedaCodigo: empresa.monedaCodigo,
               monedaSimbolo: empresa.monedaSimbolo,
+              facturadorStatus: empresa.facturadorStatus,
+              facturadorDocumentMode: empresa.facturadorDocumentMode,
+              facturadorFiscalStatus: empresa.facturadorFiscalStatus,
+              facturadorSunatMode: empresa.facturadorSunatMode,
               tenantId: empresa.tenantId,
               schemaName: empresa.schemaName,
               logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl),
@@ -218,16 +222,13 @@ export class CompanySettingsPage implements OnDestroy {
             });
           }
 
-          const existing = facturador.items.find((item) => item.ruc === this.form.ruc) ?? null;
+          const existing = facturador;
           this.existingConfig.set(existing);
           if (!existing) {
             return;
           }
 
           this.hydrateFormFromTenant(existing);
-          if (existing.tenant_id) {
-            this.loadTenantDetail(existing.tenant_id);
-          }
         },
         error: () =>
           this.errorMessage.set(
@@ -267,8 +268,7 @@ export class CompanySettingsPage implements OnDestroy {
       this.isFacturadorView &&
       this.form.sunat_mode === 'production' &&
       !this.form.certificado_file &&
-      !this.form.certificado_url.trim() &&
-      !this.existingConfig()?.certificado_url
+      !this.productionCertificateConfigured()
     ) {
       this.errorMessage.set(
         'Para produccion debes adjuntar o conservar el archivo de firma digital.',
@@ -312,6 +312,10 @@ export class CompanySettingsPage implements OnDestroy {
             formatoHora: empresa.formatoHora,
             monedaCodigo: empresa.monedaCodigo,
             monedaSimbolo: empresa.monedaSimbolo,
+            facturadorStatus: empresa.facturadorStatus,
+            facturadorDocumentMode: empresa.facturadorDocumentMode,
+            facturadorFiscalStatus: empresa.facturadorFiscalStatus,
+            facturadorSunatMode: empresa.facturadorSunatMode,
             logoPanelUrl: this.apiUrl.publicFileUrl(empresa.logoPanelUrl),
           });
           this.form.panel_logo_file = null;
@@ -328,11 +332,18 @@ export class CompanySettingsPage implements OnDestroy {
 
   private saveFacturadorSettings(): void {
     this.saving.set(true);
-    this.persistFacturadorConfig()
+    this.facturadorApi
+      .updateCurrentTenant(this.buildFacturadorPayload())
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: (tenant) => {
+        next: ({ tenant, empresa }) => {
           this.existingConfig.set(tenant);
+          this.session.updateEmpresaData({
+            facturadorStatus: empresa.facturadorStatus,
+            facturadorDocumentMode: empresa.facturadorDocumentMode,
+            facturadorFiscalStatus: empresa.facturadorFiscalStatus,
+            facturadorSunatMode: empresa.facturadorSunatMode,
+          });
           this.form.clave_sol = '';
           this.form.invoice_logo_file = null;
           this.form.certificado_file = null;
@@ -352,6 +363,75 @@ export class CompanySettingsPage implements OnDestroy {
 
   protected isProductionMode(): boolean {
     return this.form.sunat_mode === 'production';
+  }
+
+  protected productionCertificateConfigured(): boolean {
+    return !!this.existingConfig()?.configuracion?.certificado_produccion_configurado;
+  }
+
+  protected sunatCertificateStatusLabel(): string {
+    if (!this.isProductionMode()) {
+      return 'Prueba automatica';
+    }
+
+    return this.form.certificado_file || this.productionCertificateConfigured()
+      ? 'Configurado'
+      : 'Pendiente';
+  }
+
+  protected sunatBillingEndpoint(): string {
+    const environment = this.existingConfig()?.entorno_sunat;
+    if (
+      environment?.modo?.toLowerCase() === this.form.sunat_mode &&
+      environment.endpoint_facturacion
+    ) {
+      return environment.endpoint_facturacion;
+    }
+
+    return this.isProductionMode()
+      ? 'https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService'
+      : 'https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService';
+  }
+
+  protected sunatQueueName(): string {
+    const environment = this.existingConfig()?.entorno_sunat;
+    if (environment?.modo?.toLowerCase() === this.form.sunat_mode && environment.cola) {
+      return environment.cola;
+    }
+
+    return this.isProductionMode() ? 'sunat-production' : 'sunat-beta';
+  }
+
+  protected sunatModeLabel(): string {
+    const mode = (
+      this.existingConfig()?.sunat_mode ||
+      this.empresaContext()?.facturadorSunatMode ||
+      ''
+    )
+      .trim()
+      .toUpperCase();
+    if (mode === 'DISABLED' || mode === '') {
+      return 'No configurado';
+    }
+    return mode === 'PRODUCTION' ? 'Produccion' : 'Beta';
+  }
+
+  protected isPeruTenant(): boolean {
+    return this.form.country_code.trim().toUpperCase() === 'PE';
+  }
+
+  protected facturadorStatusLabel(): string {
+    const status = this.facturadorProvisionStatus().trim().toUpperCase();
+    const labels: Record<string, string> = {
+      NO_REQUERIDO: 'No requerido',
+      PENDIENTE: 'Pendiente',
+      PROVISIONANDO: 'Aprovisionando',
+      PROVISIONADO: 'Listo',
+      REINTENTO: 'Reintentando',
+      ERROR: 'Con error',
+      SUSPENDIDO: 'Suspendido',
+    };
+    return labels[status] ?? status;
   }
 
   protected onPanelLogoFileSelected(event: Event): void {
@@ -446,31 +526,31 @@ export class CompanySettingsPage implements OnDestroy {
     });
   }
 
-  private persistFacturadorConfig() {
+  private buildFacturadorPayload() {
     const empresa = this.empresaContext();
     const empresaRuc = (empresa?.ruc || '').trim();
     const empresaRazonSocial = (empresa?.razonSocial || '').trim();
 
+    const productionMode = this.form.sunat_mode === 'production';
     const payload = {
       ruc: empresaRuc || this.form.ruc.trim(),
       business_name: this.form.business_name.trim() || empresaRazonSocial,
+      external_tenant_id: empresa?.tenantId || undefined,
+      country_code: this.form.country_code.trim().toUpperCase(),
+      tax_id: empresaRuc || this.form.ruc.trim(),
       sunat_mode: this.form.sunat_mode,
-      ruc_sol: this.form.ruc_sol.trim() || empresaRuc || undefined,
-      usuario_sol: this.form.usuario_sol.trim() || undefined,
-      clave_sol: this.form.clave_sol || undefined,
-      certificado_password: this.form.certificado_password || undefined,
-      certificado_url: this.form.certificado_url.trim() || undefined,
+      ruc_sol: productionMode ? this.form.ruc_sol.trim() || undefined : undefined,
+      usuario_sol: productionMode ? this.form.usuario_sol.trim() || undefined : undefined,
+      clave_sol: productionMode ? this.form.clave_sol || undefined : undefined,
+      certificado_password: productionMode
+        ? this.form.certificado_password || undefined
+        : undefined,
       api_client_name: this.form.api_client_name.trim() || undefined,
       logo_file: this.form.invoice_logo_file,
-      certificado_file: this.form.certificado_file,
+      certificado_file: productionMode ? this.form.certificado_file : null,
     } as const;
 
-    const existing = this.existingConfig();
-    if (existing?.tenant_id) {
-      return this.facturadorApi.updateTenant(existing.tenant_id, payload);
-    }
-
-    return this.facturadorApi.createTenant(payload);
+    return payload;
   }
 
   private buildProfileRequest() {
@@ -504,19 +584,6 @@ export class CompanySettingsPage implements OnDestroy {
       monedaCodigo: this.form.currency_code,
       monedaSimbolo: this.form.currency_symbol.trim(),
     } as const;
-  }
-
-  private loadTenantDetail(tenantId: number): void {
-    this.facturadorApi
-      .getTenant(tenantId)
-      .pipe(catchError(() => of(null)))
-      .subscribe((tenant) => {
-        if (!tenant) {
-          return;
-        }
-        this.existingConfig.set(tenant);
-        this.hydrateFormFromTenant(tenant);
-      });
   }
 
   private hydrateCompanyFromEmpresa(empresa: Empresa | null): void {
@@ -558,20 +625,21 @@ export class CompanySettingsPage implements OnDestroy {
     this.setPanelLogoPreview(this.apiUrl.publicFileUrl(empresa.logoPanelUrl), false);
   }
 
-  private hydrateFormFromTenant(tenant: FacturadorTenant): void {
+  private hydrateFormFromTenant(tenant: FacturadorTenantDetail): void {
     this.applyEmpresaIdentity();
-    this.form.sunat_mode = (tenant.sunat_mode || tenant.modo_sunat || 'beta') as
-      | 'beta'
-      | 'production';
-    this.form.ruc_sol = tenant.ruc_sol || this.form.ruc_sol || this.form.ruc;
-    this.form.usuario_sol = tenant.sol_usuario || this.form.usuario_sol;
-    this.form.certificado_url = tenant.certificado_url || this.form.certificado_url;
+    const configuration = tenant.configuracion;
+    this.form.sunat_mode =
+      (tenant.sunat_mode || tenant.modo_sunat || configuration?.modo_sunat || '').toLowerCase() === 'production'
+        ? 'production'
+        : 'beta';
+    const usesTestData = configuration?.usa_datos_prueba || tenant.usa_datos_prueba;
+    this.form.ruc_sol = usesTestData
+      ? ''
+      : configuration?.ruc_sol || tenant.ruc_sol || this.form.ruc_sol;
+    this.form.usuario_sol = usesTestData
+      ? ''
+      : configuration?.usuario_sol || tenant.sol_usuario || this.form.usuario_sol;
     this.form.api_client_name = tenant.api_client_name || this.form.api_client_name;
-
-    const logoUrl = (tenant.logo_pdf_url || '').trim();
-    if (/^https?:\/\//i.test(logoUrl)) {
-      this.setInvoiceLogoPreview(logoUrl, false);
-    }
   }
 
   private handleLogoFileSelection(event: Event, type: 'panel' | 'invoice'): void {
@@ -650,7 +718,6 @@ export class CompanySettingsPage implements OnDestroy {
       direccion_fiscal: '',
       clave_sol: '',
       certificado_password: '',
-      certificado_url: '',
       api_client_name: 'default-client',
       panel_logo_file: null,
       invoice_logo_file: null,

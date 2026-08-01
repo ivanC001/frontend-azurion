@@ -33,10 +33,14 @@
       <article><i class="pi pi-building"></i><div><span>Empresa</span><strong>{{ form.business_name || 'Sin razon social' }}</strong></div></article>
       <article><i class="pi pi-id-card"></i><div><span>{{ fiscalIdLabel() }}</span><strong>{{ form.ruc || 'No registrado' }}</strong></div></article>
       <article><i class="pi pi-image"></i><div><span>Logo del panel</span><strong>{{ panelLogoStatusLabel() }}</strong></div></article>
+    } @else if (isPeruTenant()) {
+      <article><i class="pi pi-send"></i><div><span>Entorno SUNAT</span><strong>{{ sunatModeLabel() }}</strong></div></article>
+      <article><i class="pi pi-file-check"></i><div><span>Certificado</span><strong>{{ sunatCertificateStatusLabel() }}</strong></div></article>
+      <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
     } @else {
-      <article><i class="pi pi-send"></i><div><span>Entorno SUNAT</span><strong>{{ isProductionMode() ? 'Produccion' : 'Beta' }}</strong></div></article>
-      <article><i class="pi pi-file-check"></i><div><span>Certificado</span><strong>{{ form.certificado_file || form.certificado_url || existingConfig()?.certificado_url ? 'Configurado' : 'Pendiente' }}</strong></div></article>
-      <article><i class="pi pi-image"></i><div><span>Logo fiscal</span><strong>{{ invoiceLogoPreviewUrl() ? 'Configurado' : 'Pendiente' }}</strong></div></article>
+      <article><i class="pi pi-receipt"></i><div><span>Documento disponible</span><strong>Ticket interno</strong></div></article>
+      <article><i class="pi pi-globe"></i><div><span>Pais fiscal</span><strong>{{ form.country_name || form.country_code }}</strong></div></article>
+      <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
     }
   </section>
 
@@ -183,7 +187,7 @@
       </div>
     }
 
-    @if (isFacturadorView) {
+    @if (isFacturadorView && isPeruTenant()) {
       <article class="panel panel--sunat">
       <header class="panel__header">
         <div><span class="panel__icon panel__icon--sunat"><i class="pi pi-file-edit"></i></span><div><h2>SUNAT y facturacion</h2><p>Credenciales, certificado y marca de documentos fiscales.</p></div></div>
@@ -202,6 +206,28 @@
           </span>
         </label>
       </div>
+
+      @if (!isProductionMode()) {
+        <div class="sunat-environment sunat-environment--beta">
+          <span class="sunat-environment__icon"><i class="pi pi-shield"></i></span>
+          <div>
+            <strong>Entorno de pruebas SUNAT</strong>
+            <p>Azurion usa automaticamente el RUC, usuario SOL, clave y certificado oficiales de prueba. No necesitas cargar credenciales.</p>
+            <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
+            <small><b>Cola:</b> {{ sunatQueueName() }}</small>
+          </div>
+        </div>
+      } @else {
+        <div class="sunat-environment sunat-environment--production">
+          <span class="sunat-environment__icon"><i class="pi pi-exclamation-triangle"></i></span>
+          <div>
+            <strong>Entorno real SUNAT</strong>
+            <p>Los comprobantes tienen efecto tributario. Usa credenciales SOL y certificado digital reales de esta empresa.</p>
+            <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
+            <small><b>Cola:</b> {{ sunatQueueName() }}</small>
+          </div>
+        </div>
+      }
 
       <div class="form-grid">
         <div class="identity-logo identity-logo--invoice">
@@ -225,50 +251,48 @@
             <small>Archivo: {{ form.invoice_logo_file.name }}</small>
           }
         </label>
-        <label>
-          Usuario SOL
-          <input pInputText [(ngModel)]="form.usuario_sol" name="usuario_sol" />
-        </label>
-        <label>
-          RUC SOL
-          <input pInputText maxlength="11" [(ngModel)]="form.ruc_sol" name="ruc_sol" />
-        </label>
-        <label>
-          Clave SOL
-          <p-password [(ngModel)]="form.clave_sol" name="clave_sol" [feedback]="false" [toggleMask]="true" />
-        </label>
-        <label>
-          Clave certificado
-          <p-password
-            [(ngModel)]="form.certificado_password"
-            name="certificado_password"
-            [feedback]="false"
-            [toggleMask]="true"
-          />
-        </label>
-        <label class="full">
-          Archivo firma digital
-          <input
-            type="file"
-            name="certificado_file"
-            accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
-            (change)="onCertificateFileSelected($event)"
-          />
-          <small>PEM, PFX o P12 (max. 5MB)</small>
-          @if (form.certificado_file) {
-            <small>Archivo: {{ form.certificado_file.name }}</small>
-          }
-          @if (!form.certificado_file && (form.certificado_url || existingConfig()?.certificado_url)) {
-            <small>Certificado actual: Activo</small>
-          }
-          @if (isProductionMode() && !form.certificado_file && !form.certificado_url && !existingConfig()?.certificado_url) {
-            <small class="warn">En produccion este archivo es obligatorio.</small>
-          }
-        </label>
-        <label class="full">
-          URL certificado
-          <input pInputText [(ngModel)]="form.certificado_url" name="certificado_url" placeholder="tenants/ruc/cert.pem" />
-        </label>
+        @if (isProductionMode()) {
+          <label>
+            Usuario SOL real
+            <input pInputText [(ngModel)]="form.usuario_sol" name="usuario_sol" autocomplete="off" />
+          </label>
+          <label>
+            RUC SOL real
+            <input pInputText maxlength="11" [(ngModel)]="form.ruc_sol" name="ruc_sol" autocomplete="off" />
+          </label>
+          <label>
+            Clave SOL real
+            <p-password [(ngModel)]="form.clave_sol" name="clave_sol" [feedback]="false" [toggleMask]="true" />
+          </label>
+          <label>
+            Clave certificado
+            <p-password
+              [(ngModel)]="form.certificado_password"
+              name="certificado_password"
+              [feedback]="false"
+              [toggleMask]="true"
+            />
+          </label>
+          <label class="full">
+            Archivo de firma digital real
+            <input
+              type="file"
+              name="certificado_file"
+              accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
+              (change)="onCertificateFileSelected($event)"
+            />
+            <small>PEM, PFX o P12 (max. 5MB)</small>
+            @if (form.certificado_file) {
+              <small>Archivo: {{ form.certificado_file.name }}</small>
+            }
+            @if (!form.certificado_file && productionCertificateConfigured()) {
+              <small>Certificado actual: Activo</small>
+            }
+            @if (!form.certificado_file && !productionCertificateConfigured()) {
+              <small class="warn">En produccion este archivo es obligatorio.</small>
+            }
+          </label>
+        }
       </div>
 
       <div class="section-title">
@@ -287,16 +311,37 @@
         <span>El logo fiscal se mantiene separado del panel para no mezclar branding operativo con branding tributario.</span>
       </div>
       </article>
+    } @else if (isFacturadorView) {
+      <article class="panel panel--ticket-only">
+        <header class="panel__header">
+          <div>
+            <span class="panel__icon panel__icon--sunat"><i class="pi pi-receipt"></i></span>
+            <div>
+              <h2>Emision para empresa extranjera</h2>
+              <p>El facturador esta disponible en modalidad de ticket interno.</p>
+            </div>
+          </div>
+        </header>
+        <div class="info-banner info-banner--neutral">
+          <i class="pi pi-info-circle"></i>
+          <span>
+            Boletas y facturas electronicas SUNAT se habilitan exclusivamente para empresas de Peru.
+            Este tenant puede registrar ventas y emitir tickets en su moneda configurada sin enviar documentos a SUNAT.
+          </span>
+        </div>
+      </article>
     }
   </div>
 
   <footer class="actions-bar">
-    <p-button
-      [label]="saveLabel"
-      icon="pi pi-save"
-      styleClass="az-primary save-btn"
-      [loading]="saving()"
-      (onClick)="save()"
-    />
+    @if (!isFacturadorView || isPeruTenant()) {
+      <p-button
+        [label]="saveLabel"
+        icon="pi pi-save"
+        styleClass="az-primary save-btn"
+        [loading]="saving()"
+        (onClick)="save()"
+      />
+    }
   </footer>
 </section>

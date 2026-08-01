@@ -17,6 +17,7 @@ import type { CrmAdminPage } from '../../crm-admin-page';
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule, TableModule, TagModule, TextareaModule],
   templateUrl: './catalog-product-modal.html',
+  styleUrl: './catalog-product-modal.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class CatalogProductModal {

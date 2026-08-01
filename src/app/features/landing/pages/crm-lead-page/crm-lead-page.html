@@ -82,8 +82,8 @@
 
         <div class="form-grid">
           <label>
-            Tipo persona
-            <p-select name="tipoPersona" [options]="personTypeOptions" [(ngModel)]="form.tipoPersona" appendTo="body" />
+            Tipo de cliente
+            <p-select name="tipoPersona" [options]="personTypeOptions" [ngModel]="form.tipoPersona" (ngModelChange)="onPersonTypeChange($event)" appendTo="body" />
           </label>
           <label>
             Origen
@@ -91,11 +91,11 @@
           </label>
           <label>
             Tipo documento
-            <p-select name="tipoDocumento" [options]="documentTypeOptions" [(ngModel)]="form.tipoDocumento" appendTo="body" />
+            <p-select name="tipoDocumento" [options]="documentTypeOptions" [(ngModel)]="form.tipoDocumento" [disabled]="form.tipoPersona === 'SIN_DEFINIR'" appendTo="body" placeholder="Primero clasifica el lead" />
           </label>
           <label>
             Documento
-            <input pInputText name="numeroDocumento" [(ngModel)]="form.numeroDocumento" placeholder="DNI, RUC o CE" />
+            <input pInputText name="numeroDocumento" [(ngModel)]="form.numeroDocumento" [disabled]="form.tipoPersona === 'SIN_DEFINIR'" placeholder="DNI, RUC o CE" />
           </label>
           <label class="span-2">
             Nombre / contacto

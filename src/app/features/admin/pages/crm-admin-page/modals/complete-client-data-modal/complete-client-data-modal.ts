@@ -36,26 +36,39 @@ export class CompleteClientDataModal {
   protected patchForm<K extends keyof CrmClientCompletionDraft>(field: K, value: CrmClientCompletionDraft[K]): void {
     const next = { ...this.form(), [field]: value };
     if (field === 'tipoPersona') {
-      next.tipoDocumento = value === 'JURIDICA' ? '6' : '1';
+      next.tipoDocumento = value === 'JURIDICA' ? '6' : value === 'NATURAL' ? '1' : '';
     }
     this.formChange.emit(next);
   }
 
   protected actionTitle(): string {
-    if (this.action() === 'EDIT') {
-      return 'actualizar los datos comerciales';
-    }
-    return this.action() === 'PAYMENT' ? 'registrar el pago' : 'marcar la oportunidad como ganada';
+    return {
+      EDIT: 'actualizar los datos comerciales',
+      PAYMENT: 'registrar el pago',
+      WON: 'marcar la oportunidad como ganada',
+      QUOTE_CREATE: 'crear la cotizacion',
+      QUOTE_PDF: 'emitir el PDF de la cotizacion',
+      QUOTE_EMAIL: 'enviar la cotizacion por correo',
+      QUOTE_WHATSAPP: 'enviar la cotizacion por WhatsApp',
+    }[this.action()];
   }
 
   protected saveLabel(): string {
-    if (this.action() === 'EDIT') {
-      return 'Guardar datos';
-    }
-    return this.action() === 'PAYMENT' ? 'Guardar y registrar pago' : 'Guardar y marcar ganado';
+    return {
+      EDIT: 'Guardar datos',
+      PAYMENT: 'Guardar y registrar pago',
+      WON: 'Guardar y marcar ganado',
+      QUOTE_CREATE: 'Guardar y crear cotizacion',
+      QUOTE_PDF: 'Guardar y generar PDF',
+      QUOTE_EMAIL: 'Guardar y enviar correo',
+      QUOTE_WHATSAPP: 'Guardar y enviar WhatsApp',
+    }[this.action()];
   }
 
   protected documentHint(): string {
+    if (this.form().tipoPersona === 'SIN_DEFINIR') {
+      return 'Primero selecciona persona natural o empresa.';
+    }
     return this.form().tipoDocumento === '6' ? 'El RUC debe tener 11 digitos.' : 'El DNI debe tener 8 digitos.';
   }
 }

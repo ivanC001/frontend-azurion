@@ -55,7 +55,16 @@
         />
       </div>
     </div>
-    <p-table [value]="filteredProductos()" [loading]="loading()" [paginator]="filteredProductos().length > 12" [rows]="12" responsiveLayout="scroll">
+    <p-table
+      [value]="productos()"
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="productTotal()"
+      [lazy]="true"
+      (onLazyLoad)="onProductPage($event)"
+      responsiveLayout="scroll"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>SKU</th>
@@ -165,22 +174,32 @@
   <form class="dialog-form" (submit)="$event.preventDefault()">
     <div class="section-heading span-2">
       <div>
-        <strong>{{ productForm.id ? 'Datos maestros' : 'Escanea, completa y guarda' }}</strong>
+        <strong>
+          <i [class]="productForm.id ? 'pi pi-pencil' : 'pi pi-box'"></i>
+          {{ productForm.id ? 'Datos maestros' : 'Escanea, completa y guarda' }}
+        </strong>
         <span>
           {{
             productForm.id
               ? 'Actualiza la información comercial y tributaria.'
-              : 'El SKU se genera automáticamente. La cantidad inicial crea su entrada de stock y kardex.'
+              : 'Completa los datos comerciales. La cantidad inicial crea su entrada de stock y kardex.'
           }}
         </span>
       </div>
-      <button
-        type="button"
-        pButton
-        class="p-button-text p-button-secondary"
-        [label]="advancedFieldsVisible() ? 'Ocultar detalles' : 'Mostrar más detalles'"
-        (click)="advancedFieldsVisible.set(!advancedFieldsVisible())"
-      ></button>
+      @if (productForm.id) {
+        <button
+          type="button"
+          pButton
+          class="p-button-text p-button-secondary"
+          icon="pi pi-sliders-h"
+          [label]="advancedFieldsVisible() ? 'Ocultar detalles' : 'Mostrar más detalles'"
+          (click)="advancedFieldsVisible.set(!advancedFieldsVisible())"
+        ></button>
+      }
+    </div>
+    <div class="required-legend span-2">
+      <i class="pi pi-info-circle"></i>
+      <span>Los campos marcados con <strong>*</strong> son obligatorios. Los identificadores internos se generan al guardar.</span>
     </div>
     @if (errorMessage()) {
       <div class="alert alert--error span-2">{{ errorMessage() }}</div>
@@ -188,7 +207,11 @@
     <div class="barcode-capture span-2">
       <span class="barcode-capture__icon"><i class="pi pi-barcode"></i></span>
       <label>
-        Código de barras
+        <span class="field-label">
+          <i class="pi pi-barcode"></i>
+          Código de barras
+          <em class="field-optional">Opcional</em>
+        </span>
         <input
           #barcodeInput
           pInputText
@@ -220,32 +243,42 @@
       }
     </div>
     <label>
-      SKU
-      <input pInputText name="sku" [(ngModel)]="productForm.sku" placeholder="Automático: PRD-000001" [disabled]="!!productForm.id" />
-      @if (!productForm.id) {
-        <small>Opcional. Déjalo vacío para generarlo automáticamente.</small>
-      }
+      <span class="field-label">
+        <i class="pi pi-tag"></i>
+        Nombre del producto
+        <em class="field-required">*</em>
+      </span>
+      <input #productNameInput pInputText name="nombre" [(ngModel)]="productForm.nombre" placeholder="Ej. Arroz extra 1 kg" autocomplete="off" required />
     </label>
     <label>
-      Nombre del producto
-      <input #productNameInput pInputText name="nombre" [(ngModel)]="productForm.nombre" placeholder="Ej. Arroz extra 1 kg" autocomplete="off" />
-    </label>
-    <label class="span-2">
-      Descripción
-      <textarea pTextarea name="descripcion" rows="3" [(ngModel)]="productForm.descripcion" placeholder="Presentación, características o notas internas"></textarea>
-    </label>
-    <label>
-      Tipo de registro
+      <span class="field-label">
+        <i class="pi pi-list"></i>
+        Tipo de registro
+        <em class="field-required">*</em>
+      </span>
       <p-select
         name="tipoProducto"
         [options]="tipoProductoOptions()"
         [(ngModel)]="productForm.tipoProducto"
         (ngModelChange)="onTipoProductoChange($event)"
         placeholder="Selecciona el tipo"
+        required
       />
     </label>
+    <label class="span-2">
+      <span class="field-label">
+        <i class="pi pi-align-left"></i>
+        Descripción
+        <em class="field-optional">Opcional</em>
+      </span>
+      <textarea pTextarea name="descripcion" rows="3" [(ngModel)]="productForm.descripcion" placeholder="Presentación, características o notas internas"></textarea>
+    </label>
     <label>
-      Unidad de medida SUNAT
+      <span class="field-label">
+        <i class="pi pi-chart-bar"></i>
+        Unidad de medida SUNAT
+        <em class="field-optional">Predeterminada</em>
+      </span>
       <p-select
         name="unidadMedidaId"
         [options]="unidadMedidaOptions()"
@@ -254,12 +287,20 @@
       />
     </label>
     <label>
-      Precio de venta (S/)
-      <input pInputText type="number" min="0" step="0.01" name="precio" [(ngModel)]="productForm.precio" placeholder="0.00" />
+      <span class="field-label">
+        <i class="pi pi-money-bill"></i>
+        Precio de venta (S/)
+        <em class="field-required">*</em>
+      </span>
+      <input pInputText type="number" min="0" step="0.01" name="precio" [(ngModel)]="productForm.precio" placeholder="0.00" required />
     </label>
-    @if (!productForm.id) {
+    @if (!productForm.id && productForm.tipoProducto !== 'SERVICIO') {
       <label>
-        Almacén inicial
+        <span class="field-label">
+          <i class="pi pi-warehouse"></i>
+          Almacén inicial
+          <em class="field-required">*</em>
+        </span>
         <p-select
           name="almacenId"
           [options]="almacenOptions()"
@@ -267,12 +308,17 @@
           placeholder="Selecciona un almacén"
           [filter]="true"
           filterBy="label"
+          required
         />
       </label>
     }
     @if (productForm.tipoProducto !== 'SERVICIO') {
       <label>
-        Categoría
+        <span class="field-label">
+          <i class="pi pi-folder"></i>
+          Categoría
+          <em class="field-required">*</em>
+        </span>
         <p-select
           name="categoriaId"
           [options]="categoriaOptions()"
@@ -280,16 +326,29 @@
           placeholder="Selecciona una categoría"
           [filter]="true"
           filterBy="label"
+          required
         />
       </label>
       @if (!productForm.id) {
         <label>
-          Costo inicial unitario (S/)
+          <span class="field-label">
+            <i class="pi pi-wallet"></i>
+            Costo inicial unitario (S/)
+            @if (productForm.cantidadInicial > 0) {
+              <em class="field-required">*</em>
+            } @else {
+              <em class="field-optional">Opcional</em>
+            }
+          </span>
           <input pInputText type="number" min="0" step="0.01" name="costoPromedio" [(ngModel)]="productForm.costoPromedio" placeholder="0.00" />
           <small>Obligatorio cuando la cantidad inicial es mayor a cero.</small>
         </label>
         <label>
-          Cantidad inicial
+          <span class="field-label">
+            <i class="pi pi-box"></i>
+            Cantidad inicial
+            <em class="field-optional">Opcional</em>
+          </span>
           <input pInputText type="number" min="0" step="0.0001" name="cantidadInicial" [(ngModel)]="productForm.cantidadInicial" placeholder="0" />
           <small>Registra stock y kardex en la misma operación.</small>
         </label>
@@ -311,15 +370,27 @@
       </div>
       @if (!productForm.id && productForm.vencimiento && productForm.cantidadInicial > 0) {
         <label>
-          Código de lote
-          <input pInputText name="codigoLote" [(ngModel)]="productForm.codigoLote" placeholder="LOTE-001" />
+          <span class="field-label">
+            <i class="pi pi-qrcode"></i>
+            Código de lote
+            <em class="field-required">*</em>
+          </span>
+          <input pInputText name="codigoLote" [(ngModel)]="productForm.codigoLote" placeholder="LOTE-001" required />
         </label>
         <label>
-          Fecha de vencimiento
-          <input pInputText type="date" name="fechaVencimiento" [(ngModel)]="productForm.fechaVencimiento" />
+          <span class="field-label">
+            <i class="pi pi-calendar-times"></i>
+            Fecha de vencimiento
+            <em class="field-required">*</em>
+          </span>
+          <input pInputText type="date" name="fechaVencimiento" [(ngModel)]="productForm.fechaVencimiento" required />
         </label>
         <label>
-          Fecha de fabricación
+          <span class="field-label">
+            <i class="pi pi-calendar"></i>
+            Fecha de fabricación
+            <em class="field-optional">Opcional</em>
+          </span>
           <input pInputText type="date" name="fechaFabricacion" [(ngModel)]="productForm.fechaFabricacion" />
         </label>
       }
@@ -333,7 +404,11 @@
           </span>
         </div>
         <label>
-          Stock mínimo
+          <span class="field-label">
+            <i class="pi pi-chart-line"></i>
+            Stock mínimo
+            <em class="field-optional">Opcional</em>
+          </span>
           <input
             pInputText
             type="number"
@@ -348,18 +423,26 @@
     }
     <div class="photo-field span-2">
       <div class="photo-copy">
-        <strong>Foto del producto</strong>
-        <span>Opcional. Añade una foto por URL o carga una imagen del producto.</span>
+        <strong><i class="pi pi-image"></i> Foto del producto</strong>
+        <span>Opcional. Selecciona una imagen almacenada en tu dispositivo.</span>
       </div>
-      <div class="photo-grid">
-        <label>
-          URL de foto
-          <input pInputText name="foto" [(ngModel)]="productForm.foto" placeholder="https://... o ruta de imagen" />
-        </label>
-        <label>
-          Cargar imagen
-          <input class="photo-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" (change)="onFotoFileSelected($event)" />
-        </label>
+      <div class="photo-upload">
+        <input
+          #photoInput
+          class="photo-file-input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          (change)="onFotoFileSelected($event)"
+        />
+        <button
+          type="button"
+          pButton
+          class="p-button-outlined p-button-secondary"
+          icon="pi pi-upload"
+          [label]="fotoPreview() ? 'Cambiar foto' : 'Seleccionar foto'"
+          (click)="photoInput.click()"
+        ></button>
+        <span>PNG, JPG o WEBP · máximo 1 MB</span>
       </div>
       <div class="photo-preview">
         @if (fotoPreview(); as preview) {
@@ -368,8 +451,8 @@
           <span class="photo-placeholder"><i class="pi pi-image"></i></span>
         }
         <div>
-          <strong>{{ selectedPhotoName() || 'Sin foto seleccionada' }}</strong>
-          <small>PNG, JPG, JPEG, WEBP o SVG. Máximo 2 MB.</small>
+          <strong>{{ selectedPhotoName() || (fotoPreview() ? 'Foto actual del producto' : 'Sin foto seleccionada') }}</strong>
+          <small>La imagen se valida nuevamente al guardar.</small>
         </div>
       </div>
     </div>

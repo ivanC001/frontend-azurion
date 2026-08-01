@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { environment } from '@env/environment';
 
-export type ApiConnectionName = 'saasCore' | 'facturador';
+export type ApiConnectionName = 'saasCore';
 
 export type ApiConnections = Record<ApiConnectionName, string>;
 

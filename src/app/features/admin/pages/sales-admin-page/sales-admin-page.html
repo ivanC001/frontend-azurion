@@ -67,8 +67,12 @@
     <p-table
       [value]="filteredVentas()"
       [loading]="loading() && filteredVentas().length === 0"
-      [paginator]="filteredVentas().length > 12"
-      [rows]="12"
+      [lazy]="true"
+      [paginator]="ventasTotal() > ventasPageSize()"
+      [rows]="ventasPageSize()"
+      [first]="ventasPage() * ventasPageSize()"
+      [totalRecords]="ventasTotal()"
+      (onLazyLoad)="onVentasPage($event)"
       responsiveLayout="scroll"
     >
       <ng-template pTemplate="header">
@@ -122,10 +126,13 @@
               <button
                 pButton
                 type="button"
-                class="p-button-rounded p-button-sm p-button-danger p-button-text"
-                icon="pi pi-file-pdf"
+                class="quick-pdf-button p-button-sm p-button-danger p-button-outlined"
+                icon="pi pi-download"
+                label="PDF"
+                title="Descargar comprobante PDF"
                 [disabled]="!canDownloadAsset(venta, 'pdf')"
-                (click)="openAsset(venta, 'pdf')"
+                [loading]="quickPdfVentaId() === venta.id"
+                (click)="quickDownloadPdf(venta)"
               ></button>
               <button
                 pButton
@@ -214,7 +221,7 @@
         Tipo comprobante
         <p-select
           name="tipoComprobante"
-          [options]="comprobanteOptions"
+          [options]="comprobanteOptions()"
           optionLabel="label"
           optionValue="value"
           [(ngModel)]="facturaForm.tipoComprobante"
@@ -237,8 +244,14 @@
         Forma pago
         <p-select name="formaPago" [options]="formaPagoOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.formaPago" />
       </label>
+      @if (facturaForm.formaPago === 'CONTADO') {
+        <label>
+          Medio de pago
+          <p-select name="metodoPago" [options]="metodoPagoOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.metodoPago" />
+        </label>
+      }
       <label>
-        Caja activa
+        Turno de caja activo
         <p-select name="cajaId" [options]="cajaOptions()" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.cajaId" />
       </label>
     </div>
@@ -413,6 +426,24 @@
       <div><span>Facturacion</span><strong>{{ rowEstadoLabel(selectedVenta()!) }}</strong></div>
       <div><span>Proceso</span><strong>{{ rowFacturadorLabel(selectedVenta()!) }}</strong></div>
     </div>
+    @if (!isInternalTicket(selectedVenta()!)) {
+      <div class="detalle-download">
+        <div>
+          <strong>Comprobante electrónico</strong>
+          <span>Descarga el PDF listo para guardar o imprimir.</span>
+        </div>
+        <button
+          pButton
+          type="button"
+          class="p-button-danger"
+          icon="pi pi-download"
+          label="Descargar PDF"
+          [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
+          [loading]="quickPdfVentaId() === selectedVenta()!.id"
+          (click)="quickDownloadPdf(selectedVenta()!)"
+        ></button>
+      </div>
+    }
   }
 </p-dialog>
 

@@ -186,6 +186,19 @@
   justify-content: space-between;
 }
 
+.empty-state.compact {
+  align-items: center;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.7rem;
+  color: #1e40af;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 0.55rem;
+  padding: 0.75rem;
+}
+
 .result-panel {
   display: grid;
   gap: 0.85rem;

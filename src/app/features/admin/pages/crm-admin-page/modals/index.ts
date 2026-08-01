@@ -12,6 +12,5 @@ export * from './mark-lost-modal/mark-lost-modal';
 export * from './catalog-product-modal/catalog-product-modal';
 export * from './prospect-form-modal/prospect-form-modal';
 export * from './create-opportunity-modal/create-opportunity-modal';
-export * from './pipeline-stage-modal/pipeline-stage-modal';
 export * from './activity-form-modal/activity-form-modal';
 export * from './quote-form-modal/quote-form-modal';

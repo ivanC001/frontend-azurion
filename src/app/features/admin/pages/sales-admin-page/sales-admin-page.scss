@@ -190,8 +190,15 @@
 }
 
 .table-actions {
+  align-items: center;
   display: inline-flex;
   gap: 0.22rem;
+}
+
+:host ::ng-deep .quick-pdf-button {
+  border-radius: 0.55rem;
+  font-weight: 800;
+  min-width: 4.5rem;
 }
 
 .venta-form {
@@ -424,6 +431,32 @@
   font-size: 0.95rem;
 }
 
+.detalle-download {
+  align-items: center;
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 0.85rem;
+  padding: 0.8rem;
+}
+
+.detalle-download > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.detalle-download strong {
+  color: #991b1b;
+}
+
+.detalle-download span {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
 .trace-actions {
   display: inline-flex;
   gap: 0.45rem;
@@ -572,5 +605,10 @@
 
   .metrics-band article:last-child {
     border-bottom: 0;
+  }
+
+  .detalle-download {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

@@ -189,8 +189,8 @@
 
         <footer class="composer">
           <div class="composer-tabs">
-            <button type="button" class="active"><i class="pi pi-send"></i> Responder</button>
-            <button type="button" title="Usa una de las notas guardadas del panel derecho"><i class="pi pi-file-edit"></i> Notas guardadas</button>
+            <button type="button" class="active" (click)="focusReplyComposer()"><i class="pi pi-send"></i> Responder</button>
+            <button type="button" title="Usa una de las notas guardadas del panel derecho" (click)="openSavedNotes()"><i class="pi pi-file-edit"></i> Notas guardadas</button>
           </div>
           @if (quotePickerOpen()) {
             <section class="quote-picker">
@@ -214,16 +214,20 @@
               } @else {
                 <div class="quote-picker-list">
                   @for (quote of quotes(); track quote.id) {
-                    <label class="quote-option" [class.selected]="selectedQuoteIds().has(quote.id)">
+                    <label class="quote-option" [class.selected]="selectedQuoteIds().has(quote.id)" [class.quote-option--sent]="isQuoteWhatsappLocked(quote)">
                       <input
                         type="checkbox"
                         [checked]="selectedQuoteIds().has(quote.id)"
+                        [disabled]="isQuoteWhatsappLocked(quote)"
                         (change)="toggleQuote(quote.id)"
                       />
                       <span class="quote-icon"><i class="pi pi-file-pdf"></i></span>
                       <span class="quote-copy">
                         <strong>COT-{{ quote.id.toString().padStart(6, '0') }}</strong>
-                        <small>{{ quote.fechaEmision | date: 'dd/MM/yyyy' }} · {{ quote.estado }}</small>
+                        <small>
+                          {{ quote.fechaEmision | date: 'dd/MM/yyyy' }} ·
+                          {{ quoteWhatsappStatusLabel(quote) }}
+                        </small>
                       </span>
                       <b>{{ formatQuoteTotal(quote) }}</b>
                     </label>
@@ -238,13 +242,14 @@
                   (click)="sendSelectedQuotes()"
                 >
                   @if (sendingQuotes()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-whatsapp"></i> }
-                  Enviar seleccionadas ({{ selectedQuoteCount() }})
+                  {{ sendingQuotes() ? 'Enviando por WhatsApp...' : 'Enviar seleccionadas (' + selectedQuoteCount() + ')' }}
                 </button>
               </footer>
             </section>
           }
           <div class="composer-box">
             <textarea
+              id="whatsapp-reply-composer"
               rows="3"
               maxlength="4096"
               placeholder="Escribe tu mensaje..."
@@ -254,7 +259,6 @@
             ></textarea>
             <div class="composer-actions">
               <div>
-                <button type="button" title="Emojis disponibles próximamente" disabled><i class="pi pi-face-smile"></i></button>
                 <button
                   type="button"
                   class="attach-quote-button"
@@ -265,13 +269,9 @@
                   <i class="pi pi-paperclip"></i>
                   @if (selectedQuoteCount() > 0) { <span>{{ selectedQuoteCount() }}</span> }
                 </button>
-                <button type="button" title="Imágenes disponibles próximamente" disabled><i class="pi pi-image"></i></button>
                 <small>Enter para enviar · Shift + Enter para nueva línea</small>
               </div>
               <div>
-                <button class="template-button" type="button" title="Plantillas de Meta disponibles próximamente" disabled>
-                  <i class="pi pi-bookmark"></i> Plantillas
-                </button>
                 <button class="send-button" type="button" [disabled]="!draft().trim() || sending()" (click)="sendMessage()">
                   @if (sending()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-send"></i> }
                   Enviar
@@ -311,8 +311,8 @@
           </div>
           <div class="quick-actions">
             <button type="button" (click)="openProspect()"><i class="pi pi-user"></i><span>Ver perfil</span></button>
-            <button type="button" disabled title="Disponible próximamente"><i class="pi pi-calendar-plus"></i><span>Actividad</span></button>
-            <button type="button" disabled title="Disponible próximamente"><i class="pi pi-check-square"></i><span>Tarea</span></button>
+            <button type="button" (click)="openFollowUp()"><i class="pi pi-calendar-plus"></i><span>Seguimiento</span></button>
+            <button type="button" (click)="createQuote()"><i class="pi pi-file-edit"></i><span>Cotizar</span></button>
           </div>
         </section>
 
@@ -356,7 +356,7 @@
           }
         </section>
 
-        <section class="detail-card note-card">
+        <section id="whatsapp-saved-notes" class="detail-card note-card">
           <header>
             <span><strong>Notas internas</strong><small>{{ selectedNotes().length }}/3</small></span>
             <i class="pi pi-lock" title="Solo visible para tu equipo"></i>

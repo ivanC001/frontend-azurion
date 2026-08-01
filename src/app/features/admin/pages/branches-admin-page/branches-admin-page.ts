@@ -23,6 +23,7 @@ interface SucursalForm {
   tipoAfectacionDefaultId: string;
   tributoDefaultId: string;
   porcentajeIgvDefault: number;
+  crearAlmacenPrincipal: boolean;
 }
 
 @Component({
@@ -124,7 +125,11 @@ export class BranchesAdminPage {
   protected openCreate(): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
-    this.form = { ...this.emptyForm(), ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null };
+    this.form = {
+      ...this.emptyForm(),
+      codigo: this.nextBranchCode(),
+      ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null,
+    };
     this.createDialogVisible.set(true);
   }
 
@@ -133,8 +138,8 @@ export class BranchesAdminPage {
     this.successMessage.set(null);
 
     const igvPorcentaje = Number(this.form.igvPorcentaje);
-    if (!this.form.codigo.trim() || !this.form.nombre.trim() || !this.form.ubigeoCodigo) {
-      this.errorMessage.set('Completa codigo, nombre y ubigeo de la sucursal.');
+    if (!this.form.nombre.trim() || !this.form.ubigeoCodigo) {
+      this.errorMessage.set('Completa el nombre y el ubigeo de la sucursal.');
       return;
     }
     if (Number.isNaN(igvPorcentaje) || igvPorcentaje < 0 || igvPorcentaje > 100) {
@@ -150,13 +155,23 @@ export class BranchesAdminPage {
         direccion: this.form.direccion.trim() || null,
         ubigeoCodigo: this.form.ubigeoCodigo,
         igvPorcentaje,
+        crearAlmacenPrincipal: this.form.crearAlmacenPrincipal,
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
+          const principalCreated = this.form.crearAlmacenPrincipal;
           this.createDialogVisible.set(false);
-          this.successMessage.set('Sucursal creada correctamente.');
-          this.form = { ...this.emptyForm(), ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null };
+          this.successMessage.set(
+            principalCreated
+              ? 'Sucursal y almacen principal creados correctamente.'
+              : 'Sucursal creada correctamente.',
+          );
+          this.form = {
+            ...this.emptyForm(),
+            codigo: this.nextBranchCode(),
+            ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null,
+          };
           this.load();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -184,6 +199,7 @@ export class BranchesAdminPage {
         item.tipoAfectacionDefaultId || (effectivePercentage === 0 ? '20' : '10'),
       tributoDefaultId: item.tributoDefaultId || (effectivePercentage === 0 ? '9997' : '1000'),
       porcentajeIgvDefault: effectivePercentage,
+      crearAlmacenPrincipal: false,
     };
     if (!this.ubigeos().some((ubigeo) => ubigeo.codigo === item.ubigeoCodigo)) {
       this.ubigeos.update((items) => [
@@ -316,7 +332,19 @@ export class BranchesAdminPage {
       tipoAfectacionDefaultId: '10',
       tributoDefaultId: '1000',
       porcentajeIgvDefault: 18,
+      crearAlmacenPrincipal: true,
     };
+  }
+
+  private nextBranchCode(): string {
+    const usedCodes = new Set(this.sucursales().map((item) => item.codigo.toUpperCase()));
+    for (let sequence = 1; sequence <= 9999; sequence += 1) {
+      const candidate = `SUC-${String(sequence).padStart(3, '0')}`;
+      if (!usedCodes.has(candidate)) {
+        return candidate;
+      }
+    }
+    return `SUC-${Date.now()}`;
   }
 
   private resolveError(error: unknown): string {

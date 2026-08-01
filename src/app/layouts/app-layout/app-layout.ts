@@ -382,11 +382,13 @@ export class AppLayout {
         }
       });
     if (!this.isGeneralAdmin()) {
-      this.lowStockAlerts.refresh(true);
-      if (this.authSession.hasModule('CRM')) {
+      if (this.authSession.hasWorkspaceAccess('ERP')) {
+        this.lowStockAlerts.refresh(true);
+      }
+      if (this.authSession.hasWorkspaceAccess('CRM')) {
         this.crmInboxChannels.refresh();
         this.whatsappNotifications.refresh(false);
-        timer(10_000, 10_000)
+        timer(30_000, 30_000)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(() => {
             if (typeof document === 'undefined' || !document.hidden) {
@@ -1023,7 +1025,7 @@ export class AppLayout {
             label: 'Sucursales',
             route: '/admin/sucursales',
             icon: 'pi-building',
-            permission: 'SUCURSALES_READ',
+            permission: 'SUCURSALES_WRITE',
           },
           {
             label: 'Usuarios',
@@ -1107,7 +1109,7 @@ export class AppLayout {
   }
 
   private hasWorkspaceAccess(workspace: WorkspaceMode): boolean {
-    return this.authSession.hasModule(workspace === 'crm' ? 'CRM' : 'ERP');
+    return this.authSession.hasWorkspaceAccess(workspace === 'crm' ? 'CRM' : 'ERP');
   }
 
   private resolveCrmHomeRoute(): string {

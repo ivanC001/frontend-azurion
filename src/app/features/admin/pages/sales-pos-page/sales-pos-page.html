@@ -161,7 +161,7 @@
       <section class="checkout-section">
         <label class="section-label">Comprobante</label>
         <div class="segmented-control">
-          @for (option of documentOptions; track option.value) {
+          @for (option of documentOptions(); track option.value) {
             <button type="button" [class.active]="tipoComprobante === option.value" (click)="selectDocument(option.value)">
               <i [class]="'pi ' + option.icon"></i><span>{{ option.label }}</span>
             </button>

@@ -1,87 +1,240 @@
-<p-dialog header="Registrar producto CRM" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().catalogDrawerOpen()" (visibleChange)="!$event && host().catalogDrawerOpen.set(false)" styleClass="crm-dialog crm-dialog--catalogo crm-dialog--catalog-register">
-  <form class="dialog-form catalog-quick-form">
-    @if (host().catalogStep() === 'select') {
-      <div class="catalog-selector-head">
-        <div>
-          <span>Selecciona origen</span>
-          <strong>Que vas a registrar</strong>
-          <p>Elige entre {{ host().catalogTypeCards.length }} rubros comerciales. Despues AZURION mostrara un formulario corto con los campos correctos para vender desde CRM o landing.</p>
-        </div>
+<p-dialog
+  [header]="host().catalogoForm.id ? 'Editar oferta CRM' : 'Registrar producto CRM'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().catalogDrawerOpen()"
+  (visibleChange)="!$event && host().catalogDrawerOpen.set(false)"
+  styleClass="crm-dialog crm-dialog--catalogo crm-dialog--catalog-register"
+>
+  <form class="catalog-quick-form">
+    <ol class="catalog-flow" aria-label="Pasos del registro">
+      <li [class.is-active]="host().catalogStep() === 'select'" [class.is-complete]="host().catalogStep() === 'form'">
+        <span>1</span>
+        <div><strong>Rubro</strong><small>Clasifica la oferta</small></div>
+      </li>
+      <li [class.is-active]="host().catalogStep() === 'form'">
+        <span>2</span>
+        <div><strong>Datos comerciales</strong><small>Define qué se venderá</small></div>
+      </li>
+      <li [class.is-active]="host().catalogStep() === 'form' && host().catalogoForm.publicEnabled">
+        <span>3</span>
+        <div><strong>Publicación</strong><small>CRM y landing</small></div>
+      </li>
+    </ol>
+
+    @if (host().errorMessage()) {
+      <div class="catalog-form-message catalog-form-message--error" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ host().errorMessage() }}</span>
       </div>
-      <div class="catalog-type-grid">
-        @for (type of host().catalogTypeCards; track type.value) {
-          <button type="button" class="catalog-type-card" (click)="host().selectCatalogType(type.value)">
-            <i [class]="type.icon"></i>
-            <strong>{{ type.label }}</strong>
-            <span>{{ type.description }}</span>
-          </button>
+    }
+
+    @if (host().catalogStep() === 'select') {
+      <header class="catalog-selector-head">
+        <span>Selecciona el tipo de oferta</span>
+        <h2>¿Qué vas a registrar?</h2>
+        <p>Elige un rubro. El siguiente paso mostrará únicamente los datos necesarios para cotizarlo, publicarlo y usarlo en oportunidades.</p>
+      </header>
+
+      <div class="catalog-type-groups">
+        @for (group of host().catalogTypeGroups; track group.code) {
+          <section class="catalog-type-group">
+            <header>
+              <strong>{{ group.label }}</strong>
+              <span>{{ group.description }}</span>
+            </header>
+            <div class="catalog-type-grid">
+              @for (type of group.types; track type.value) {
+                <button type="button" class="catalog-type-card" (click)="host().selectCatalogType(type.value)">
+                  <i [class]="type.icon"></i>
+                  <span class="catalog-type-copy">
+                    <strong>{{ type.label }}</strong>
+                    <small>{{ type.description }}</small>
+                  </span>
+                  <i class="pi pi-chevron-right catalog-type-arrow"></i>
+                </button>
+              }
+            </div>
+          </section>
         }
       </div>
     } @else {
-      <div class="catalog-intro">
-        <i class="pi pi-tags"></i>
-        <div>
-          <strong>Producto para CRM y landing</strong>
-          <span>Registra el producto, servicio o bien que ofreces. La landing solo enviara este ID y AZURION guardara el contexto.</span>
-        </div>
-      </div>
-      <div class="dialog-grid catalog-form-grid">
-        <div class="catalog-selected-type wide-field">
-          <i [class]="host().opportunityTypeMeta(host().catalogoForm.tipoItem).icon"></i>
-          <div>
-            <strong>{{ host().opportunityTypeMeta(host().catalogoForm.tipoItem).label }}</strong>
-            <span>{{ host().opportunityTypeMeta(host().catalogoForm.tipoItem).description }}</span>
-          </div>
-          @if (!host().catalogoForm.id) {
-            <button type="button" (click)="host().backToCatalogTypeSelection()">Cambiar</button>
+      <div class="catalog-registration-layout">
+        <main class="catalog-registration-main">
+          <section class="catalog-form-section catalog-form-section--identity">
+            <div class="catalog-section-heading">
+              <div>
+                <span>Oferta seleccionada</span>
+                <strong>Información comercial</strong>
+              </div>
+              <div class="catalog-selected-type">
+                <i [class]="host().catalogRegistrationDefinition().icon"></i>
+                <div>
+                  <strong>{{ host().catalogRegistrationDefinition().label }}</strong>
+                  <span>{{ host().catalogRegistrationDefinition().description }}</span>
+                </div>
+                @if (!host().catalogoForm.id) {
+                  <button type="button" (click)="host().backToCatalogTypeSelection()">Cambiar</button>
+                }
+              </div>
+            </div>
+
+            <div class="catalog-input-grid">
+              <label class="catalog-field--wide">
+                {{ host().catalogRegistrationDefinition().nameLabel }} <span class="required">*</span>
+                <input
+                  pInputText
+                  name="catNombre"
+                  [(ngModel)]="host().catalogoForm.nombre"
+                  (blur)="host().ensureCatalogLandingSlug()"
+                  [placeholder]="host().catalogNamePlaceholder()"
+                />
+              </label>
+              <label>
+                {{ host().catalogRegistrationDefinition().priceLabel }}
+                <input pInputText type="number" min="0" step="0.01" name="catPrecio" [(ngModel)]="host().catalogoForm.precioReferencial" placeholder="0.00" />
+                <small>{{ host().catalogRegistrationDefinition().priceHelp }}</small>
+              </label>
+              <label>
+                Estado de la oferta <span class="required">*</span>
+                <p-select
+                  name="catEstado"
+                  [options]="host().catalogStatusOptions"
+                  [(ngModel)]="host().catalogoForm.estado"
+                  appendTo="body"
+                  placeholder="Selecciona un estado"
+                />
+              </label>
+              <label class="catalog-field--wide">
+                Descripción comercial <span class="required">*</span>
+                <textarea
+                  pTextarea
+                  name="catDescripcion"
+                  rows="4"
+                  [(ngModel)]="host().catalogoForm.descripcion"
+                  [placeholder]="host().catalogDescriptionPlaceholder()"
+                ></textarea>
+                <small>Esta información acompañará al producto en el CRM y ayudará al asesor a responder correctamente.</small>
+              </label>
+            </div>
+          </section>
+
+          <section class="catalog-form-section">
+            <div class="catalog-section-heading">
+              <div>
+                <span>Datos del rubro</span>
+                <strong>Información específica de {{ host().catalogRegistrationDefinition().label.toLowerCase() }}</strong>
+              </div>
+              <small>Los campos con * son necesarios para un registro útil.</small>
+            </div>
+            <div class="catalog-input-grid catalog-attributes-grid">
+              @for (field of host().catalogFields(); track field.key) {
+                <label [class.catalog-field--wide]="field.wide">
+                  {{ field.label }} @if (field.required) { <span class="required">*</span> }
+                  @if (field.type === 'select') {
+                    <p-select
+                      [name]="'catAttr' + field.key"
+                      [options]="host().catalogFieldOptions(field)"
+                      [ngModel]="host().catalogAttribute(field.key)"
+                      (ngModelChange)="host().setCatalogAttribute(field, $event)"
+                      appendTo="body"
+                      [placeholder]="field.placeholder"
+                      [showClear]="!field.required"
+                    />
+                  } @else if (field.type === 'textarea') {
+                    <textarea
+                      pTextarea
+                      rows="3"
+                      [name]="'catAttr' + field.key"
+                      [ngModel]="host().catalogAttribute(field.key)"
+                      (ngModelChange)="host().setCatalogAttribute(field, $event)"
+                      [placeholder]="field.placeholder"
+                    ></textarea>
+                  } @else {
+                    <input
+                      pInputText
+                      [type]="field.type || 'text'"
+                      [attr.min]="field.min ?? null"
+                      [attr.step]="field.step ?? null"
+                      [name]="'catAttr' + field.key"
+                      [ngModel]="host().catalogAttribute(field.key)"
+                      (ngModelChange)="host().setCatalogAttribute(field, $event)"
+                      [placeholder]="field.placeholder"
+                    />
+                  }
+                  @if (field.help) { <small>{{ field.help }}</small> }
+                </label>
+              }
+            </div>
+          </section>
+
+          <section class="catalog-form-section">
+            <div class="catalog-section-heading">
+              <div>
+                <span>Disponibilidad</span>
+                <strong>Publicación y captación</strong>
+              </div>
+            </div>
+            <label class="catalog-public-toggle">
+              <input
+                type="checkbox"
+                name="catPublicEnabled"
+                [(ngModel)]="host().catalogoForm.publicEnabled"
+                (ngModelChange)="host().ensureCatalogLandingSlug()"
+              />
+              <span>
+                <strong>Recibir leads desde una landing</strong>
+                <small>Genera una ruta pública segura vinculada a esta oferta.</small>
+              </span>
+            </label>
+            @if (host().catalogoForm.publicEnabled) {
+              <label class="catalog-slug-field">
+                Slug de la landing
+                <div><span>/crm-lead/</span><input pInputText name="catLandingSlug" [(ngModel)]="host().catalogoForm.landingSlug" (blur)="host().normalizeCatalogLandingSlug()" placeholder="nombre-de-la-oferta" /></div>
+                <small>Se genera desde el nombre; puedes personalizarlo antes de guardar.</small>
+              </label>
+            }
+            @if (host().catalogoForm.estado !== 'ACTIVO' && host().catalogoForm.publicEnabled) {
+              <div class="catalog-help catalog-help--warning">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>La landing no recibirá leads hasta que la oferta cambie a estado Activo.</span>
+              </div>
+            }
+          </section>
+        </main>
+
+        <aside class="catalog-preview-card">
+          <span class="catalog-preview-eyebrow">Vista previa</span>
+          <div class="catalog-preview-icon"><i [class]="host().catalogRegistrationDefinition().icon"></i></div>
+          <small>{{ host().catalogRegistrationDefinition().label }}</small>
+          <h3>{{ host().catalogoForm.nombre || host().catalogNamePlaceholder() }}</h3>
+          <strong class="catalog-preview-price">{{ host().catalogPricePreview() }}</strong>
+          <p>{{ host().catalogoForm.descripcion || 'La descripción comercial aparecerá aquí.' }}</p>
+          @if (host().catalogPreviewAttributes().length) {
+            <dl>
+              @for (attribute of host().catalogPreviewAttributes(); track attribute.label) {
+                <div><dt>{{ attribute.label }}</dt><dd>{{ attribute.value }}</dd></div>
+              }
+            </dl>
+          } @else {
+            <div class="catalog-preview-empty">Completa los datos del rubro para enriquecer la ficha.</div>
           }
-        </div>
-        <label class="wide-field">Nombre <span class="required">*</span><input pInputText name="catNombre" [(ngModel)]="host().catalogoForm.nombre" [placeholder]="host().catalogNamePlaceholder()" /></label>
-        <label>Precio referencial<input pInputText type="number" min="0" name="catPrecio" [(ngModel)]="host().catalogoForm.precioReferencial" placeholder="0.00" /></label>
-        <label>
-          Estado de la oferta
-          <p-select
-            name="catEstado"
-            [options]="host().catalogStatusOptions"
-            [(ngModel)]="host().catalogoForm.estado"
-            appendTo="body"
-            placeholder="Selecciona un estado"
-          />
-        </label>
-        @for (field of host().catalogFields(); track field.key) {
-          <label>
-            {{ field.label }}
-            <input
-              pInputText
-              [type]="field.type || 'text'"
-              [name]="'catAttr' + field.key"
-              [ngModel]="host().catalogAttribute(field.key)"
-              (ngModelChange)="host().setCatalogAttribute(field, $event)"
-              [placeholder]="field.placeholder"
-            />
-          </label>
-        }
-        <label class="check-row wide-field">
-          <input type="checkbox" name="catPublicEnabled" [(ngModel)]="host().catalogoForm.publicEnabled" />
-          <span>Habilitar esta oferta para recibir leads desde landing</span>
-        </label>
-        @if (host().catalogoForm.estado !== 'ACTIVO' && host().catalogoForm.publicEnabled) {
-          <div class="catalog-help catalog-help--warning wide-field">
-            <i class="pi pi-exclamation-triangle"></i>
-            <span>Una oferta inactiva o archivada no recibe leads aunque la publicacion este habilitada.</span>
+          <div class="catalog-preview-publication" [class.is-public]="host().catalogoForm.publicEnabled && host().catalogoForm.estado === 'ACTIVO'">
+            <i [class]="host().catalogoForm.publicEnabled ? 'pi pi-globe' : 'pi pi-lock'"></i>
+            <span>{{ host().catalogPublicationLabel() }}</span>
           </div>
+        </aside>
+      </div>
+
+      <footer class="catalog-dialog-actions">
+        @if (!host().catalogoForm.id) {
+          <button type="button" class="catalog-back-button" (click)="host().backToCatalogTypeSelection()"><i class="pi pi-arrow-left"></i> Volver al rubro</button>
         }
-        <label class="wide-field">Slug landing<input pInputText name="catLandingSlug" [(ngModel)]="host().catalogoForm.landingSlug" placeholder="toyota-hilux-2021, curso-excel..." /></label>
-        <label class="wide-field">Detalle rapido<textarea pTextarea name="catDescripcion" rows="3" [(ngModel)]="host().catalogoForm.descripcion" [placeholder]="host().catalogDescriptionPlaceholder()"></textarea></label>
-        <div class="catalog-help wide-field">
-          <i class="pi pi-link"></i>
-          <span>Al guardar, usa el enlace seguro de la tabla. La landing debe enviar <b>catalogoItemId</b> y <b>token</b>; no debe inventar datos del producto.</span>
-        </div>
-      </div>
-      <div class="dialog-actions">
-        <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().catalogDrawerOpen.set(false)" />
-        <p-button label="Guardar oferta" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveCatalogo()" />
-      </div>
+        <span></span>
+        <p-button type="button" label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().catalogDrawerOpen.set(false)" />
+        <p-button type="button" [label]="host().catalogoForm.id ? 'Guardar cambios' : 'Registrar oferta'" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveCatalogo()" />
+      </footer>
     }
   </form>
 </p-dialog>

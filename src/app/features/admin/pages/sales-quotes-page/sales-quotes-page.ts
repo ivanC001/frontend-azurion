@@ -11,6 +11,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
 import {
   AdminSaasApiService,
   Caja,
@@ -108,18 +109,25 @@ export class SalesQuotesPage {
 
   protected readonly cajaOptions = computed(() =>
     this.cajas()
-      .filter((caja) => caja.estado === 'ABIERTA')
+      .filter((caja) => caja.estado === 'ABIERTO')
       .map((caja) => ({
-        label: `${caja.codigo} - ${caja.nombre} (${caja.sucursalNombre})`,
+        label: `${caja.numero} - ${caja.cajaNombre} (${caja.sucursalNombre})`,
         value: caja.id,
       })),
   );
 
-  protected readonly documentOptions: Array<{ label: string; value: TipoComprobanteVenta }> = [
-    { label: 'Ticket', value: 'TICKET_VENTA' },
-    { label: 'Boleta', value: 'BOLETA' },
-    { label: 'Factura', value: 'FACTURA' },
-  ];
+  protected readonly documentOptions = computed(() => {
+    const options: Array<{ label: string; value: TipoComprobanteVenta }> = [
+      { label: 'Ticket', value: 'TICKET_VENTA' },
+    ];
+    if (canIssueElectronicDocuments(this.session.currentSession()?.empresa)) {
+      options.push(
+        { label: 'Boleta', value: 'BOLETA' },
+        { label: 'Factura', value: 'FACTURA' },
+      );
+    }
+    return options;
+  });
 
   constructor() {
     this.load();

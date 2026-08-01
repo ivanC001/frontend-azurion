@@ -45,16 +45,16 @@
         </header>
         <div class="client-completion-grid">
           <label>
-            <span>Tipo de persona <b>*</b></span>
+            <span>Tipo de cliente <b>*</b></span>
             <p-select name="clientTipoPersona" [options]="personTypeOptions()" [ngModel]="form().tipoPersona" (ngModelChange)="patchForm('tipoPersona', $event)" appendTo="body" />
           </label>
           <label>
             <span>Tipo de documento <b>*</b></span>
-            <p-select name="clientTipoDocumento" [options]="documentTypeOptions()" [ngModel]="form().tipoDocumento" (ngModelChange)="patchForm('tipoDocumento', $event)" appendTo="body" />
+            <p-select name="clientTipoDocumento" [options]="documentTypeOptions()" [ngModel]="form().tipoDocumento" (ngModelChange)="patchForm('tipoDocumento', $event)" [disabled]="form().tipoPersona === 'SIN_DEFINIR'" appendTo="body" />
           </label>
           <label>
             <span>Numero de documento <b>*</b></span>
-            <input pInputText inputmode="numeric" maxlength="11" name="clientNumeroDocumento" [ngModel]="form().numeroDocumento" (ngModelChange)="patchForm('numeroDocumento', $event)" placeholder="DNI o RUC" />
+            <input pInputText inputmode="numeric" maxlength="11" name="clientNumeroDocumento" [ngModel]="form().numeroDocumento" (ngModelChange)="patchForm('numeroDocumento', $event)" [disabled]="form().tipoPersona === 'SIN_DEFINIR'" placeholder="DNI o RUC" />
             <small>{{ documentHint() }}</small>
           </label>
 

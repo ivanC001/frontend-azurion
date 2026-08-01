@@ -2,8 +2,8 @@ import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Observable, forkJoin, of, switchMap } from 'rxjs';
-import { catchError, finalize, map } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,15 +12,13 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
 import { toLocalDateInputValue } from '@core/utils/local-date';
-import { FacturadorApiService } from '@features/facturador/data/facturador-api.service';
 import {
   AdminSaasApiService,
-  CreateEmpresaRequest,
+  CreateEmpresaRegistrationRequest,
   Empresa,
   EmpresaOperationalSummary,
   ModuloGlobal,
   Plan,
-  Suscripcion,
 } from '../../data/admin-saas-api.service';
 
 interface EmpresaForm {
@@ -39,8 +37,6 @@ interface EmpresaForm {
   planId: number | null;
   fechaInicio: string;
   moduloCodigos: string[];
-  syncFacturador: boolean;
-  logoFile: File | null;
 }
 
 interface HttpErrorLike {
@@ -53,14 +49,6 @@ interface ApiErrorPayload {
   readonly message?: string;
   readonly details?: readonly string[];
   readonly errors?: Record<string, readonly string[] | string>;
-}
-
-interface EmpresaCreationFlowResult {
-  readonly empresa: Empresa;
-  readonly suscripcion: Suscripcion | null;
-  readonly suscripcionMessage: string;
-  readonly facturadorSynced: boolean;
-  readonly facturadorMessage: string;
 }
 
 interface TenantInitialCredentials {
@@ -89,7 +77,6 @@ interface TenantInitialCredentials {
 })
 export class CompaniesAdminPage {
   private readonly api = inject(AdminSaasApiService);
-  private readonly facturadorApi = inject(FacturadorApiService);
   private readonly router = inject(Router);
 
   protected readonly companySummaries = signal<EmpresaOperationalSummary[]>([]);
@@ -261,9 +248,6 @@ export class CompaniesAdminPage {
     this.form.monedaSimbolo = country.symbol;
     this.form.zonaHoraria = country.timezone;
     this.form.idioma = country.language;
-    if (country.code !== 'PE') {
-      this.form.syncFacturador = false;
-    }
   }
 
   protected onPlanChanged(planId: number | null): void {
@@ -272,30 +256,10 @@ export class CompaniesAdminPage {
     this.form.moduloCodigos = this.normalizeAssignableModuleSelection(
       selectedPlan?.moduloCodigos ?? [],
     );
-    this.normalizeFacturadorSyncState();
   }
 
   protected isModuleSelected(codigo: string): boolean {
     return this.form.moduloCodigos.includes(this.normalizeModuleCode(codigo));
-  }
-
-  protected toggleModule(codigo: string, checked: boolean): void {
-    const normalizedCode = this.normalizeModuleCode(codigo);
-    if (!this.assignableModuleCodes.has(normalizedCode)) {
-      return;
-    }
-
-    const current = new Set(this.form.moduloCodigos);
-    if (checked) {
-      current.add(normalizedCode);
-    } else {
-      current.delete(normalizedCode);
-    }
-    this.form.moduloCodigos = [...current];
-    if (normalizedCode === 'FACTURACION' && !checked) {
-      this.form.syncFacturador = false;
-    }
-    this.normalizeFacturadorSyncState();
   }
 
   protected saveEmpresa(): void {
@@ -309,21 +273,7 @@ export class CompaniesAdminPage {
       return;
     }
 
-    const syncFacturador = this.shouldSyncFacturador();
-    if (this.form.syncFacturador && !syncFacturador) {
-      this.errorMessage.set(
-        'El facturador SUNAT solo puede sincronizar empresas de Peru con RUC de 11 digitos.',
-      );
-      return;
-    }
-    if (syncFacturador && !this.form.logoFile) {
-      this.errorMessage.set(
-        'Adjunta el logo de la empresa para registrar tambien en facturador, o desmarca esa opcion.',
-      );
-      return;
-    }
-
-    const request: CreateEmpresaRequest = {
+    const request: CreateEmpresaRegistrationRequest = {
       ruc: this.form.ruc.trim(),
       razonSocial: this.form.razonSocial.trim(),
       tipoDocumentoFiscal: this.form.tipoDocumentoFiscal,
@@ -336,63 +286,16 @@ export class CompaniesAdminPage {
       idioma: this.form.idioma,
       tenantId: this.form.tenantId.trim(),
       schemaName: this.form.schemaName.trim(),
-      moduloCodigos: [...this.form.moduloCodigos],
+      planId: this.form.planId!,
+      fechaInicio: this.form.fechaInicio || null,
     };
 
     this.saving.set(true);
     this.api
-      .createEmpresa(request)
-      .pipe(
-        switchMap((empresa) =>
-          this.createSuscripcionIfNeeded(empresa).pipe(
-            map((suscripcion) => ({
-              empresa,
-              suscripcion,
-              suscripcionMessage: '',
-            })),
-            catchError((error: unknown) =>
-              of({
-                empresa,
-                suscripcion: null,
-                suscripcionMessage: this.resolveError(error),
-              }),
-            ),
-          ),
-        ),
-        switchMap((result) => {
-          if (result.suscripcionMessage || !syncFacturador) {
-            return of({ ...result, facturadorSynced: false, facturadorMessage: '' });
-          }
-
-          return this.facturadorApi
-            .createTenant({
-              ruc: result.empresa.ruc,
-              business_name: result.empresa.razonSocial,
-              sunat_mode: 'beta',
-              api_client_name: `erp-${result.empresa.tenantId}`,
-              logo_file: this.form.logoFile,
-            })
-            .pipe(
-              map((tenant) => ({
-                ...result,
-                facturadorSynced: true,
-                facturadorMessage: tenant.already_exists
-                  ? 'Facturador ya tenia esta empresa y reutilizo su schema.'
-                  : 'Facturador registro la empresa y creo su schema.',
-              })),
-              catchError((error: unknown) =>
-                of({
-                  ...result,
-                  facturadorSynced: false,
-                  facturadorMessage: this.resolveFacturadorError(error),
-                }),
-              ),
-            );
-        }),
-        finalize(() => this.saving.set(false)),
-      )
+      .createEmpresaRegistration(request)
+      .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: ({ empresa, suscripcionMessage, facturadorSynced, facturadorMessage }: EmpresaCreationFlowResult) => {
+        next: ({ empresa }) => {
           this.dialogVisible.set(false);
           this.loadData();
           this.initialCredentials.set({
@@ -401,24 +304,11 @@ export class CompaniesAdminPage {
             password: 'admin1',
           });
 
-          if (suscripcionMessage) {
-            this.successMessage.set('Empresa registrada en AZURION.');
-            this.errorMessage.set(`No se pudo asignar el plan inicial: ${suscripcionMessage}`);
-            return;
-          }
-
-          if (!syncFacturador) {
-            this.successMessage.set('Empresa registrada correctamente.');
-            return;
-          }
-
-          if (facturadorSynced) {
-            this.successMessage.set(`Empresa registrada correctamente. ${facturadorMessage}`);
-            return;
-          }
-
-          this.successMessage.set('Empresa registrada en AZURION.');
-          this.errorMessage.set(`No se pudo sincronizar en facturador: ${facturadorMessage}`);
+          this.successMessage.set(
+            this.form.moduloCodigos.includes('ERP')
+              ? 'Empresa registrada. El facturador se aprovisionara automaticamente en modo ticket.'
+              : 'Empresa registrada correctamente.',
+          );
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -448,37 +338,6 @@ export class CompaniesAdminPage {
       return 0;
     }
     return Math.min(Math.round((active / limit) * 100), 100);
-  }
-
-  protected onLogoFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] || null;
-
-    if (!file) {
-      this.form.logoFile = null;
-      return;
-    }
-
-    if (!this.isValidLogoFile(file)) {
-      this.form.logoFile = null;
-      input.value = '';
-      this.errorMessage.set('Logo invalido. Usa PNG, JPG, JPEG, WEBP o SVG (maximo 2 MB).');
-      return;
-    }
-
-    this.form.logoFile = file;
-  }
-
-  private createSuscripcionIfNeeded(empresa: Empresa): Observable<Suscripcion | null> {
-    if (!this.form.planId) {
-      return of<Suscripcion | null>(null);
-    }
-
-    return this.api.createSuscripcion({
-      empresaId: empresa.id,
-      planId: this.form.planId,
-      fechaInicio: this.form.fechaInicio || null,
-    });
   }
 
   private loadData(): void {
@@ -531,24 +390,7 @@ export class CompaniesAdminPage {
       planId: null,
       fechaInicio: toLocalDateInputValue(),
       moduloCodigos: [],
-      syncFacturador: false,
-      logoFile: null,
     };
-  }
-
-  private normalizeFacturadorSyncState(): void {
-    if (!this.form.moduloCodigos.includes('FACTURACION')) {
-      this.form.syncFacturador = false;
-    }
-  }
-
-  private shouldSyncFacturador(): boolean {
-    return (
-      this.form.syncFacturador &&
-      this.form.moduloCodigos.includes('FACTURACION') &&
-      this.form.paisCodigo === 'PE' &&
-      /^\d{11}$/.test(this.form.ruc.trim())
-    );
   }
 
   private normalizeAssignableModuleSelection(moduloCodigos: readonly string[]): string[] {
@@ -606,29 +448,6 @@ export class CompaniesAdminPage {
     return 'No se pudo completar la operacion.';
   }
 
-  private resolveFacturadorError(error: unknown): string {
-    if (typeof error === 'object' && error !== null && 'error' in error) {
-      const httpError = error as HttpErrorLike;
-      if (httpError.status === 0) {
-        return 'No se pudo conectar con el servicio de facturacion. Intenta nuevamente.';
-      }
-
-      const backendMessage = this.extractErrorMessage(httpError.error);
-      const normalizedMessage = backendMessage.toLowerCase();
-      if (
-        normalizedMessage.includes('authentication required') ||
-        normalizedMessage.includes('invalid jwt token') ||
-        normalizedMessage.includes('invalid api key')
-      ) {
-        return 'No se pudo completar la operacion en el servicio de facturacion.';
-      }
-
-      return backendMessage || httpError.message || 'Error no controlado en facturador.';
-    }
-
-    return 'Error no controlado en facturador.';
-  }
-
   private extractErrorMessage(payload: unknown): string {
     if (typeof payload === 'string') {
       return payload.trim();
@@ -667,22 +486,4 @@ export class CompaniesAdminPage {
     return '';
   }
 
-  private isValidLogoFile(file: File): boolean {
-    const maxBytes = 2 * 1024 * 1024;
-    const allowedMimeTypes = new Set([
-      'image/png',
-      'image/jpeg',
-      'image/jpg',
-      'image/webp',
-      'image/svg+xml',
-    ]);
-    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.svg'];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((extension) =>
-      lowerName.endsWith(extension),
-    );
-    const hasAllowedMime = allowedMimeTypes.has(file.type.toLowerCase());
-
-    return file.size <= maxBytes && (hasAllowedMime || hasAllowedExtension);
-  }
 }

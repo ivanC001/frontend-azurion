@@ -122,6 +122,58 @@ describe('AuthSessionService', () => {
     expect(secondTab.currentSession()?.tenantId).toBe('20123456789');
   });
 
+  it('does not enable ERP for a CRM-only user when the tenant has both modules', () => {
+    const service = TestBed.inject(AuthSessionService);
+    service.setSession({
+      ...validSession(),
+      roles: ['CRM_CALLCENTER', 'ROLE_CRM_VENDEDOR'],
+      permissions: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ', 'COTIZACIONES_READ'],
+      modules: ['ERP', 'CRM', 'CLIENTES', 'COTIZACIONES'],
+    });
+
+    expect(service.hasModule('ERP')).toBe(true);
+    expect(service.hasWorkspaceAccess('ERP')).toBe(false);
+    expect(service.hasWorkspaceAccess('CRM')).toBe(true);
+  });
+
+  it('does not use shared customer and quote permissions to enable ERP', () => {
+    const service = TestBed.inject(AuthSessionService);
+    service.setSession({
+      ...validSession(),
+      roles: ['ADMIN_EMPRESA'],
+      permissions: ['CLIENTES_READ', 'COTIZACIONES_READ', 'SUCURSALES_READ'],
+      modules: ['ERP', 'CRM', 'CLIENTES', 'COTIZACIONES'],
+    });
+
+    expect(service.hasWorkspaceAccess('ERP')).toBe(false);
+    expect(service.hasWorkspaceAccess('CRM')).toBe(false);
+  });
+
+  it('enables only the ERP workspace for a pure ERP role', () => {
+    const service = TestBed.inject(AuthSessionService);
+    service.setSession({
+      ...validSession(),
+      roles: ['ROLE_ERP_VENDEDOR'],
+      permissions: ['VENTAS_READ', 'CLIENTES_READ', 'COTIZACIONES_READ'],
+      modules: ['ERP', 'VENTAS', 'CRM', 'CLIENTES', 'COTIZACIONES'],
+    });
+
+    expect(service.hasWorkspaceAccess('ERP')).toBe(true);
+    expect(service.hasWorkspaceAccess('CRM')).toBe(false);
+  });
+
+  it('requires the contracted module even when the user has a workspace role', () => {
+    const service = TestBed.inject(AuthSessionService);
+    service.setSession({
+      ...validSession(),
+      roles: ['CRM_VENDEDOR'],
+      permissions: ['CRM_LEADS_READ'],
+      modules: ['ERP'],
+    });
+
+    expect(service.hasWorkspaceAccess('CRM')).toBe(false);
+  });
+
   function validSession(): LoginResponse {
     return {
       accessToken: 'opaque-token',

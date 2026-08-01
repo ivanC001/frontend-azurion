@@ -103,27 +103,84 @@
   styleClass="branch-dialog"
 >
   <form class="dialog-form">
-    <p class="dialog-copy">Completa los datos base y elige el ubigeo para dejar la sede lista para operar.</p>
-    <div class="dialog-grid">
-      <label>
-        Codigo <span class="required">*</span>
-        <input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="SUC-01" />
-      </label>
-      <label>
-        Nombre <span class="required">*</span>
-        <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Sucursal centro" />
-      </label>
-      <label class="wide-field">
-        Direccion
-        <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Direccion referencial" />
-      </label>
-      <div class="wide-field">
-        <app-ubigeo-picker name="sucursalUbigeo" [(value)]="form.ubigeoCodigo" [required]="true" />
+    <div class="smart-form-intro">
+      <span class="smart-form-intro__icon"><i class="pi pi-sparkles"></i></span>
+      <div>
+        <strong>Nueva sede en pocos pasos</strong>
+        <p>El codigo se genera solo y puedes dejar listo su almacen principal en el mismo registro.</p>
       </div>
-      <label>
-        IGV de la sucursal (%) <span class="required">*</span>
-        <input pInputText type="number" min="0" max="100" step="0.01" name="igvPorcentaje" [(ngModel)]="form.igvPorcentaje" placeholder="18.00" />
-      </label>
+      <span class="auto-pill"><i class="pi pi-bolt"></i> Asistido</span>
+    </div>
+
+    <section class="form-section">
+      <header class="form-section__head">
+        <span><i class="pi pi-building"></i></span>
+        <div><strong>Identidad de la sucursal</strong><small>Datos visibles en ventas, caja y reportes.</small></div>
+      </header>
+      <div class="dialog-grid">
+        <label class="field-control">
+          <span class="field-label"><i class="pi pi-hashtag"></i> Codigo</span>
+          <span class="auto-input">
+            <input pInputText name="codigo" [(ngModel)]="form.codigo" readonly placeholder="Automatico" />
+            <small><i class="pi pi-lock"></i> Generado</small>
+          </span>
+        </label>
+        <label class="field-control">
+          <span class="field-label"><i class="pi pi-pencil"></i> Nombre <b>*</b></span>
+          <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Ej. Sucursal Centro" />
+        </label>
+        <label class="wide-field field-control">
+          <span class="field-label"><i class="pi pi-map-marker"></i> Direccion</span>
+          <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Av., calle, numero y referencia" />
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header class="form-section__head">
+        <span><i class="pi pi-map"></i></span>
+        <div><strong>Ubicacion y tributacion</strong><small>Selecciona el ubigeo SUNAT y confirma el IGV.</small></div>
+      </header>
+      <div class="dialog-grid">
+        <div class="wide-field ubigeo-field">
+          <app-ubigeo-picker name="sucursalUbigeo" [(value)]="form.ubigeoCodigo" [required]="true" />
+        </div>
+        @if (selectedUbigeo(); as ubigeo) {
+          <div class="location-summary">
+            <span><i class="pi pi-map-marker"></i></span>
+            <div><strong>{{ ubigeo.distrito }}</strong><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small></div>
+          </div>
+        }
+        <label class="field-control tax-field">
+          <span class="field-label"><i class="pi pi-percentage"></i> IGV de la sucursal <b>*</b></span>
+          <span class="percentage-input">
+            <input pInputText type="number" min="0" max="100" step="0.01" name="igvPorcentaje" [(ngModel)]="form.igvPorcentaje" />
+            <b>%</b>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <label class="principal-option">
+      <input type="checkbox" name="crearAlmacenPrincipal" [(ngModel)]="form.crearAlmacenPrincipal" />
+      <span class="principal-option__icon"><i class="pi pi-box"></i></span>
+      <div>
+        <strong>Crear tambien el almacen principal</strong>
+        <small>Copiara nombre, direccion y sucursal; quedara habilitado para vender.</small>
+      </div>
+      <span class="recommended-pill">Recomendado</span>
+    </label>
+
+    <div class="branch-preview">
+      <span><i class="pi pi-building"></i></span>
+      <div>
+        <small>Vista previa</small>
+        <strong>{{ form.nombre || 'Nueva sucursal' }}</strong>
+        <p>{{ form.codigo || 'Codigo automatico' }} · {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}</p>
+      </div>
+      @if (form.crearAlmacenPrincipal) {
+        <b><i class="pi pi-check-circle"></i> + Almacen</b>
+      }
     </div>
     <div class="dialog-actions">
       <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="createDialogVisible.set(false)" />

@@ -41,12 +41,18 @@
         <h4><i class="pi pi-list-check or-ico"></i>Datos de la oportunidad</h4>
         <label class="full-field">Titulo <span class="required">*</span><input pInputText name="opTitulo" [(ngModel)]="host().opportunityForm.titulo" placeholder="Nombre del negocio" /></label>
         <div class="or-mini">
-          <label>Monto estimado<input pInputText type="number" min="0" name="opMonto" [(ngModel)]="host().opportunityForm.montoEstimado" /></label>
-          <label>Interes comercial<p-select name="opTemperatura" [options]="host().opportunityTemperatureOptions" [ngModel]="host().opportunityFormTemperature()" (ngModelChange)="host().setOpportunityFormTemperature($event)" appendTo="body" /></label>
-          <label>Cierre estimado<input pInputText type="date" name="opCierre" [(ngModel)]="host().opportunityForm.fechaCierreEstimada" /></label>
+          <label>Monto estimado <span class="required">*</span><input pInputText type="number" min="0.01" step="0.01" name="opMonto" [(ngModel)]="host().opportunityForm.montoEstimado" /></label>
+          <label>Probabilidad comercial <span class="required">*</span><p-select name="opTemperatura" [options]="host().opportunityTemperatureOptions" [ngModel]="host().opportunityFormTemperature()" (ngModelChange)="host().setOpportunityFormTemperature($event)" appendTo="body" /></label>
+          <label>Cierre estimado <span class="required">*</span><input pInputText type="date" name="opCierre" [(ngModel)]="host().opportunityForm.fechaCierreEstimada" /></label>
         </div>
-        <label>Responsable<p-select name="opResponsable" [options]="host().responsableOptions()" [(ngModel)]="host().opportunityForm.responsableId" [showClear]="true" appendTo="body" /></label>
+        <label>Responsable <span class="required">*</span><p-select name="opResponsable" [options]="host().responsableOptions()" [(ngModel)]="host().opportunityForm.responsableId" [showClear]="true" appendTo="body" /></label>
         <label>Etapa<p-select name="opEtapa" [options]="host().etapaOptions()" [(ngModel)]="host().opportunityForm.etapa" appendTo="body" /></label>
+        @if (!host().opportunityForm.id) {
+          <div class="or-mini">
+            <label>Siguiente accion <span class="required">*</span><input pInputText name="opProximaAccion" [(ngModel)]="host().opportunityForm.proximaAccion" placeholder="Ej. Llamada inicial" /></label>
+            <label>Fecha de la accion <span class="required">*</span><input pInputText type="datetime-local" name="opFechaProximaAccion" [(ngModel)]="host().opportunityForm.fechaProximaAccion" /></label>
+          </div>
+        }
       </section>
 
       <aside class="or-summary">
@@ -55,6 +61,9 @@
         <p><i class="pi pi-tag or-ico"></i><span>Oferta<strong>{{ host().opportunityInterestLabel() }}</strong></span></p>
         <p><i class="pi pi-dollar or-ico"></i><span>Monto estimado<strong>S/ {{ (host().opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</strong></span></p>
         <p><i class="pi pi-calendar or-ico"></i><span>Cierre estimado<strong>{{ host().opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong></span></p>
+        @if (!host().opportunityForm.id) {
+          <p><i class="pi pi-list-check or-ico"></i><span>Siguiente paso<strong>{{ host().opportunityForm.proximaAccion || 'Sin definir' }}</strong></span></p>
+        }
       </aside>
     </section>
 

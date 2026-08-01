@@ -215,8 +215,6 @@ export class FacturadorConfigPage {
       api_client_name: detail.api_client_name || undefined,
       ruc_sol: detail.ruc_sol || detail.configuracion?.ruc_sol || undefined,
       usuario_sol: detail.sol_usuario || detail.configuracion?.usuario_sol || undefined,
-      certificado_url: detail.certificado_url || detail.configuracion?.certificado_url || undefined,
-      logo_pdf_url: detail.logo_pdf_url || detail.configuracion?.logo_pdf_url || undefined,
       serie_factura: this.normalizeSerie(
         this.form.serie_factura,
         FacturadorConfigPage.DEFAULT_SERIE_FACTURA,

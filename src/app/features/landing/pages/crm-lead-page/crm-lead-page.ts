@@ -42,8 +42,8 @@ export class CrmLeadPage implements OnInit {
     interesPrincipal: this.route.snapshot.queryParamMap.get('interes') || '',
     presupuestoEstimado: this.parseNumberParam('precio') || this.parseNumberParam('presupuesto') || 0,
     fechaInteres: this.route.snapshot.queryParamMap.get('fechaInteres') || this.today,
-    tipoPersona: this.route.snapshot.queryParamMap.get('tipoPersona') || 'NATURAL',
-    tipoDocumento: this.route.snapshot.queryParamMap.get('tipoDocumento') || 'DNI',
+    tipoPersona: this.route.snapshot.queryParamMap.get('tipoPersona') || 'SIN_DEFINIR',
+    tipoDocumento: this.route.snapshot.queryParamMap.get('tipoDocumento') || '',
     numeroDocumento: this.route.snapshot.queryParamMap.get('numeroDocumento') || this.route.snapshot.queryParamMap.get('documento') || '',
     nombre: this.route.snapshot.queryParamMap.get('nombre') || '',
     empresa: this.route.snapshot.queryParamMap.get('empresa') || '',
@@ -55,6 +55,7 @@ export class CrmLeadPage implements OnInit {
   };
 
   protected readonly personTypeOptions = [
+    { label: 'Por definir', value: 'SIN_DEFINIR' },
     { label: 'Persona natural', value: 'NATURAL' },
     { label: 'Empresa', value: 'JURIDICA' },
   ];
@@ -185,6 +186,14 @@ export class CrmLeadPage implements OnInit {
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
+  }
+
+  protected onPersonTypeChange(value: string): void {
+    this.form.tipoPersona = value;
+    this.form.tipoDocumento = value === 'JURIDICA' ? 'RUC' : value === 'NATURAL' ? 'DNI' : '';
+    if (value === 'SIN_DEFINIR') {
+      this.form.numeroDocumento = '';
+    }
   }
 
   private resolveError(error: unknown): string {

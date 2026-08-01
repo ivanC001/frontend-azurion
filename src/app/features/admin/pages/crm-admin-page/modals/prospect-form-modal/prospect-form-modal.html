@@ -27,22 +27,50 @@
         <div class="section-title">
           <i class="pi pi-id-card"></i>
           <div>
-            <strong>Informacion general</strong>
-            <span>Datos de contacto, documento y origen.</span>
+          <strong>Información general</strong>
+          <span>Clasificación, identificación y datos de contacto.</span>
           </div>
         </div>
         <div class="prospect-input-grid">
-          <label>Tipo de persona <span class="required">*</span><p-select name="nuevoTipoPersona" [options]="host().tipoPersonaOptions" [(ngModel)]="host().prospectForm.tipoPersona" appendTo="body" /></label>
+          <label>Tipo de prospecto <span class="required">*</span><p-select name="nuevoTipoPersona" [options]="host().tipoPersonaOptions" [ngModel]="host().prospectForm.tipoPersona" (ngModelChange)="host().onProspectPersonTypeChange($event)" appendTo="body" /></label>
+          <label>País <span class="required">*</span><p-select name="nuevoPaisCodigo" [options]="host().prospectCountryOptions" [ngModel]="host().prospectForm.paisCodigo" (ngModelChange)="host().onProspectCountryChange($event)" [filter]="true" filterBy="label" appendTo="body" /></label>
           <label>Origen <span class="required">*</span><p-select name="nuevoOrigen" [options]="host().origenOptions" [(ngModel)]="host().prospectForm.origen" appendTo="body" /></label>
           <label>Fecha de registro<input pInputText type="date" name="nuevoFechaInteres" [(ngModel)]="host().prospectForm.fechaInteres" /></label>
-          <label>Tipo documento<p-select name="nuevoTipoDocumento" [options]="host().documentoOptions" [(ngModel)]="host().prospectForm.tipoDocumento" appendTo="body" /></label>
-          <label class="span-2">Numero documento<input pInputText name="nuevoNumeroDocumento" [(ngModel)]="host().prospectForm.numeroDocumento" placeholder="DNI o RUC" /></label>
-          <label>Nombre / Contacto <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Nombre del contacto" /></label>
-          <label>Razon social<input pInputText name="nuevoRazonSocial" [(ngModel)]="host().prospectForm.razonSocial" placeholder="Solo empresa" /></label>
-          <label>Nombre comercial<input pInputText name="nuevoNombreComercial" [(ngModel)]="host().prospectForm.nombreComercial" placeholder="Opcional" /></label>
-          <label>Telefono<input pInputText name="nuevoTelefono" [(ngModel)]="host().prospectForm.telefono" placeholder="999999999" /></label>
-          <label class="span-2">Correo electronico<input pInputText name="nuevoCorreo" [(ngModel)]="host().prospectForm.correo" placeholder="correo@empresa.com" /></label>
-          <label class="span-3">Direccion<input pInputText name="nuevoDireccion" [(ngModel)]="host().prospectForm.direccion" placeholder="Direccion referencial" /></label>
+
+          @if (host().isNaturalProspect()) {
+            <div class="prospect-identity-heading span-full">
+              <i class="pi pi-user"></i>
+              <div>
+                <strong>Datos de la persona</strong>
+                <span>Identificación personal correspondiente a {{ host().prospectCountryName() }}.</span>
+              </div>
+            </div>
+            <label>Tipo de identificación <span class="required">*</span><p-select name="nuevoTipoDocumento" [options]="host().prospectDocumentOptions()" [ngModel]="host().prospectForm.tipoDocumento" (ngModelChange)="host().onProspectDocumentTypeChange($event)" appendTo="body" /></label>
+            <label>Número de identificación <span class="required">*</span><input pInputText name="nuevoNumeroDocumento" [(ngModel)]="host().prospectForm.numeroDocumento" (blur)="host().normalizeProspectDocumentNumber()" [attr.inputmode]="host().prospectDocumentInputMode()" maxlength="30" [placeholder]="host().prospectDocumentPlaceholder()" /><small class="prospect-field-help">{{ host().prospectDocumentHelp() }}</small></label>
+            <label class="span-2">Nombre completo <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Nombres y apellidos" /></label>
+          } @else if (host().isCompanyProspect()) {
+            <div class="prospect-identity-heading prospect-identity-heading--company span-full">
+              <i class="pi pi-building"></i>
+              <div>
+                <strong>Datos de la empresa</strong>
+                <span>Identificación fiscal correspondiente a {{ host().prospectCountryName() }}.</span>
+              </div>
+            </div>
+            <label>Identificación fiscal <span class="required">*</span><p-select name="nuevoTipoDocumento" [options]="host().prospectDocumentOptions()" [ngModel]="host().prospectForm.tipoDocumento" (ngModelChange)="host().onProspectDocumentTypeChange($event)" appendTo="body" /></label>
+            <label>Número fiscal <span class="required">*</span><input pInputText name="nuevoNumeroDocumento" [(ngModel)]="host().prospectForm.numeroDocumento" (blur)="host().normalizeProspectDocumentNumber()" [attr.inputmode]="host().prospectDocumentInputMode()" maxlength="30" [placeholder]="host().prospectDocumentPlaceholder()" /><small class="prospect-field-help">{{ host().prospectDocumentHelp() }}</small></label>
+            <label class="span-2">Razón social <span class="required">*</span><input pInputText name="nuevoRazonSocial" [(ngModel)]="host().prospectForm.razonSocial" placeholder="Nombre legal de la empresa" /></label>
+            <label class="span-2">Nombre de contacto <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Persona responsable del contacto" /></label>
+            <label class="span-2">Nombre comercial<input pInputText name="nuevoNombreComercial" [(ngModel)]="host().prospectForm.nombreComercial" placeholder="Opcional" /></label>
+          } @else {
+            <div class="manual-origin-note span-full">
+              <i class="pi pi-info-circle"></i>
+              <span>Selecciona persona natural o empresa para solicitar los datos de identificación correspondientes al país. También puedes guardar el lead por clasificar.</span>
+            </div>
+            <label class="span-2">Nombre / Contacto <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Nombre del contacto" /></label>
+          }
+          <label>Teléfono<input pInputText type="tel" name="nuevoTelefono" [(ngModel)]="host().prospectForm.telefono" placeholder="Código de país y número" /></label>
+          <label class="span-2">Correo electrónico<input pInputText type="email" name="nuevoCorreo" [(ngModel)]="host().prospectForm.correo" placeholder="contacto@empresa.com" /></label>
+          <label class="span-full">Dirección<input pInputText name="nuevoDireccion" [(ngModel)]="host().prospectForm.direccion" placeholder="Dirección referencial" /></label>
         </div>
       </article>
     </section>

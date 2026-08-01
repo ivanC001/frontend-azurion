@@ -2,8 +2,8 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { firstValueFrom, forkJoin, Observable, throwError } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,12 +13,15 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
 import { ExcelReportService } from '../../data/excel-report.service';
 import {
   AdminSaasApiService,
   Almacen,
   Compra,
+  InventorySummary,
   KardexMovimiento,
+  PageResponse,
   Producto,
   StockItem,
   StockLoteItem,
@@ -28,15 +31,12 @@ interface MovimientoForm {
   productoId: number | null;
   almacenId: number | null;
   almacenDestinoId: number | null;
-  tipoMovimiento: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'TRASLADO';
+  loteId: number | null;
+  tipoMovimiento: 'SALIDA' | 'AJUSTE' | 'TRASLADO';
   motivo: string;
   cantidad: number;
-  precioCompra: number;
-  precioVenta: number;
-  codigoLote: string;
-  fechaFabricacion: string;
-  fechaVencimiento: string;
   referencia: string;
+  clientOperationId: string;
 }
 
 interface CompraDetalleForm {
@@ -56,7 +56,17 @@ interface CompraForm {
   proveedorDocumento: string;
   proveedorNombre: string;
   almacenId: number | null;
+  clientOperationId: string;
   detalles: CompraDetalleForm[];
+}
+
+interface StockSettingsForm {
+  stockId: number | null;
+  producto: string;
+  almacen: string;
+  stockMinimo: number;
+  stockMaximo: number | null;
+  ubicacionFisica: string;
 }
 
 @Component({
@@ -88,7 +98,13 @@ export class InventoryAdminPage {
   protected readonly stock = signal<StockItem[]>([]);
   protected readonly kardex = signal<KardexMovimiento[]>([]);
   protected readonly stockLotes = signal<StockLoteItem[]>([]);
+  protected readonly movementLotes = signal<StockLoteItem[]>([]);
   protected readonly compras = signal<Compra[]>([]);
+  protected readonly stockTotal = signal(0);
+  protected readonly lotesTotal = signal(0);
+  protected readonly kardexTotal = signal(0);
+  protected readonly comprasTotal = signal(0);
+  protected readonly pageSize = 20;
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -97,25 +113,22 @@ export class InventoryAdminPage {
   protected readonly stockProductoFilter = signal<number | null>(null);
   protected readonly movimientoDialogVisible = signal(false);
   protected readonly compraDialogVisible = signal(false);
+  protected readonly stockSettingsDialogVisible = signal(false);
   protected readonly activeStockLotes = computed(() =>
     this.stockLotes().filter((item) => Number(item.stockActual || 0) > 0),
   );
 
-  protected readonly inventoryMetrics = computed(() => ({
-    stockLines: this.stock().length,
-    lowStock: this.stock().filter((item) => item.stockBajo && !item.sinStock).length,
-    noStock: this.stock().filter((item) => item.sinStock).length,
-    expiring: this.activeStockLotes().filter((item) => this.expiryStatus(item) === 'POR_VENCER')
-      .length,
-    expired: this.activeStockLotes().filter((item) => this.expiryStatus(item) === 'VENCIDO').length,
-    recentMovements: this.kardex().length,
-    purchases: this.compras().length,
-    invested: this.compras().reduce((sum, item) => sum + Number(item.total || 0), 0),
-    projectedProfit: this.compras().reduce(
-      (sum, item) => sum + Number(item.gananciaProyectada || 0),
-      0,
-    ),
-  }));
+  protected readonly inventoryMetrics = signal({
+    stockLines: 0,
+    lowStock: 0,
+    noStock: 0,
+    expiring: 0,
+    expired: 0,
+    recentMovements: 0,
+    purchases: 0,
+    invested: 0,
+    projectedProfit: 0,
+  });
 
   protected compraForm: CompraForm = this.emptyCompraForm();
 
@@ -142,15 +155,20 @@ export class InventoryAdminPage {
     productoId: null,
     almacenId: null,
     almacenDestinoId: null,
+    loteId: null,
     tipoMovimiento: 'AJUSTE',
     motivo: 'AJUSTE_MANUAL',
     cantidad: 0,
-    precioCompra: 0,
-    precioVenta: 0,
-    codigoLote: '',
-    fechaFabricacion: '',
-    fechaVencimiento: '',
     referencia: '',
+    clientOperationId: '',
+  };
+  protected stockSettingsForm: StockSettingsForm = {
+    stockId: null,
+    producto: '',
+    almacen: '',
+    stockMinimo: 0,
+    stockMaximo: null,
+    ubicacionFisica: '',
   };
 
   protected readonly almacenOptions = computed(() =>
@@ -193,31 +211,42 @@ export class InventoryAdminPage {
     this.errorMessage.set(null);
     forkJoin({
       almacenes: this.api.listAlmacenes(),
-      productos: this.api.listAllProductos(),
-      stock: this.api.listStock(
+      productos: this.api.pageProductos('', undefined, 0, 50),
+      stock: this.api.pageStock(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
-      kardex: this.api.listKardex(
+      kardex: this.api.pageKardex(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
-      lotes: this.api.listStockLotes(
+      lotes: this.api.pageStockLotes(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
-      compras: this.api.listCompras(),
+      compras: this.api.pageCompras('', undefined, 0, this.pageSize),
+      summary: this.api.getInventorySummary(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ almacenes, productos, stock, kardex, lotes, compras }) => {
+        next: ({ almacenes, productos, stock, kardex, lotes, compras, summary }) => {
           this.almacenes.set(almacenes);
-          this.productos.set(productos);
-          this.stock.set(stock);
-          this.kardex.set(kardex);
-          this.stockLotes.set(lotes);
-          this.compras.set(compras);
-          this.syncLowStockAlerts(stock, lotes);
+          this.productos.set(productos.content);
+          this.applyStockPage(stock);
+          this.kardex.set(kardex.content);
+          this.kardexTotal.set(kardex.totalElements);
+          this.stockLotes.set(lotes.content);
+          this.lotesTotal.set(lotes.totalElements);
+          this.compras.set(compras.content);
+          this.comprasTotal.set(compras.totalElements);
+          this.applySummary(summary);
+          this.syncLowStockAlerts(stock.content, lotes.content);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -226,26 +255,34 @@ export class InventoryAdminPage {
   protected applyFilters(): void {
     this.loading.set(true);
     forkJoin({
-      stock: this.api.listStock(
+      stock: this.api.pageStock(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
-      kardex: this.api.listKardex(
+      kardex: this.api.pageKardex(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
-      lotes: this.api.listStockLotes(
+      lotes: this.api.pageStockLotes(
         this.stockProductoFilter() || undefined,
         this.stockAlmacenFilter() || undefined,
+        0,
+        this.pageSize,
       ),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: ({ stock, kardex, lotes }) => {
-          this.stock.set(stock);
-          this.kardex.set(kardex);
-          this.stockLotes.set(lotes);
-          this.syncLowStockAlerts(stock, lotes);
+          this.applyStockPage(stock);
+          this.kardex.set(kardex.content);
+          this.kardexTotal.set(kardex.totalElements);
+          this.stockLotes.set(lotes.content);
+          this.lotesTotal.set(lotes.totalElements);
+          this.syncLowStockAlerts(stock.content, lotes.content);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
@@ -257,41 +294,181 @@ export class InventoryAdminPage {
     this.applyFilters();
   }
 
-  protected async exportStockExcel(): Promise<void> {
-    if (!this.stock().length) {
-      this.errorMessage.set('No hay stock para exportar con los filtros actuales.');
-      return;
-    }
+  protected loadStockPage(event: { first?: number | null; rows?: number | null }): void {
+    const { page, size } = this.pageFromEvent(event);
+    this.loading.set(true);
+    this.api
+      .pageStock(
+        this.stockProductoFilter() || undefined,
+        this.stockAlmacenFilter() || undefined,
+        page,
+        size,
+      )
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => this.applyStockPage(response),
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
 
-    await this.excelReport.exportWorkbook(`azurion-inventario-stock-${this.today()}.xlsx`, [
-      this.buildStockSheet(),
-    ]);
-    this.successMessage.set(`Reporte de stock exportado: ${this.stock().length} fila(s).`);
+  protected loadLotesPage(event: { first?: number | null; rows?: number | null }): void {
+    const { page, size } = this.pageFromEvent(event);
+    this.loading.set(true);
+    this.api
+      .pageStockLotes(
+        this.stockProductoFilter() || undefined,
+        this.stockAlmacenFilter() || undefined,
+        page,
+        size,
+      )
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.stockLotes.set(response.content);
+          this.lotesTotal.set(response.totalElements);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected loadKardexPage(event: { first?: number | null; rows?: number | null }): void {
+    const { page, size } = this.pageFromEvent(event);
+    this.loading.set(true);
+    this.api
+      .pageKardex(
+        this.stockProductoFilter() || undefined,
+        this.stockAlmacenFilter() || undefined,
+        page,
+        size,
+      )
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.kardex.set(response.content);
+          this.kardexTotal.set(response.totalElements);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected loadComprasPage(event: { first?: number | null; rows?: number | null }): void {
+    const { page, size } = this.pageFromEvent(event);
+    this.loading.set(true);
+    this.api
+      .pageCompras('', undefined, page, size)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.compras.set(response.content);
+          this.comprasTotal.set(response.totalElements);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected filterProductOptions(event: { filter?: string | null }): void {
+    const selectedIds = new Set<number>(
+      [
+        this.stockProductoFilter(),
+        this.movimientoForm.productoId,
+        ...this.compraForm.detalles.map((item) => item.productoId),
+      ].filter((id): id is number => typeof id === 'number'),
+    );
+    const selected = this.productos().filter((item) => selectedIds.has(item.id));
+    this.api.pageProductos(event.filter || '', undefined, 0, 50).subscribe({
+      next: (response) => {
+        const merged = new Map<number, Producto>();
+        [...selected, ...response.content].forEach((item) => merged.set(item.id, item));
+        this.productos.set([...merged.values()]);
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
+  }
+
+  protected async exportStockExcel(): Promise<void> {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    try {
+      const rows = await this.loadAllPages((page, size) =>
+        this.api.pageStock(
+          this.stockProductoFilter() || undefined,
+          this.stockAlmacenFilter() || undefined,
+          page,
+          size,
+        ),
+      );
+      if (!rows.length) {
+        this.errorMessage.set('No hay stock para exportar con los filtros actuales.');
+        return;
+      }
+      await this.excelReport.exportWorkbook(`azurion-inventario-stock-${this.today()}.xlsx`, [
+        this.buildStockSheet(rows),
+      ]);
+      this.successMessage.set(`Reporte de stock exportado: ${rows.length} fila(s).`);
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveError(error));
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   protected async exportKardexExcel(): Promise<void> {
-    if (!this.kardex().length) {
-      this.errorMessage.set('No hay kardex para exportar con los filtros actuales.');
-      return;
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    try {
+      const rows = await this.loadAllPages((page, size) =>
+        this.api.pageKardex(
+          this.stockProductoFilter() || undefined,
+          this.stockAlmacenFilter() || undefined,
+          page,
+          size,
+        ),
+      );
+      if (!rows.length) {
+        this.errorMessage.set('No hay kardex para exportar con los filtros actuales.');
+        return;
+      }
+      await this.excelReport.exportWorkbook(`azurion-inventario-kardex-${this.today()}.xlsx`, [
+        this.buildKardexSheet(rows),
+      ]);
+      this.successMessage.set(`Reporte kardex exportado: ${rows.length} fila(s).`);
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveError(error));
+    } finally {
+      this.loading.set(false);
     }
-
-    await this.excelReport.exportWorkbook(`azurion-inventario-kardex-${this.today()}.xlsx`, [
-      this.buildKardexSheet(),
-    ]);
-    this.successMessage.set(`Reporte kardex exportado: ${this.kardex().length} fila(s).`);
   }
 
   protected async exportInventarioExcel(): Promise<void> {
-    if (!this.stock().length && !this.kardex().length) {
-      this.errorMessage.set('No hay informacion de inventario para exportar.');
-      return;
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    try {
+      const productoId = this.stockProductoFilter() || undefined;
+      const almacenId = this.stockAlmacenFilter() || undefined;
+      const [stock, kardex] = await Promise.all([
+        this.loadAllPages((page, size) =>
+          this.api.pageStock(productoId, almacenId, page, size),
+        ),
+        this.loadAllPages((page, size) =>
+          this.api.pageKardex(productoId, almacenId, page, size),
+        ),
+      ]);
+      if (!stock.length && !kardex.length) {
+        this.errorMessage.set('No hay informacion de inventario para exportar.');
+        return;
+      }
+      await this.excelReport.exportWorkbook(`azurion-inventario-completo-${this.today()}.xlsx`, [
+        this.buildStockSheet(stock),
+        this.buildKardexSheet(kardex),
+      ]);
+      this.successMessage.set(
+        `Reporte completo exportado: ${stock.length} stock y ${kardex.length} movimiento(s).`,
+      );
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveError(error));
+    } finally {
+      this.loading.set(false);
     }
-
-    await this.excelReport.exportWorkbook(`azurion-inventario-completo-${this.today()}.xlsx`, [
-      this.buildStockSheet(),
-      this.buildKardexSheet(),
-    ]);
-    this.successMessage.set('Reporte completo de inventario exportado.');
   }
 
   protected openCompraDialog(): void {
@@ -327,6 +504,16 @@ export class InventoryAdminPage {
     return Boolean(producto?.vencimiento ?? producto?.manejaVencimiento);
   }
 
+  protected compraDetalleControlsLot(detalle: CompraDetalleForm): boolean {
+    const producto = this.productos().find((item) => item.id === detalle.productoId);
+    return Boolean(
+      producto?.lotes ??
+        producto?.manejaLotes ??
+        producto?.vencimiento ??
+        producto?.manejaVencimiento,
+    );
+  }
+
   protected saveCompra(): void {
     if (this.saving()) {
       return;
@@ -335,6 +522,13 @@ export class InventoryAdminPage {
     const numero = this.compraForm.numeroComprobante.trim().toUpperCase();
     if (!numero || !this.compraForm.fechaEmision || !this.compraForm.almacenId) {
       this.errorMessage.set('Completa comprobante, fecha de emision y almacen destino.');
+      return;
+    }
+    if (
+      !this.compraForm.proveedorDocumento.trim() &&
+      !this.compraForm.proveedorNombre.trim()
+    ) {
+      this.errorMessage.set('Indica el documento o el nombre del proveedor.');
       return;
     }
     const invalid = this.compraForm.detalles.find(
@@ -350,6 +544,13 @@ export class InventoryAdminPage {
       );
       return;
     }
+    const missingLot = this.compraForm.detalles.find(
+      (item) => this.compraDetalleControlsLot(item) && !item.codigoLote.trim(),
+    );
+    if (missingLot) {
+      this.errorMessage.set('Completa el codigo de lote de los productos que controlan lotes.');
+      return;
+    }
     const missingExpiry = this.compraForm.detalles.find(
       (item) => this.compraDetalleControlsExpiry(item) && !item.fechaVencimiento,
     );
@@ -357,6 +558,16 @@ export class InventoryAdminPage {
       this.errorMessage.set(
         'Completa la fecha de vencimiento de los productos que controlan caducidad.',
       );
+      return;
+    }
+    const invalidDates = this.compraForm.detalles.find(
+      (item) =>
+        item.fechaFabricacion &&
+        item.fechaVencimiento &&
+        item.fechaFabricacion > item.fechaVencimiento,
+    );
+    if (invalidDates) {
+      this.errorMessage.set('La fecha de fabricacion no puede ser posterior al vencimiento.');
       return;
     }
 
@@ -369,6 +580,7 @@ export class InventoryAdminPage {
         proveedorDocumento: this.compraForm.proveedorDocumento.trim() || null,
         proveedorNombre: this.compraForm.proveedorNombre.trim() || null,
         almacenId: this.compraForm.almacenId,
+        clientOperationId: this.compraForm.clientOperationId,
         detalles: this.compraForm.detalles.map((item) => ({
           productoId: Number(item.productoId),
           cantidad: Number(item.cantidad),
@@ -399,17 +611,14 @@ export class InventoryAdminPage {
       productoId: productoId ?? this.stockProductoFilter() ?? null,
       almacenId: almacenId ?? this.stockAlmacenFilter() ?? this.almacenes()[0]?.id ?? null,
       almacenDestinoId: null,
+      loteId: null,
       tipoMovimiento: 'AJUSTE',
       motivo: 'AJUSTE_MANUAL',
       cantidad: 0,
-      precioCompra: 0,
-      precioVenta: 0,
-      codigoLote: '',
-      fechaFabricacion: '',
-      fechaVencimiento: '',
       referencia: '',
+      clientOperationId: createClientOperationId('inventory'),
     };
-    this.prefillPrecioVenta(productoId ?? null);
+    this.refreshMovementLotes();
     this.movimientoDialogVisible.set(true);
   }
 
@@ -421,6 +630,7 @@ export class InventoryAdminPage {
       proveedorDocumento: '',
       proveedorNombre: '',
       almacenId: this.almacenes()[0]?.id ?? null,
+      clientOperationId: createClientOperationId('purchase'),
       detalles: [this.emptyCompraDetalle()],
     };
   }
@@ -439,12 +649,41 @@ export class InventoryAdminPage {
 
   protected onProductoChange(productoId: number | null): void {
     this.movimientoForm.productoId = productoId;
-    this.prefillPrecioVenta(productoId);
+    this.movimientoForm.loteId = null;
+    this.refreshMovementLotes();
   }
 
-  protected selectedProductControlsExpiry(): boolean {
+  protected selectedProductControlsLots(): boolean {
     const producto = this.productos().find((item) => item.id === this.movimientoForm.productoId);
-    return Boolean(producto?.vencimiento ?? producto?.manejaVencimiento);
+    return Boolean(producto?.lotes ?? producto?.manejaLotes);
+  }
+
+  protected movementLotOptions(): Array<{ label: string; value: number }> {
+    return this.movementLotes()
+      .filter(
+        (item) =>
+          item.productoId === this.movimientoForm.productoId &&
+          item.almacenId === this.movimientoForm.almacenId &&
+          Number(item.stockActual || 0) >= 0 &&
+          item.estado === 'ACTIVO',
+      )
+      .map((item) => ({
+        label: `${item.codigoLote} - saldo ${Number(item.stockActual || 0)}`,
+        value: item.loteId,
+      }));
+  }
+
+  private refreshMovementLotes(): void {
+    const productoId = this.movimientoForm.productoId;
+    const almacenId = this.movimientoForm.almacenId;
+    if (!productoId || !almacenId) {
+      this.movementLotes.set([]);
+      return;
+    }
+    this.api.listStockLotes(productoId, almacenId).subscribe({
+      next: (items) => this.movementLotes.set(items),
+      error: () => this.movementLotes.set([]),
+    });
   }
 
   protected onTipoMovimientoChange(tipo: MovimientoForm['tipoMovimiento']): void {
@@ -452,13 +691,7 @@ export class InventoryAdminPage {
     if (tipo !== 'TRASLADO') {
       this.movimientoForm.almacenDestinoId = null;
     }
-    if (tipo !== 'ENTRADA') {
-      this.movimientoForm.precioCompra = 0;
-      this.movimientoForm.precioVenta = 0;
-      this.movimientoForm.codigoLote = '';
-      this.movimientoForm.fechaFabricacion = '';
-      this.movimientoForm.fechaVencimiento = '';
-    }
+    this.movimientoForm.loteId = null;
     this.movimientoForm.motivo = this.defaultReasonByType(tipo);
   }
 
@@ -476,8 +709,12 @@ export class InventoryAdminPage {
     const tipoMovimiento = this.movimientoForm.tipoMovimiento;
     const motivo = this.movimientoForm.motivo.trim();
 
-    if (!productoId || !almacenId || !motivo || Number.isNaN(cantidad) || cantidad <= 0) {
-      this.errorMessage.set('Completa producto, almacen, motivo y cantidad valida.');
+    const invalidQuantity =
+      Number.isNaN(cantidad) ||
+      cantidad < 0 ||
+      (tipoMovimiento !== 'AJUSTE' && cantidad <= 0);
+    if (!productoId || !almacenId || !motivo || invalidQuantity) {
+      this.errorMessage.set('Completa producto, almacen, motivo y una cantidad valida.');
       return;
     }
 
@@ -492,12 +729,12 @@ export class InventoryAdminPage {
       }
     }
     if (
-      tipoMovimiento === 'ENTRADA' &&
-      this.selectedProductControlsExpiry() &&
-      !this.movimientoForm.fechaVencimiento
+      tipoMovimiento === 'AJUSTE' &&
+      this.selectedProductControlsLots() &&
+      !this.movimientoForm.loteId
     ) {
       this.errorMessage.set(
-        'Este producto controla caducidad. Indica la fecha de vencimiento del lote.',
+        'Selecciona el lote cuyo saldo deseas ajustar.',
       );
       return;
     }
@@ -509,26 +746,21 @@ export class InventoryAdminPage {
         almacenId,
         almacenDestinoId:
           tipoMovimiento === 'TRASLADO' ? this.movimientoForm.almacenDestinoId : null,
+        loteId: this.movimientoForm.loteId,
         tipoMovimiento,
         motivo,
         cantidad,
-        precioCompra:
-          tipoMovimiento === 'ENTRADA'
-            ? this.normalizeOptionalNumber(this.movimientoForm.precioCompra)
-            : null,
-        precioVenta:
-          tipoMovimiento === 'ENTRADA'
-            ? this.normalizeOptionalNumber(this.movimientoForm.precioVenta)
-            : null,
-        codigoLote:
-          tipoMovimiento === 'ENTRADA' ? this.movimientoForm.codigoLote.trim() || null : null,
-        fechaFabricacion:
-          tipoMovimiento === 'ENTRADA' ? this.movimientoForm.fechaFabricacion || null : null,
-        fechaVencimiento:
-          tipoMovimiento === 'ENTRADA' ? this.movimientoForm.fechaVencimiento || null : null,
         referencia: this.movimientoForm.referencia.trim() || null,
+        clientOperationId: this.movimientoForm.clientOperationId,
       })
-      .pipe(finalize(() => this.saving.set(false)))
+      .pipe(
+        catchError((originalError: unknown) =>
+          this.api
+            .getMovimientoStockByOperation(this.movimientoForm.clientOperationId)
+            .pipe(catchError(() => throwError(() => originalError))),
+        ),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: () => {
           this.movimientoDialogVisible.set(false);
@@ -549,25 +781,7 @@ export class InventoryAdminPage {
     if (tipo === 'TRASLADO') {
       return 'TRASLADO_INTERNO';
     }
-    return 'COMPRA';
-  }
-
-  private normalizeOptionalNumber(value: number): number | null {
-    const parsed = Number(value || 0);
-    return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
-  }
-
-  private prefillPrecioVenta(productoId: number | null): void {
-    if (
-      !productoId ||
-      this.movimientoForm.tipoMovimiento !== 'ENTRADA' ||
-      Number(this.movimientoForm.precioVenta || 0) > 0
-    ) {
-      return;
-    }
-
-    const producto = this.productos().find((item) => item.id === productoId);
-    this.movimientoForm.precioVenta = Number(producto?.precioVentaBase ?? producto?.precio ?? 0);
+    return 'AJUSTE_MANUAL';
   }
 
   protected movementDialogTitle(): string {
@@ -580,7 +794,67 @@ export class InventoryAdminPage {
     if (this.movimientoForm.tipoMovimiento === 'TRASLADO') {
       return 'Registrar traslado';
     }
-    return 'Registrar entrada';
+    return 'Registrar ajuste';
+  }
+
+  protected movementQuantityLabel(): string {
+    if (this.movimientoForm.tipoMovimiento !== 'AJUSTE') {
+      return 'Cantidad';
+    }
+    return this.selectedProductControlsLots()
+      ? 'Nuevo saldo del lote'
+      : 'Nuevo saldo del almacen';
+  }
+
+  protected onMovementWarehouseChange(almacenId: number | null): void {
+    this.movimientoForm.almacenId = almacenId;
+    this.movimientoForm.loteId = null;
+    this.refreshMovementLotes();
+  }
+
+  protected openStockSettings(item: StockItem): void {
+    this.errorMessage.set(null);
+    this.stockSettingsForm = {
+      stockId: item.id,
+      producto: `${item.productoSku} - ${item.productoNombre}`,
+      almacen: `${item.almacenCodigo} - ${item.almacenNombre}`,
+      stockMinimo: Number(item.stockMinimo || 0),
+      stockMaximo: item.stockMaximo == null ? null : Number(item.stockMaximo),
+      ubicacionFisica: item.ubicacionFisica || '',
+    };
+    this.stockSettingsDialogVisible.set(true);
+  }
+
+  protected saveStockSettings(): void {
+    if (this.saving() || !this.stockSettingsForm.stockId) {
+      return;
+    }
+    const minimo = Number(this.stockSettingsForm.stockMinimo);
+    const maximo =
+      this.stockSettingsForm.stockMaximo == null ||
+      String(this.stockSettingsForm.stockMaximo).trim() === ''
+        ? null
+        : Number(this.stockSettingsForm.stockMaximo);
+    if (minimo < 0 || (maximo != null && (maximo < 0 || maximo < minimo))) {
+      this.errorMessage.set('El stock maximo debe ser igual o mayor al stock minimo.');
+      return;
+    }
+    this.saving.set(true);
+    this.api
+      .updateStockSettings(this.stockSettingsForm.stockId, {
+        stockMinimo: minimo,
+        stockMaximo: maximo,
+        ubicacionFisica: this.stockSettingsForm.ubicacionFisica.trim() || null,
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.stockSettingsDialogVisible.set(false);
+          this.successMessage.set('Configuracion de stock actualizada.');
+          this.applyFilters();
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
   }
 
   protected movementSummary(): string {
@@ -606,7 +880,7 @@ export class InventoryAdminPage {
     return 'success';
   }
 
-  private buildStockSheet() {
+  private buildStockSheet(items: StockItem[] = this.stock()) {
     return {
       name: 'Stock',
       title: 'Reporte de stock por almacen',
@@ -619,7 +893,7 @@ export class InventoryAdminPage {
         { key: 'minimo', label: 'Stock minimo', width: 14, format: 'number' as const },
         { key: 'estado', label: 'Estado', width: 14 },
       ],
-      rows: this.stock().map((item) => ({
+      rows: items.map((item) => ({
         producto: item.productoNombre,
         sku: item.productoSku,
         almacen: `${item.almacenCodigo} - ${item.almacenNombre}`,
@@ -631,7 +905,7 @@ export class InventoryAdminPage {
     };
   }
 
-  private buildKardexSheet() {
+  private buildKardexSheet(items: KardexMovimiento[] = this.kardex()) {
     return {
       name: 'Kardex',
       title: 'Reporte kardex de inventario',
@@ -647,7 +921,7 @@ export class InventoryAdminPage {
         { key: 'saldo', label: 'Saldo', width: 14, format: 'number' as const },
         { key: 'referencia', label: 'Referencia', width: 24 },
       ],
-      rows: this.kardex().map((item) => ({
+      rows: items.map((item) => ({
         fecha: item.fechaMovimiento,
         producto: item.productoNombre,
         sku: item.productoSku,
@@ -766,6 +1040,50 @@ export class InventoryAdminPage {
       return;
     }
     this.lowStockAlerts.register(stock, true, lotes);
+  }
+
+  private async loadAllPages<T>(
+    loader: (page: number, size: number) => Observable<PageResponse<T>>,
+  ): Promise<T[]> {
+    const size = 200;
+    const rows: T[] = [];
+    let page = 0;
+    while (true) {
+      const response = await firstValueFrom(loader(page, size));
+      rows.push(...response.content);
+      if (response.last || response.content.length === 0 || page + 1 >= response.totalPages) {
+        return rows;
+      }
+      page += 1;
+    }
+  }
+
+  private applyStockPage(response: PageResponse<StockItem>): void {
+    this.stock.set(response.content);
+    this.stockTotal.set(response.totalElements);
+  }
+
+  private applySummary(summary: InventorySummary): void {
+    this.inventoryMetrics.set({
+      stockLines: summary.stockLines,
+      lowStock: summary.lowStock,
+      noStock: summary.noStock,
+      expiring: summary.expiring,
+      expired: summary.expired,
+      recentMovements: summary.movements,
+      purchases: summary.purchases,
+      invested: Number(summary.invested || 0),
+      projectedProfit: Number(summary.projectedProfit || 0),
+    });
+  }
+
+  private pageFromEvent(event: {
+    first?: number | null;
+    rows?: number | null;
+  }): { page: number; size: number } {
+    const size = event.rows && event.rows > 0 ? event.rows : this.pageSize;
+    const first = event.first && event.first > 0 ? event.first : 0;
+    return { page: Math.floor(first / size), size };
   }
 
   private daysUntil(date?: string | null): number {

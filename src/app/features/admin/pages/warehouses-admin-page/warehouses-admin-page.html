@@ -65,7 +65,10 @@
             <th>Nombre</th>
             <th>Sucursal</th>
             <th>Direccion</th>
+            <th>Tipo</th>
+            <th>Venta</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-item>
@@ -76,17 +79,33 @@
             <td>{{ item.nombre }}</td>
             <td>{{ item.sucursalCodigo }} - {{ item.sucursalNombre }}</td>
             <td>{{ item.direccion || 'Sin direccion' }}</td>
+            <td>{{ item.tipoAlmacen }}</td>
+            <td>
+              <p-tag
+                [value]="item.permiteVenta ? 'Permitida' : 'Bloqueada'"
+                [severity]="item.permiteVenta ? 'success' : 'warn'"
+              />
+            </td>
             <td>
               <p-tag
                 [value]="item.activo ? 'Activo' : 'Inactivo'"
                 [severity]="statusSeverity(item.activo)"
               />
             </td>
+            <td>
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Editar almacen"
+                (onClick)="openEdit(item)"
+              />
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="5">
+            <td colspan="8">
               <div class="empty-state">
                 <strong>Todavia no hay almacenes registrados.</strong>
                 <span>Crea el primer almacen para comenzar a controlar stock por sucursal.</span>
@@ -100,7 +119,7 @@
 </section>
 
 <p-dialog
-  header="Registrar almacen"
+  [header]="dialogTitle()"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
@@ -109,39 +128,122 @@
   styleClass="warehouse-dialog"
 >
   <form class="dialog-form">
-    <p class="dialog-copy">
-      Completa los datos base del almacen y asignalo a la sucursal donde controlara stock.
-    </p>
-    <div class="dialog-grid">
-      <label>
-        Codigo <span class="required">*</span>
-        <input pInputText name="codigo" [(ngModel)]="form.codigo" placeholder="ALM-01" />
+    <div class="smart-form-intro">
+      <span class="smart-form-intro__icon"><i class="pi pi-sparkles"></i></span>
+      <div>
+        <strong>Registro asistido</strong>
+        <p>Elige primero la sucursal y completaremos codigo, nombre y direccion por ti.</p>
+      </div>
+      <span class="auto-pill"><i class="pi pi-bolt"></i> Automatico</span>
+    </div>
+
+    <section class="form-section">
+      <header class="form-section__head">
+        <span><i class="pi pi-map-marker"></i></span>
+        <div><strong>Ubicacion operativa</strong><small>Define donde se controlara el stock.</small></div>
+      </header>
+      <div class="dialog-grid">
+        <label class="wide-field field-control">
+          <span class="field-label"><i class="pi pi-building"></i> Sucursal <b>*</b></span>
+          <p-select
+            name="sucursalId"
+            [options]="sucursalOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="form.sucursalId"
+            (ngModelChange)="onSucursalChange()"
+            placeholder="Selecciona la sucursal"
+            appendTo="body"
+          />
+        </label>
+        @if (selectedSucursal(); as sucursal) {
+          <div class="branch-summary wide-field">
+            <span><i class="pi pi-building"></i></span>
+            <div>
+              <strong>{{ sucursal.nombre }}</strong>
+              <small>{{ sucursal.direccion || 'Sucursal sin direccion registrada' }}</small>
+            </div>
+            <b>{{ sucursal.codigo }}</b>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="form-section">
+      <header class="form-section__head">
+        <span><i class="pi pi-box"></i></span>
+        <div><strong>Identidad del almacen</strong><small>Puedes ajustar el nombre y la direccion sugeridos.</small></div>
+      </header>
+      <div class="dialog-grid">
+        <label class="field-control">
+          <span class="field-label"><i class="pi pi-hashtag"></i> Codigo</span>
+          <span class="auto-input">
+            <input pInputText name="codigo" [(ngModel)]="form.codigo" readonly placeholder="Automatico" />
+            <small><i class="pi pi-lock"></i> Generado</small>
+          </span>
+        </label>
+        <label class="field-control">
+          <span class="field-label"><i class="pi pi-tag"></i> Tipo de almacen <b>*</b></span>
+          <p-select
+            name="tipoAlmacen"
+            [options]="warehouseTypeOptions"
+            [(ngModel)]="form.tipoAlmacen"
+            (ngModelChange)="onWarehouseTypeChange()"
+            appendTo="body"
+          />
+        </label>
+        @if (principalUnavailable()) {
+          <div class="rule-warning wide-field">
+            <i class="pi pi-info-circle"></i>
+            Esta sucursal ya tiene un almacen principal activo. Selecciona otro tipo.
+          </div>
+        }
+        <label class="wide-field field-control">
+          <span class="field-label"><i class="pi pi-pencil"></i> Nombre <b>*</b></span>
+          <input
+            pInputText
+            name="nombre"
+            [(ngModel)]="form.nombre"
+            (ngModelChange)="markNameManual()"
+            placeholder="Nombre del almacen"
+          />
+        </label>
+        <label class="wide-field field-control">
+          <span class="field-label"><i class="pi pi-map"></i> Direccion</span>
+          <input
+            pInputText
+            name="direccion"
+            [(ngModel)]="form.direccion"
+            (ngModelChange)="markAddressManual()"
+            placeholder="Se copiara desde la sucursal"
+          />
+        </label>
+      </div>
+    </section>
+
+    <div class="warehouse-options">
+      <label class="option-card">
+        <input type="checkbox" name="permiteVenta" [(ngModel)]="form.permiteVenta" />
+        <span><i class="pi pi-shopping-cart"></i></span>
+        <div><strong>Habilitar ventas</strong><small>Permite despachar ventas desde este almacen.</small></div>
       </label>
-      <label>
-        Nombre <span class="required">*</span>
-        <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Almacen principal" />
-      </label>
-      <label class="wide-field">
-        Direccion
-        <input
-          pInputText
-          name="direccion"
-          [(ngModel)]="form.direccion"
-          placeholder="Direccion referencial"
-        />
-      </label>
-      <label class="wide-field">
-        Sucursal <span class="required">*</span>
-        <p-select
-          name="sucursalId"
-          [options]="sucursalOptions()"
-          optionLabel="label"
-          optionValue="value"
-          [(ngModel)]="form.sucursalId"
-          placeholder="Selecciona la sucursal"
-          appendTo="body"
-        />
-      </label>
+      @if (form.id) {
+        <label class="option-card">
+          <input type="checkbox" name="activo" [(ngModel)]="form.activo" />
+          <span><i class="pi pi-power-off"></i></span>
+          <div><strong>Almacen activo</strong><small>Disponible para operaciones de inventario.</small></div>
+        </label>
+      }
+    </div>
+
+    <div class="warehouse-preview">
+      <span class="warehouse-preview__icon"><i class="pi pi-box"></i></span>
+      <div>
+        <small>Vista previa</small>
+        <strong>{{ form.nombre || 'Nuevo almacen' }}</strong>
+        <p>{{ form.codigo || 'Codigo automatico' }} · {{ selectedSucursal()?.nombre || 'Sin sucursal' }}</p>
+      </div>
+      <span class="type-pill">{{ warehouseTypeLabel() }}</span>
     </div>
     <div class="dialog-actions">
       <p-button
@@ -150,7 +252,13 @@
         [outlined]="true"
         (onClick)="dialogVisible.set(false)"
       />
-      <p-button label="Guardar almacen" icon="pi pi-save" [loading]="saving()" (onClick)="save()" />
+      <p-button
+        [label]="form.id ? 'Guardar cambios' : 'Guardar almacen'"
+        icon="pi pi-save"
+        [loading]="saving()"
+        [disabled]="principalUnavailable()"
+        (onClick)="save()"
+      />
     </div>
   </form>
 </p-dialog>

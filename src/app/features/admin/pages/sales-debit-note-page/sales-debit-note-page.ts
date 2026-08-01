@@ -10,6 +10,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
 import {
   AdminSaasApiService,
   NotaFiscalRecord,
@@ -37,6 +38,7 @@ type DebitoMotivoCodigo = '01' | '02' | '03' | '11' | '12';
 export class SalesDebitNotePage {
   private readonly api = inject(AdminSaasApiService);
   private readonly session = inject(AuthSessionService);
+  private pendingOperationId: string | null = null;
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -115,8 +117,12 @@ export class SalesDebitNotePage {
     }
 
     this.saving.set(true);
+    const clientOperationId =
+      this.pendingOperationId ?? createClientOperationId('debit-note');
+    this.pendingOperationId = clientOperationId;
     this.api
       .registrarNotaDebito({
+        clientOperationId,
         ventaId: this.selectedVentaId() as number,
         motivoCodigo: this.motivoCodigo(),
         motivoDescripcion: this.motivoDescripcion().trim(),
@@ -127,6 +133,9 @@ export class SalesDebitNotePage {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (response) => {
+          if (response.facturacion?.success) {
+            this.pendingOperationId = null;
+          }
           if (response.nota) {
             this.upsertNota(response.nota);
           }

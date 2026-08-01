@@ -72,7 +72,7 @@ export class ContactComponent {
         landingKey: this.form.landingKey.trim() || null,
         catalogoItemId: this.form.catalogoItemId || null,
         catalogoToken: this.form.catalogoToken.trim() || null,
-        tipoPersona: this.form.company.trim() ? 'JURIDICA' : 'NATURAL',
+        tipoPersona: 'SIN_DEFINIR',
         nombre: this.form.name.trim(),
         empresa: this.form.company.trim() || null,
         correo: this.form.email.trim() || null,

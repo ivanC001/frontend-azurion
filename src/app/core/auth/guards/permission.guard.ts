@@ -15,12 +15,19 @@ export const permissionGuard: CanActivateFn = (route) => {
 
   const permission = String(route.data?.['permission'] ?? '');
   const moduleCode = route.data?.['module'] as string | readonly string[] | undefined;
+  const workspace = String(route.data?.['workspace'] ?? '').trim().toUpperCase();
   const anyModules = (route.data?.['anyModules'] ?? []) as readonly string[];
   const anyPermissions = (route.data?.['anyPermission'] ??
     route.data?.['anyPermissions'] ?? []) as readonly string[];
   const allPermissions = (route.data?.['allPermissions'] ?? []) as readonly string[];
   const fallback = resolveFallbackRoute(sessionService);
 
+  if (
+    (workspace === 'ERP' || workspace === 'CRM') &&
+    !sessionService.hasWorkspaceAccess(workspace)
+  ) {
+    return router.createUrlTree([fallback]);
+  }
   if (moduleCode && !sessionService.hasModule(moduleCode)) {
     return router.createUrlTree([fallback]);
   }
@@ -40,9 +47,6 @@ export const permissionGuard: CanActivateFn = (route) => {
 };
 
 function resolveFallbackRoute(session: AuthSessionService): string {
-  if (session.hasModule('ERP')) {
-    return '/admin/dashboard';
-  }
   if (session.hasPermission('CRM_REPORTS_READ') || session.hasPermission('CRM_REPORTS_TEAM')) {
     return '/admin/crm';
   }
@@ -58,6 +62,9 @@ function resolveFallbackRoute(session: AuthSessionService): string {
     session.hasPermission('CRM_OPPORTUNITIES_READ')
   ) {
     return '/admin/crm/pipeline';
+  }
+  if (session.hasWorkspaceAccess('ERP')) {
+    return '/admin/dashboard';
   }
   if (session.hasPermission('CONFIGURACION_WRITE')) {
     return '/admin/configuracion-empresa';

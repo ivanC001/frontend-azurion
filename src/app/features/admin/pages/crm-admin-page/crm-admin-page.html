@@ -1,4 +1,9 @@
-<section class="admin-page crm-page" [class.crm-page--executive]="activeTab() === 'dashboard'">
+<section
+  class="admin-page crm-page"
+  [class.crm-page--executive]="activeTab() === 'dashboard'"
+  [class.crm-page--expanded]="activeTab() === 'seguimiento' || activeTab() === 'oportunidades' || activeTab() === 'clientes'"
+  [class.crm-page--top-tight]="activeTab() === 'oportunidades' || activeTab() === 'clientes'"
+>
   @if (activeTab() !== 'embudo' && activeTab() !== 'seguimientoPagos') {
     <header class="page-header crm-header" [class.crm-header--followup]="activeTab() === 'seguimiento'" [class.crm-header--capture]="isCommercialStageTab()">
       <div>
@@ -17,26 +22,22 @@
           <div class="followup-header-actions">
             <button type="button" class="az-light-action" [class.active]="showFollowUpFilters()" (click)="showFollowUpFilters.set(!showFollowUpFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showFollowUpFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
             <button type="button" class="az-light-action" (click)="exportFollowUpCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
-            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
             <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateActivity()"><i class="pi pi-plus"></i><span>Nueva actividad</span></button>
           </div>
         } @else if (activeTab() === 'oportunidades') {
           <div class="followup-header-actions">
             <button type="button" class="az-light-action" [class.active]="showOpportunityFilters()" (click)="showOpportunityFilters.set(!showOpportunityFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showOpportunityFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
             <button type="button" class="az-light-action" (click)="exportOpportunitiesCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
-            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
             <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateOpportunity()"><i class="pi pi-plus"></i><span>Nueva oportunidad</span></button>
           </div>
         } @else if (activeTab() === 'clientes') {
           <div class="followup-header-actions">
             <button type="button" class="az-light-action" [class.active]="showClientFilters()" (click)="showClientFilters.set(!showClientFilters())"><i class="pi pi-filter"></i><span>Filtros</span><i [class]="showClientFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i></button>
             <button type="button" class="az-light-action" (click)="exportClientsCsv()"><i class="pi pi-download"></i><span>Exportar</span></button>
-            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
           </div>
         } @else if (activeTab() === 'seguimientoPagos') {
           <div class="followup-header-actions">
             <button type="button" class="az-light-action" (click)="exportClientsCsv()"><i class="pi pi-download"></i><span>Exportar clientes</span></button>
-            <button type="button" class="az-icon-action" title="Mas opciones" aria-label="Mas opciones"><i class="pi pi-ellipsis-h"></i></button>
           </div>
         } @else if (activeTab() !== 'dashboard' && !isCrmConfigTab()) {
           @if (activeTab() === 'captacion') {
@@ -56,7 +57,10 @@
           }
         }
         @if (activeTab() === 'captacion') {
-          <p-button label="Crear prospecto" icon="pi pi-user-plus" styleClass="az-secondary" (onClick)="openCreateProspect()" />
+          <button type="button" class="az-primary-action followup-new-activity-action" (click)="openCreateProspect()">
+            <i class="pi pi-plus"></i>
+            <span>Nuevo prospecto</span>
+          </button>
         } @else if (activeTab() !== 'seguimiento' && activeTab() !== 'oportunidades' && activeTab() !== 'clientes') {
           <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
         }
@@ -70,7 +74,12 @@
   @if (successMessage()) {
     <div class="alert alert--success">{{ successMessage() }}</div>
   }
-  <section class="crm-shell" [class.crm-shell--followup]="isCommercialStageTab()">
+  <section
+    class="crm-shell"
+    [class.crm-shell--followup]="isCommercialStageTab()"
+    [class.crm-shell--pipeline]="activeTab() === 'embudo'"
+    [class.crm-shell--tight]="activeTab() === 'captacion' || activeTab() === 'seguimiento' || activeTab() === 'oportunidades' || activeTab() === 'clientes'"
+  >
     @if (isCommercialStageTab() && activeTab() !== 'seguimientoPagos') {
       <section class="followup-stage-strip crm-stage-strip" aria-label="Proceso comercial">
         @for (stage of followUpStageCards(); track stage.tab) {
@@ -412,9 +421,6 @@
           <div class="crm-admin-hero__actions">
             @if ((activeTab() === 'administracion' || activeTab() === 'administracionGeneral') && canManageCrmCatalog()) {
               <p-button label="Nuevo producto CRM" icon="pi pi-plus" (onClick)="openCreateCatalogo()" />
-            }
-            @if ((activeTab() === 'administracion' || activeTab() === 'administracionGeneral') && canManageCrmConfig()) {
-              <p-button label="Nueva etapa" icon="pi pi-sitemap" severity="secondary" (onClick)="openCreateStage()" />
             }
           </div>
         </article>
@@ -1187,6 +1193,7 @@
         (quickActivityRequested)="openQuickActivity($event, 'LLAMADA', 'Llamar a ' + $event.nombre)"
         (completeActivityRequested)="openCompleteActivity($event.activity, $event.prospect)"
         (whatsappRequested)="sendProspectWhatsapp($event)"
+        (emailRequested)="sendProspectByEmail($event)"
         (opportunityRequested)="openFollowUpOpportunity($event)"
         (detailRequested)="selectFollowUpProspect($event)"
       />
@@ -1196,12 +1203,10 @@
     @if (activeTab() === 'embudo') {
       <app-pipeline-page
         [query]="query()"
-        [canManageConfig]="canManageCrmConfig()"
         [summaryCards]="pipelineSummaryCards()"
         [columns]="pipelinePageColumns()"
         (queryChange)="updateCrmQuery($event)"
         (clearStageFilterRequested)="setOpportunityStageFilter(null)"
-        (configureStagesRequested)="openCreateStage()"
         (createOpportunityRequested)="openCreateOpportunity()"
         (opportunitySelected)="openPipelineOpportunityDetail($event.opportunity, $event.stage)"
         (editOpportunityRequested)="openEditOpportunity($event)"
@@ -1262,8 +1267,6 @@
 
 
 <app-create-opportunity-modal [host]="modalContext" />
-
-<app-pipeline-stage-modal [host]="modalContext" />
 
 <app-activity-form-modal [host]="modalContext" />
 

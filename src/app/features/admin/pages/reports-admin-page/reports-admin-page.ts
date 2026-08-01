@@ -114,7 +114,7 @@ export class ReportsAdminPage {
 
   protected readonly cajaOptions = computed(() =>
     this.cajas().map((caja) => ({
-      label: `${caja.codigo} - ${caja.nombre}`,
+      label: `${caja.numero} - ${caja.cajaNombre}`,
       value: caja.id,
     })),
   );
@@ -375,7 +375,7 @@ export class ReportsAdminPage {
             safeList(
               this.api.listCajaMovimientos(caja.id),
               [] as CajaMovimiento[],
-              `movimientos caja ${caja.codigo || caja.id}`,
+              `movimientos turno ${caja.numero || caja.id}`,
             ),
           );
           const movimientos$ = movimientosRequests.length
@@ -591,10 +591,12 @@ export class ReportsAdminPage {
         }));
       case 'caja':
         return this.movimientosCaja().map((item) => {
-          const caja = this.cajas().find((candidate) => candidate.id === item.cajaId);
+          const caja = this.cajas().find((candidate) => candidate.id === item.turnoId);
           return {
             fecha: this.formatDateTime(item.fechaMovimiento),
-            caja: caja ? `${caja.codigo} - ${caja.nombre}` : `Caja ${item.cajaId}`,
+            caja: caja
+              ? `${caja.numero} - ${caja.cajaNombre}`
+              : `Turno ${item.turnoId}`,
             tipo: item.tipoMovimiento,
             descripcion: item.descripcion,
             referencia: item.referencia || '',
@@ -602,7 +604,7 @@ export class ReportsAdminPage {
             monto: Number(item.monto || 0),
             saldo: Number(item.saldoResultante || 0),
             __date: this.dateOnly(item.fechaMovimiento),
-            __cajaId: item.cajaId,
+            __cajaId: item.turnoId,
             __amount: Number(item.monto || 0),
           };
         });

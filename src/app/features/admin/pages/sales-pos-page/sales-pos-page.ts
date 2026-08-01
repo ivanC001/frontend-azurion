@@ -11,6 +11,8 @@ import { SelectModule } from 'primeng/select';
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
 import { UiToastService } from '@core/services/ui-toast.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
+import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
 import {
   AdminSaasApiService,
   Caja,
@@ -78,6 +80,7 @@ export class SalesPosPage {
   private readonly session = inject(AuthSessionService);
   private readonly toast = inject(UiToastService);
   private readonly lowStockAlerts = inject(LowStockAlertService);
+  private pendingSaleOperationId: string | null = null;
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -100,11 +103,21 @@ export class SalesPosPage {
   protected metodoPago: MetodoPago = 'EFECTIVO';
   protected montoRecibido = 0;
 
-  protected readonly documentOptions = [
-    { label: 'Ticket', value: 'TICKET_VENTA', icon: 'pi-receipt' },
-    { label: 'Boleta', value: 'BOLETA', icon: 'pi-file' },
-    { label: 'Factura', value: 'FACTURA', icon: 'pi-building' },
-  ] as const;
+  protected readonly documentOptions = computed(() => {
+    const options: Array<{
+      label: string;
+      value: TipoComprobanteVenta;
+      icon: string;
+    }> = [{ label: 'Ticket', value: 'TICKET_VENTA', icon: 'pi-receipt' }];
+
+    if (canIssueElectronicDocuments(this.session.currentSession()?.empresa)) {
+      options.push(
+        { label: 'Boleta', value: 'BOLETA', icon: 'pi-file' },
+        { label: 'Factura', value: 'FACTURA', icon: 'pi-building' },
+      );
+    }
+    return options;
+  });
 
   protected readonly methodOptions = [
     { label: 'Efectivo', value: 'EFECTIVO' },
@@ -116,7 +129,7 @@ export class SalesPosPage {
 
   protected readonly cajaOptions = computed(() =>
     this.cajas().map((caja) => ({
-      label: `${caja.codigo} - ${caja.nombre}`,
+      label: `${caja.cajaCodigo} - ${caja.cajaNombre}`,
       value: caja.id,
     })),
   );
@@ -340,6 +353,17 @@ export class SalesPosPage {
   }
 
   protected selectDocument(type: TipoComprobanteVenta): void {
+    if (
+      type !== 'TICKET_VENTA' &&
+      !canIssueElectronicDocuments(this.session.currentSession()?.empresa)
+    ) {
+      this.tipoComprobante = 'TICKET_VENTA';
+      this.toast.info(
+        'Completa la configuracion fiscal de una empresa peruana para emitir boletas o facturas.',
+        'Solo ticket disponible',
+      );
+      return;
+    }
     this.tipoComprobante = type;
     if (type === 'TICKET_VENTA') {
       this.selectedClienteId.set(null);
@@ -422,6 +446,9 @@ export class SalesPosPage {
   }
 
   protected submitSale(): void {
+    if (this.saving()) {
+      return;
+    }
     const error = this.validateSale();
     if (error) {
       this.toast.warn(error);
@@ -431,14 +458,15 @@ export class SalesPosPage {
     const cajaId = this.selectedCajaId() as number;
     const cliente = this.selectedCliente();
     const ticketDraft = this.buildTicketDraft();
+    const clientOperationId =
+      this.pendingSaleOperationId ?? createClientOperationId('sale-pos');
+    this.pendingSaleOperationId = clientOperationId;
     this.saving.set(true);
 
     this.api
       .registrarVentaCaja(cajaId, {
         tipoComprobante: this.tipoComprobante,
         total: Number(this.total().toFixed(2)),
-        responsableId: this.actorId(),
-        responsableNombre: this.actorName(),
         clienteId: cliente?.id || null,
         clienteTipoDocumento: cliente?.tipoDocumento || null,
         clienteNumeroDocumento: cliente?.numeroDocumento || null,
@@ -446,12 +474,15 @@ export class SalesPosPage {
         moneda: 'PEN',
         tipoCambio: 1,
         formaPago: this.formaPago,
+        metodoPago: this.formaPago === 'CREDITO' ? 'CREDITO' : this.metodoPago,
         descripcion: `Venta POS - ${this.metodoPago}`,
+        clientOperationId,
         items: this.cart().flatMap((item) => this.buildSaleRequestItems(item)),
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (response) => {
+          this.pendingSaleOperationId = null;
           this.lastSale.set(response);
           this.ticketPreview.set({
             ...ticketDraft,
@@ -644,7 +675,7 @@ export class SalesPosPage {
       empresaRuc: current?.empresa?.ruc || '',
       logoUrl: current?.empresa?.logoPanelUrl || null,
       sucursalNombre: caja?.sucursalNombre || 'Sucursal',
-      cajaNombre: caja ? `${caja.codigo} - ${caja.nombre}` : 'Caja',
+      cajaNombre: caja ? `${caja.cajaCodigo} - ${caja.cajaNombre}` : 'Caja',
       vendedor: this.actorName(),
       clienteNombre: cliente?.nombre || 'Cliente general',
       clienteDocumento: cliente?.numeroDocumento || '-',

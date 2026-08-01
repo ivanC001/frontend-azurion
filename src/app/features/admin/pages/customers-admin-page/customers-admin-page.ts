@@ -11,6 +11,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
 import {
   AdminSaasApiService,
   Cliente,
@@ -70,7 +71,11 @@ export class CustomersAdminPage {
   protected readonly selectedDeudor = signal<Cliente | null>(null);
   protected readonly abonos = signal<ClienteAbono[]>([]);
   protected readonly loadingAbonos = signal(false);
-  protected abonoForm = { monto: 0, observacion: '' };
+  protected abonoForm = {
+    monto: 0,
+    observacion: '',
+    clientOperationId: createClientOperationId('customer-payment'),
+  };
 
   protected form: ClienteForm = {
     id: null,
@@ -360,7 +365,11 @@ export class CustomersAdminPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.selectedDeudor.set(cliente);
-    this.abonoForm = { monto: Number(cliente.saldoDeuda || 0), observacion: '' };
+    this.abonoForm = {
+      monto: Number(cliente.saldoDeuda || 0),
+      observacion: '',
+      clientOperationId: createClientOperationId('customer-payment'),
+    };
     this.abonoDialogVisible.set(true);
     this.loadAbonos(cliente);
   }
@@ -389,6 +398,7 @@ export class CustomersAdminPage {
         {
           monto,
           observacion: this.abonoForm.observacion.trim() || null,
+          clientOperationId: this.abonoForm.clientOperationId,
         },
         { tenantId },
       )

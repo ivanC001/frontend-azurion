@@ -39,6 +39,10 @@ export interface LoginResponse {
     readonly formatoHora?: string | null;
     readonly monedaCodigo?: string | null;
     readonly monedaSimbolo?: string | null;
+    readonly facturadorStatus?: string | null;
+    readonly facturadorDocumentMode?: string | null;
+    readonly facturadorFiscalStatus?: string | null;
+    readonly facturadorSunatMode?: string | null;
     readonly tenantId: string;
     readonly schemaName: string;
     readonly logoPanelUrl?: string | null;
@@ -49,6 +53,37 @@ export interface LoginResponse {
 const SESSION_KEY = 'azurios.session';
 const SESSION_NOTICE_KEY = 'azurios.session-notice';
 const SESSION_CHANNEL = 'azurios.auth-session';
+const ERP_ROLE_CODES = new Set([
+  'ERP_ADMIN',
+  'ERP_VENDEDOR',
+  'ERP_CAJERO',
+  'ERP_ALMACENERO',
+  'ERP_CONTADOR',
+]);
+const CRM_ROLE_CODES = new Set([
+  'CRM_ADMIN',
+  'CRM_GERENTE',
+  'CRM_SUPERVISOR',
+  'CRM_VENDEDOR',
+  'CRM_MARKETING',
+  'CRM_CALLCENTER',
+]);
+const ERP_PERMISSION_PREFIXES = [
+  'VENTAS_',
+  'CAJA_',
+  'INVENTORY_',
+  'PRODUCTOS_',
+  'COMPRAS_',
+  'PROVEEDORES_',
+  'FACTURACION_',
+  'TRIBUTACION_',
+  'NOTA_CREDITO_',
+  'NOTA_DEBITO_',
+  'GUIA_REMISION_',
+] as const;
+const ERP_EXACT_PERMISSIONS = new Set(['REPORTES_READ']);
+
+export type WorkspaceCode = 'ERP' | 'CRM';
 
 type SessionChannelMessage =
   | { type: 'SESSION_UPDATED'; session: LoginResponse; persist: boolean }
@@ -176,6 +211,46 @@ export class AuthSessionService {
     return requiredModules.every((value) => activeModules.has(value.trim().toUpperCase()));
   }
 
+  hasWorkspaceAccess(workspace: WorkspaceCode): boolean {
+    const session = this.session();
+    if (!session) {
+      return false;
+    }
+    if (session.adminGeneral) {
+      return true;
+    }
+
+    const normalizedWorkspace = workspace.trim().toUpperCase() as WorkspaceCode;
+    if (!this.hasModule(normalizedWorkspace)) {
+      return false;
+    }
+
+    const roles = new Set(
+      (session.roles ?? [])
+        .map((role) => this.normalizeRoleCode(role))
+        .filter((role) => role.length > 0),
+    );
+    const permissions = (session.permissions ?? []).map((permission) =>
+      permission.trim().toUpperCase(),
+    );
+
+    if (normalizedWorkspace === 'CRM') {
+      return (
+        [...roles].some((role) => CRM_ROLE_CODES.has(role)) ||
+        permissions.some((permission) => permission.startsWith('CRM_'))
+      );
+    }
+
+    return (
+      [...roles].some((role) => ERP_ROLE_CODES.has(role)) ||
+      permissions.some(
+        (permission) =>
+          ERP_EXACT_PERMISSIONS.has(permission) ||
+          ERP_PERMISSION_PREFIXES.some((prefix) => permission.startsWith(prefix)),
+      )
+    );
+  }
+
   updateEmpresaData(patch: Partial<NonNullable<NonNullable<LoginResponse['empresa']>>>): void {
     const current = this.session();
     if (!current?.empresa) {
@@ -287,6 +362,10 @@ export class AuthSessionService {
         .map((value) => value.trim().toUpperCase())
         .filter((value) => value.length > 0),
     };
+  }
+
+  private normalizeRoleCode(role: string): string {
+    return role.trim().toUpperCase().replace(/^ROLE_/, '');
   }
 
   private initializeChannel(): void {

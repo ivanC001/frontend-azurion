@@ -495,50 +495,32 @@
 
     <div class="modules-field">
       <div class="modules-field__header">
-        <strong>Modulos iniciales del tenant</strong>
-        <small>AZURION ejecutara solo las migraciones necesarias para estos modulos al crear la empresa.</small>
+        <strong>Modulos incluidos en el plan</strong>
+        <small>Se asignan desde el plan seleccionado y no pueden modificarse durante el registro.</small>
       </div>
 
       <div class="modules-grid">
         @for (modulo of assignableModules(); track modulo.id) {
-          <label class="module-option" [class.module-option--active]="isModuleSelected(modulo.codigo)">
-            <input
-              type="checkbox"
-              [checked]="isModuleSelected(modulo.codigo)"
-              (change)="toggleModule(modulo.codigo, $any($event.target).checked)"
-            />
-            <span class="module-option__copy">
-              <strong>{{ modulo.nombre }}</strong>
-              <small>{{ modulo.codigo }}</small>
-            </span>
-          </label>
+          @if (isModuleSelected(modulo.codigo)) {
+            <label class="module-option module-option--active">
+              <input type="checkbox" checked disabled />
+              <span class="module-option__copy">
+                <strong>{{ modulo.nombre }}</strong>
+                <small>{{ modulo.codigo }}</small>
+              </span>
+            </label>
+          }
         }
       </div>
     </div>
 
-    <label>
-      Logo empresa
-      <input
-        type="file"
-        name="logoFile"
-        accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
-        (change)="onLogoFileSelected($event)"
-      />
-      <small>Formatos permitidos: PNG, JPG, JPEG, WEBP o SVG. Maximo 2 MB.</small>
-      @if (form.logoFile) {
-        <small>Archivo: {{ form.logoFile.name }}</small>
-      }
-    </label>
-
-    <label class="check-field">
-      <input
-        type="checkbox"
-        name="syncFacturador"
-        [(ngModel)]="form.syncFacturador"
-        [disabled]="!isModuleSelected('FACTURACION') || form.paisCodigo !== 'PE'"
-      />
-      <span>Registrar tambien en facturador SUNAT (solo Peru con modulo FACTURACION)</span>
-    </label>
+    <div class="dialog-info">
+      <i class="pi pi-info-circle"></i>
+      <span>
+        Si activas ERP, AZURION aprovisionara automaticamente el facturador en modo ticket.
+        Para empresas de Peru, SUNAT se configura despues desde el panel del tenant.
+      </span>
+    </div>
   </form>
 
   <ng-template pTemplate="footer">

@@ -109,7 +109,7 @@ export class WhatsappInboxPage implements OnInit {
 
   ngOnInit(): void {
     this.loadSupportData();
-    timer(0, 5000)
+    timer(0, 15_000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         if (typeof document !== 'undefined' && document.hidden) {
@@ -288,7 +288,25 @@ export class WhatsappInboxPage implements OnInit {
   protected useNoteAsReply(note: CrmWhatsappInternalNote): void {
     this.draft.set(note.contenido);
     this.mobilePanel.set('CHAT');
+    this.focusReplyComposer();
     this.successMessage.set(`Nota ${note.slot} cargada como respuesta. Revísala antes de enviar.`);
+  }
+
+  protected focusReplyComposer(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    document.getElementById('whatsapp-reply-composer')?.focus();
+  }
+
+  protected openSavedNotes(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    document.getElementById('whatsapp-saved-notes')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
   }
 
   protected deleteInternalNote(note: CrmWhatsappInternalNote, event: Event): void {
@@ -321,6 +339,9 @@ export class WhatsappInboxPage implements OnInit {
   }
 
   protected toggleQuote(quoteId: number): void {
+    if (this.isQuoteWhatsappLocked(this.quotes().find((quote) => quote.id === quoteId))) {
+      return;
+    }
     this.selectedQuoteIds.update((current) => {
       const updated = new Set(current);
       if (updated.has(quoteId)) {
@@ -334,8 +355,16 @@ export class WhatsappInboxPage implements OnInit {
 
   protected sendSelectedQuotes(): void {
     const prospectId = this.selectedProspectId();
-    const quoteIds = [...this.selectedQuoteIds()];
+    const alreadySent = new Set(
+      this.quotes()
+        .filter((quote) => this.isQuoteWhatsappLocked(quote))
+        .map((quote) => quote.id),
+    );
+    const quoteIds = [...this.selectedQuoteIds()].filter((quoteId) => !alreadySent.has(quoteId));
     if (!prospectId || quoteIds.length === 0 || this.sendingQuotes()) {
+      if (prospectId && quoteIds.length === 0 && this.selectedQuoteIds().size > 0) {
+        this.errorMessage.set('Las cotizaciones seleccionadas ya fueron enviadas por WhatsApp.');
+      }
       return;
     }
     const caption = this.draft().trim();
@@ -389,6 +418,23 @@ export class WhatsappInboxPage implements OnInit {
       });
   }
 
+  protected isQuoteWhatsappLocked(quote: Cotizacion | undefined): boolean {
+    return ['SENT', 'SENDING', 'UNKNOWN'].includes(quote?.whatsappSendStatus || '');
+  }
+
+  protected quoteWhatsappStatusLabel(quote: Cotizacion): string {
+    switch (quote.whatsappSendStatus) {
+      case 'SENT':
+        return 'Enviada por WhatsApp';
+      case 'SENDING':
+        return 'Envio en proceso';
+      case 'UNKNOWN':
+        return 'Envio por verificar';
+      default:
+        return quote.estado;
+    }
+  }
+
   protected createQuote(): void {
     const prospectId = this.selectedProspectId();
     void this.router.navigate(['/admin/crm/cotizaciones'], {
@@ -406,6 +452,13 @@ export class WhatsappInboxPage implements OnInit {
   protected openProspect(): void {
     const prospectId = this.selectedProspectId();
     void this.router.navigate(['/admin/crm/prospectos'], {
+      queryParams: prospectId ? { prospectoId: prospectId } : undefined,
+    });
+  }
+
+  protected openFollowUp(): void {
+    const prospectId = this.selectedProspectId();
+    void this.router.navigate(['/admin/crm/seguimiento'], {
       queryParams: prospectId ? { prospectoId: prospectId } : undefined,
     });
   }
@@ -540,10 +593,13 @@ export class WhatsappInboxPage implements OnInit {
   }
 
   private loadSupportData(): void {
-    forkJoin({ users: this.api.listUsuarios(), activities: this.api.listCrmActividades() }).subscribe({
+    forkJoin({
+      users: this.api.listUsuarios(),
+      activities: this.api.listCrmActividadesPage({ page: 0, size: 100 }),
+    }).subscribe({
       next: ({ users, activities }) => {
         this.users.set(users.filter((item) => item.activo));
-        this.activities.set(activities);
+        this.activities.set(activities.content ?? []);
       },
       error: () => undefined,
     });

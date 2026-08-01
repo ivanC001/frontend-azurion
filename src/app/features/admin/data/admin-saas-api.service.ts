@@ -36,6 +36,12 @@ export interface Empresa {
   readonly formatoHora?: string | null;
   readonly monedaCodigo?: string | null;
   readonly monedaSimbolo?: string | null;
+  readonly facturadorStatus?: string | null;
+  readonly facturadorDocumentMode?: string | null;
+  readonly facturadorFiscalStatus?: string | null;
+  readonly facturadorSunatMode?: string | null;
+  readonly facturadorLastError?: string | null;
+  readonly facturadorProvisionedAt?: string | null;
   readonly tenantId: string;
   readonly schemaName: string;
   readonly logoPanelUrl?: string | null;
@@ -56,6 +62,13 @@ export interface CreateEmpresaRequest {
   readonly tenantId: string;
   readonly schemaName: string;
   readonly moduloCodigos?: readonly string[] | null;
+}
+
+export interface CreateEmpresaRegistrationRequest
+  extends Omit<CreateEmpresaRequest, 'moduloCodigos'> {
+  readonly planId: number;
+  readonly fechaInicio?: string | null;
+  readonly limiteUsuarios?: number | null;
 }
 
 export interface UpdateCurrentEmpresaBrandingRequest {
@@ -163,6 +176,11 @@ export interface Suscripcion {
   readonly fechaFin: string | null;
 }
 
+export interface EmpresaRegistration {
+  readonly empresa: Empresa;
+  readonly suscripcion: Suscripcion;
+}
+
 export interface EmpresaOperationalSummary {
   readonly empresa: Empresa;
   readonly suscripcion: Suscripcion | null;
@@ -180,13 +198,6 @@ export interface EmpresaOperationalSummary {
   readonly actualizadaEn: string | null;
 }
 
-export interface CreateSuscripcionRequest {
-  readonly empresaId: number;
-  readonly planId: number;
-  readonly fechaInicio?: string | null;
-  readonly limiteUsuarios?: number | null;
-}
-
 export interface UpdateSuscripcionEstadoRequest {
   readonly estado: string;
   readonly fechaFin?: string | null;
@@ -201,15 +212,27 @@ export interface Almacen {
   readonly sucursalCodigo: string;
   readonly sucursalNombre: string;
   readonly tipoAlmacen: string;
+  readonly permiteVenta: boolean;
   readonly estado: string;
   readonly activo: boolean;
 }
 
 export interface CreateAlmacenRequest {
-  readonly codigo: string;
+  readonly codigo?: string | null;
   readonly nombre: string;
   readonly direccion?: string | null;
   readonly sucursalId: number;
+  readonly tipoAlmacen?: string | null;
+  readonly permiteVenta?: boolean | null;
+}
+
+export interface UpdateAlmacenRequest {
+  readonly nombre: string;
+  readonly direccion?: string | null;
+  readonly sucursalId: number;
+  readonly tipoAlmacen?: string | null;
+  readonly permiteVenta?: boolean | null;
+  readonly activo?: boolean | null;
 }
 
 export interface Sucursal {
@@ -230,14 +253,17 @@ export interface Sucursal {
 }
 
 export interface CreateSucursalRequest {
-  readonly codigo: string;
+  readonly codigo?: string | null;
   readonly nombre: string;
   readonly direccion?: string | null;
   readonly ubigeoCodigo: string;
   readonly igvPorcentaje: number;
+  readonly crearAlmacenPrincipal?: boolean;
 }
 
-export type UpdateSucursalRequest = CreateSucursalRequest;
+export type UpdateSucursalRequest = Omit<CreateSucursalRequest, 'crearAlmacenPrincipal'> & {
+  readonly codigo: string;
+};
 
 export interface Ubigeo {
   readonly codigo: string;
@@ -302,23 +328,48 @@ export interface ClienteAbono {
 export interface RegistrarClienteAbonoRequest {
   readonly monto: number;
   readonly observacion?: string | null;
+  readonly clientOperationId: string;
 }
 
-export interface Caja {
+export interface CajaFisica {
   readonly id: number;
   readonly sucursalId: number;
   readonly sucursalCodigo: string;
   readonly sucursalNombre: string;
   readonly codigo: string;
   readonly nombre: string;
-  readonly estado: string;
-  readonly saldoCapital: number;
-  readonly saldoActual: number;
-  readonly saldoSalida: number | null;
-  readonly totalEntradas: number;
-  readonly totalSalidas: number;
-  readonly totalDepositos: number;
+  readonly moneda: string;
+  readonly estado: 'ACTIVA' | 'INACTIVA';
+  readonly usuarioIds: number[];
+}
+
+export interface CajaTurno {
+  readonly id: number;
+  readonly numero: string;
+  readonly cajaId: number;
+  readonly sucursalId: number;
+  readonly sucursalCodigo: string;
+  readonly sucursalNombre: string;
+  readonly cajaCodigo: string;
+  readonly cajaNombre: string;
+  readonly moneda: string;
+  readonly estado: 'ABIERTO' | 'CERRADO';
+  readonly usuarioId: number | null;
+  readonly saldoApertura: number;
+  readonly saldoEsperado: number;
+  readonly conteoFisico: number | null;
   readonly diferenciaCierre: number | null;
+  readonly numeroVentas: number;
+  readonly totalVentas: number;
+  readonly totalEfectivo: number;
+  readonly totalTarjeta: number;
+  readonly totalBilleteraDigital: number;
+  readonly totalTransferencia: number;
+  readonly totalCredito: number;
+  readonly totalIngresosManuales: number;
+  readonly totalRetiros: number;
+  readonly totalDepositos: number;
+  readonly totalReembolsos: number;
   readonly responsableAperturaId: string;
   readonly responsableAperturaNombre: string;
   readonly responsableCierreId: string | null;
@@ -329,10 +380,17 @@ export interface Caja {
   readonly observacionCierre: string | null;
 }
 
+export type Caja = CajaTurno;
+
 export interface CajaMovimiento {
   readonly id: number;
+  readonly turnoId: number;
   readonly cajaId: number;
   readonly tipoMovimiento: string;
+  readonly origen: string;
+  readonly medioPago: string;
+  readonly afectaEfectivo: boolean;
+  readonly ventaId: number | null;
   readonly monto: number;
   readonly saldoAnterior: number;
   readonly saldoResultante: number;
@@ -342,6 +400,8 @@ export interface CajaMovimiento {
   readonly responsableId: string;
   readonly responsableNombre: string;
   readonly fechaMovimiento: string;
+  readonly anulado: boolean;
+  readonly motivoAnulacion: string | null;
 }
 
 export type TipoComprobanteVenta = 'FACTURA' | 'BOLETA' | 'BOLETA_SIN_NOMBRE' | 'TICKET_VENTA';
@@ -403,20 +463,23 @@ export interface VentaLeyendaRequest {
   readonly valor: string;
 }
 
-export interface AbrirCajaRequest {
+export interface GuardarCajaFisicaRequest {
   readonly sucursalId: number;
   readonly codigo: string;
   readonly nombre: string;
-  readonly saldoCapital: number;
-  readonly responsableId: string;
-  readonly responsableNombre: string;
+  readonly moneda: string;
+  readonly estado: 'ACTIVA' | 'INACTIVA';
+  readonly usuarioIds: number[];
+}
+
+export interface AbrirCajaTurnoRequest {
+  readonly cajaId: number;
+  readonly saldoApertura: number;
   readonly observacion?: string | null;
 }
 
-export interface CerrarCajaRequest {
-  readonly saldoSalida: number;
-  readonly responsableId: string;
-  readonly responsableNombre: string;
+export interface CerrarCajaTurnoRequest {
+  readonly conteoFisico: number;
   readonly observacion?: string | null;
 }
 
@@ -425,24 +488,20 @@ export interface RegistrarMovimientoCajaRequest {
   readonly monto: number;
   readonly descripcion: string;
   readonly referencia?: string | null;
-  readonly responsableId: string;
-  readonly responsableNombre: string;
+  readonly clientOperationId: string;
 }
 
 export interface DepositoCuentaEmpresarialRequest {
   readonly monto: number;
   readonly cuentaEmpresarial: string;
   readonly numeroOperacion?: string | null;
-  readonly responsableId: string;
-  readonly responsableNombre: string;
   readonly observacion?: string | null;
+  readonly clientOperationId: string;
 }
 
 export interface RegistrarVentaCajaRequest {
   readonly tipoComprobante: TipoComprobanteVenta;
   readonly total: number;
-  readonly responsableId: string;
-  readonly responsableNombre: string;
   readonly clienteId?: number | null;
   readonly clienteTipoDocumento?: string | null;
   readonly clienteNumeroDocumento?: string | null;
@@ -451,6 +510,7 @@ export interface RegistrarVentaCajaRequest {
   readonly moneda?: string | null;
   readonly tipoCambio?: number | null;
   readonly formaPago?: string | null;
+  readonly metodoPago?: string | null;
   readonly contingencia?: boolean | null;
   readonly tipoOperacionSunat?: string | null;
   readonly percepcion?: VentaPercepcionRequest | null;
@@ -460,6 +520,7 @@ export interface RegistrarVentaCajaRequest {
   readonly leyendas?: VentaLeyendaRequest[] | null;
   readonly descripcion?: string | null;
   readonly items: VentaProductoRequest[];
+  readonly clientOperationId: string;
 }
 
 export interface FacturadorVentaResponse {
@@ -478,6 +539,9 @@ export interface VentaRecord {
   readonly clienteNombre: string;
   readonly moneda: string;
   readonly total: number;
+  readonly cajaTurnoId?: number | null;
+  readonly formaPago?: string | null;
+  readonly metodoPago?: string | null;
   readonly fechaVenta: string;
   readonly facturacionEstado?: string | null;
   readonly facturacionIntentos?: number | null;
@@ -523,6 +587,9 @@ export interface RegistrarVentaCajaResponse {
     readonly clienteNombre: string;
     readonly moneda: string;
     readonly total: number;
+    readonly cajaTurnoId?: number | null;
+    readonly formaPago?: string | null;
+    readonly metodoPago?: string | null;
     readonly fechaVenta: string;
     readonly facturacionEstado?: string | null;
     readonly facturacionIntentos?: number | null;
@@ -544,6 +611,7 @@ export interface RegistrarVentaCajaResponse {
 }
 
 export interface RegistrarGuiaRemisionRequest {
+  readonly clientOperationId: string;
   readonly sucursalOrigenId: number;
   readonly sucursalDestinoId: number;
   readonly fechaTraslado: string;
@@ -597,6 +665,7 @@ export interface GuiaRemisionRecord {
 }
 
 export interface RegistrarNotaFiscalRequest {
+  readonly clientOperationId: string;
   readonly ventaId: number;
   readonly motivoCodigo: string;
   readonly motivoDescripcion: string;
@@ -676,9 +745,9 @@ export interface Producto {
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
   readonly precio: number;
-  readonly almacenId: number;
-  readonly almacenCodigo: string;
-  readonly almacenNombre: string;
+  readonly almacenId: number | null;
+  readonly almacenCodigo: string | null;
+  readonly almacenNombre: string | null;
   readonly stockCantidad: number;
   readonly activo: boolean;
   readonly imagenUrl?: string | null;
@@ -702,7 +771,7 @@ export interface CreateProductoRequest {
   readonly sku: string;
   readonly nombre: string;
   readonly precio: number;
-  readonly almacenId: number;
+  readonly almacenId?: number | null;
   readonly codigo?: string | null;
   readonly codigoBarras?: string | null;
   readonly descripcion?: string | null;
@@ -725,6 +794,15 @@ export interface CreateProductoRequest {
   readonly precioVentaBase?: number | null;
 }
 
+export interface VentaSummary {
+  readonly totalVentas: number;
+  readonly totalMonto: number;
+  readonly ventasHoy: number;
+  readonly aceptadasSunat: number;
+  readonly pendientesSunat: number;
+  readonly ticketsInternos: number;
+}
+
 export interface CreateProductoRapidoRequest {
   readonly codigoBarras?: string | null;
   readonly sku?: string | null;
@@ -736,7 +814,7 @@ export interface CreateProductoRapidoRequest {
   readonly precioVenta: number;
   readonly costoInicial: number;
   readonly cantidadInicial: number;
-  readonly almacenId: number;
+  readonly almacenId?: number | null;
   readonly manejaVencimiento: boolean;
   readonly stockMinimo: number;
   readonly codigoLote?: string | null;
@@ -749,6 +827,7 @@ export interface UpdateProductoRequest {
   readonly nombre: string;
   readonly precio: number;
   readonly activo: boolean;
+  readonly almacenId?: number | null;
   readonly codigo?: string | null;
   readonly codigoBarras?: string | null;
   readonly descripcion?: string | null;
@@ -822,6 +901,7 @@ export interface StockMovimientoRequest {
   readonly precioVenta?: number | null;
   readonly usuarioId?: string | null;
   readonly referencia?: string | null;
+  readonly clientOperationId: string;
 }
 
 export interface KardexMovimiento {
@@ -849,6 +929,8 @@ export interface StockItem {
   readonly almacenNombre: string;
   readonly cantidad: number;
   readonly stockMinimo: number;
+  readonly stockMaximo?: number | null;
+  readonly ubicacionFisica?: string | null;
   readonly stockBajo: boolean;
   readonly sinStock: boolean;
 }
@@ -867,6 +949,26 @@ export interface StockLoteItem {
   readonly fechaIngreso: string;
   readonly fechaVencimiento?: string | null;
   readonly estado: string;
+}
+
+export interface InventorySummary {
+  readonly stockLines: number;
+  readonly lowStock: number;
+  readonly noStock: number;
+  readonly expiring: number;
+  readonly expired: number;
+  readonly movements: number;
+  readonly purchases: number;
+  readonly invested: number;
+  readonly projectedProfit: number;
+}
+
+export interface ProductSummary {
+  readonly total: number;
+  readonly active: number;
+  readonly products: number;
+  readonly services: number;
+  readonly lowStock: number;
 }
 
 export interface CompraDetalle {
@@ -917,6 +1019,7 @@ export interface CreateCompraRequest {
   readonly numeroComprobante: string;
   readonly fechaEmision: string;
   readonly almacenId: number;
+  readonly clientOperationId: string;
   readonly detalles: Array<{
     readonly productoId: number;
     readonly cantidad: number;
@@ -969,6 +1072,8 @@ export interface Cotizacion {
   readonly motivoRechazo?: string | null;
   readonly decisionSiguiente?: string | null;
   readonly convertidaEn?: string | null;
+  readonly whatsappSendStatus?: 'SENDING' | 'SENT' | 'ERROR' | 'UNKNOWN' | null;
+  readonly whatsappMessageId?: string | null;
   readonly detalles: CotizacionDetalle[];
 }
 
@@ -1094,7 +1199,8 @@ export interface CrmActividadPageRequest extends CrmPageRequest {
 
 export interface CrmProspecto {
   readonly id: number;
-  readonly tipoPersona: 'NATURAL' | 'JURIDICA' | string;
+  readonly tipoPersona: 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA' | string;
+  readonly paisCodigo?: string | null;
   readonly tipoDocumento?: string | null;
   readonly numeroDocumento?: string | null;
   readonly nombre: string;
@@ -1140,7 +1246,8 @@ export interface CrmProspecto {
 }
 
 export interface CreateCrmProspectoRequest {
-  readonly tipoPersona: 'NATURAL' | 'JURIDICA' | string;
+  readonly tipoPersona: 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA' | string;
+  readonly paisCodigo?: string | null;
   readonly tipoDocumento?: string | null;
   readonly numeroDocumento?: string | null;
   readonly nombre: string;
@@ -1291,14 +1398,16 @@ export interface CreateCrmOportunidadRequest {
   readonly prospectoId?: number | null;
   readonly clienteId?: number | null;
   readonly tipoOportunidad?: string | null;
-  readonly catalogoItemId?: number | null;
+  readonly catalogoItemId: number;
   readonly titulo: string;
   readonly descripcion?: string | null;
-  readonly montoEstimado?: number | null;
-  readonly probabilidad?: number | null;
+  readonly montoEstimado: number;
+  readonly probabilidad: number;
   readonly etapa?: string | null;
-  readonly fechaCierreEstimada?: string | null;
-  readonly responsableId?: string | null;
+  readonly fechaCierreEstimada: string;
+  readonly responsableId: string;
+  readonly proximaAccion: string;
+  readonly fechaProximaAccion: string;
 }
 
 export interface UpdateCrmOportunidadRequest extends Partial<CreateCrmOportunidadRequest> {
@@ -1484,6 +1593,12 @@ export interface CrmCanalTokenConfig {
   readonly metaTokenExpiresAt?: string | null;
   readonly activo: boolean;
   readonly metadataJson?: string | null;
+}
+
+export interface SendCrmOpportunityEmailResponse {
+  readonly destinatario: string;
+  readonly asunto: string;
+  readonly enviadoEn: string;
 }
 
 export interface UpdateEmpresaSubscriptionPlanRequest {
@@ -1834,17 +1949,6 @@ export class AdminSaasApiService {
     );
   }
 
-  createEmpresa(request: CreateEmpresaRequest) {
-    return this.http
-      .post<ApiResponse<Empresa>>(this.apiUrl.url('saasCore', '/v1/saas/empresas'), request, {
-        headers: this.session.apiHeaders(),
-      })
-      .pipe(
-        map((response) => response.data),
-        tap(() => this.invalidateCache('empresas')),
-      );
-  }
-
   getCurrentEmpresa() {
     return this.http
       .get<ApiResponse<Empresa>>(this.apiUrl.url('saasCore', '/v1/saas/empresas/current'), {
@@ -1984,18 +2088,6 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
-  createSuscripcion(request: CreateSuscripcionRequest) {
-    return this.http
-      .post<ApiResponse<Suscripcion>>(
-        this.apiUrl.url('saasCore', '/v1/saas/suscripciones'),
-        request,
-        {
-          headers: this.session.apiHeaders(),
-        },
-      )
-      .pipe(map((response) => response.data));
-  }
-
   updateSuscripcionEstado(id: number, request: UpdateSuscripcionEstadoRequest) {
     return this.http
       .put<ApiResponse<Suscripcion>>(
@@ -2018,11 +2110,50 @@ export class AdminSaasApiService {
     );
   }
 
+  pageAlmacenes(page = 0, size = 20) {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http
+      .get<ApiResponse<PageResponse<Almacen>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/almacenes/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   createAlmacen(request: CreateAlmacenRequest) {
     return this.http
       .post<ApiResponse<Almacen>>(this.apiUrl.url('saasCore', '/v1/saas/almacenes'), request, {
         headers: this.session.apiHeaders(),
       })
+      .pipe(
+        map((response) => response.data),
+        tap(() => this.invalidateCache('almacenes')),
+      );
+  }
+
+  createEmpresaRegistration(request: CreateEmpresaRegistrationRequest) {
+    return this.http
+      .post<ApiResponse<EmpresaRegistration>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/registro'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(
+        map((response) => response.data),
+        tap(() => {
+          this.invalidateCache('empresas');
+          this.invalidateCache('suscripciones');
+        }),
+      );
+  }
+
+  updateAlmacen(id: number, request: UpdateAlmacenRequest) {
+    return this.http
+      .put<ApiResponse<Almacen>>(
+        this.apiUrl.url('saasCore', `/v1/saas/almacenes/${id}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(
         map((response) => response.data),
         tap(() => this.invalidateCache('almacenes')),
@@ -2247,6 +2378,10 @@ export class AdminSaasApiService {
   }
 
   listCajas(estado?: string, sucursalId?: number) {
+    return this.listCajaTurnos(estado, sucursalId);
+  }
+
+  listCajaTurnos(estado?: string, sucursalId?: number) {
     let params = new HttpParams();
     if (estado) {
       params = params.set('estado', estado);
@@ -2256,83 +2391,105 @@ export class AdminSaasApiService {
     }
 
     return this.http
-      .get<ApiResponse<Caja[]>>(this.apiUrl.url('saasCore', '/v1/saas/cajas'), {
+      .get<ApiResponse<CajaTurno[]>>(this.apiUrl.url('saasCore', '/v1/saas/caja-turnos'), {
         headers: this.session.apiHeaders(),
         params: params.keys().length ? params : undefined,
       })
       .pipe(map((response) => response.data));
   }
 
-  abrirCaja(request: AbrirCajaRequest) {
+  getCajaTurnoActivo() {
     return this.http
-      .post<ApiResponse<Caja>>(this.apiUrl.url('saasCore', '/v1/saas/cajas/abrir'), request, {
+      .get<ApiResponse<CajaTurno | null>>(
+        this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/activo'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  listCajasFisicas(sucursalId?: number) {
+    const params = sucursalId ? new HttpParams().set('sucursalId', sucursalId) : undefined;
+    return this.http
+      .get<ApiResponse<CajaFisica[]>>(this.apiUrl.url('saasCore', '/v1/saas/cajas-fisicas'), {
         headers: this.session.apiHeaders(),
+        params,
       })
       .pipe(map((response) => response.data));
   }
 
-  cerrarCaja(cajaId: number, request: CerrarCajaRequest) {
+  crearCajaFisica(request: GuardarCajaFisicaRequest) {
     return this.http
-      .post<ApiResponse<Caja>>(
-        this.apiUrl.url('saasCore', `/v1/saas/cajas/${cajaId}/cerrar`),
+      .post<ApiResponse<CajaFisica>>(
+        this.apiUrl.url('saasCore', '/v1/saas/cajas-fisicas'),
         request,
-        {
-          headers: this.session.apiHeaders(),
-        },
+        { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
   }
 
-  registrarMovimientoCaja(cajaId: number, request: RegistrarMovimientoCajaRequest) {
+  actualizarCajaFisica(cajaId: number, request: GuardarCajaFisicaRequest) {
+    return this.http
+      .put<ApiResponse<CajaFisica>>(
+        this.apiUrl.url('saasCore', `/v1/saas/cajas-fisicas/${cajaId}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  abrirTurnoCaja(request: AbrirCajaTurnoRequest) {
+    return this.http
+      .post<ApiResponse<CajaTurno>>(
+        this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/abrir'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  cerrarTurnoCaja(turnoId: number, request: CerrarCajaTurnoRequest) {
+    return this.http
+      .post<ApiResponse<CajaTurno>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/cerrar`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  registrarMovimientoCaja(turnoId: number, request: RegistrarMovimientoCajaRequest) {
     return this.http
       .post<ApiResponse<CajaMovimiento>>(
-        this.apiUrl.url('saasCore', `/v1/saas/cajas/${cajaId}/movimientos`),
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`),
         request,
-        {
-          headers: this.session.apiHeaders(),
-        },
+        { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
   }
 
-  depositarCuentaEmpresarial(cajaId: number, request: DepositoCuentaEmpresarialRequest) {
+  depositarCuentaEmpresarial(turnoId: number, request: DepositoCuentaEmpresarialRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaMovimiento>
-      >(this.apiUrl.url('saasCore', `/v1/saas/cajas/${cajaId}/depositos-cuenta-empresarial`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaMovimiento>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/depositos-cuenta-empresarial`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
-  listCajaMovimientos(cajaId: number) {
+  listCajaMovimientos(turnoId: number) {
     return this.http
       .get<ApiResponse<CajaMovimiento[]>>(
-        this.apiUrl.url('saasCore', `/v1/saas/cajas/${cajaId}/movimientos`),
-        {
-          headers: this.session.apiHeaders(),
-        },
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`),
+        { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
   }
 
   listVentas(q?: string) {
-    const params = q?.trim() ? new HttpParams().set('q', q.trim()) : undefined;
-    return this.http
-      .get<ApiResponse<VentasListPayload>>(this.apiUrl.url('saasCore', '/v1/saas/ventas'), {
-        headers: this.session.apiHeaders(),
-        params,
-      })
-      .pipe(
-        map((response) => {
-          const payload = response.data;
-          if (Array.isArray(payload)) {
-            return payload;
-          }
-          if (payload && Array.isArray(payload.items)) {
-            return [...payload.items];
-          }
-          return [] as VentaRecord[];
-        }),
-      );
+    return this.pageVentas(q ?? '', 0, 200).pipe(
+      map((response) => [...(response.content ?? [])]),
+    );
   }
 
   streamVentasStatus(): Observable<VentaStatusStreamEvent> {
@@ -2394,10 +2551,10 @@ export class AdminSaasApiService {
     });
   }
 
-  registrarVentaCaja(cajaId: number, request: RegistrarVentaCajaRequest) {
+  registrarVentaCaja(turnoId: number, request: RegistrarVentaCajaRequest) {
     return this.http
       .post<ApiResponse<RegistrarVentaCajaResponse>>(
-        this.apiUrl.url('saasCore', `/v1/saas/cajas/${cajaId}/ventas`),
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/ventas`),
         request,
         {
           headers: this.session.apiHeaders(),
@@ -2514,7 +2671,7 @@ export class AdminSaasApiService {
       )
       .pipe(
         map((response) => response.data),
-        tap(() => this.invalidateCache('categorias-producto')),
+        tap(() => this.invalidateCache('categorias-producto', 'productos-todos')),
       );
   }
 
@@ -2529,7 +2686,7 @@ export class AdminSaasApiService {
       )
       .pipe(
         map((response) => response.data),
-        tap(() => this.invalidateCache('categorias-producto')),
+        tap(() => this.invalidateCache('categorias-producto', 'productos-todos')),
       );
   }
 
@@ -2562,6 +2719,84 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  pageVentas(q = '', page = 0, size = 20) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (q.trim()) {
+      params = params.set('q', q.trim());
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<VentaRecord>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/ventas/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getVentasSummary() {
+    return this.http
+      .get<ApiResponse<VentaSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/ventas/summary'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getMovimientoStockByOperation(operationId: string) {
+    return this.http
+      .get<ApiResponse<KardexMovimiento>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/inventory/movimientos/operaciones/${encodeURIComponent(operationId)}`,
+        ),
+        {
+          headers: this.session.apiHeaders(),
+        },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  pageStock(productoId?: number, almacenId?: number, page = 0, size = 20) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (productoId) {
+      params = params.set('productoId', productoId);
+    }
+    if (almacenId) {
+      params = params.set('almacenId', almacenId);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<StockItem>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getInventorySummary() {
+    return this.http
+      .get<ApiResponse<InventorySummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/summary'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateStockSettings(
+    stockId: number,
+    request: {
+      readonly stockMinimo: number;
+      readonly stockMaximo?: number | null;
+      readonly ubicacionFisica?: string | null;
+    },
+  ) {
+    return this.http
+      .put<ApiResponse<StockItem>>(
+        this.apiUrl.url('saasCore', `/v1/saas/inventory/stock/${stockId}/settings`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   listStockLotes(productoId?: number, almacenId?: number) {
     let params = new HttpParams();
     if (productoId) {
@@ -2581,11 +2816,43 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  pageStockLotes(productoId?: number, almacenId?: number, page = 0, size = 20) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (productoId) {
+      params = params.set('productoId', productoId);
+    }
+    if (almacenId) {
+      params = params.set('almacenId', almacenId);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<StockLoteItem>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/lotes/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   listCompras() {
     return this.http
       .get<ApiResponse<Compra[]>>(this.apiUrl.url('saasCore', '/v1/saas/inventory/compras'), {
         headers: this.session.apiHeaders(),
       })
+      .pipe(map((response) => response.data));
+  }
+
+  pageCompras(query = '', almacenId?: number, page = 0, size = 20) {
+    let params = new HttpParams()
+      .set('query', query.trim())
+      .set('page', page)
+      .set('size', size);
+    if (almacenId) {
+      params = params.set('almacenId', almacenId);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<Compra>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/compras/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -2704,29 +2971,57 @@ export class AdminSaasApiService {
   }
 
   listAllProductos(almacenId?: number) {
-    const loadPage = (page: number) => {
-      let params = new HttpParams().set('page', page).set('size', 200);
-      if (almacenId) {
-        params = params.set('almacenId', almacenId);
-      }
-      return this.http
-        .get<ApiResponse<PageResponse<Producto>>>(
-          this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'),
-          {
-            headers: this.session.apiHeaders(),
-            params,
-          },
-        )
-        .pipe(map((response) => response.data));
-    };
+    const cacheKey = this.tenantCacheKey(`productos-todos:${almacenId ?? 'all'}`, null);
+    return this.cached(cacheKey, () => {
+      const loadPage = (page: number) => {
+        let params = new HttpParams().set('page', page).set('size', 200);
+        if (almacenId) {
+          params = params.set('almacenId', almacenId);
+        }
+        return this.http
+          .get<ApiResponse<PageResponse<Producto>>>(
+            this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'),
+            {
+              headers: this.session.apiHeaders(),
+              params,
+            },
+          )
+          .pipe(map((response) => response.data));
+      };
 
-    return loadPage(0).pipe(
-      expand((response) => (response.last ? EMPTY : loadPage(response.page + 1))),
-      reduce(
-        (products, response) => [...products, ...(response.content ?? [])],
-        [] as Producto[],
-      ),
-    );
+      return loadPage(0).pipe(
+        expand((response) => (response.last ? EMPTY : loadPage(response.page + 1))),
+        reduce(
+          (products, response) => [...products, ...(response.content ?? [])],
+          [] as Producto[],
+        ),
+      );
+    });
+  }
+
+  pageProductos(query = '', almacenId?: number, page = 0, size = 20) {
+    let params = new HttpParams()
+      .set('q', query.trim())
+      .set('page', page)
+      .set('size', size);
+    if (almacenId) {
+      params = params.set('almacenId', almacenId);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<Producto>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getProductSummary() {
+    return this.http
+      .get<ApiResponse<ProductSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/summary'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
   }
 
   createProductoRapido(request: CreateProductoRapidoRequest) {
@@ -2740,8 +3035,18 @@ export class AdminSaasApiService {
       )
       .pipe(
         map((response) => response.data),
-        tap(() => this.invalidateCache('categorias-producto')),
+        tap(() => this.invalidateCache('categorias-producto', 'productos-todos')),
       );
+  }
+
+  downloadVentaPdf(ventaId: number) {
+    return this.http.get(
+      this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/comprobante/pdf`),
+      {
+        headers: this.session.apiHeaders(),
+        responseType: 'blob',
+      },
+    );
   }
 
   lookupProducto(codigo: string) {
@@ -2843,6 +3148,16 @@ export class AdminSaasApiService {
         map((response) => response.data),
         tap(() => this.invalidateCache('empresas')),
       );
+  }
+
+  synchronizeCurrentEmpresaFacturador() {
+    return this.http
+      .post<ApiResponse<Empresa>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/current/facturador/synchronize'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
   }
 
   listCrmInboxChannels() {
@@ -3517,6 +3832,42 @@ export class AdminSaasApiService {
           headers: this.session.apiHeaders(),
           params: params.keys().length ? params : undefined,
         },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  sendCrmOpportunityEmail(id: number, asunto: string, mensaje: string) {
+    return this.http
+      .post<ApiResponse<SendCrmOpportunityEmailResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/correo`),
+        { asunto, mensaje },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  sendCrmProspectEmail(id: number, asunto: string, mensaje: string) {
+    return this.http
+      .post<ApiResponse<SendCrmOpportunityEmailResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${id}/correo`),
+        { asunto, mensaje },
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  pageKardex(productoId?: number, almacenId?: number, page = 0, size = 20) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (productoId) {
+      params = params.set('productoId', productoId);
+    }
+    if (almacenId) {
+      params = params.set('almacenId', almacenId);
+    }
+    return this.http
+      .get<ApiResponse<PageResponse<KardexMovimiento>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/kardex/page'),
+        { headers: this.session.apiHeaders(), params },
       )
       .pipe(map((response) => response.data));
   }

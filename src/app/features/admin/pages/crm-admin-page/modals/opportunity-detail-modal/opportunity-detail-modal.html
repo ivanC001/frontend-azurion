@@ -143,9 +143,12 @@
                     <nav>
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
                       @if (host().canSendQuoteByWhatsapp(quote)) {
-                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                        <button type="button" [disabled]="host().isQuoteWhatsappSending(quote.id) || host().isQuoteWhatsappLocked(quote)" (click)="host().sendQuoteByWhatsapp(quote)">
+                          <i [class]="host().isQuoteWhatsappProcessing(quote) ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+                          {{ host().quoteWhatsappActionLabel(quote) }}
+                        </button>
                       } @else {
-                        <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                        <button type="button" disabled title="Registra un teléfono válido en el prospecto para habilitar WhatsApp"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                       }
                       @if (host().canSendQuoteByEmail(quote)) {
                         <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
@@ -153,7 +156,7 @@
                           {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
                         </button>
                       } @else {
-                        <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                        <button type="button" disabled title="Registra un correo en el contacto para habilitar este envío"><i class="pi pi-envelope"></i> Correo</button>
                       }
                       @if (host().quoteStatusValue(quote) === 'ENVIADA') {
                         <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
@@ -223,11 +226,21 @@
             </header>
             <button type="button" class="interest-action interest-action--primary" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-calendar-plus"></i> Registrar actividad</button>
             @if (host().opportunityWhatsappAvailable(detail)) {
-              <button type="button" class="interest-action interest-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</button>
+              <button type="button" class="interest-action interest-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)">
+                <i [class]="host().actionId() === detail.id ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+                {{ host().actionId() === detail.id ? 'Enviando por WhatsApp...' : 'Enviar WhatsApp' }}
+              </button>
             }
-            @if (host().opportunityEmailUrl(detail); as emailLink) {
-              <a class="interest-action interest-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
-            }
+            <button
+              type="button"
+              class="interest-action interest-action--mail"
+              [disabled]="!host().opportunityEmailAvailable(detail) || host().isOpportunityEmailSending(detail.id)"
+              [title]="host().opportunityEmailAvailable(detail) ? 'Enviar desde el correo configurado en Azurion' : 'El contacto no tiene correo registrado'"
+              (click)="host().sendOpportunityByEmail(detail)"
+            >
+              <i [class]="host().isOpportunityEmailSending(detail.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+              {{ host().isOpportunityEmailSending(detail.id) ? 'Enviando por correo...' : 'Enviar correo' }}
+            </button>
             <button type="button" class="interest-action interest-action--danger" (click)="host().markLost(detail)"><i class="pi pi-flag"></i> Marcar perdido</button>
             <button type="button" class="interest-action interest-action--advance" (click)="host().advanceInterestedToQuoted(detail)">
               Crear cotizacion
@@ -436,9 +449,12 @@
                   <nav>
                     <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
                     @if (host().canSendQuoteByWhatsapp(quote)) {
-                      <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      <button type="button" [disabled]="host().isQuoteWhatsappSending(quote.id) || host().isQuoteWhatsappLocked(quote)" (click)="host().sendQuoteByWhatsapp(quote)">
+                        <i [class]="host().isQuoteWhatsappProcessing(quote) ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+                        {{ host().quoteWhatsappActionLabel(quote) }}
+                      </button>
                     } @else {
-                      <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                      <button type="button" disabled title="Registra un teléfono válido en el prospecto para habilitar WhatsApp"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                     }
                     @if (host().canSendQuoteByEmail(quote)) {
                       <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
@@ -446,7 +462,7 @@
                         {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
                       </button>
                     } @else {
-                      <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                      <button type="button" disabled title="Registra un correo en el contacto para habilitar este envío"><i class="pi pi-envelope"></i> Correo</button>
                     }
                     @if (host().quoteStatusValue(quote) === 'ENVIADA') {
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
@@ -486,7 +502,10 @@
                             <div class="negotiation-quote-actions">
                               <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
                               @if (host().canSendQuoteByWhatsapp(quote)) {
-                                <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                                <button type="button" [disabled]="host().isQuoteWhatsappSending(quote.id) || host().isQuoteWhatsappLocked(quote)" (click)="host().sendQuoteByWhatsapp(quote)">
+                                  <i [class]="host().isQuoteWhatsappProcessing(quote) ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+                                  {{ host().quoteWhatsappActionLabel(quote) }}
+                                </button>
                               }
                               @if (host().canSendQuoteByEmail(quote)) {
                                 <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
@@ -772,9 +791,12 @@
                     <nav>
                       <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().downloadQuotePdf(quote)"><i class="pi pi-file-pdf"></i> PDF</button>
                       @if (host().canSendQuoteByWhatsapp(quote)) {
-                        <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().sendQuoteByWhatsapp(quote)"><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                        <button type="button" [disabled]="host().isQuoteWhatsappSending(quote.id) || host().isQuoteWhatsappLocked(quote)" (click)="host().sendQuoteByWhatsapp(quote)">
+                          <i [class]="host().isQuoteWhatsappProcessing(quote) ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+                          {{ host().quoteWhatsappActionLabel(quote) }}
+                        </button>
                       } @else {
-                        <button type="button" disabled><i class="pi pi-whatsapp"></i> WhatsApp</button>
+                        <button type="button" disabled title="Registra un teléfono válido en el prospecto para habilitar WhatsApp"><i class="pi pi-whatsapp"></i> WhatsApp</button>
                       }
                       @if (host().canSendQuoteByEmail(quote)) {
                         <button type="button" [disabled]="host().actionId() === quote.id || host().isQuoteEmailSending(quote.id)" (click)="host().sendQuoteByEmail(quote)">
@@ -782,7 +804,7 @@
                           {{ host().isQuoteEmailSending(quote.id) ? 'Enviando...' : 'Correo' }}
                         </button>
                       } @else {
-                        <button type="button" disabled><i class="pi pi-envelope"></i> Correo</button>
+                        <button type="button" disabled title="Registra un correo en el contacto para habilitar este envío"><i class="pi pi-envelope"></i> Correo</button>
                       }
                       @if (host().quoteStatusValue(quote) === 'ENVIADA') {
                         <button type="button" [disabled]="host().actionId() === quote.id" (click)="host().followQuote(quote)"><i class="pi pi-calendar-clock"></i> Seguimiento</button>
@@ -849,11 +871,21 @@
           <button type="button" class="quick-action" (click)="host().openOpportunityActivity(detail, 'LLAMADA')"><i class="pi pi-plus"></i> Nueva actividad</button>
           <button type="button" class="quick-action quick-action--violet" (click)="host().openOpportunityActivity(detail, 'REUNION')"><i class="pi pi-calendar"></i> Programar reunion</button>
           @if (host().opportunityWhatsappAvailable(detail)) {
-            <button type="button" class="quick-action quick-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)"><i class="pi pi-whatsapp"></i> Enviar WhatsApp</button>
+            <button type="button" class="quick-action quick-action--whatsapp" [disabled]="host().actionId() === detail.id" (click)="host().sendOpportunityByWhatsapp(detail)">
+              <i [class]="host().actionId() === detail.id ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+              {{ host().actionId() === detail.id ? 'Enviando por WhatsApp...' : 'Enviar WhatsApp' }}
+            </button>
           }
-          @if (host().opportunityEmailUrl(detail); as emailLink) {
-            <a class="quick-action quick-action--mail" [href]="emailLink"><i class="pi pi-envelope"></i> Enviar correo</a>
-          }
+          <button
+            type="button"
+            class="quick-action quick-action--mail"
+            [disabled]="!host().opportunityEmailAvailable(detail) || host().isOpportunityEmailSending(detail.id)"
+            [title]="host().opportunityEmailAvailable(detail) ? 'Enviar desde el correo configurado en Azurion' : 'El contacto no tiene correo registrado'"
+            (click)="host().sendOpportunityByEmail(detail)"
+          >
+            <i [class]="host().isOpportunityEmailSending(detail.id) ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+            {{ host().isOpportunityEmailSending(detail.id) ? 'Enviando por correo...' : 'Enviar correo' }}
+          </button>
           <button type="button" class="quick-action quick-action--warning" (click)="host().openOpportunityPaymentActivity(detail)"><i class="pi pi-credit-card"></i> Registrar pago</button>
           @if (host().canMoveCrmOpportunities()) {
             <button type="button" class="quick-action quick-action--danger" (click)="host().markLost(detail)"><i class="pi pi-times"></i> Marcar como perdido</button>

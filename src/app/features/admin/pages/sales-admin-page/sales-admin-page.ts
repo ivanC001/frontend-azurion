@@ -20,6 +20,8 @@ import { TagModule } from 'primeng/tag';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { createClientOperationId } from '@core/utils/client-operation-id';
+import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
 import {
   AdminSaasApiService,
   Caja,
@@ -29,6 +31,7 @@ import {
   RegistrarVentaCajaResponse,
   TipoComprobanteVenta,
   VentaRecord,
+  VentaSummary,
   VentaStatusStreamEvent,
 } from '../../data/admin-saas-api.service';
 
@@ -82,6 +85,7 @@ interface NuevaFacturaForm {
   moneda: Moneda;
   tipoCambio: number;
   formaPago: 'CONTADO' | 'CREDITO';
+  metodoPago: 'EFECTIVO' | 'TARJETA' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA';
   tipoOperacionSunat: string;
   contingencia: boolean;
   cuotaMonto: number;
@@ -191,6 +195,7 @@ export class SalesAdminPage implements OnDestroy {
   private static readonly TRACE_CACHE_PREFIX = 'azurion.sales.trace';
   private static readonly REQUEST_TIMEOUT_MS = 18000;
   private static readonly LIST_REQUEST_TIMEOUT_MS = 12000;
+  private static readonly PDF_REQUEST_TIMEOUT_MS = 30000;
   private static readonly LIST_WATCHDOG_MS = 16000;
   private static readonly STATUS_STREAM_RECONNECT_MS = 3000;
 
@@ -203,10 +208,15 @@ export class SalesAdminPage implements OnDestroy {
   private ventasStatusStreamSubscription: Subscription | null = null;
   private ventasStatusReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
+  private pendingFacturaOperationId: string | null = null;
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly ventas = signal<VentaRecord[]>([]);
+  protected readonly ventasTotal = signal(0);
+  protected readonly ventasPage = signal(0);
+  protected readonly ventasPageSize = signal(20);
+  protected readonly ventasSummary = signal<VentaSummary | null>(null);
   protected readonly cajasAbiertas = signal<Caja[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);
   protected readonly productos = signal<Producto[]>([]);
@@ -219,6 +229,7 @@ export class SalesAdminPage implements OnDestroy {
   protected readonly traceByExternalId = signal<VentaTraceMap>({});
   protected readonly selectedVenta = signal<VentaRecord | null>(null);
   protected readonly activeTrace = signal<VentaTrace | null>(null);
+  protected readonly quickPdfVentaId = signal<number | null>(null);
 
   protected facturaForm: NuevaFacturaForm = this.createFacturaForm();
 
@@ -244,6 +255,10 @@ export class SalesAdminPage implements OnDestroy {
   });
 
   protected readonly metrics = computed(() => {
+    const summary = this.ventasSummary();
+    if (summary) {
+      return summary;
+    }
     const rows = this.filteredVentas();
     const today = new Date();
     const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -286,11 +301,18 @@ export class SalesAdminPage implements OnDestroy {
     };
   });
 
-  protected readonly comprobanteOptions = [
-    { label: 'Ticket interno - venta rapida', value: 'TICKET_VENTA' },
-    { label: 'Boleta electronica', value: 'BOLETA' },
-    { label: 'Factura electronica', value: 'FACTURA' },
-  ];
+  protected readonly comprobanteOptions = computed(() => {
+    const options: Array<{ label: string; value: TipoComprobanteVenta }> = [
+      { label: 'Ticket interno - venta rapida', value: 'TICKET_VENTA' },
+    ];
+    if (canIssueElectronicDocuments(this.session.currentSession()?.empresa)) {
+      options.push(
+        { label: 'Boleta electronica', value: 'BOLETA' },
+        { label: 'Factura electronica', value: 'FACTURA' },
+      );
+    }
+    return options;
+  });
 
   protected readonly monedaOptions = [
     { label: 'Soles', value: 'PEN' },
@@ -300,6 +322,14 @@ export class SalesAdminPage implements OnDestroy {
   protected readonly formaPagoOptions = [
     { label: 'Contado', value: 'CONTADO' },
     { label: 'Credito', value: 'CREDITO' },
+  ];
+
+  protected readonly metodoPagoOptions = [
+    { label: 'Efectivo', value: 'EFECTIVO' },
+    { label: 'Tarjeta', value: 'TARJETA' },
+    { label: 'Yape', value: 'YAPE' },
+    { label: 'Plin', value: 'PLIN' },
+    { label: 'Transferencia', value: 'TRANSFERENCIA' },
   ];
 
   protected readonly clienteTipoDocOptions = [
@@ -327,7 +357,7 @@ export class SalesAdminPage implements OnDestroy {
 
   protected readonly cajaOptions = computed(() =>
     this.cajasAbiertas().map((caja) => ({
-      label: `${caja.codigo} - ${caja.nombre} (${caja.sucursalCodigo})`,
+      label: `${caja.cajaCodigo} - ${caja.cajaNombre} (${caja.sucursalCodigo})`,
       value: caja.id,
     })),
   );
@@ -345,11 +375,20 @@ export class SalesAdminPage implements OnDestroy {
 
   protected loadData(): void {
     this.loadVentasOnly();
+    this.loadVentasSummary();
     this.loadSupportData();
   }
 
   private loadVentasOnly(): void {
+    this.ventasPage.set(0);
     this.requestVentas(undefined);
+  }
+
+  private loadVentasSummary(): void {
+    this.api.getVentasSummary().subscribe({
+      next: (summary) => this.ventasSummary.set(summary),
+      error: () => undefined,
+    });
   }
 
   private loadSupportData(): void {
@@ -379,6 +418,16 @@ export class SalesAdminPage implements OnDestroy {
   }
 
   protected refreshVentas(): void {
+    this.ventasPage.set(0);
+    this.requestVentas(this.searchTerm().trim() || undefined);
+    this.loadVentasSummary();
+  }
+
+  protected onVentasPage(event: { first?: number | null; rows?: number | null }): void {
+    const size = Math.max(1, Number(event.rows ?? this.ventasPageSize()));
+    const first = Math.max(0, Number(event.first ?? 0));
+    this.ventasPageSize.set(size);
+    this.ventasPage.set(Math.floor(first / size));
     this.requestVentas(this.searchTerm().trim() || undefined);
   }
 
@@ -395,10 +444,10 @@ export class SalesAdminPage implements OnDestroy {
     let watchdog: ReturnType<typeof setTimeout> | null = null;
 
     this.ventasRequestSubscription = this.api
-      .listVentas(query)
+      .pageVentas(query ?? '', this.ventasPage(), this.ventasPageSize())
       .pipe(timeout(SalesAdminPage.LIST_REQUEST_TIMEOUT_MS))
       .subscribe({
-        next: (ventas) => {
+        next: (response) => {
           if (requestSeq !== this.ventasLoadRequestSeq) {
             return;
           }
@@ -406,7 +455,8 @@ export class SalesAdminPage implements OnDestroy {
           if (watchdog !== null) {
             clearTimeout(watchdog);
           }
-          this.ventas.set(Array.isArray(ventas) ? ventas : []);
+          this.ventas.set(Array.isArray(response.content) ? response.content : []);
+          this.ventasTotal.set(Number(response.totalElements ?? 0));
           this.loading.set(false);
           this.ventasRequestSubscription = null;
         },
@@ -584,7 +634,7 @@ export class SalesAdminPage implements OnDestroy {
     if (!caja) {
       return 'Caja no encontrada';
     }
-    return `${caja.codigo} - ${caja.nombre}`;
+    return `${caja.cajaCodigo} - ${caja.cajaNombre}`;
   }
 
   protected currentCajaApertura(): number | null {
@@ -593,7 +643,7 @@ export class SalesAdminPage implements OnDestroy {
       return null;
     }
     const caja = this.cajasAbiertas().find((item) => item.id === cajaId);
-    return caja ? Number(caja.saldoCapital) : null;
+    return caja ? Number(caja.saldoApertura) : null;
   }
 
   protected cajaAperturadaEn(): string | null {
@@ -838,6 +888,9 @@ export class SalesAdminPage implements OnDestroy {
     this.errorMessage.set(null);
     this.infoMessage.set(null);
     this.saving.set(true);
+    const clientOperationId =
+      this.pendingFacturaOperationId ?? createClientOperationId('sale');
+    this.pendingFacturaOperationId = clientOperationId;
     let settled = false;
     let watchdog: ReturnType<typeof setTimeout> | null = null;
 
@@ -845,8 +898,6 @@ export class SalesAdminPage implements OnDestroy {
     const request = {
       tipoComprobante: this.facturaForm.tipoComprobante,
       total,
-      responsableId: this.actorId(),
-      responsableNombre: this.actorName(),
       clienteId: this.facturaForm.clienteId,
       clienteTipoDocumento: this.facturaForm.clienteTipoDoc,
       clienteNumeroDocumento: this.facturaForm.clienteNumeroDoc.trim() || null,
@@ -855,6 +906,9 @@ export class SalesAdminPage implements OnDestroy {
       moneda: this.facturaForm.moneda,
       tipoCambio: Number(this.facturaForm.tipoCambio || 0),
       formaPago: this.facturaForm.formaPago,
+      metodoPago: this.facturaForm.formaPago === 'CREDITO'
+        ? 'CREDITO'
+        : this.facturaForm.metodoPago,
       cuotas:
         this.facturaForm.formaPago === 'CREDITO' &&
         this.facturaForm.cuotaMonto > 0 &&
@@ -868,6 +922,7 @@ export class SalesAdminPage implements OnDestroy {
             ]
           : null,
       descripcion: this.facturaForm.observacion.trim() || null,
+      clientOperationId,
       items: this.facturaForm.items.map((item) => ({
         productoId: item.productoId as number,
         almacenId: item.almacenId,
@@ -883,6 +938,7 @@ export class SalesAdminPage implements OnDestroy {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (response) => {
+          this.pendingFacturaOperationId = null;
           settled = true;
           if (watchdog !== null) {
             clearTimeout(watchdog);
@@ -914,7 +970,10 @@ export class SalesAdminPage implements OnDestroy {
   }
 
   protected displayRowNumber(rowIndex: number): number {
-    return this.filteredVentas().length - rowIndex;
+    return Math.max(
+      1,
+      this.ventasTotal() - (this.ventasPage() * this.ventasPageSize() + rowIndex),
+    );
   }
 
   protected rowEstadoLabel(venta: VentaRecord): string {
@@ -1001,7 +1060,7 @@ export class SalesAdminPage implements OnDestroy {
     if (this.isInternalTicket(venta)) {
       return false;
     }
-    if (asset === 'pdf' && !!venta.facturadorPdfUrl) {
+    if (asset === 'pdf') {
       return true;
     }
     if (asset === 'xml' && !!venta.facturadorXmlUrl) {
@@ -1016,9 +1075,6 @@ export class SalesAdminPage implements OnDestroy {
       return false;
     }
 
-    if (asset === 'pdf') {
-      return Boolean(trace.pdfUrl);
-    }
     if (asset === 'xml') {
       return Boolean(trace.xmlUrl);
     }
@@ -1057,19 +1113,20 @@ export class SalesAdminPage implements OnDestroy {
 
   protected openAsset(venta: VentaRecord, asset: ArchivoComprobante): void {
     const trace = this.traceByExternalId()[venta.externalId] || this.traceFromVentaBackend(venta);
-    if (!trace) {
-      this.infoMessage.set(`No hay traza disponible para ${venta.externalId}.`);
-      return;
-    }
-
     const backendUrl =
       asset === 'pdf'
         ? venta.facturadorPdfUrl
         : asset === 'xml'
           ? venta.facturadorXmlUrl
           : venta.facturadorCdrUrl;
-    const url = asset === 'pdf' ? trace.pdfUrl : asset === 'xml' ? trace.xmlUrl : trace.cdrUrl;
-    const resolvedUrl = (url || backendUrl || '').trim();
+    const traceUrl = trace
+      ? asset === 'pdf'
+        ? trace.pdfUrl
+        : asset === 'xml'
+          ? trace.xmlUrl
+          : trace.cdrUrl
+      : null;
+    const resolvedUrl = (backendUrl || traceUrl || '').trim();
     if (!resolvedUrl) {
       this.infoMessage.set(
         `El ${asset.toUpperCase()} aun no esta disponible para ${venta.externalId}.`,
@@ -1078,6 +1135,47 @@ export class SalesAdminPage implements OnDestroy {
     }
 
     window.open(this.decorateFacturadorAssetUrl(resolvedUrl), '_blank', 'noopener,noreferrer');
+  }
+
+  protected quickDownloadPdf(venta: VentaRecord): void {
+    if (this.isInternalTicket(venta) || this.quickPdfVentaId() !== null) {
+      return;
+    }
+
+    this.quickPdfVentaId.set(venta.id);
+    this.errorMessage.set(null);
+    this.infoMessage.set(`Preparando PDF de ${venta.externalId}...`);
+
+    this.api
+      .downloadVentaPdf(venta.id)
+      .pipe(
+        timeout(SalesAdminPage.PDF_REQUEST_TIMEOUT_MS),
+        finalize(() => this.quickPdfVentaId.set(null)),
+      )
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = objectUrl;
+          anchor.download = this.pdfFilename(venta);
+          anchor.style.display = 'none';
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+          this.infoMessage.set(`Descarga del PDF ${venta.externalId} iniciada.`);
+        },
+        error: (error) => {
+          this.errorMessage.set(
+            this.resolveError(error, `No se pudo preparar el PDF de ${venta.externalId}.`),
+          );
+        },
+      });
+  }
+
+  private pdfFilename(venta: VentaRecord): string {
+    const safeExternalId = (venta.externalId || `venta-${venta.id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+    return `Comprobante-${safeExternalId}.pdf`;
   }
 
   protected openActiveTraceAsset(asset: ArchivoComprobante): void {
@@ -1557,6 +1655,7 @@ export class SalesAdminPage implements OnDestroy {
       moneda: 'PEN',
       tipoCambio: 3.8,
       formaPago: 'CONTADO',
+      metodoPago: 'EFECTIVO',
       tipoOperacionSunat: '0101',
       contingencia: false,
       cuotaMonto: 0,
@@ -1661,7 +1760,10 @@ export class SalesAdminPage implements OnDestroy {
     return (value || '').toLowerCase().includes(query);
   }
 
-  private resolveError(error: unknown): string {
+  private resolveError(
+    error: unknown,
+    fallback = 'No se pudo completar la operacion de ventas.',
+  ): string {
     if (typeof error === 'object' && error !== null) {
       const httpError = error as { status?: number; error?: { message?: string } };
       if (httpError.status === 400) {
@@ -1679,8 +1781,8 @@ export class SalesAdminPage implements OnDestroy {
       if ((httpError as { name?: string }).name === 'TimeoutError') {
         return 'La consulta de ventas demoro demasiado. Intenta recargar.';
       }
-      return httpError.error?.message || 'No se pudo completar la operacion de ventas.';
+      return httpError.error?.message || fallback;
     }
-    return 'No se pudo completar la operacion de ventas.';
+    return fallback;
   }
 }

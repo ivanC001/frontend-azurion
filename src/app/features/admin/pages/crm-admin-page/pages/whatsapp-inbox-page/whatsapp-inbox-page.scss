@@ -744,6 +744,22 @@
     border-color: #78aef2;
   }
 
+  &.quote-option--sent {
+    background: #f2fbf5;
+    border-color: #a9dfbb;
+    cursor: default;
+
+    .quote-icon {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .quote-copy small {
+      color: #15803d;
+      font-weight: 750;
+    }
+  }
+
   input { accent-color: var(--blue); }
 
   > b {

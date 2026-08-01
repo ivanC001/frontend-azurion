@@ -30,8 +30,6 @@ interface FacturadorTenantForm {
   usuario_sol: string;
   clave_sol: string;
   certificado_password: string;
-  certificado_url: string;
-  logo_pdf_url: string;
   logo_file: File | null;
   certificado_file: File | null;
 }
@@ -114,7 +112,7 @@ export class FacturadorCompaniesPage {
 
     if (!this.hasLogoConfigured()) {
       this.errorMessage.set(
-        'Debes registrar el logo de la empresa (archivo o URL) para crear el tenant.',
+        'Debes cargar el logo de la empresa para crear el tenant.',
       );
       return;
     }
@@ -210,28 +208,13 @@ export class FacturadorCompaniesPage {
   }
 
   protected tenantLogoValue(tenant: FacturadorTenantDetail | null): string {
-    if (!tenant) {
-      return '-';
-    }
-    return tenant.configuracion?.logo_pdf_url || tenant.logo_pdf_url || '-';
-  }
-
-  protected hasTenantLogo(tenant: FacturadorTenantDetail | null): boolean {
-    const value = this.tenantLogoValue(tenant);
-    return value !== '-';
+    return tenant?.configuracion?.logo_pdf_configurado ? 'Configurado' : 'No configurado';
   }
 
   protected selectedTenantApiKey(): string {
     const value =
       this.selectedTenantDetail()?.api_key || this.selectedTenantDetail()?.configuracion?.token_api;
     return value || 'No disponible';
-  }
-
-  protected isHttpUrl(value: string | null): boolean {
-    if (!value) {
-      return false;
-    }
-    return /^https?:\/\//i.test(value.trim());
   }
 
   protected onLogoFileSelected(event: Event): void {
@@ -282,8 +265,6 @@ export class FacturadorCompaniesPage {
       usuario_sol: this.form.usuario_sol.trim() || undefined,
       clave_sol: this.form.clave_sol || undefined,
       certificado_password: this.form.certificado_password || undefined,
-      certificado_url: this.form.certificado_url.trim() || undefined,
-      logo_pdf_url: this.form.logo_pdf_url.trim() || undefined,
       logo_file: this.form.logo_file,
       certificado_file: this.form.certificado_file,
     };
@@ -296,7 +277,7 @@ export class FacturadorCompaniesPage {
   }
 
   private hasLogoConfigured(): boolean {
-    return !!this.form.logo_file || this.form.logo_pdf_url.trim().length > 0;
+    return !!this.form.logo_file;
   }
 
   private createEmptyForm(): FacturadorTenantForm {
@@ -309,8 +290,6 @@ export class FacturadorCompaniesPage {
       usuario_sol: '',
       clave_sol: '',
       certificado_password: '',
-      certificado_url: '',
-      logo_pdf_url: '',
       logo_file: null,
       certificado_file: null,
     };
@@ -349,9 +328,8 @@ export class FacturadorCompaniesPage {
       'image/jpeg',
       'image/jpg',
       'image/webp',
-      'image/svg+xml',
     ]);
-    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.svg'];
+    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
     const lowerName = file.name.toLowerCase();
     const hasAllowedExtension = allowedExtensions.some((extension) =>
       lowerName.endsWith(extension),

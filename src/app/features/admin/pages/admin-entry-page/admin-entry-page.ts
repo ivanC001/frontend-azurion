@@ -30,9 +30,6 @@ export class AdminEntryPage implements OnInit {
     if (isGeneral) {
       return '/admin/control-empresas';
     }
-    if (this.auth.hasModule('ERP')) {
-      return '/admin/dashboard';
-    }
     if (this.auth.hasPermission('CRM_REPORTS_READ') || this.auth.hasPermission('CRM_REPORTS_TEAM')) {
       return '/admin/crm';
     }
@@ -48,6 +45,9 @@ export class AdminEntryPage implements OnInit {
       this.auth.hasPermission('CRM_OPPORTUNITIES_READ')
     ) {
       return '/admin/crm/pipeline';
+    }
+    if (this.auth.hasWorkspaceAccess('ERP')) {
+      return '/admin/dashboard';
     }
     if (this.auth.hasPermission('CONFIGURACION_WRITE')) {
       return '/admin/configuracion-empresa';

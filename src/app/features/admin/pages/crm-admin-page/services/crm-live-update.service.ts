@@ -7,7 +7,8 @@ import { CrmFollowupService } from './crm-followup.service';
 import { CrmOpportunityService } from './crm-opportunity.service';
 import { CrmProspectService } from './crm-prospect.service';
 
-const CRM_LIVE_PAGE_SIZE = 100;
+const CRM_LIVE_PAGE_SIZE = 50;
+const CRM_LIVE_REFRESH_MS = 30_000;
 
 export interface CrmLiveSnapshot {
   prospectos: CrmProspecto[];
@@ -22,7 +23,7 @@ export class CrmLiveUpdateService {
   private readonly opportunities = inject(CrmOpportunityService);
   private readonly followups = inject(CrmFollowupService);
 
-  watch(refreshIntervalMs = 12_000, shouldRefresh: () => boolean = () => true): Observable<CrmLiveSnapshot> {
+  watch(refreshIntervalMs = CRM_LIVE_REFRESH_MS, shouldRefresh: () => boolean = () => true): Observable<CrmLiveSnapshot> {
     return timer(refreshIntervalMs, refreshIntervalMs).pipe(
       filter(() => !this.document.hidden && shouldRefresh()),
       exhaustMap(() => forkJoin({

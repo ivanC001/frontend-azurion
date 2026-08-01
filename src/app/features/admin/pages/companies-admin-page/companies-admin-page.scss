@@ -544,6 +544,25 @@
   strong { color: var(--az-text); }
 }
 
+.dialog-info {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--az-blue-soft) 72%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-blue) 30%, var(--az-border));
+  border-radius: 0.75rem;
+  color: var(--az-text-muted);
+  display: flex;
+  font-size: 0.82rem;
+  gap: 0.65rem;
+  grid-column: 1 / -1;
+  line-height: 1.45;
+  padding: 0.8rem 0.9rem;
+
+  i {
+    color: var(--az-blue);
+    margin-top: 0.12rem;
+  }
+}
+
 @media (max-width: 900px) {
   .table-panel__head { align-items: stretch; display: grid; }
 }

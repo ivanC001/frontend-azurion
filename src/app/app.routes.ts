@@ -115,7 +115,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         canActivate: [permissionGuard],
-        data: { module: 'ERP' },
+        data: { module: 'ERP', workspace: 'ERP' },
         loadComponent: () =>
           import('@features/admin/pages/admin-dashboard-page/admin-dashboard-page').then(
             (component) => component.AdminDashboardPage,
@@ -559,7 +559,7 @@ export const routes: Routes = [
       {
         path: 'sucursales',
         canActivate: [permissionGuard],
-        data: { permission: 'SUCURSALES_READ' },
+        data: { permission: 'SUCURSALES_WRITE' },
         loadComponent: () =>
           import('@features/admin/pages/branches-admin-page/branches-admin-page').then(
             (component) => component.BranchesAdminPage,

@@ -27,7 +27,11 @@ import {
   Almacen,
   CategoriaProducto,
   Producto,
+  ProductSummary,
 } from '../../data/admin-saas-api.service';
+
+const MAX_PRODUCT_PHOTO_BYTES = 1024 * 1024;
+const ALLOWED_PRODUCT_PHOTO_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 interface ProductoForm {
   id: number | null;
@@ -95,11 +99,14 @@ export class ProductsAdminPage {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly productSearch = signal('');
+  protected readonly productTotal = signal(0);
+  protected readonly pageSize = 20;
   protected readonly productDialogVisible = signal(false);
   protected readonly advancedFieldsVisible = signal(false);
   protected readonly selectedPhotoName = signal<string | null>(null);
   protected readonly checkingBarcode = signal(false);
   protected readonly barcodeMessage = signal<string | null>(null);
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected productForm: ProductoForm = {
     id: null,
@@ -174,37 +181,12 @@ export class ProductsAdminPage {
     { label: '9998 - Inafecto', value: '9998' },
   ];
 
-  protected readonly filteredProductos = computed(() => {
-    const term = this.productSearch().trim().toLowerCase();
-    if (!term) {
-      return this.productos();
-    }
-
-    return this.productos().filter(
-      (item) =>
-        String(item.codigo || '')
-          .toLowerCase()
-          .includes(term) ||
-        String(item.codigoBarras || '')
-          .toLowerCase()
-          .includes(term) ||
-        item.sku.toLowerCase().includes(term) ||
-        item.nombre.toLowerCase().includes(term) ||
-        String(item.unidadMedidaId || '')
-          .toLowerCase()
-          .includes(term),
-    );
-  });
-
-  protected readonly productStats = computed(() => {
-    const productos = this.productos();
-    return {
-      total: productos.length,
-      active: productos.filter((item) => item.activo).length,
-      products: productos.filter((item) => item.tipoProducto !== 'SERVICIO').length,
-      services: productos.filter((item) => item.tipoProducto === 'SERVICIO').length,
-      lowStock: productos.filter((item) => this.isLowStock(item)).length,
-    };
+  protected readonly productStats = signal({
+    total: 0,
+    active: 0,
+    products: 0,
+    services: 0,
+    lowStock: 0,
   });
 
   constructor() {
@@ -215,14 +197,17 @@ export class ProductsAdminPage {
     this.loading.set(true);
     this.errorMessage.set(null);
     forkJoin({
-      productos: this.api.listAllProductos(),
+      productos: this.api.pageProductos(this.productSearch(), undefined, 0, this.pageSize),
+      summary: this.api.getProductSummary(),
       almacenes: this.api.listAlmacenes(),
       categorias: this.api.listCategoriasProducto(),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ productos, almacenes, categorias }) => {
-          this.productos.set(productos);
+        next: ({ productos, summary, almacenes, categorias }) => {
+          this.productos.set(productos.content);
+          this.productTotal.set(productos.totalElements);
+          this.applyProductSummary(summary);
           this.almacenes.set(almacenes);
           this.categorias.set(categorias);
           this.lowStockAlerts.refresh(false);
@@ -234,6 +219,40 @@ export class ProductsAdminPage {
   protected setProductSearch(event: Event): void {
     const input = event.target as HTMLInputElement | null;
     this.productSearch.set(input?.value ?? '');
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    this.searchTimer = setTimeout(() => this.loadProductPage(0, this.pageSize), 300);
+  }
+
+  private applyProductSummary(summary: ProductSummary): void {
+    this.productStats.set({
+      total: summary.total,
+      active: summary.active,
+      products: summary.products,
+      services: summary.services,
+      lowStock: summary.lowStock,
+    });
+  }
+
+  protected loadProductPage(page: number, size: number): void {
+    this.loading.set(true);
+    this.api
+      .pageProductos(this.productSearch(), undefined, page, size)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.productos.set(response.content);
+          this.productTotal.set(response.totalElements);
+        },
+        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      });
+  }
+
+  protected onProductPage(event: { first?: number | null; rows?: number | null }): void {
+    const size = event.rows && event.rows > 0 ? event.rows : this.pageSize;
+    const first = event.first && event.first > 0 ? event.first : 0;
+    this.loadProductPage(Math.floor(first / size), size);
   }
 
   protected openCreateProductDialog(): void {
@@ -339,6 +358,10 @@ export class ProductsAdminPage {
       this.errorMessage.set('Selecciona la categoria del producto.');
       return;
     }
+    if (manejaStock && !this.productForm.almacenId) {
+      this.errorMessage.set('Selecciona un almacén para controlar las existencias.');
+      return;
+    }
 
     if (stockMinimo < 0) {
       this.errorMessage.set('El stock mínimo no puede ser negativo.');
@@ -377,6 +400,7 @@ export class ProductsAdminPage {
           nombre,
           precio,
           activo: this.productForm.activo,
+          almacenId: manejaStock ? this.productForm.almacenId : null,
           codigo: this.productForm.codigo.trim() || null,
           codigoBarras: this.productForm.codigoBarras.trim() || null,
           descripcion: this.productForm.descripcion.trim() || null,
@@ -413,12 +437,6 @@ export class ProductsAdminPage {
     }
 
     const sku = this.productForm.sku.trim().toUpperCase();
-    if (!this.productForm.almacenId) {
-      this.saving.set(false);
-      this.errorMessage.set('Selecciona un almacén antes de crear el producto.');
-      return;
-    }
-
     this.api
       .createProductoRapido({
         sku: sku || null,
@@ -426,7 +444,7 @@ export class ProductsAdminPage {
         precioVenta: precio,
         costoInicial: precioCompraBase,
         cantidadInicial,
-        almacenId: this.productForm.almacenId,
+        almacenId: manejaStock ? this.productForm.almacenId : null,
         codigoBarras: this.productForm.codigoBarras.trim() || null,
         descripcion: this.productForm.descripcion.trim() || null,
         categoriaId: this.productForm.categoriaId || null,
@@ -523,6 +541,7 @@ export class ProductsAdminPage {
         nombre: producto.nombre,
         precio: Number(producto.precio),
         activo: !producto.activo,
+        almacenId: producto.tipoProducto === 'SERVICIO' ? null : producto.almacenId,
         codigo: producto.codigo || null,
         codigoBarras: producto.codigoBarras || null,
         descripcion: producto.descripcion || null,
@@ -581,8 +600,12 @@ export class ProductsAdminPage {
       this.productForm.stockMinimo = 0;
       this.productForm.categoriaId =
         this.categorias().find((categoria) => categoria.nombre === 'Servicios')?.id ?? null;
-    } else if (this.productForm.stockMinimo <= 0) {
-      this.productForm.stockMinimo = 5;
+      this.productForm.almacenId = null;
+    } else {
+      if (this.productForm.stockMinimo <= 0) {
+        this.productForm.stockMinimo = 5;
+      }
+      this.productForm.almacenId ||= this.almacenes()[0]?.id ?? null;
     }
   }
 
@@ -670,16 +693,16 @@ export class ProductsAdminPage {
       return;
     }
 
-    if (!file.type.startsWith('image/')) {
-      this.errorMessage.set('Selecciona una imagen valida para la foto del producto.');
+    if (!ALLOWED_PRODUCT_PHOTO_TYPES.has(file.type.toLowerCase())) {
+      this.errorMessage.set('Selecciona una imagen PNG, JPG o WEBP valida.');
       if (input) {
         input.value = '';
       }
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      this.errorMessage.set('La foto del producto no debe superar 2 MB.');
+    if (file.size > MAX_PRODUCT_PHOTO_BYTES) {
+      this.errorMessage.set('La foto del producto no debe superar 1 MB.');
       if (input) {
         input.value = '';
       }

@@ -14,7 +14,7 @@
         [showClear]="true"
       />
       <p-select
-        [options]="documentOptions"
+        [options]="documentOptions()"
         [ngModel]="convertDocumentType()"
         (ngModelChange)="convertDocumentType.set($event)"
       />
