@@ -862,180 +862,196 @@
   opacity: 0.45;
 }
 
-:host ::ng-deep .ticket-preview-dialog {
+:host ::ng-deep .sale-document-dialog {
   max-width: calc(100vw - 2rem);
-  width: 720px;
+  width: 680px;
 }
 
-.ticket-success {
+.document-status {
   align-items: center;
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
+  border: 1px solid;
   border-radius: 0.55rem;
-  color: #047857;
   display: flex;
   gap: 0.65rem;
   margin-bottom: 0.75rem;
   padding: 0.65rem;
 }
 
-.ticket-success > span {
+.document-status.is-ready {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #047857;
+}
+
+.document-status.is-pending {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.document-status.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.document-status > span {
   align-items: center;
-  background: #16a34a;
+  background: currentColor;
   border-radius: 50%;
-  color: #ffffff;
   display: flex;
   height: 2.2rem;
   justify-content: center;
+  min-width: 2.2rem;
   width: 2.2rem;
 }
 
-.ticket-success p {
+.document-status > span i {
+  color: #ffffff;
+}
+
+.document-status p {
   font-size: 0.72rem;
   margin: 0.12rem 0 0;
 }
 
-.ticket-preview {
-  background: #ffffff;
-  border: 1px solid #dbe3ee;
+.document-summary {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
   border-radius: 0.55rem;
-  color: #111827;
+  color: var(--az-text);
   padding: 1rem;
 }
 
-.ticket-preview header {
+.document-summary header {
   align-items: center;
-  border-bottom: 2px solid #111827;
+  border-bottom: 1px solid var(--az-border);
   display: grid;
   gap: 0.75rem;
   grid-template-columns: auto 1fr auto;
   padding-bottom: 0.75rem;
 }
 
-.ticket-preview header img {
-  max-height: 3.4rem;
-  max-width: 5.5rem;
-  object-fit: contain;
+.document-icon {
+  align-items: center;
+  background: #fee2e2;
+  border-radius: 0.5rem;
+  color: #dc2626;
+  display: flex;
+  font-size: 1.2rem;
+  height: 2.75rem;
+  justify-content: center;
+  width: 2.75rem;
 }
 
-.ticket-preview h3,
-.ticket-preview p {
+.document-summary h3,
+.document-summary p {
   margin: 0;
 }
 
-.ticket-preview p {
-  color: #64748b;
-  font-size: 0.7rem;
-  margin-top: 0.15rem;
+.document-summary header span,
+.document-details span,
+.official-number span {
+  color: var(--az-text-soft);
+  font-size: 0.68rem;
 }
 
-.ticket-number {
-  border: 1px solid #111827;
+.official-number {
+  background: color-mix(in srgb, var(--az-primary) 7%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-primary) 25%, var(--az-border));
+  border-radius: 0.45rem;
   display: grid;
-  font-size: 0.68rem;
   gap: 0.2rem;
   padding: 0.5rem;
-  text-align: center;
+  text-align: right;
 }
 
-.ticket-meta {
+.document-details {
   display: grid;
-  gap: 0.35rem 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 0.75rem 0;
-}
-
-.ticket-meta div,
-.ticket-totals div {
-  display: flex;
-  font-size: 0.72rem;
-  justify-content: space-between;
-}
-
-.ticket-meta span,
-.ticket-totals span {
-  color: #64748b;
-}
-
-.ticket-items {
-  border-bottom: 1px solid #cbd5e1;
-  border-top: 1px solid #cbd5e1;
-}
-
-.ticket-items > div {
-  align-items: center;
-  border-bottom: 1px dashed #cbd5e1;
-  display: flex;
-  font-size: 0.72rem;
-  justify-content: space-between;
-  padding: 0.45rem 0;
-}
-
-.ticket-items > div:last-child {
-  border-bottom: 0;
-}
-
-.ticket-items span {
-  display: grid;
-  gap: 0.1rem;
-}
-
-.ticket-items small {
-  color: #64748b;
-}
-
-.ticket-totals {
-  display: grid;
-  gap: 0.25rem;
-  margin-left: auto;
-  padding-top: 0.75rem;
-  width: min(17rem, 100%);
-}
-
-.ticket-totals .preview-grand {
-  border-top: 2px solid #111827;
-  font-size: 1rem;
-  margin-top: 0.25rem;
-  padding-top: 0.45rem;
-}
-
-.print-formats {
-  display: grid;
-  gap: 0.5rem;
+  gap: 0.65rem 1rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0.75rem;
+  padding-top: 0.85rem;
 }
 
-.print-formats button {
+.document-details > div {
+  display: grid;
+  font-size: 0.72rem;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.document-details strong {
+  overflow-wrap: anywhere;
+}
+
+.document-total strong {
+  color: #059669;
+  font-size: 1rem;
+}
+
+.document-authority-note {
   align-items: center;
-  background: var(--az-surface);
-  border: 1px solid var(--az-border);
-  border-radius: 0.5rem;
-  color: var(--az-text);
-  cursor: pointer;
+  color: var(--az-text-soft);
   display: flex;
-  gap: 0.55rem;
-  min-height: 3.6rem;
-  padding: 0.65rem;
-  text-align: left;
+  font-size: 0.7rem;
+  gap: 0.45rem;
+  margin: 0.75rem 0;
 }
 
-.print-formats button:hover {
-  border-color: #2563eb;
+.document-authority-note i {
   color: #2563eb;
 }
 
-.print-formats button > i {
-  font-size: 1.2rem;
+.document-actions button {
+  align-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  font-weight: 700;
+  gap: 0.55rem;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0.65rem 1rem;
+  width: 100%;
 }
 
-.print-formats button span {
+.document-actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.print-format-actions {
   display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.print-formats small {
-  color: var(--az-text-soft);
-  font-size: 0.65rem;
+.official-document-button {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.official-document-button:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.official-document-button.is-ticket {
+  background: #2563eb;
+}
+
+.official-document-button.is-ticket:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.retry-document-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.waiting-document-button {
+  background: color-mix(in srgb, #2563eb 12%, var(--az-surface));
+  color: #2563eb;
 }
 
 :host ::ng-deep .checkout-panel .p-select {
@@ -1067,22 +1083,22 @@
     color: #6ee7b7;
   }
 
-  .ticket-success {
+  .document-status.is-ready {
     background: rgba(16, 185, 129, 0.13);
     border-color: rgba(16, 185, 129, 0.28);
     color: #6ee7b7;
   }
 
-  .ticket-preview :is(h3, strong) {
-    color: #111827 !important;
+  .document-status.is-pending {
+    background: rgba(37, 99, 235, 0.13);
+    border-color: rgba(96, 165, 250, 0.3);
+    color: #93c5fd;
   }
 
-  .ticket-preview :is(p, span, small) {
-    color: #64748b !important;
-  }
-
-  .ticket-preview .preview-grand :is(span, strong) {
-    color: #111827 !important;
+  .document-status.is-error {
+    background: rgba(239, 68, 68, 0.13);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: #fca5a5;
   }
 }
 
@@ -1151,13 +1167,16 @@
     display: none;
   }
 
-  .ticket-preview header,
-  .ticket-meta,
-  .print-formats {
+  .document-summary header,
+  .document-details {
     grid-template-columns: 1fr;
   }
 
-  .ticket-number {
+  .official-number {
     text-align: left;
+  }
+
+  .print-format-actions {
+    grid-template-columns: 1fr;
   }
 }

@@ -152,53 +152,324 @@
 .table-band {
   background: #ffffff;
   border: 1px solid #d6e2ef;
-  border-radius: 0.95rem;
-  overflow: hidden;
-  padding: 0.35rem;
+  border-radius: 0.75rem;
+  overflow: visible;
+  padding: 0;
 }
 
-:host ::ng-deep .p-datatable {
+:host ::ng-deep .sales-ledger-table {
+  .p-datatable-table-container {
+    overflow: visible;
+  }
+
+  table {
+    min-width: 980px;
+  }
+
   .p-datatable-thead > tr > th {
-    background: linear-gradient(132deg, #1f6fd6, #2a88e4);
-    border: 0;
-    color: #ffffff;
-    font-size: 0.9rem;
+    background: #f7f9fc;
+    border-color: #e3eaf3;
+    color: #48566b;
+    font-size: 0.72rem;
     font-weight: 700;
-    padding: 0.75rem 0.7rem;
+    padding: 0.7rem 0.75rem;
+    text-transform: none;
   }
 
   .p-datatable-tbody > tr > td {
-    border-bottom: 1px solid #dbe4ef;
-    color: #112640;
-    padding: 0.7rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e5ebf3;
+    color: #172033;
+    font-size: 0.78rem;
+    padding: 0.72rem 0.75rem;
     vertical-align: middle;
+  }
+
+  .p-datatable-tbody > tr:hover > td,
+  .p-datatable-tbody > tr.is-selected > td {
+    background: #f3f7ff;
+  }
+
+  .p-paginator {
+    border-top: 1px solid #e5ebf3;
+    padding: 0.45rem 0.65rem;
   }
 }
 
 .doc-cell {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.35rem;
+  min-width: 9.5rem;
 }
 
 .doc-cell strong {
+  color: #18243a;
+  display: block;
+  font-size: 0.82rem;
   font-weight: 800;
+  margin: 0.2rem 0 0.12rem;
+  white-space: nowrap;
 }
 
 .amount-cell {
+  color: #13233b;
+  font-size: 0.86rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .table-actions {
   align-items: center;
   display: inline-flex;
-  gap: 0.22rem;
+  gap: 0.35rem;
+  justify-content: flex-end;
 }
 
-:host ::ng-deep .quick-pdf-button {
-  border-radius: 0.55rem;
+.selection-column {
+  text-align: center;
+  width: 2.8rem;
+}
+
+.actions-column {
+  text-align: right;
+  width: 7rem;
+}
+
+.row-checkbox {
+  accent-color: #2563eb;
+  block-size: 0.95rem;
+  cursor: pointer;
+  inline-size: 0.95rem;
+}
+
+.document-badge {
+  border-radius: 0.3rem;
+  display: inline-flex;
+  font-size: 0.62rem;
   font-weight: 800;
-  min-width: 4.5rem;
+  line-height: 1;
+  padding: 0.25rem 0.38rem;
+}
+
+.document-badge.is-receipt {
+  background: #e8f1ff;
+  color: #2563eb;
+}
+
+.document-badge.is-invoice {
+  background: #e5f8ed;
+  color: #168451;
+}
+
+.document-badge.is-ticket {
+  background: #f2eafe;
+  color: #7c3aed;
+}
+
+.doc-cell small,
+.customer-cell small,
+.date-cell small,
+.status-cell small {
+  color: #75839a;
+  display: block;
+  font-size: 0.67rem;
+}
+
+.customer-cell {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  min-width: 10rem;
+}
+
+.customer-cell strong {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 750;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-avatar {
+  align-items: center;
+  background: #dce9ff;
+  border-radius: 50%;
+  color: #2563eb;
+  display: inline-flex;
+  flex: 0 0 2rem;
+  font-size: 0.66rem;
+  font-weight: 850;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.date-cell strong,
+.date-cell span {
+  display: block;
+  white-space: nowrap;
+}
+
+.date-cell strong {
+  font-size: 0.74rem;
+}
+
+.date-cell span {
+  color: #4e5e75;
+  font-size: 0.69rem;
+  margin: 0.1rem 0;
+}
+
+.payment-cell {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.38rem;
+  white-space: nowrap;
+}
+
+.payment-icon {
+  align-items: center;
+  background: #eaf7ee;
+  border-radius: 0.35rem;
+  color: #16a05d;
+  display: inline-flex;
+  height: 1.45rem;
+  justify-content: center;
+  width: 1.45rem;
+}
+
+.payment-icon i {
+  font-size: 0.72rem;
+}
+
+.status-cell {
+  min-width: 7rem;
+}
+
+.status-pill {
+  align-items: center;
+  border-radius: 0.35rem;
+  display: inline-flex;
+  font-size: 0.65rem;
+  font-weight: 800;
+  gap: 0.25rem;
+  margin-bottom: 0.22rem;
+  padding: 0.28rem 0.42rem;
+}
+
+.status-pill i {
+  font-size: 0.65rem;
+}
+
+.status-pill.is-success {
+  background: #e6f8ed;
+  color: #13864d;
+}
+
+.status-pill.is-warning {
+  background: #fff4db;
+  color: #b76a07;
+}
+
+.status-pill.is-danger {
+  background: #ffebeb;
+  color: #cf3131;
+}
+
+.status-pill.is-neutral {
+  background: #eef2f7;
+  color: #56657a;
+}
+
+:host ::ng-deep .row-action-button {
+  border-color: #dbe5f1;
+  color: #2563eb;
+  height: 2rem;
+  width: 2rem;
+}
+
+.sale-action-menu {
+  position: relative;
+}
+
+.sale-action-menu summary {
+  align-items: center;
+  border: 1px solid #dbe5f1;
+  border-radius: 0.45rem;
+  color: #52647c;
+  cursor: pointer;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  list-style: none;
+  width: 2rem;
+}
+
+.sale-action-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.sale-action-menu[open] summary {
+  background: #edf4ff;
+  border-color: #8bb5f7;
+  color: #2563eb;
+}
+
+.sale-action-popover {
+  background: #ffffff;
+  border: 1px solid #d8e2ef;
+  border-radius: 0.55rem;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 18%);
+  display: grid;
+  min-width: 14.5rem;
+  padding: 0.35rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 50;
+}
+
+.sale-action-popover button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #25344a;
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 650;
+  gap: 0.55rem;
+  grid-template-columns: 1.1rem 1fr;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  width: 100%;
+}
+
+.sale-action-popover button:hover:not(:disabled) {
+  background: #f0f5fc;
+  color: #155bc4;
+}
+
+.sale-action-popover button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.sale-action-popover .menu-action-danger {
+  color: #c92c2c;
+}
+
+.menu-separator {
+  border-top: 1px solid #e5ebf3;
+  margin: 0.25rem 0;
+}
+
+.empty-table-cell {
+  color: #718096;
+  padding: 2.5rem !important;
+  text-align: center;
 }
 
 .venta-form {
@@ -216,14 +487,6 @@
 
 .fact-alert--local {
   background: #047857;
-}
-
-.doc-cell small {
-  color: var(--az-text-soft);
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 750;
-  margin-bottom: 0.12rem;
 }
 
 .fact-alert strong {
@@ -457,6 +720,12 @@
   font-size: 0.82rem;
 }
 
+.detalle-print-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+}
+
 .trace-actions {
   display: inline-flex;
   gap: 0.45rem;
@@ -502,6 +771,59 @@
 
   .search-wrap {
     border-color: #4b5563;
+  }
+
+  ::ng-deep .sales-ledger-table {
+    .p-datatable-thead > tr > th {
+      background: #192333;
+      border-color: #334155;
+      color: #aebbd0;
+    }
+
+    .p-datatable-tbody > tr > td {
+      background: #202b3b;
+      border-color: #334155;
+      color: #e5edf8;
+    }
+
+    .p-datatable-tbody > tr:hover > td,
+    .p-datatable-tbody > tr.is-selected > td {
+      background: #26364c;
+    }
+  }
+
+  .doc-cell strong,
+  .amount-cell,
+  .customer-cell strong,
+  .date-cell strong {
+    color: #f7fafc;
+  }
+
+  .date-cell span,
+  .doc-cell small,
+  .customer-cell small,
+  .date-cell small,
+  .status-cell small {
+    color: #9baac0;
+  }
+
+  .sale-action-menu summary {
+    border-color: #46556a;
+    color: #bdd0e8;
+  }
+
+  .sale-action-popover {
+    background: #172233;
+    border-color: #425169;
+  }
+
+  .sale-action-popover button {
+    color: #dce7f6;
+  }
+
+  .sale-action-popover button:hover:not(:disabled) {
+    background: #25344a;
+    color: #8dbbff;
   }
 
   .rule-box {
@@ -610,5 +932,10 @@
   .detalle-download {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .detalle-print-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }

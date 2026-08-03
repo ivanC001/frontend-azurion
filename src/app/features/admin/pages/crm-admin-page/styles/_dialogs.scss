@@ -1,0 +1,1572 @@
+.activity-register-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.activity-register-form--complete {
+  display: block;
+}
+
+.activity-complete-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.activity-complete-close {
+  all: unset;
+  cursor: pointer;
+}
+
+.activity-complete-title {
+  align-items: center;
+  display: flex;
+  font-size: 1.08rem;
+}
+
+.activity-complete-title span {
+  align-items: center;
+  background: #eaf3ff;
+  border-radius: 999px;
+  color: #0b6eea;
+  display: inline-flex;
+  height: 2.2rem;
+  justify-content: center;
+  width: 2.2rem;
+}
+
+.activity-complete-topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 0.55rem;
+}
+
+.activity-complete-actions {
+  display: inline-flex;
+  gap: 0.62rem;
+  justify-content: flex-end;
+}
+
+.activity-register-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(14rem, 0.75fr) minmax(0, 1.55fr);
+}
+
+.activity-context-card {
+  align-self: stretch;
+  background:
+    linear-gradient(150deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.08)), var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-primary) 20%, var(--az-border));
+  border-radius: 0.95rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-rows: auto 1fr;
+  padding: 1rem;
+}
+
+.activity-context-card > i {
+  align-items: center;
+  background: linear-gradient(135deg, var(--az-primary), #10b981);
+  border-radius: 0.85rem;
+  color: #fff;
+  display: inline-flex;
+  font-size: 1.05rem;
+  height: 2.8rem;
+  justify-content: center;
+  width: 2.8rem;
+}
+
+.activity-context-card--empty > i {
+  background: linear-gradient(135deg, #64748b, #2563eb);
+}
+
+.activity-context-card span,
+.activity-context-card p,
+.activity-context-card small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.activity-context-card strong {
+  color: var(--az-text);
+  display: block;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  margin: 0.18rem 0;
+}
+
+.activity-context-card p {
+  margin: 0 0 0.28rem;
+}
+
+.activity-context-card hr {
+  border: 0;
+  border-top: 1px solid var(--az-border);
+  margin: 0.45rem 0;
+}
+
+.activity-context-meta {
+  align-items: center;
+  display: flex !important;
+  gap: 0.42rem;
+}
+
+.activity-context-meta i {
+  color: var(--az-primary);
+  font-size: 0.82rem;
+}
+
+.activity-register-fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.activity-qualification-note {
+  background: color-mix(in srgb, #eff6ff 78%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #60a5fa 28%, var(--az-border));
+  border-radius: 0.72rem;
+  color: var(--az-text-soft);
+  display: grid;
+  gap: 0.15rem;
+  line-height: 1.28;
+  margin-bottom: 0.7rem;
+  padding: 0.62rem 0.75rem;
+}
+
+.activity-qualification-note i {
+  color: var(--az-primary);
+  grid-row: 1 / span 2;
+}
+
+.activity-qualification-note strong {
+  color: var(--az-text);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.activity-qualification-note span {
+  font-size: 0.76rem;
+}
+
+.activity-field-section {
+  background: color-mix(in srgb, var(--az-page-bg) 48%, var(--az-surface));
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+}
+
+.activity-field-section h3 {
+  color: var(--az-text);
+  font-size: 0.84rem;
+  font-weight: 950;
+  margin: 0;
+}
+
+.activity-section-title {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.activity-next-toggle {
+  align-items: center;
+  color: #047857;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 900;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.dialog-grid--activity {
+  gap: 0.7rem;
+}
+
+.activity-help-note {
+  background: color-mix(in srgb, #10b981 8%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 24%, var(--az-border));
+  border-radius: 0.65rem;
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+}
+
+.activity-register-form--complete .activity-register-layout {
+  align-items: stretch;
+  gap: 1.4rem;
+  grid-template-columns: 12rem minmax(0, 1fr);
+}
+
+.activity-register-form--complete .activity-context-card {
+  background: linear-gradient(160deg, #f8fbff, #f0fdfa);
+  border-color: #cfe0f4;
+  border-radius: 0.9rem;
+  gap: 0.65rem;
+  min-height: 29.4rem;
+  padding: 1.05rem 1.35rem;
+}
+
+.activity-register-form--complete .activity-context-card > i {
+  background: #dbeafe;
+  border-radius: 999px;
+  color: #0b6eea;
+  font-size: 1.15rem;
+  height: 2.8rem;
+  width: 2.8rem;
+}
+
+.activity-register-form--complete .activity-context-card span,
+.activity-register-form--complete .activity-context-card p,
+.activity-register-form--complete .activity-context-card small {
+  font-size: 0.72rem;
+  line-height: 1.42;
+}
+
+.activity-register-form--complete .activity-context-card strong {
+  font-size: 1rem;
+  line-height: 1.15;
+  margin: 0.25rem 0 0.55rem;
+}
+
+.activity-register-form--complete .activity-context-card hr {
+  margin: 0.62rem 0;
+}
+
+.activity-register-form--complete .activity-context-meta {
+  align-items: flex-start;
+  display: grid !important;
+  gap: 0.45rem;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  margin: 0 0 0.72rem;
+}
+
+.activity-register-form--complete .activity-field-section {
+  background: #fff;
+  border-radius: 0.74rem;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.activity-register-form--complete label {
+  font-size: 0.68rem;
+  min-width: 0;
+}
+
+.activity-register-form--complete .activity-section--main .dialog-grid--activity {
+  gap: 0.7rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1.45fr);
+}
+
+.activity-register-form--complete .activity-result-grid {
+  gap: 0.62rem 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.activity-register-form--complete textarea {
+  min-height: 3rem !important;
+}
+
+.activity-register-form--complete .activity-next-section {
+  align-items: center;
+  gap: 0.85rem;
+  grid-template-columns: 1.1fr 1.9fr;
+}
+
+.activity-register-form--complete .activity-next-section > .dialog-grid {
+  gap: 0.82rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.activity-register-form--complete .activity-next-section .wide-field {
+  grid-column: 1 / -1;
+}
+
+.activity-register-form--complete .activity-qualification-note {
+  gap: 0.1rem 0.65rem;
+  grid-template-columns: 1.35rem minmax(0, 1fr);
+  margin-bottom: 0;
+  padding: 0.55rem 0.75rem;
+}
+
+.activity-register-form--complete .activity-help-note {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  min-height: 2rem;
+  padding: 0.42rem 0.7rem;
+}
+
+.activity-select-option {
+  align-items: center;
+  display: inline-flex;
+  font-size: 0.68rem;
+  gap: 0.38rem;
+}
+
+.activity-select-option i {
+  color: #0b6eea;
+  font-size: 0.72rem;
+}
+
+.activity-select-option--state i {
+  color: #10b981;
+  font-size: 0.52rem;
+}
+
+.activity-actions--hidden {
+  display: none !important;
+}
+
+.kpi-list.compact {
+  border-top: 1px solid var(--az-border);
+  padding-top: 0.75rem;
+}
+
+.funnel-card {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.7rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.funnel-card h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.funnel-row,
+.kpi-list span {
+  align-items: center;
+  background: var(--az-surface-hover);
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr auto auto;
+  padding: 0.65rem 0.75rem;
+}
+
+.funnel-row em {
+  color: var(--az-text-soft);
+  font-style: normal;
+}
+
+.kpi-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.kpi-list span {
+  grid-template-columns: 1fr auto;
+}
+
+.dialog-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.or-form {
+  gap: 0.62rem;
+  grid-template-columns: 1fr !important;
+}
+.or-intro {
+  color: var(--az-text-soft);
+  font-size: 0.74rem;
+  margin: -0.25rem 0 0.25rem;
+}
+.or-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));
+}
+.or-card,
+.or-panel,
+.or-summary,
+.or-desc {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.62rem;
+}
+.or-card {
+  background: linear-gradient(135deg, var(--b), #fff);
+  display: grid;
+  gap: 0.18rem 0.62rem;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  min-height: 5rem;
+  padding: 0.65rem;
+}
+.or-ico {
+  align-items: center;
+  background: color-mix(in srgb, var(--c, #2563eb) 13%, #fff);
+  border-radius: 0.58rem;
+  color: var(--c, #2563eb);
+  display: inline-flex;
+  justify-content: center;
+}
+.or-card > .or-ico {
+  font-size: 1rem;
+  grid-row: 1 / span 4;
+  height: 2.25rem;
+  width: 2.25rem;
+}
+.or-card span,
+.or-card p {
+  color: var(--az-text-soft);
+  font-size: 0.68rem;
+  line-height: 1.28;
+  margin: 0;
+}
+.or-card span {
+  text-transform: uppercase;
+  font-weight: 900;
+}
+.or-card strong {
+  font-size: 0.78rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.or-card b {
+  color: #059669;
+  font-size: 0.88rem;
+}
+.or-layout {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 1.08fr 1.55fr 0.9fr;
+}
+.or-panel,
+.or-summary {
+  display: grid;
+  gap: 0.56rem;
+  padding: 0.72rem;
+}
+.or-panel h4,
+.or-summary h4 {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border);
+  display: flex;
+  font-size: 0.78rem;
+  gap: 0.45rem;
+  margin: 0;
+  padding-bottom: 0.42rem;
+}
+.or-panel h4 .or-ico {
+  --c: #8b5cf6;
+  height: 1.45rem;
+  width: 1.45rem;
+}
+.or-mini {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.or-summary {
+  background: linear-gradient(135deg, #f8fafc, #ecfdf5);
+}
+.or-summary p {
+  align-items: center;
+  border-top: 1px solid color-mix(in srgb, var(--az-border) 70%, #dcfce7);
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  margin: 0;
+  padding-top: 0.55rem;
+}
+.or-summary p:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.or-summary .or-ico {
+  --c: #22c55e;
+  height: 2rem;
+  width: 2rem;
+}
+.or-summary span {
+  color: var(--az-text-soft);
+  font-size: 0.68rem;
+}
+.or-summary strong {
+  color: var(--az-text);
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.12rem;
+}
+.or-desc {
+  display: block;
+  padding: 0.72rem;
+}
+.or-desc span {
+  align-items: center;
+  display: flex;
+  font-weight: 900;
+  gap: 0.42rem;
+  margin-bottom: 0.5rem;
+}
+.or-desc .or-ico {
+  --c: #8b5cf6;
+  height: 1.35rem;
+  width: 1.35rem;
+}
+.or-desc textarea {
+  min-height: 3.4rem !important;
+}
+
+.dialog-grid label {
+  min-width: 0;
+}
+
+.activity-status-field small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 0.32rem;
+}
+
+.check-row {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary) 5%, var(--az-surface));
+  border: 1px solid var(--az-border);
+  border-radius: 0.65rem;
+  display: flex;
+  flex-direction: row;
+  gap: 0.55rem;
+  min-height: 2.8rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.check-row input {
+  height: 1.05rem;
+  width: 1.05rem;
+}
+
+.manual-origin-note {
+  align-items: center;
+  background: color-mix(in srgb, #10b981 10%, var(--az-surface));
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: 0.65rem;
+  color: #047857;
+  display: flex;
+  font-weight: 850;
+  gap: 0.55rem;
+  min-height: 2.85rem;
+  padding: 0.65rem 0.8rem;
+}
+
+.manual-origin-note i {
+  font-size: 0.95rem;
+}
+
+.crm-admin-config-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.quote-lines {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.quote-line {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(12rem, 1.4fr) minmax(10rem, 1fr) 5rem 6.5rem 6rem 6rem 2.5rem;
+}
+
+.quote-line--modern {
+  background: #fff;
+  border: 1px solid var(--az-border);
+  border-radius: 0.85rem;
+  grid-template-columns: minmax(18rem, 1.7fr) 5rem 7rem 6rem minmax(11rem, 0.9fr) 7rem 2.5rem;
+  padding: 0.55rem;
+}
+
+.quote-line--header {
+  background: transparent;
+  border: 0;
+  color: var(--az-text-soft);
+  font-size: 0.68rem;
+  padding-block: 0;
+}
+
+.quote-line-total {
+  display: grid;
+  justify-items: end;
+  line-height: 1.1;
+}
+
+.quote-line-total small {
+  color: #059669;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.quote-modern-form {
+  gap: 0.95rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.quote-modern-hero {
+  align-items: center;
+  background: linear-gradient(135deg, #f8fbff, #ecfdf5);
+  border: 1px solid color-mix(in srgb, #38bdf8 38%, var(--az-border));
+  border-radius: 1rem;
+  box-shadow: 0 0.75rem 1.7rem rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 1rem;
+}
+
+.quote-company-mark {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  display: inline-flex;
+  height: 4rem;
+  justify-content: center;
+  overflow: hidden;
+  width: 4rem;
+}
+
+.quote-company-mark img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.quote-company-mark span,
+.quote-modern-hero > strong {
+  color: var(--az-text);
+  font-size: 1.25rem;
+  font-weight: 950;
+}
+
+.quote-modern-hero h3,
+.quote-modern-hero p {
+  margin: 0;
+}
+
+.quote-modern-hero h3 {
+  color: var(--az-text);
+  font-size: 1.2rem;
+  line-height: 1.1;
+}
+
+.quote-modern-hero span,
+.quote-modern-hero p,
+.quote-offer-card__head span {
+  color: var(--az-text-soft);
+  font-size: 0.78rem;
+}
+
+.quote-context-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quote-context-card {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: 0.82rem;
+}
+
+.quote-context-card i {
+  align-items: center;
+  background: #dbeafe;
+  border-radius: 0.78rem;
+  color: #2563eb;
+  display: inline-flex;
+  height: 2.55rem;
+  justify-content: center;
+  width: 2.55rem;
+}
+
+.quote-context-card--product i {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.quote-context-card--seller i {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.quote-context-card span,
+.quote-context-card p,
+.quote-commercial-card span,
+.quote-offer-card__footer span {
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+}
+
+.quote-context-card strong {
+  color: var(--az-text);
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  margin: 0.08rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-context-card p,
+.quote-offer-card__footer span {
+  line-height: 1.35;
+  margin: 0;
+}
+
+.quote-commercial-card {
+  background: color-mix(in srgb, var(--az-page-bg) 72%, #fff);
+  border: 1px solid var(--az-border);
+  border-radius: 0.95rem;
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.9rem;
+}
+
+.quote-commercial-card__head {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.quote-commercial-card__head strong {
+  color: var(--az-text);
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
+}
+
+.quote-modern-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.quote-modern-grid--conditions {
+  grid-template-columns: minmax(12rem, 0.35fr) minmax(0, 1fr);
+}
+
+.quote-modern-grid--conditions .wide-field {
+  grid-column: auto;
+}
+
+.quote-offer-card {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+
+.quote-offer-card__head {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.quote-offer-card__head > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.quote-offer-card__head b {
+  background: #ecfeff;
+  border-radius: 999px;
+  color: #0f766e;
+  padding: 0.3rem 0.65rem;
+}
+
+.quote-offer-card__footer {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+}
+
+.quote-promotion-card {
+  background: #f8fafc;
+  border: 1px dashed #bfdbfe;
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.quote-promotion-card h3,
+.quote-promotion-card p {
+  margin: 0;
+}
+
+.quote-promotion-card span,
+.quote-promotion-card p {
+  color: var(--az-text-soft);
+  font-size: 0.78rem;
+}
+
+.quote-promotion-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 0.85fr 1.1fr 0.85fr 0.7fr 0.8fr 0.8fr 1fr auto;
+}
+
+.quote-promotion-description {
+  min-width: 0;
+}
+
+.quote-promotion-save {
+  align-items: center;
+  background: #10b981;
+  border: 0;
+  border-radius: 0.65rem;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 0.35rem;
+  justify-content: center;
+  padding: 0.65rem 0.8rem;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .p-select,
+:host ::ng-deep textarea[ptextarea],
+textarea {
+  width: 100%;
+}
+
+:host ::ng-deep .crm-dialog {
+  max-width: calc(100vw - 2rem);
+  width: min(52rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .crm-dialog--form {
+  width: min(96rem, calc(100vw - 1.25rem));
+}
+
+:host ::ng-deep .crm-dialog--form .p-dialog {
+  max-height: calc(100vh - 2rem);
+}
+
+:host ::ng-deep .crm-dialog--form .p-dialog-content {
+  max-height: calc(100vh - 8rem);
+  overflow-x: hidden;
+  padding-bottom: 0;
+}
+
+:host ::ng-deep .crm-dialog--activity.p-dialog,
+:host ::ng-deep .crm-dialog--activity .p-dialog {
+  max-width: calc(100vw - 1rem) !important;
+  width: 64rem !important;
+}
+
+:host ::ng-deep .crm-dialog--quote-modern {
+  width: min(82rem, calc(100vw - 1.25rem));
+}
+
+:host ::ng-deep .crm-dialog--activity .p-dialog-content {
+  max-height: calc(100vh - 2.5rem);
+  overflow-x: hidden;
+  padding: 0.25rem 1rem 1rem;
+}
+
+:host ::ng-deep .activity-register-form--complete .p-select,
+:host ::ng-deep .activity-register-form--complete input[pinputtext],
+:host ::ng-deep .activity-register-form--complete textarea[ptextarea] {
+  border-radius: 0.42rem;
+  min-height: 2rem;
+  min-width: 0;
+  width: 100%;
+}
+
+:host ::ng-deep .activity-register-form--complete .p-select-label,
+:host ::ng-deep .activity-register-form--complete input[pinputtext],
+:host ::ng-deep .activity-register-form--complete textarea[ptextarea] {
+  color: #40506a;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+:host ::ng-deep .activity-register-form--complete input[name='actAsunto'],
+:host ::ng-deep .activity-register-form--complete .activity-subject-input {
+  font-size: 0.68rem;
+}
+
+:host ::ng-deep .activity-mini-panel .p-select-option {
+  font-size: 0.72rem;
+  padding: 0.42rem 0.6rem;
+}
+
+:host ::ng-deep .activity-complete-actions .p-button {
+  border-radius: 0.42rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  min-height: 2.05rem;
+  min-width: 6.4rem;
+  padding: 0.35rem 0.7rem;
+}
+
+:host ::ng-deep .crm-dialog--followup-detail {
+  max-height: calc(100vh - 1.5rem);
+  width: min(84rem, calc(100vw - 1.5rem));
+}
+
+:host ::ng-deep .crm-dialog--followup-detail .p-dialog-header {
+  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  border-bottom: 1px solid var(--az-border);
+  border-radius: 1rem 1rem 0 0;
+  flex-shrink: 0;
+  padding: 0.72rem 0.95rem;
+}
+
+:host ::ng-deep .crm-dialog--followup-detail .p-dialog-title {
+  color: var(--az-text);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+:host ::ng-deep .crm-dialog--followup-detail .p-dialog-header-close {
+  border: 1px solid var(--az-border);
+  border-radius: 0.65rem;
+  color: var(--az-text-soft);
+  height: 2.3rem;
+  width: 2.3rem;
+}
+
+:host ::ng-deep .crm-dialog--followup-detail .p-dialog-content {
+  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  border-radius: 0 0 1rem 1rem;
+  max-height: calc(100vh - 5.3rem);
+  overflow: auto;
+  padding: 0;
+}
+
+:host ::ng-deep .crm-dialog--opportunity-detail {
+  max-height: calc(100vh - 1.5rem);
+  width: min(92rem, calc(100vw - 1.5rem));
+}
+
+:host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-header {
+  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  border-bottom: 1px solid var(--az-border);
+  border-radius: 1rem 1rem 0 0;
+  padding: 0.75rem 0.95rem;
+}
+
+:host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-title {
+  color: var(--az-text);
+  font-size: 0.95rem;
+  font-weight: 950;
+}
+
+:host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-header-close {
+  border: 1px solid var(--az-border);
+  border-radius: 0.65rem;
+  color: var(--az-text-soft);
+  height: 2.3rem;
+  width: 2.3rem;
+}
+
+:host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-content {
+  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  border-radius: 0 0 1rem 1rem;
+  max-height: calc(100vh - 5.25rem);
+  overflow: auto;
+  padding: 0;
+}
+
+@media (max-width: 1180px) {
+  :host ::ng-deep .crm-dialog--followup-detail {
+    width: min(72rem, calc(100vw - 1rem));
+  }
+
+  :host ::ng-deep .crm-dialog--opportunity-detail {
+    width: min(74rem, calc(100vw - 1rem));
+  }
+
+  .opportunity-kpi-strip,
+  .opportunity-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .opportunity-activity-card {
+    grid-column: 1 / -1;
+  }
+
+  .opportunity-side-stack {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  :host ::ng-deep .crm-dialog--followup-detail {
+    max-height: calc(100vh - 0.75rem);
+    width: calc(100vw - 0.75rem);
+  }
+
+  :host ::ng-deep .crm-dialog--followup-detail .p-dialog-header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  :host ::ng-deep .crm-dialog--followup-detail .p-dialog-content {
+    max-height: calc(100vh - 4.5rem);
+  }
+
+  :host ::ng-deep .crm-dialog--opportunity-detail {
+    max-height: calc(100vh - 0.75rem);
+    width: calc(100vw - 0.75rem);
+  }
+
+  :host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  :host ::ng-deep .crm-dialog--opportunity-detail .p-dialog-content {
+    max-height: calc(100vh - 4.5rem);
+  }
+
+  .opportunity-detail-head,
+  .opportunity-kpi-strip,
+  .opportunity-detail-grid,
+  .opportunity-side-stack,
+  .opportunity-score,
+  .opportunity-activity-item {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunity-detail-head {
+    align-items: stretch;
+  }
+
+  .opportunity-detail-actions {
+    justify-content: stretch;
+  }
+
+  .opportunity-detail-actions button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .opportunity-kpi-strip article {
+    border-right: 0;
+    border-bottom: 1px solid var(--az-border);
+    padding: 0.45rem 0;
+  }
+
+  .opportunity-kpi-strip article:last-child {
+    border-bottom: 0;
+  }
+
+  .opportunity-activity-item aside {
+    justify-items: start;
+  }
+}
+
+:host ::ng-deep .crm-dialog--form .dialog-form {
+  display: grid;
+  gap: 1rem;
+}
+
+:host ::ng-deep .crm-dialog--form .dialog-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+:host ::ng-deep .crm-dialog--form .wide-field {
+  grid-column: span 2;
+}
+
+:host ::ng-deep .crm-dialog--form .full-field {
+  grid-column: 1 / -1;
+}
+
+:host ::ng-deep .crm-dialog--form textarea,
+:host ::ng-deep .crm-dialog--form textarea[ptextarea] {
+  min-height: 7rem;
+}
+
+:host ::ng-deep .crm-dialog--form .dialog-actions {
+  background: color-mix(in srgb, var(--az-surface) 98%, white);
+  border-top: 1px solid var(--az-border);
+  bottom: 0;
+  margin: 0 -1.5rem;
+  padding: 0.85rem 1.5rem 0;
+  position: sticky;
+  z-index: 2;
+}
+
+:host ::ng-deep .crm-dialog--opportunity-register {
+  width: min(72rem, calc(100vw - 1rem));
+}
+
+:host ::ng-deep .crm-dialog--prospect-register {
+  max-width: calc(100vw - 1rem);
+  width: min(78rem, calc(100vw - 1rem));
+}
+
+:host ::ng-deep .crm-dialog--prospect-register .p-dialog-content {
+  max-height: calc(100vh - 1.5rem);
+  overflow: auto;
+  padding: 0;
+}
+
+.prospect-register-form {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #f8fafc 78%, var(--az-surface)),
+    var(--az-surface)
+  );
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.prospect-register-head {
+  align-items: center;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.prospect-title-block {
+  align-items: center;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+}
+
+.prospect-title-block > i {
+  align-items: center;
+  background: #dcfce7;
+  border-radius: 0.85rem;
+  color: #059669;
+  display: inline-flex;
+  font-size: 1.15rem;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.prospect-title-block h2 {
+  font-size: 1.2rem;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.prospect-title-block p {
+  color: var(--az-text-soft);
+  font-size: 0.82rem;
+  margin: 0.2rem 0 0;
+}
+
+.prospect-head-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.icon-close-button,
+.soft-button,
+.save-button,
+.outline-success-button {
+  align-items: center;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-weight: 850;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.7rem;
+}
+
+.icon-close-button {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  color: var(--az-text-soft);
+  justify-content: center;
+  padding: 0;
+  width: 2.25rem;
+}
+
+.soft-button {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  color: var(--az-text);
+}
+
+.save-button {
+  background: #10b981;
+  border: 1px solid #10b981;
+  color: white;
+}
+
+.save-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.prospect-register-layout {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prospect-form-card {
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #dbeafe);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.45rem 1.2rem rgba(15, 23, 42, 0.035);
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.8rem;
+}
+
+.section-title {
+  align-items: center;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1.8rem minmax(0, 1fr);
+}
+
+.section-title > i {
+  align-items: center;
+  background: #dcfce7;
+  border-radius: 0.6rem;
+  color: #059669;
+  display: inline-flex;
+  height: 1.8rem;
+  justify-content: center;
+  width: 1.8rem;
+}
+
+.section-title strong,
+.section-title span {
+  display: block;
+}
+
+.section-title strong {
+  font-size: 0.9rem;
+}
+
+.section-title span {
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+}
+
+.prospect-input-grid,
+.compact-fields-grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.prospect-input-grid label,
+.compact-fields-grid label,
+.product-register-grid label {
+  min-width: 0;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-3 {
+  grid-column: 1 / -1;
+}
+
+.product-register-grid {
+  align-items: end;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(16rem, 0.8fr) minmax(18rem, 1.3fr) auto;
+}
+
+.product-help {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.product-help strong {
+  font-size: 0.88rem;
+}
+
+.product-help p {
+  color: var(--az-text-soft);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.outline-success-button {
+  background: var(--az-surface);
+  border: 1px solid #10b981;
+  color: #059669;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.compact-preview {
+  margin-top: -0.15rem;
+}
+
+.prospect-detail-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.notes-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.notes-grid label {
+  grid-column: auto;
+}
+
+.prospect-register-footer {
+  align-items: center;
+  border-top: 1px solid var(--az-border);
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
+}
+
+:host ::ng-deep .crm-dialog--catalogo {
+  width: min(64rem, calc(100vw - 2rem));
+}
+
+:host ::ng-deep .crm-dialog--catalog-register .catalog-quick-form {
+  display: block;
+  min-height: 100%;
+  padding-top: 0;
+}
+
+:host ::ng-deep .crm-dialog--catalog-register .catalog-form-grid {
+  grid-template-columns: 1fr;
+}
+
+:host ::ng-deep .crm-dialog--catalog-register .p-dialog-content {
+  overflow-x: hidden;
+}
+
+:host ::ng-deep .crm-dialog--wide {
+  width: min(72rem, calc(100vw - 2rem));
+}
+
+@media (max-width: 1080px) {
+  .catalog-type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@keyframes crmRise {
+  from {
+    opacity: 0;
+    transform: translateY(0.45rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 980px) {
+  .crm-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-header > div:first-child {
+    min-width: 0;
+  }
+
+  .crm-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .crm-header-search {
+    max-width: none;
+    min-width: min(18rem, 100%);
+  }
+
+  .salesforce-view,
+  .catalog-info-strip,
+  .followup-board,
+  .crm-admin-grid,
+  .crm-promotion-admin-layout,
+  .crm-workstrip,
+  .capture-board,
+  .crm-subfilters,
+  .quote-context-grid,
+  .quote-modern-grid--conditions {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-funnel-actions {
+    justify-content: flex-end;
+  }
+
+  .crm-dashboard,
+  .dialog-grid,
+  .quote-modern-grid,
+  .quote-line {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-line--header {
+    display: none;
+  }
+
+  .quote-modern-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-modern-hero > strong,
+  .quote-line-total {
+    justify-items: start;
+  }
+
+  .quote-offer-card__footer,
+  .crm-integration-admin-card header,
+  .crm-promotion-admin-card header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-promotion-admin-form {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-promotion-admin-form label,
+  .crm-promotion-admin-form .wide-field {
+    grid-column: auto;
+  }
+
+  .crm-integration-fields {
+    grid-template-columns: 1fr;
+  }
+
+  :host ::ng-deep .crm-dialog--form .dialog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  :host ::ng-deep .crm-dialog--form .wide-field {
+    grid-column: 1 / -1;
+  }
+
+  .or-grid,
+  .or-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+}
+
+@media (max-width: 640px) {
+  .pipeline-head,
+  .table-head,
+  .crm-admin-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-admin-hero__actions {
+    justify-content: stretch;
+  }
+
+  .crm-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .crm-header-search {
+    flex-basis: auto;
+    min-width: 0;
+  }
+
+  .crm-funnel-actions {
+    justify-content: stretch;
+  }
+
+  .crm-funnel-actions button {
+    flex: 1 1 auto;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .catalog-selected-type {
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+  }
+
+  .catalog-selected-type button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 420px) {
+  .catalog-type-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CRM polish overrides */

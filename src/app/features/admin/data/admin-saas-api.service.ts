@@ -405,6 +405,7 @@ export interface CajaMovimiento {
 }
 
 export type TipoComprobanteVenta = 'FACTURA' | 'BOLETA' | 'BOLETA_SIN_NOMBRE' | 'TICKET_VENTA';
+export type FormatoImpresionComprobante = 'A4' | 'TICKET';
 
 export interface VentaProductoRequest {
   readonly productoId: number;
@@ -532,17 +533,7 @@ export interface FacturadorVentaResponse {
   readonly data?: unknown;
 }
 
-export interface VentaRecord {
-  readonly id: number;
-  readonly externalId: string;
-  readonly clienteDocumento: string;
-  readonly clienteNombre: string;
-  readonly moneda: string;
-  readonly total: number;
-  readonly cajaTurnoId?: number | null;
-  readonly formaPago?: string | null;
-  readonly metodoPago?: string | null;
-  readonly fechaVenta: string;
+export interface FacturadorDocumentStatus {
   readonly facturacionEstado?: string | null;
   readonly facturacionIntentos?: number | null;
   readonly facturadorHttpStatus?: number | null;
@@ -559,53 +550,28 @@ export interface VentaRecord {
   readonly facturacionActualizadoEn?: string | null;
 }
 
-export interface VentaStatusStreamEvent {
+export interface VentaRecord extends FacturadorDocumentStatus {
+  readonly id: number;
+  readonly externalId: string;
+  readonly clienteDocumento: string;
+  readonly clienteNombre: string;
+  readonly moneda: string;
+  readonly total: number;
+  readonly cajaTurnoId?: number | null;
+  readonly formaPago?: string | null;
+  readonly metodoPago?: string | null;
+  readonly fechaVenta: string;
+}
+
+export interface VentaStatusStreamEvent extends FacturadorDocumentStatus {
   readonly tenantId?: string | null;
   readonly source?: string | null;
   readonly ventaId?: number | null;
   readonly externalId: string;
-  readonly facturacionEstado?: string | null;
-  readonly facturacionIntentos?: number | null;
-  readonly facturadorHttpStatus?: number | null;
-  readonly facturadorEndpoint?: string | null;
-  readonly facturadorTipoComprobante?: string | null;
-  readonly facturadorMensaje?: string | null;
-  readonly facturadorSunatEstado?: string | null;
-  readonly facturadorDocumentoId?: string | null;
-  readonly facturadorTicket?: string | null;
-  readonly facturadorPdfUrl?: string | null;
-  readonly facturadorXmlUrl?: string | null;
-  readonly facturadorCdrUrl?: string | null;
-  readonly facturacionActualizadoEn?: string | null;
 }
 
 export interface RegistrarVentaCajaResponse {
-  readonly venta: {
-    readonly id: number;
-    readonly externalId: string;
-    readonly clienteDocumento: string;
-    readonly clienteNombre: string;
-    readonly moneda: string;
-    readonly total: number;
-    readonly cajaTurnoId?: number | null;
-    readonly formaPago?: string | null;
-    readonly metodoPago?: string | null;
-    readonly fechaVenta: string;
-    readonly facturacionEstado?: string | null;
-    readonly facturacionIntentos?: number | null;
-    readonly facturadorHttpStatus?: number | null;
-    readonly facturadorEndpoint?: string | null;
-    readonly facturadorTipoComprobante?: string | null;
-    readonly facturadorMensaje?: string | null;
-    readonly facturadorSunatEstado?: string | null;
-    readonly facturadorDocumentoId?: string | null;
-    readonly facturadorTicket?: string | null;
-    readonly facturadorPdfUrl?: string | null;
-    readonly facturadorXmlUrl?: string | null;
-    readonly facturadorCdrUrl?: string | null;
-    readonly facturadorRespuestaJson?: string | null;
-    readonly facturacionActualizadoEn?: string | null;
-  };
+  readonly venta: VentaRecord;
   readonly movimientoCaja: CajaMovimiento | null;
   readonly facturacion: FacturadorVentaResponse;
 }
@@ -633,7 +599,7 @@ export interface RegistrarGuiaRemisionResponse {
   readonly facturacion: FacturadorVentaResponse;
 }
 
-export interface GuiaRemisionRecord {
+export interface GuiaRemisionRecord extends FacturadorDocumentStatus {
   readonly id: number;
   readonly externalId: string;
   readonly sucursalOrigenId: number;
@@ -648,20 +614,6 @@ export interface GuiaRemisionRecord {
   readonly responsableId: string;
   readonly responsableNombre: string;
   readonly itemsResumen?: string | null;
-  readonly facturacionEstado?: string | null;
-  readonly facturacionIntentos?: number | null;
-  readonly facturadorHttpStatus?: number | null;
-  readonly facturadorEndpoint?: string | null;
-  readonly facturadorTipoComprobante?: string | null;
-  readonly facturadorMensaje?: string | null;
-  readonly facturadorSunatEstado?: string | null;
-  readonly facturadorDocumentoId?: string | null;
-  readonly facturadorTicket?: string | null;
-  readonly facturadorPdfUrl?: string | null;
-  readonly facturadorXmlUrl?: string | null;
-  readonly facturadorCdrUrl?: string | null;
-  readonly facturadorRespuestaJson?: string | null;
-  readonly facturacionActualizadoEn?: string | null;
 }
 
 export interface RegistrarNotaFiscalRequest {
@@ -680,7 +632,7 @@ export interface RegistrarNotaFiscalResponse {
   readonly facturacion: FacturadorVentaResponse;
 }
 
-export interface NotaFiscalRecord {
+export interface NotaFiscalRecord extends FacturadorDocumentStatus {
   readonly id: number;
   readonly externalId: string;
   readonly tipoDocumento: string;
@@ -698,20 +650,6 @@ export interface NotaFiscalRecord {
   readonly motivoDescripcion: string;
   readonly responsableId: string;
   readonly responsableNombre: string;
-  readonly facturacionEstado?: string | null;
-  readonly facturacionIntentos?: number | null;
-  readonly facturadorHttpStatus?: number | null;
-  readonly facturadorEndpoint?: string | null;
-  readonly facturadorTipoComprobante?: string | null;
-  readonly facturadorMensaje?: string | null;
-  readonly facturadorSunatEstado?: string | null;
-  readonly facturadorDocumentoId?: string | null;
-  readonly facturadorTicket?: string | null;
-  readonly facturadorPdfUrl?: string | null;
-  readonly facturadorXmlUrl?: string | null;
-  readonly facturadorCdrUrl?: string | null;
-  readonly facturadorRespuestaJson?: string | null;
-  readonly facturacionActualizadoEn?: string | null;
 }
 
 type VentasListPayload =
@@ -757,6 +695,7 @@ export interface Producto {
   readonly manejaLotes?: boolean | null;
   readonly manejaVencimiento?: boolean | null;
   readonly stockMinimoGlobal?: number | null;
+  readonly precioVentaModo?: 'INCLUYE_IGV' | null;
 }
 
 export interface CategoriaProducto {
@@ -963,6 +902,25 @@ export interface InventorySummary {
   readonly projectedProfit: number;
 }
 
+export interface FiscalSummary {
+  readonly desde: string;
+  readonly hasta: string;
+  readonly ventasBrutas: number;
+  readonly ventasNetas: number;
+  readonly debitoFiscal: number;
+  readonly comprasNetas: number;
+  readonly igvCompras: number;
+  readonly creditoFiscal: number;
+  readonly igvPorPagarEstimado: number;
+  readonly saldoCreditoFiscalEstimado: number;
+  readonly costoVentasConocido: number;
+  readonly margenReal: number | null;
+  readonly margenCompleto: boolean;
+  readonly lineasVentaSinCostoHistorico: number;
+  readonly notasHistoricasSinDesglose: number;
+  readonly notasCreditoSinReversionCosto: number;
+}
+
 export interface ProductSummary {
   readonly total: number;
   readonly active: number;
@@ -978,8 +936,17 @@ export interface CompraDetalle {
   readonly productoNombre: string;
   readonly cantidad: number;
   readonly costoUnitario: number;
+  readonly costoNetoUnitario: number;
+  readonly porcentajeIgv: number;
+  readonly montoIgvUnitario: number;
+  readonly costoTotalUnitario: number;
+  readonly costoInventariableUnitario: number;
   readonly precioVenta: number;
+  readonly precioVentaNeto: number;
+  readonly subtotalNeto: number;
+  readonly montoIgv: number;
   readonly total: number;
+  readonly totalCostoInventariable: number;
   readonly ventaProyectada: number;
   readonly gananciaProyectada: number;
   readonly margenPorcentaje: number;
@@ -1002,7 +969,13 @@ export interface Compra {
   readonly almacenId: number;
   readonly almacenCodigo: string;
   readonly almacenNombre: string;
+  readonly subtotalNeto: number;
+  readonly montoIgv: number;
   readonly total: number;
+  readonly creditoFiscalAplicable: boolean;
+  readonly creditoFiscal: number;
+  readonly totalCostoInventariable: number;
+  readonly tratamientoIgv: 'DESGLOSADO' | 'HISTORICO_SIN_DESGLOSE';
   readonly ventaProyectada: number;
   readonly gananciaProyectada: number;
   readonly margenPorcentaje: number;
@@ -1019,11 +992,15 @@ export interface CreateCompraRequest {
   readonly numeroComprobante: string;
   readonly fechaEmision: string;
   readonly almacenId: number;
+  readonly creditoFiscalAplicable: boolean;
   readonly clientOperationId: string;
   readonly detalles: Array<{
     readonly productoId: number;
     readonly cantidad: number;
     readonly costoUnitario: number;
+    readonly costoNetoUnitario: number;
+    readonly porcentajeIgv: number;
+    readonly costoTotalUnitario: number;
     readonly precioVenta: number;
     readonly codigoLote?: string | null;
     readonly fechaFabricacion?: string | null;
@@ -2732,6 +2709,25 @@ export class AdminSaasApiService {
       .pipe(map((response) => response.data));
   }
 
+  getVenta(ventaId: number) {
+    return this.http
+      .get<ApiResponse<VentaRecord>>(
+        this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}`),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  retryVentaDocument(ventaId: number) {
+    return this.http
+      .post<ApiResponse<VentaRecord>>(
+        this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/facturacion/reintentar`),
+        {},
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   getVentasSummary() {
     return this.http
       .get<ApiResponse<VentaSummary>>(
@@ -2776,6 +2772,22 @@ export class AdminSaasApiService {
       .get<ApiResponse<InventorySummary>>(
         this.apiUrl.url('saasCore', '/v1/saas/inventory/summary'),
         { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getFiscalSummary(desde?: string | null, hasta?: string | null) {
+    let params = new HttpParams();
+    if (desde) {
+      params = params.set('desde', desde);
+    }
+    if (hasta) {
+      params = params.set('hasta', hasta);
+    }
+    return this.http
+      .get<ApiResponse<FiscalSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/reportes/fiscal'),
+        { headers: this.session.apiHeaders(), params },
       )
       .pipe(map((response) => response.data));
   }
@@ -3039,9 +3051,31 @@ export class AdminSaasApiService {
       );
   }
 
-  downloadVentaPdf(ventaId: number) {
+  downloadVentaPdf(ventaId: number, formato: FormatoImpresionComprobante = 'A4') {
+    const params = new HttpParams().set('formato', formato);
     return this.http.get(
       this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/comprobante/pdf`),
+      {
+        headers: this.session.apiHeaders(),
+        params,
+        responseType: 'blob',
+      },
+    );
+  }
+
+  downloadVentaXml(ventaId: number) {
+    return this.http.get(
+      this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/comprobante/xml`),
+      {
+        headers: this.session.apiHeaders(),
+        responseType: 'blob',
+      },
+    );
+  }
+
+  downloadVentaCdr(ventaId: number) {
+    return this.http.get(
+      this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/comprobante/cdr`),
       {
         headers: this.session.apiHeaders(),
         responseType: 'blob',

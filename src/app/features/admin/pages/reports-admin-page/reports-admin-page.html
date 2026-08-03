@@ -41,11 +41,11 @@
     </label>
     <label>
       Desde
-      <input pInputText type="date" [ngModel]="startDateFilter()" (ngModelChange)="startDateFilter.set($event || null)" />
+      <input pInputText type="date" [ngModel]="startDateFilter()" (ngModelChange)="onStartDateChange($event)" />
     </label>
     <label>
       Hasta
-      <input pInputText type="date" [ngModel]="endDateFilter()" (ngModelChange)="endDateFilter.set($event || null)" />
+      <input pInputText type="date" [ngModel]="endDateFilter()" (ngModelChange)="onEndDateChange($event)" />
     </label>
     <label>
       Estado / tipo
@@ -106,6 +106,42 @@
   <section class="summary-strip">
     {{ activeFiltersSummary() }}
   </section>
+
+  @if ((moduleFilter() === 'ventas' || moduleFilter() === 'compras') && fiscalSummary(); as fiscal) {
+    <section class="fiscal-panel" aria-label="Resumen tributario y margen real">
+      <div class="fiscal-panel__head">
+        <div>
+          <span><i class="pi pi-calculator"></i> Resumen fiscal del periodo</span>
+          <small>Importes calculados con precios finales que incluyen impuestos.</small>
+        </div>
+        <em>{{ fiscal.desde }} al {{ fiscal.hasta }}</em>
+      </div>
+      <div class="fiscal-grid">
+        <article><span>Ventas brutas</span><strong>S/ {{ fiscal.ventasBrutas.toFixed(2) }}</strong></article>
+        <article><span>Ventas netas</span><strong>S/ {{ fiscal.ventasNetas.toFixed(2) }}</strong></article>
+        <article class="fiscal-card--tax"><span>Debito fiscal</span><strong>S/ {{ fiscal.debitoFiscal.toFixed(2) }}</strong></article>
+        <article><span>Compras netas</span><strong>S/ {{ fiscal.comprasNetas.toFixed(2) }}</strong></article>
+        <article><span>IGV de compras</span><strong>S/ {{ fiscal.igvCompras.toFixed(2) }}</strong></article>
+        <article class="fiscal-card--credit"><span>Credito fiscal</span><strong>S/ {{ fiscal.creditoFiscal.toFixed(2) }}</strong></article>
+        <article class="fiscal-card--payable"><span>IGV por pagar estimado</span><strong>S/ {{ fiscal.igvPorPagarEstimado.toFixed(2) }}</strong></article>
+        <article class="fiscal-card--credit"><span>Saldo a favor estimado</span><strong>S/ {{ fiscal.saldoCreditoFiscalEstimado.toFixed(2) }}</strong></article>
+        <article><span>Costo de ventas conocido</span><strong>S/ {{ fiscal.costoVentasConocido.toFixed(2) }}</strong></article>
+        <article [class.fiscal-card--warning]="!fiscal.margenCompleto">
+          <span>Margen real</span>
+          @if (fiscal.margenCompleto && fiscal.margenReal !== null) {
+            <strong>S/ {{ fiscal.margenReal.toFixed(2) }}</strong>
+          } @else {
+            <strong>Incompleto</strong>
+            <small>
+              {{ fiscal.lineasVentaSinCostoHistorico }} linea(s) sin costo,
+              {{ fiscal.notasHistoricasSinDesglose }} nota(s) sin desglose y
+              {{ fiscal.notasCreditoSinReversionCosto }} nota(s) de credito sin reversion de costo
+            </small>
+          }
+        </article>
+      </div>
+    </section>
+  }
 
   @if (moduleFilter() === 'crm_pipeline') {
     <section class="pipeline-report-panel" aria-label="Exportacion de cuadros del pipeline">

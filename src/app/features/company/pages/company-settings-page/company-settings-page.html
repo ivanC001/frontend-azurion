@@ -38,7 +38,7 @@
       <article><i class="pi pi-file-check"></i><div><span>Certificado</span><strong>{{ sunatCertificateStatusLabel() }}</strong></div></article>
       <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
     } @else {
-      <article><i class="pi pi-receipt"></i><div><span>Documento disponible</span><strong>Ticket interno</strong></div></article>
+      <article><i class="pi pi-receipt"></i><div><span>Documento disponible</span><strong>Ticket de venta</strong></div></article>
       <article><i class="pi pi-globe"></i><div><span>Pais fiscal</span><strong>{{ form.country_name || form.country_code }}</strong></div></article>
       <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
     }
@@ -318,7 +318,7 @@
             <span class="panel__icon panel__icon--sunat"><i class="pi pi-receipt"></i></span>
             <div>
               <h2>Emision para empresa extranjera</h2>
-              <p>El facturador esta disponible en modalidad de ticket interno.</p>
+              <p>El Facturador genera tickets de venta propios, sin envio a SUNAT.</p>
             </div>
           </div>
         </header>

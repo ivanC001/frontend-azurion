@@ -6,7 +6,7 @@ import {
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription, forkJoin, of, timeout } from 'rxjs';
@@ -27,6 +27,7 @@ import {
   Caja,
   Cliente,
   FacturadorVentaResponse,
+  FormatoImpresionComprobante,
   Producto,
   RegistrarVentaCajaResponse,
   TipoComprobanteVenta,
@@ -34,6 +35,7 @@ import {
   VentaSummary,
   VentaStatusStreamEvent,
 } from '../../data/admin-saas-api.service';
+import { isIdentifiedCustomer } from '../../shared/customer-document-rules';
 
 type ClienteTipoDoc = '0' | '1' | '6';
 type Moneda = 'PEN' | 'USD';
@@ -180,6 +182,7 @@ const ESCENARIO_SUNAT_OPTIONS: Array<{ label: string; value: EscenarioSunat }> =
   imports: [
     DatePipe,
     DecimalPipe,
+    NgClass,
     FormsModule,
     ButtonModule,
     DialogModule,
@@ -230,6 +233,10 @@ export class SalesAdminPage implements OnDestroy {
   protected readonly selectedVenta = signal<VentaRecord | null>(null);
   protected readonly activeTrace = signal<VentaTrace | null>(null);
   protected readonly quickPdfVentaId = signal<number | null>(null);
+  protected readonly quickPdfFormat = signal<FormatoImpresionComprobante | null>(null);
+  protected readonly downloadingArtifact = signal<string | null>(null);
+  protected readonly retryingVentaId = signal<number | null>(null);
+  protected readonly selectedVentaIds = signal<ReadonlySet<number>>(new Set<number>());
 
   protected facturaForm: NuevaFacturaForm = this.createFacturaForm();
 
@@ -279,9 +286,8 @@ export class SalesAdminPage implements OnDestroy {
       }
 
       const estado = this.resolveSunatEstado(venta);
-      if (this.isInternalTicket(venta)) {
+      if (this.isTicketDocument(venta)) {
         ticketsInternos += 1;
-        continue;
       }
       if (estado === 'ACEPTADO') {
         aceptadasSunat += 1;
@@ -303,7 +309,7 @@ export class SalesAdminPage implements OnDestroy {
 
   protected readonly comprobanteOptions = computed(() => {
     const options: Array<{ label: string; value: TipoComprobanteVenta }> = [
-      { label: 'Ticket interno - venta rapida', value: 'TICKET_VENTA' },
+      { label: 'Ticket de venta - emitido por Facturador', value: 'TICKET_VENTA' },
     ];
     if (canIssueElectronicDocuments(this.session.currentSession()?.empresa)) {
       options.push(
@@ -492,7 +498,11 @@ export class SalesAdminPage implements OnDestroy {
     this.stopVentasStatusStream();
     this.ventasStatusStreamSubscription = this.api.streamVentasStatus().subscribe({
       next: (event) => this.applyVentaStatusEvent(event),
-      error: () => this.scheduleVentasStatusReconnect(),
+      error: (error: unknown) => {
+        if (!this.isVentasStatusAuthorizationError(error)) {
+          this.scheduleVentasStatusReconnect();
+        }
+      },
       complete: () => this.scheduleVentasStatusReconnect(),
     });
   }
@@ -520,6 +530,11 @@ export class SalesAdminPage implements OnDestroy {
         this.startVentasStatusStream();
       }
     }, SalesAdminPage.STATUS_STREAM_RECONNECT_MS);
+  }
+
+  private isVentasStatusAuthorizationError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    return message.includes('SSE_HTTP_401') || message.includes('SSE_HTTP_403');
   }
 
   private applyVentaStatusEvent(event: VentaStatusStreamEvent): void {
@@ -787,9 +802,9 @@ export class SalesAdminPage implements OnDestroy {
       return 'Regla factura: RUC (11 digitos) y razon social obligatorios.';
     }
     if (this.facturaForm.tipoComprobante === 'BOLETA') {
-      return 'Regla boleta: si supera S/ 500 se exige DNI de 8 digitos y nombre.';
+      return 'Regla boleta: si supera S/ 500 se exige un cliente identificado con DNI o RUC.';
     }
-    return 'Ticket interno: confirma la venta, descuenta stock y registra caja inmediatamente. No se envia al Facturador ni a SUNAT.';
+    return 'Ticket de venta: registra venta, stock y caja inmediatamente. El Facturador asigna el numero y genera el PDF sin enviarlo a SUNAT.';
   }
 
   protected isTicketForm(): boolean {
@@ -802,15 +817,19 @@ export class SalesAdminPage implements OnDestroy {
       : 'Confirmar y enviar en segundo plano';
   }
 
-  protected isInternalTicket(venta: VentaRecord): boolean {
-    const estado = (venta.facturacionEstado || '').trim().toUpperCase();
+  protected isTicketDocument(venta: VentaRecord): boolean {
     const tipo = (venta.facturadorTipoComprobante || '').trim().toUpperCase();
-    return estado === 'NO_REQUIERE' || tipo === 'TICKET_VENTA' || tipo === 'TICKET';
+    return tipo === 'TICKET_VENTA' || tipo === 'TICKET' || tipo === 'TK';
+  }
+
+  protected isLegacyInternalTicket(venta: VentaRecord): boolean {
+    const estado = (venta.facturacionEstado || '').trim().toUpperCase();
+    return estado === 'NO_REQUIERE';
   }
 
   protected documentTypeLabel(venta: VentaRecord): string {
-    if (this.isInternalTicket(venta)) {
-      return 'Ticket interno';
+    if (this.isTicketDocument(venta)) {
+      return 'Ticket de venta';
     }
     const tipo = (venta.facturadorTipoComprobante || '').trim().toUpperCase();
     return tipo === 'FACTURA' ? 'Factura' : tipo.startsWith('BOLETA') ? 'Boleta' : 'Comprobante';
@@ -969,11 +988,121 @@ export class SalesAdminPage implements OnDestroy {
     }, SalesAdminPage.REQUEST_TIMEOUT_MS);
   }
 
-  protected displayRowNumber(rowIndex: number): number {
-    return Math.max(
-      1,
-      this.ventasTotal() - (this.ventasPage() * this.ventasPageSize() + rowIndex),
-    );
+  protected officialDocumentNumber(venta: VentaRecord): string {
+    const candidate = (venta.facturadorTicket || '').trim().toUpperCase();
+    if (/^[A-Z0-9]{1,8}-[A-Z0-9]{1,16}$/.test(candidate)) {
+      return candidate;
+    }
+    return venta.externalId;
+  }
+
+  protected internalTicketNumber(venta: VentaRecord): string {
+    return `#${String(venta.id).padStart(6, '0')}`;
+  }
+
+  protected clientInitials(venta: VentaRecord): string {
+    const parts = (venta.clienteNombre || 'Cliente')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2);
+    return parts.map((part) => part.charAt(0).toUpperCase()).join('') || 'CL';
+  }
+
+  protected paymentLabel(venta: VentaRecord): string {
+    const method = (venta.metodoPago || venta.formaPago || 'No indicado').trim();
+    return method
+      .toLowerCase()
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  protected paymentIcon(venta: VentaRecord): string {
+    const method = (venta.metodoPago || '').toUpperCase();
+    if (method === 'EFECTIVO') return 'pi pi-money-bill';
+    if (method === 'TARJETA') return 'pi pi-credit-card';
+    if (method === 'TRANSFERENCIA') return 'pi pi-building-columns';
+    if (method === 'YAPE' || method === 'PLIN') return 'pi pi-mobile';
+    return 'pi pi-wallet';
+  }
+
+  protected currencySymbol(venta: VentaRecord): string {
+    const currency = (venta.moneda || 'PEN').trim().toUpperCase();
+    if (currency === 'PEN') return 'S/';
+    if (currency === 'USD') return '$';
+    if (currency === 'EUR') return 'EUR';
+    return currency;
+  }
+
+  protected relativeSaleDate(venta: VentaRecord): string {
+    const timestamp = new Date(venta.fechaVenta).getTime();
+    if (!Number.isFinite(timestamp)) return '';
+    const elapsedMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
+    if (elapsedMinutes < 1) return 'Ahora';
+    if (elapsedMinutes < 60) return `Hace ${elapsedMinutes} min`;
+    const hours = Math.floor(elapsedMinutes / 60);
+    if (hours < 24) return `Hace ${hours} h`;
+    const days = Math.floor(hours / 24);
+    return days === 1 ? 'Ayer' : `Hace ${days} dias`;
+  }
+
+  protected statusDisplayLabel(venta: VentaRecord): string {
+    const status = this.rowEstadoLabel(venta).toUpperCase();
+    if (status === 'ACEPTADO') return 'Aceptado';
+    if (status === 'RECHAZADO') return 'Rechazado';
+    if (status === 'ERROR') return 'Error';
+    if (status === 'PENDIENTE' || status === 'PROCESANDO') return 'En cola';
+    if (status === 'NO REQUIERE') return 'Registrado';
+    return status.charAt(0) + status.slice(1).toLowerCase();
+  }
+
+  protected statusDetailLabel(venta: VentaRecord): string {
+    const status = this.rowEstadoLabel(venta).toUpperCase();
+    if (status === 'ACEPTADO') return this.isTicketDocument(venta) ? 'Facturador' : 'SUNAT';
+    if (status === 'RECHAZADO' || status === 'ERROR') return this.isTicketDocument(venta) ? 'Error facturador' : 'Error SUNAT';
+    if (status === 'PENDIENTE' || status === 'PROCESANDO') return 'Por enviar';
+    return this.isLegacyInternalTicket(venta) ? 'Registro legado' : 'Facturador';
+  }
+
+  protected statusClass(venta: VentaRecord): string {
+    const status = this.rowEstadoLabel(venta).toUpperCase();
+    if (status === 'ACEPTADO' || status === 'NO REQUIERE') return 'is-success';
+    if (status === 'RECHAZADO' || status === 'ERROR') return 'is-danger';
+    if (status === 'PENDIENTE' || status === 'PROCESANDO') return 'is-warning';
+    return 'is-neutral';
+  }
+
+  protected documentClass(venta: VentaRecord): string {
+    const type = this.documentTypeLabel(venta).toLowerCase();
+    if (type.includes('factura')) return 'is-invoice';
+    if (type.includes('boleta')) return 'is-receipt';
+    return 'is-ticket';
+  }
+
+  protected isVentaSelected(venta: VentaRecord): boolean {
+    return this.selectedVentaIds().has(venta.id);
+  }
+
+  protected toggleVentaSelection(venta: VentaRecord, checked: boolean): void {
+    const next = new Set(this.selectedVentaIds());
+    if (checked) next.add(venta.id);
+    else next.delete(venta.id);
+    this.selectedVentaIds.set(next);
+  }
+
+  protected arePageVentasSelected(): boolean {
+    const rows = this.filteredVentas();
+    return rows.length > 0 && rows.every((venta) => this.selectedVentaIds().has(venta.id));
+  }
+
+  protected togglePageSelection(checked: boolean): void {
+    const next = new Set(this.selectedVentaIds());
+    for (const venta of this.filteredVentas()) {
+      if (checked) next.add(venta.id);
+      else next.delete(venta.id);
+    }
+    this.selectedVentaIds.set(next);
   }
 
   protected rowEstadoLabel(venta: VentaRecord): string {
@@ -984,29 +1113,9 @@ export class SalesAdminPage implements OnDestroy {
     return this.resolveSunatEstado(venta) || 'Registrada';
   }
 
-  protected rowEstadoSeverity(venta: VentaRecord): TagSeverity {
-    const status = this.rowEstadoLabel(venta);
-    if (!status || status === 'Registrada') {
-      return 'secondary';
-    }
-    if (status === 'ACEPTADO') {
-      return 'success';
-    }
-    if (status === 'RECHAZADO' || status === 'ERROR') {
-      return 'danger';
-    }
-    if (status === 'PENDIENTE' || status === 'PROCESANDO') {
-      return 'warn';
-    }
-    if (status === 'NO REQUIERE') {
-      return 'info';
-    }
-    return 'warn';
-  }
-
   protected rowFacturadorLabel(venta: VentaRecord): string {
-    if (this.isInternalTicket(venta)) {
-      return 'Venta local';
+    if (this.isLegacyInternalTicket(venta)) {
+      return 'Ticket legado sin PDF';
     }
     if (venta.facturadorHttpStatus || venta.facturadorMensaje) {
       const status = venta.facturadorHttpStatus ?? 0;
@@ -1021,54 +1130,25 @@ export class SalesAdminPage implements OnDestroy {
     return `${trace.statusCode} - ${trace.message}`;
   }
 
-  protected rowFacturadorSeverity(venta: VentaRecord): TagSeverity {
-    if (this.isInternalTicket(venta)) {
-      return 'info';
-    }
-    if (venta.facturadorHttpStatus) {
-      const status = Number(venta.facturadorHttpStatus);
-      if (status >= 200 && status < 300) {
-        return 'success';
-      }
-      if (status >= 500) {
-        return 'danger';
-      }
-      return 'warn';
-    }
-
-    const trace = this.traceByExternalId()[venta.externalId];
-    if (!trace) {
-      return 'secondary';
-    }
-    if (trace.statusCode >= 200 && trace.statusCode < 300) {
-      return 'success';
-    }
-    if (trace.statusCode >= 500) {
-      return 'danger';
-    }
-    return 'warn';
-  }
-
   protected hasTrace(venta: VentaRecord): boolean {
-    if (this.isInternalTicket(venta)) {
+    if (this.isLegacyInternalTicket(venta)) {
       return false;
     }
     return Boolean(this.traceByExternalId()[venta.externalId] || venta.facturadorRespuestaJson);
   }
 
   protected canDownloadAsset(venta: VentaRecord, asset: ArchivoComprobante): boolean {
-    if (this.isInternalTicket(venta)) {
+    if (this.isLegacyInternalTicket(venta)) {
       return false;
     }
-    if (asset === 'pdf') {
-      return true;
+    const accepted = (venta.facturacionEstado || '').trim().toUpperCase() === 'ACEPTADO';
+    if (asset === 'pdf') return accepted;
+    if (this.isTicketDocument(venta)) {
+      return false;
     }
-    if (asset === 'xml' && !!venta.facturadorXmlUrl) {
-      return true;
-    }
-    if (asset === 'cdr' && !!venta.facturadorCdrUrl) {
-      return true;
-    }
+    if (accepted) return true;
+    if (asset === 'xml' && !!venta.facturadorXmlUrl) return true;
+    if (asset === 'cdr' && !!venta.facturadorCdrUrl) return true;
 
     const trace = this.traceByExternalId()[venta.externalId];
     if (!trace) {
@@ -1111,53 +1191,34 @@ export class SalesAdminPage implements OnDestroy {
     this.openTraceForVenta(lastVenta);
   }
 
-  protected openAsset(venta: VentaRecord, asset: ArchivoComprobante): void {
-    const trace = this.traceByExternalId()[venta.externalId] || this.traceFromVentaBackend(venta);
-    const backendUrl =
-      asset === 'pdf'
-        ? venta.facturadorPdfUrl
-        : asset === 'xml'
-          ? venta.facturadorXmlUrl
-          : venta.facturadorCdrUrl;
-    const traceUrl = trace
-      ? asset === 'pdf'
-        ? trace.pdfUrl
-        : asset === 'xml'
-          ? trace.xmlUrl
-          : trace.cdrUrl
-      : null;
-    const resolvedUrl = (backendUrl || traceUrl || '').trim();
-    if (!resolvedUrl) {
-      this.infoMessage.set(
-        `El ${asset.toUpperCase()} aun no esta disponible para ${venta.externalId}.`,
-      );
-      return;
-    }
-
-    window.open(this.decorateFacturadorAssetUrl(resolvedUrl), '_blank', 'noopener,noreferrer');
-  }
-
-  protected quickDownloadPdf(venta: VentaRecord): void {
-    if (this.isInternalTicket(venta) || this.quickPdfVentaId() !== null) {
+  protected quickDownloadPdf(
+    venta: VentaRecord,
+    formato: FormatoImpresionComprobante,
+  ): void {
+    if (this.isLegacyInternalTicket(venta) || this.quickPdfVentaId() !== null) {
       return;
     }
 
     this.quickPdfVentaId.set(venta.id);
+    this.quickPdfFormat.set(formato);
     this.errorMessage.set(null);
     this.infoMessage.set(`Preparando PDF de ${venta.externalId}...`);
 
     this.api
-      .downloadVentaPdf(venta.id)
+      .downloadVentaPdf(venta.id, formato)
       .pipe(
         timeout(SalesAdminPage.PDF_REQUEST_TIMEOUT_MS),
-        finalize(() => this.quickPdfVentaId.set(null)),
+        finalize(() => {
+          this.quickPdfVentaId.set(null);
+          this.quickPdfFormat.set(null);
+        }),
       )
       .subscribe({
         next: (blob) => {
           const objectUrl = URL.createObjectURL(blob);
           const anchor = document.createElement('a');
           anchor.href = objectUrl;
-          anchor.download = this.pdfFilename(venta);
+          anchor.download = this.pdfFilename(venta, formato);
           anchor.style.display = 'none';
           document.body.appendChild(anchor);
           anchor.click();
@@ -1173,9 +1234,108 @@ export class SalesAdminPage implements OnDestroy {
       });
   }
 
-  private pdfFilename(venta: VentaRecord): string {
+  protected previewPdf(venta: VentaRecord): void {
+    if (this.isLegacyInternalTicket(venta) || this.quickPdfVentaId() !== null) {
+      return;
+    }
+
+    const previewWindow = window.open('', '_blank');
+    if (!previewWindow) {
+      this.errorMessage.set('El navegador bloqueo la vista previa. Habilita las ventanas emergentes para Azurion.');
+      return;
+    }
+    previewWindow.opener = null;
+    previewWindow.document.title = 'Preparando comprobante';
+    previewWindow.document.body.textContent = 'Preparando PDF...';
+
+    this.quickPdfVentaId.set(venta.id);
+    this.quickPdfFormat.set('A4');
+    this.api
+      .downloadVentaPdf(venta.id, 'A4')
+      .pipe(
+        timeout(SalesAdminPage.PDF_REQUEST_TIMEOUT_MS),
+        finalize(() => {
+          this.quickPdfVentaId.set(null);
+          this.quickPdfFormat.set(null);
+        }),
+      )
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          previewWindow.location.replace(objectUrl);
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        },
+        error: (error) => {
+          previewWindow.close();
+          this.errorMessage.set(this.resolveError(error, 'No se pudo abrir la vista previa del PDF.'));
+        },
+      });
+  }
+
+  protected downloadArtifact(venta: VentaRecord, asset: Exclude<ArchivoComprobante, 'pdf'>): void {
+    const key = `${venta.id}:${asset}`;
+    if (this.downloadingArtifact() !== null) return;
+    this.downloadingArtifact.set(key);
+    this.errorMessage.set(null);
+
+    const request = asset === 'xml'
+      ? this.api.downloadVentaXml(venta.id)
+      : this.api.downloadVentaCdr(venta.id);
+    request
+      .pipe(
+        timeout(SalesAdminPage.PDF_REQUEST_TIMEOUT_MS),
+        finalize(() => this.downloadingArtifact.set(null)),
+      )
+      .subscribe({
+        next: (blob) => {
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = objectUrl;
+          anchor.download = this.artifactFilename(venta, asset);
+          anchor.style.display = 'none';
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+          this.infoMessage.set(`${asset.toUpperCase()} de ${this.officialDocumentNumber(venta)} descargado.`);
+        },
+        error: (error) => {
+          this.errorMessage.set(this.resolveError(error, `No se pudo descargar el ${asset.toUpperCase()}.`));
+        },
+      });
+  }
+
+  protected retryVentaDocument(venta: VentaRecord): void {
+    if (this.retryingVentaId() !== null) return;
+    this.retryingVentaId.set(venta.id);
+    this.errorMessage.set(null);
+    this.api
+      .retryVentaDocument(venta.id)
+      .pipe(finalize(() => this.retryingVentaId.set(null)))
+      .subscribe({
+        next: (updated) => {
+          this.ventas.update((rows) => rows.map((row) => row.id === updated.id ? updated : row));
+          this.infoMessage.set(`Reintento programado para ${this.officialDocumentNumber(updated)}.`);
+        },
+        error: (error) => {
+          this.errorMessage.set(this.resolveError(error, 'No se pudo reintentar la emision.'));
+        },
+      });
+  }
+
+  protected canRetryDocument(venta: VentaRecord): boolean {
+    const status = this.rowEstadoLabel(venta).toUpperCase();
+    return !this.isLegacyInternalTicket(venta) && (status === 'ERROR' || status === 'RECHAZADO');
+  }
+
+  private artifactFilename(venta: VentaRecord, asset: 'xml' | 'cdr'): string {
+    const number = this.officialDocumentNumber(venta).replace(/[^a-zA-Z0-9._-]/g, '_');
+    return `${asset === 'cdr' ? 'R-' : ''}${number}.${asset === 'cdr' ? 'zip' : 'xml'}`;
+  }
+
+  private pdfFilename(venta: VentaRecord, formato: FormatoImpresionComprobante): string {
     const safeExternalId = (venta.externalId || `venta-${venta.id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
-    return `Comprobante-${safeExternalId}.pdf`;
+    return `Comprobante-${safeExternalId}-${formato === 'A4' ? 'A4' : '80mm'}.pdf`;
   }
 
   protected openActiveTraceAsset(asset: ArchivoComprobante): void {
@@ -1194,7 +1354,7 @@ export class SalesAdminPage implements OnDestroy {
   }
 
   protected copyComprobante(venta: VentaRecord): void {
-    const value = venta.externalId;
+    const value = this.officialDocumentNumber(venta);
     if (!navigator.clipboard?.writeText) {
       this.infoMessage.set(`Comprobante: ${value}`);
       return;
@@ -1220,7 +1380,7 @@ export class SalesAdminPage implements OnDestroy {
       this.selectedVenta.set(response.venta);
       this.detalleDialogVisible.set(true);
       this.infoMessage.set(
-        `Ticket interno ${response.venta.externalId} registrado. La venta termino sin esperar Facturador ni SUNAT.`,
+        `Ticket legado ${response.venta.externalId} registrado sin documento del Facturador.`,
       );
       this.loadData();
       return;
@@ -1586,8 +1746,8 @@ export class SalesAdminPage implements OnDestroy {
     }
 
     if (this.facturaForm.tipoComprobante === 'BOLETA' && total > 500) {
-      if (this.facturaForm.clienteTipoDoc !== '1' || !/^[0-9]{8}$/.test(numeroDoc) || !nombre) {
-        return 'Boleta mayor a S/ 500 requiere DNI de 8 digitos y nombre de cliente.';
+      if (!isIdentifiedCustomer(this.facturaForm.clienteTipoDoc, numeroDoc, nombre)) {
+        return 'Boleta mayor a S/ 500 requiere un cliente identificado con DNI o RUC.';
       }
       return null;
     }

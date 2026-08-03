@@ -1,0 +1,89 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.financial-card {
+  background: linear-gradient(135deg, #f8fafc, var(--az-surface));
+  border: 1px solid var(--az-border);
+  border-radius: 0.62rem;
+  box-shadow: 0 0.45rem 1.1rem rgba(15, 23, 42, 0.04);
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.65rem;
+}
+
+.financial-card--wide {
+  box-shadow: none;
+}
+
+h3 {
+  align-items: center;
+  color: var(--az-text);
+  display: flex;
+  font-size: 0.76rem;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.financial-lines {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.financial-lines p {
+  align-items: center;
+  display: flex;
+  font-size: 0.67rem;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.financial-lines span,
+small {
+  color: var(--az-text-soft);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.financial-lines b {
+  color: var(--az-text);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.financial-lines .is-paid {
+  color: #059669;
+}
+
+.financial-lines .is-pending {
+  color: #dc2626;
+}
+
+.financial-progress {
+  background: #e5e7eb;
+  border-radius: 999px;
+  height: 0.42rem;
+  margin: 0.45rem 0 0.25rem;
+  overflow: hidden;
+}
+
+.financial-progress span {
+  background: linear-gradient(90deg, #10b981, #2563eb);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.link-action {
+  background: transparent;
+  border: 0;
+  color: var(--az-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 850;
+  justify-self: start;
+  padding: 0;
+}

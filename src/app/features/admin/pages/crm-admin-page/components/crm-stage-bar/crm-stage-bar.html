@@ -1,0 +1,22 @@
+<section
+  [class.opportunity-stage-line--compact]="compact()"
+  class="opportunity-stage-line"
+  aria-label="Progreso de oportunidad"
+>
+  @for (step of steps(); track step.value) {
+    <article
+      [class]="'opportunity-step opportunity-step--' + step.state"
+      [class.opportunity-step--lost]="step.lost"
+      [attr.aria-current]="step.state === 'current' ? 'step' : null"
+    >
+      <i [style.background]="compact() && step.state !== 'pending' ? step.color : null">
+        @if (step.state === 'done') {
+          <span class="pi pi-check"></span>
+        } @else {
+          {{ $index + 1 }}
+        }
+      </i>
+      <strong>{{ step.label }}</strong>
+    </article>
+  }
+</section>

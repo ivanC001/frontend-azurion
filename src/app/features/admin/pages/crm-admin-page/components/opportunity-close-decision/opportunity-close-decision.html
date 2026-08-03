@@ -1,0 +1,72 @@
+<aside class="negotiation-decision-panel">
+  <header>
+    <div>
+      <span>Decision de cierre</span>
+      <strong>{{ canClose() ? 'Requisitos completos' : 'Completa los requisitos' }}</strong>
+    </div>
+    <em [class.ready]="canClose()">{{ canClose() ? 'Completo' : 'Incompleto' }}</em>
+  </header>
+
+  <div class="negotiation-decision-checks">
+    <p [class.done]="hasFinalAgreement()">
+      <i [class]="hasFinalAgreement() ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+      Acuerdo final registrado
+    </p>
+    <p [class.done]="paymentPlan().firstPaymentDone && paymentPlan().hasPaymentProof">
+      <i
+        [class]="
+          paymentPlan().firstPaymentDone && paymentPlan().hasPaymentProof
+            ? 'pi pi-check-circle'
+            : 'pi pi-circle'
+        "
+      ></i>
+      {{
+        paymentPlan().isCredit
+          ? 'Primera cuota y comprobante registrados'
+          : 'Pago total y comprobante registrados'
+      }}
+    </p>
+    @if (paymentPlan().isCredit) {
+      <p [class.done]="paymentPlan().remainingProgrammed">
+        <i [class]="paymentPlan().remainingProgrammed ? 'pi pi-check-circle' : 'pi pi-circle'"></i>
+        Cuotas restantes programadas
+      </p>
+    }
+  </div>
+
+  <div class="negotiation-decision-help">
+    <p><strong>Para ganar:</strong> completa los requisitos de cierre.</p>
+    <p><strong>Para marcar perdido:</strong> registra el motivo.</p>
+  </div>
+
+  <nav>
+    <button type="button" [disabled]="hasFinalAgreement()" (click)="agreementRequested.emit()">
+      <i [class]="hasFinalAgreement() ? 'pi pi-check-circle' : 'pi pi-file-check'"></i>
+      {{ hasFinalAgreement() ? 'Acuerdo registrado' : 'Registrar acuerdo final' }}
+    </button>
+    <button
+      type="button"
+      [disabled]="requiredPaymentRegistered()"
+      (click)="paymentRequested.emit()"
+    >
+      <i [class]="requiredPaymentRegistered() ? 'pi pi-check-circle' : 'pi pi-credit-card'"></i>
+      {{ requiredPaymentRegistered() ? 'Pago registrado' : 'Registrar pago' }}
+    </button>
+    <button
+      type="button"
+      class="negotiation-win-action"
+      [disabled]="!canClose() || actionInProgress()"
+      (click)="wonRequested.emit()"
+    >
+      <i class="pi pi-trophy"></i> Marcar ganado
+    </button>
+    <button
+      type="button"
+      class="negotiation-loss-action"
+      [disabled]="canClose() || actionInProgress()"
+      (click)="lostRequested.emit()"
+    >
+      <i class="pi pi-times"></i> Registrar perdida
+    </button>
+  </nav>
+</aside>

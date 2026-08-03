@@ -1,0 +1,168 @@
+:host {
+  display: block;
+}
+
+article {
+  background: color-mix(in srgb, var(--az-surface, #fff) 92%, #f8fafc);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.5rem;
+}
+
+article.opportunity-quote-card--interest {
+  background: linear-gradient(
+    135deg,
+    var(--az-surface, #fff),
+    color-mix(in srgb, var(--az-surface, #fff) 88%, #eff6ff)
+  );
+  border-radius: 12px;
+  padding: 14px;
+}
+
+article.opportunity-quote-card--negotiation {
+  border-left: 4px solid #64748b;
+  border-radius: 0.7rem;
+  padding: 0.65rem;
+}
+
+article.opportunity-quote-card--accepted {
+  border-left-color: #10b981;
+}
+
+article.opportunity-quote-card--adjustment {
+  border-left-color: #8b5cf6;
+}
+
+article.opportunity-quote-card--rejected {
+  border-left-color: #ef4444;
+}
+
+article.opportunity-quote-card--waiting {
+  border-left-color: #f59e0b;
+}
+
+header,
+nav {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+  justify-content: space-between;
+}
+
+.negotiation-heading {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  justify-content: initial;
+}
+
+.negotiation-heading b {
+  font-size: 0.72rem;
+}
+
+.negotiation-heading em {
+  justify-self: end;
+}
+
+header span,
+p {
+  color: var(--az-text-soft);
+  font-size: 0.64rem;
+  margin: 0;
+}
+
+nav {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+button {
+  align-items: center;
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  color: var(--az-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 900;
+  gap: 0.28rem;
+  min-height: 1.55rem;
+  padding: 0.28rem 0.38rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.danger-action {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.quote-status {
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: 0.22rem 0.48rem;
+  white-space: nowrap;
+}
+
+.quote-status--pending {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.quote-status--accepted {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.quote-status--rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.negotiation-decision {
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: 0.22rem 0.48rem;
+  white-space: nowrap;
+}
+
+.negotiation-decision--accepted {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.negotiation-decision--adjustment {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.negotiation-decision--rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.negotiation-decision--waiting {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+@media (max-width: 760px) {
+  .negotiation-heading {
+    grid-template-columns: auto 1fr;
+  }
+
+  .negotiation-heading em {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

@@ -143,8 +143,18 @@
       </div>
 
       <div class="cart-summary">
-        <div><span>Subtotal</span><strong>S/ {{ subtotal() | number: '1.2-2' }}</strong></div>
+        <div><span>Precios finales</span><strong>S/ {{ subtotal() | number: '1.2-2' }}</strong></div>
         <div><span>Descuento</span><strong class="discount-total">- S/ {{ descuentoTotal() | number: '1.2-2' }}</strong></div>
+        @if (taxBreakdown().operacionGravada > 0) {
+          <div><span>Op. gravada</span><strong>S/ {{ taxBreakdown().operacionGravada | number: '1.2-2' }}</strong></div>
+        }
+        @if (taxBreakdown().operacionExonerada > 0) {
+          <div><span>Op. exonerada</span><strong>S/ {{ taxBreakdown().operacionExonerada | number: '1.2-2' }}</strong></div>
+        }
+        @if (taxBreakdown().operacionInafecta > 0) {
+          <div><span>Op. inafecta</span><strong>S/ {{ taxBreakdown().operacionInafecta | number: '1.2-2' }}</strong></div>
+        }
+        <div class="tax-total"><span>IGV incluido</span><strong>S/ {{ taxBreakdown().igv | number: '1.2-2' }}</strong></div>
         <div class="grand-total"><span>Total a cobrar</span><strong>S/ {{ total() | number: '1.2-2' }}</strong></div>
       </div>
     </section>
@@ -169,7 +179,7 @@
         </div>
         <p class="context-note">
           @if (tipoComprobante === 'TICKET_VENTA') {
-            Venta interna inmediata, sin SUNAT.
+            Ticket comercial emitido por Azurion Facturador, sin envio a SUNAT.
           } @else {
             El comprobante se enviara al Facturador en segundo plano.
           }
@@ -253,11 +263,17 @@
         }
       </section>
 
-      @if (lastSale(); as result) {
-        <button type="button" class="last-sale" (click)="openLastTicket()">
-          <i class="pi pi-check-circle"></i>
-          <div><strong>{{ result.venta.externalId }}</strong><span>{{ result.facturacion.message }}</span></div>
-          <i class="pi pi-print"></i>
+      @if (saleDocument(); as result) {
+        <button type="button" class="last-sale" (click)="openLastDocument()">
+          @if (isOfficialDocumentReady(result)) {
+            <i class="pi pi-check-circle"></i>
+          } @else if (documentHasError(result)) {
+            <i class="pi pi-exclamation-triangle"></i>
+          } @else {
+            <i class="pi pi-spin pi-spinner"></i>
+          }
+          <div><strong>{{ result.officialNumber || result.externalId }}</strong><span>{{ documentStateLabel(result) }}</span></div>
+          <i class="pi pi-file-pdf"></i>
         </button>
       }
 
@@ -273,71 +289,80 @@
 </section>
 
 <p-dialog
-  header="Ticket generado"
+  header="Documento de venta"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [visible]="ticketDialogVisible()"
-  (visibleChange)="ticketDialogVisible.set($event)"
-  styleClass="ticket-preview-dialog"
+  [visible]="documentDialogVisible()"
+  (visibleChange)="documentDialogVisible.set($event)"
+  styleClass="sale-document-dialog"
 >
-  @if (ticketPreview(); as ticket) {
-    <section class="ticket-success">
-      <span><i class="pi pi-check"></i></span>
+  @if (saleDocument(); as document) {
+    <section
+      class="document-status"
+      [class.is-ready]="isOfficialDocumentReady(document)"
+      [class.is-error]="documentHasError(document)"
+      [class.is-pending]="!isOfficialDocumentReady(document) && !documentHasError(document)"
+    >
+      <span>
+        @if (isOfficialDocumentReady(document)) {
+          <i class="pi pi-check"></i>
+        } @else if (documentHasError(document)) {
+          <i class="pi pi-exclamation-triangle"></i>
+        } @else {
+          <i class="pi pi-spin pi-spinner"></i>
+        }
+      </span>
       <div>
-        <strong>Venta registrada correctamente</strong>
-        <p>{{ ticket.facturacionMessage }}</p>
+        <strong>{{ documentStateLabel(document) }}</strong>
+        <p>{{ document.facturacionMessage }}</p>
       </div>
     </section>
 
-    <article class="ticket-preview">
+    <article class="document-summary">
       <header>
-        @if (ticket.logoUrl) {
-          <img [src]="ticket.logoUrl" alt="Logo empresa" />
-        }
-        <div>
-          <h3>{{ ticket.empresaNombre }}</h3>
-          <p>RUC {{ ticket.empresaRuc || '-' }}</p>
-          <p>{{ ticket.sucursalNombre }}</p>
-        </div>
-        <div class="ticket-number">
-          <span>Ticket de venta</span>
-          <strong>{{ ticket.externalId }}</strong>
-        </div>
+        <span class="document-icon"><i class="pi pi-file-pdf"></i></span>
+        <div><span>Documento solicitado</span><h3>{{ document.requestedDocument }}</h3></div>
+        <div class="official-number"><span>Numero oficial</span><strong>{{ document.officialNumber || 'Pendiente de numeracion' }}</strong></div>
       </header>
 
-      <div class="ticket-meta">
-        <div><span>Fecha</span><strong>{{ previewDate(ticket.fecha) }}</strong></div>
-        <div><span>Caja</span><strong>{{ ticket.cajaNombre }}</strong></div>
-        <div><span>Cliente</span><strong>{{ ticket.clienteNombre }}</strong></div>
-        <div><span>Documento</span><strong>{{ ticket.clienteDocumento }}</strong></div>
-        <div><span>Comprobante solicitado</span><strong>{{ ticket.requestedDocument }}</strong></div>
-        <div><span>Vendedor</span><strong>{{ ticket.vendedor }}</strong></div>
-        <div><span>Pago</span><strong>{{ ticket.formaPago === 'CREDITO' ? 'Credito' : ticket.metodoPago }}</strong></div>
-      </div>
-
-      <div class="ticket-items">
-        @for (item of ticket.items; track item.sku) {
-          <div>
-            <span><strong>{{ item.cantidad }} x {{ item.nombre }}</strong><small>{{ item.sku }}</small></span>
-            <strong>S/ {{ item.total | number: '1.2-2' }}</strong>
-          </div>
-        }
-      </div>
-
-      <div class="ticket-totals">
-        <div><span>Subtotal</span><strong>S/ {{ ticket.subtotal | number: '1.2-2' }}</strong></div>
-        <div><span>Descuento</span><strong>- S/ {{ ticket.descuento | number: '1.2-2' }}</strong></div>
-        <div class="preview-grand"><span>Total</span><strong>S/ {{ ticket.total | number: '1.2-2' }}</strong></div>
-        <div><span>Recibido</span><strong>S/ {{ ticket.recibido | number: '1.2-2' }}</strong></div>
-        <div><span>Vuelto</span><strong>S/ {{ ticket.vuelto | number: '1.2-2' }}</strong></div>
+      <div class="document-details">
+        <div><span>Operacion</span><strong>{{ document.externalId }}</strong></div>
+        <div><span>Fecha</span><strong>{{ previewDate(document.fecha) }}</strong></div>
+        <div><span>Cliente</span><strong>{{ document.clienteNombre }}</strong></div>
+        <div><span>Documento</span><strong>{{ document.clienteDocumento }}</strong></div>
+        <div><span>Pago</span><strong>{{ document.formaPago === 'CREDITO' ? 'Credito' : document.metodoPago }}</strong></div>
+        <div class="document-total"><span>Total</span><strong>S/ {{ document.total | number: '1.2-2' }}</strong></div>
       </div>
     </article>
 
-    <div class="print-formats">
-      <button type="button" (click)="printTicket('A4')"><i class="pi pi-file"></i><span><strong>A4</strong><small>Hoja completa</small></span></button>
-      <button type="button" (click)="printTicket('80MM')"><i class="pi pi-receipt"></i><span><strong>80 mm</strong><small>Ticket termico</small></span></button>
-      <button type="button" (click)="printTicket('58MM')"><i class="pi pi-receipt"></i><span><strong>58 mm</strong><small>Ticket compacto</small></span></button>
+    <p class="document-authority-note">
+      <i class="pi pi-shield"></i>
+      <span>La serie, el correlativo y el PDF son emitidos exclusivamente por Azurion Facturador.</span>
+    </p>
+
+    <div class="document-actions">
+      @if (isOfficialDocumentReady(document)) {
+        <div class="print-format-actions" aria-label="Formatos de impresion">
+          <button type="button" class="official-document-button" [disabled]="downloadingDocument()" (click)="openOfficialDocument('A4')">
+            <i [class]="downloadingDocument() === 'A4' ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'"></i>
+            <span>{{ downloadingDocument() === 'A4' ? 'Preparando A4...' : 'Imprimir en A4' }}</span>
+          </button>
+          <button type="button" class="official-document-button is-ticket" [disabled]="downloadingDocument()" (click)="openOfficialDocument('TICKET')">
+            <i [class]="downloadingDocument() === 'TICKET' ? 'pi pi-spin pi-spinner' : 'pi pi-receipt'"></i>
+            <span>{{ downloadingDocument() === 'TICKET' ? 'Preparando ticket...' : 'Imprimir ticket 80 mm' }}</span>
+          </button>
+        </div>
+      } @else if (documentHasError(document)) {
+        <button type="button" class="retry-document-button" [disabled]="retryingDocument() || document.facturacionEstado === 'RECHAZADO'" (click)="retryOfficialDocument()">
+          <i [class]="retryingDocument() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
+          <span>{{ document.facturacionEstado === 'RECHAZADO' ? 'Corrige los datos antes de reemitir' : retryingDocument() ? 'Programando...' : 'Reintentar generacion' }}</span>
+        </button>
+      } @else {
+        <button type="button" class="waiting-document-button" disabled>
+          <i class="pi pi-spin pi-spinner"></i><span>Generando documento oficial...</span>
+        </button>
+      }
     </div>
   }
 </p-dialog>

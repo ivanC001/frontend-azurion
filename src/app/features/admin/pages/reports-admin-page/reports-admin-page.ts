@@ -21,6 +21,7 @@ import {
   CajaMovimiento,
   Compra,
   CrmPipelineColumn,
+  FiscalSummary,
   GuiaRemisionRecord,
   KardexMovimiento,
   NotaFiscalRecord,
@@ -69,6 +70,7 @@ export class ReportsAdminPage {
   protected readonly almacenes = signal<Almacen[]>([]);
   protected readonly productos = signal<Producto[]>([]);
   protected readonly crmPipeline = signal<CrmPipelineColumn[]>([]);
+  protected readonly fiscalSummary = signal<FiscalSummary | null>(null);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -210,34 +212,49 @@ export class ReportsAdminPage {
           { key: 'numero', label: 'Numero', width: 18 },
           { key: 'proveedor', label: 'Proveedor', width: 28 },
           { key: 'almacen', label: 'Almacen', width: 18 },
+          { key: 'tratamiento', label: 'Calidad del dato', width: 22 },
           { key: 'sku', label: 'SKU', width: 14 },
           { key: 'producto', label: 'Producto', width: 30 },
           { key: 'cantidad', label: 'Cantidad', align: 'right', format: 'number', width: 12 },
           {
-            key: 'costoUnitario',
-            label: 'Costo compra',
+            key: 'costoNetoUnitario',
+            label: 'Costo neto unit.',
             align: 'right',
             format: 'currency',
             width: 14,
           },
           {
-            key: 'precioVenta',
-            label: 'Precio venta',
+            key: 'igvCompra',
+            label: 'IGV compra',
             align: 'right',
             format: 'currency',
             width: 14,
           },
-          { key: 'total', label: 'Gasto total', align: 'right', format: 'currency', width: 15 },
+          { key: 'total', label: 'Total compra', align: 'right', format: 'currency', width: 15 },
+          {
+            key: 'costoInventariable',
+            label: 'Costo inventariable',
+            align: 'right',
+            format: 'currency',
+            width: 17,
+          },
+          {
+            key: 'precioVentaFinal',
+            label: 'Venta final unit.',
+            align: 'right',
+            format: 'currency',
+            width: 15,
+          },
           {
             key: 'ventaProyectada',
-            label: 'Venta proyectada',
+            label: 'Venta neta proyectada',
             align: 'right',
             format: 'currency',
-            width: 16,
+            width: 18,
           },
           {
             key: 'gananciaProyectada',
-            label: 'Ganancia proyectada',
+            label: 'Margen real',
             align: 'right',
             format: 'currency',
             width: 17,
@@ -368,6 +385,11 @@ export class ReportsAdminPage {
         'notas credito',
       ),
       notasDebito: safeList(this.api.listNotasDebito(), [] as NotaFiscalRecord[], 'notas debito'),
+      fiscalSummary: safeList(
+        this.api.getFiscalSummary(this.startDateFilter(), this.endDateFilter()),
+        null as FiscalSummary | null,
+        'resumen fiscal',
+      ),
     })
       .pipe(
         switchMap((base) => {
@@ -401,6 +423,7 @@ export class ReportsAdminPage {
           this.crmPipeline.set(base.crmPipeline);
           this.notasCredito.set(base.notasCredito);
           this.notasDebito.set(base.notasDebito);
+          this.fiscalSummary.set(base.fiscalSummary);
           this.movimientosCaja.set(movimientosCaja.flat());
           const uniqueFailures = Array.from(new Set(failedModules));
           this.successMessage.set(
@@ -430,6 +453,17 @@ export class ReportsAdminPage {
     this.cajaFilter.set(null);
     this.startDateFilter.set(null);
     this.endDateFilter.set(null);
+    this.refreshFiscalSummary();
+  }
+
+  protected onStartDateChange(value: string | null): void {
+    this.startDateFilter.set(value || null);
+    this.refreshFiscalSummary();
+  }
+
+  protected onEndDateChange(value: string | null): void {
+    this.endDateFilter.set(value || null);
+    this.refreshFiscalSummary();
   }
 
   protected setQuickRange(range: QuickRange): void {
@@ -439,6 +473,7 @@ export class ReportsAdminPage {
     if (range === 'today') {
       this.startDateFilter.set(end);
       this.endDateFilter.set(end);
+      this.refreshFiscalSummary();
       return;
     }
 
@@ -448,6 +483,7 @@ export class ReportsAdminPage {
         .slice(0, 10);
       this.startDateFilter.set(monthStart);
       this.endDateFilter.set(end);
+      this.refreshFiscalSummary();
       return;
     }
 
@@ -456,6 +492,14 @@ export class ReportsAdminPage {
     start.setDate(start.getDate() - days);
     this.startDateFilter.set(start.toISOString().slice(0, 10));
     this.endDateFilter.set(end);
+    this.refreshFiscalSummary();
+  }
+
+  private refreshFiscalSummary(): void {
+    this.api.getFiscalSummary(this.startDateFilter(), this.endDateFilter()).subscribe({
+      next: (summary) => this.fiscalSummary.set(summary),
+      error: () => this.fiscalSummary.set(null),
+    });
   }
 
   protected async exportExcel(): Promise<void> {
@@ -610,31 +654,37 @@ export class ReportsAdminPage {
         });
       case 'compras':
         return this.compras().flatMap((compra) =>
-          (compra.detalles || []).map((detalle) => ({
-            fecha: compra.fechaEmision || this.dateOnly(compra.fechaIngreso),
-            tipo: compra.tipoComprobante,
-            numero: compra.numeroComprobante,
-            proveedor: this.formatProveedor(compra.proveedorDocumento, compra.proveedorNombre),
-            almacen: `${compra.almacenCodigo} - ${compra.almacenNombre}`,
-            sku: detalle.productoSku,
-            producto: detalle.productoNombre,
-            cantidad: Number(detalle.cantidad || 0),
-            costoUnitario: Number(detalle.costoUnitario || 0),
-            precioVenta: Number(detalle.precioVenta || 0),
-            total: Number(detalle.total || 0),
-            ventaProyectada: Number(detalle.ventaProyectada || 0),
-            gananciaProyectada: Number(detalle.gananciaProyectada || 0),
-            margenPorcentaje: Number(detalle.margenPorcentaje || 0),
-            lote: detalle.codigoLote || '',
-            vencimiento: detalle.fechaVencimiento || '',
-            __date: compra.fechaEmision || this.dateOnly(compra.fechaIngreso),
-            __productoId: detalle.productoId,
-            __almacenId: compra.almacenId,
-            __status: compra.tipoComprobante,
-            __quantity: Number(detalle.cantidad || 0),
-            __amount: Number(detalle.total || 0),
-            __profit: Number(detalle.gananciaProyectada || 0),
-          })),
+          (compra.detalles || []).map((detalle) => {
+            const hasTaxBreakdown = compra.tratamientoIgv === 'DESGLOSADO';
+            return {
+              fecha: compra.fechaEmision || this.dateOnly(compra.fechaIngreso),
+              tipo: compra.tipoComprobante,
+              numero: compra.numeroComprobante,
+              proveedor: this.formatProveedor(compra.proveedorDocumento, compra.proveedorNombre),
+              almacen: `${compra.almacenCodigo} - ${compra.almacenNombre}`,
+              tratamiento: hasTaxBreakdown ? 'Desglosado' : 'Histórico sin desglose',
+              sku: detalle.productoSku,
+              producto: detalle.productoNombre,
+              cantidad: Number(detalle.cantidad || 0),
+              costoNetoUnitario: hasTaxBreakdown ? Number(detalle.costoNetoUnitario || 0) : null,
+              igvCompra: hasTaxBreakdown ? Number(detalle.montoIgv || 0) : null,
+              costoInventariable: Number(detalle.totalCostoInventariable || 0),
+              precioVentaFinal: Number(detalle.precioVenta || 0),
+              total: Number(detalle.total || 0),
+              ventaProyectada: hasTaxBreakdown ? Number(detalle.ventaProyectada || 0) : null,
+              gananciaProyectada: hasTaxBreakdown ? Number(detalle.gananciaProyectada || 0) : null,
+              margenPorcentaje: hasTaxBreakdown ? Number(detalle.margenPorcentaje || 0) : null,
+              lote: detalle.codigoLote || '',
+              vencimiento: detalle.fechaVencimiento || '',
+              __date: compra.fechaEmision || this.dateOnly(compra.fechaIngreso),
+              __productoId: detalle.productoId,
+              __almacenId: compra.almacenId,
+              __status: compra.tipoComprobante,
+              __quantity: Number(detalle.cantidad || 0),
+              __amount: Number(detalle.total || 0),
+              __profit: hasTaxBreakdown ? Number(detalle.gananciaProyectada || 0) : 0,
+            };
+          }),
         );
       case 'notas':
         return [...this.notasCredito(), ...this.notasDebito()].map((item) => ({
@@ -792,7 +842,14 @@ export class ReportsAdminPage {
       return ['total'];
     }
     if (this.moduleFilter() === 'compras') {
-      return ['cantidad', 'total', 'ventaProyectada', 'gananciaProyectada'];
+      return [
+        'cantidad',
+        'igvCompra',
+        'total',
+        'costoInventariable',
+        'ventaProyectada',
+        'gananciaProyectada',
+      ];
     }
     if (this.moduleFilter() === 'caja') {
       return ['monto'];

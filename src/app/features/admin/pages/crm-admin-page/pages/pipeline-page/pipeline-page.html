@@ -61,7 +61,7 @@
 
   <section class="pipeline-board pipeline-board--salesforce pipeline-board--compact" aria-label="Pipeline de oportunidades">
     <div class="pipeline-scroll pipeline-scroll--salesforce pipeline-scroll--compact">
-      @for (column of columns(); track column.value; let columnIndex = $index; let isLast = $last) {
+      @for (column of visibleColumns(); track column.value; let columnIndex = $index; let isLast = $last) {
         <article class="pipeline-column pipeline-column--salesforce" [style.--stage-color]="column.color">
           <header class="pipeline-stage-header">
             <span class="pipeline-stage-number">{{ (columnIndex + 1).toString().padStart(2, '0') }}</span>
@@ -69,21 +69,21 @@
               <strong>{{ column.label }}</strong>
               <small>
                 <span>
-                  {{ visibleRows(column).length }}
-                  {{ visibleRows(column).length === 1 ? 'oportunidad' : 'oportunidades' }}
+                  {{ column.visibleItems.length }}
+                  {{ column.visibleItems.length === 1 ? 'oportunidad' : 'oportunidades' }}
                 </span>
                 <i></i>
-                <span>S/ {{ visibleTotal(column) | number: '1.0-0' }}</span>
+                <span>S/ {{ column.visibleTotal | number: '1.0-0' }}</span>
               </small>
             </div>
             <span class="pipeline-stage-icon"><i [class]="column.icon"></i></span>
             <span class="pipeline-stage-progress" aria-hidden="true">
-              <i [style.width.%]="visibleAverageProbability(column)"></i>
+              <i [style.width.%]="column.visibleAverageProbability"></i>
             </span>
-            <b>{{ visibleAverageProbability(column) }}%</b>
+            <b>{{ column.visibleAverageProbability }}%</b>
           </header>
           <div class="pipeline-stack pipeline-stack--salesforce">
-            @for (row of visibleRows(column); track row.opportunity.id) {
+            @for (row of column.visibleItems; track row.opportunity.id) {
               <article
                 class="deal-card deal-card--salesforce"
                 [class.deal-card--won]="row.won"

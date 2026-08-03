@@ -2,3 +2,38 @@
   display: grid;
   gap: 1rem;
 }
+
+.opportunity-filters-panel {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.95rem;
+  box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.055);
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  padding: 0.75rem;
+}
+
+.opportunity-filters-panel button {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  color: var(--az-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 0.42rem;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0.55rem 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .opportunity-filters-panel {
+    grid-template-columns: 1fr;
+  }
+}

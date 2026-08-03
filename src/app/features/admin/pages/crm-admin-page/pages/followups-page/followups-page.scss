@@ -8,6 +8,29 @@
   gap: 1rem;
 }
 
+.followup-prospect-copy {
+  align-items: start;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.followup-prospect-copy strong,
+.followup-prospect-contact {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.followup-prospect-copy strong {
+  line-height: 1.25;
+}
+
+.followup-prospect-contact {
+  color: var(--az-text-soft, #64748b);
+  line-height: 1.2;
+}
+
 .followup-table-footer {
   align-items: center;
   border-top: 1px solid var(--az-border, #dbe5f3);

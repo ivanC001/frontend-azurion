@@ -10,8 +10,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -26,6 +26,7 @@ import {
   AdminSaasApiService,
   Almacen,
   CategoriaProducto,
+  ConfiguracionTributaria,
   Producto,
   ProductSummary,
 } from '../../data/admin-saas-api.service';
@@ -94,6 +95,7 @@ export class ProductsAdminPage {
   protected readonly almacenes = signal<Almacen[]>([]);
   protected readonly productos = signal<Producto[]>([]);
   protected readonly categorias = signal<CategoriaProducto[]>([]);
+  protected readonly taxConfig = signal<ConfiguracionTributaria | null>(null);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -201,15 +203,19 @@ export class ProductsAdminPage {
       summary: this.api.getProductSummary(),
       almacenes: this.api.listAlmacenes(),
       categorias: this.api.listCategoriasProducto(),
+      // La configuracion tributaria enriquece el desglose visual, pero no debe
+      // impedir administrar productos cuando el rol no cuenta con TRIBUTACION_READ.
+      taxConfig: this.api.getConfiguracionTributaria().pipe(catchError(() => of(null))),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ productos, summary, almacenes, categorias }) => {
+        next: ({ productos, summary, almacenes, categorias, taxConfig }) => {
           this.productos.set(productos.content);
           this.productTotal.set(productos.totalElements);
           this.applyProductSummary(summary);
           this.almacenes.set(almacenes);
           this.categorias.set(categorias);
+          this.taxConfig.set(taxConfig);
           this.lowStockAlerts.refresh(false);
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -483,6 +489,39 @@ export class ProductsAdminPage {
     this.barcodeMessage.set(null);
   }
 
+  protected productPriceBreakdown(): {
+    base: number;
+    igv: number;
+    final: number;
+    rate: number;
+    taxable: boolean;
+  } {
+    const final = Math.max(Number(this.productForm.precio || 0), 0);
+    const inherited = this.taxConfig();
+    const afectacion = this.productForm.usaConfiguracionEmpresa
+      ? inherited?.tipoAfectacionDefaultId || '10'
+      : this.productForm.tipoAfectacionIgvId;
+    const rate = Math.max(
+      Number(
+        this.productForm.usaConfiguracionEmpresa
+          ? inherited?.porcentajeIgvDefault ?? 18
+          : this.productForm.porcentajeImpuesto,
+      ),
+      0,
+    );
+    const taxable = new Set(['10', '11', '12', '13', '14', '15', '16', '17']).has(
+      afectacion,
+    );
+    const base = taxable && rate > 0 ? final / (1 + rate / 100) : final;
+    return {
+      base,
+      igv: taxable ? Math.max(final - base, 0) : 0,
+      final,
+      rate: taxable ? rate : 0,
+      taxable,
+    };
+  }
+
   protected checkBarcodeAndContinue(event?: Event): void {
     event?.preventDefault();
     const barcode = this.productForm.codigoBarras.trim();
@@ -745,7 +784,7 @@ export class ProductsAdminPage {
         error?: { message?: string; details?: string[] };
       };
       if (httpError.status === 403) {
-        return 'No tienes permisos de productos. Solicita rol ADMIN o SALES en este tenant.';
+        return 'No tienes acceso a los datos necesarios para administrar productos. Solicita los permisos PRODUCTOS_READ e INVENTORY_READ.';
       }
       if (httpError.status === 500) {
         return 'No se pudo completar la operacion en este momento. Intenta nuevamente.';

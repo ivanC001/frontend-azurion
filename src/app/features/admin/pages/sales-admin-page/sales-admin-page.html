@@ -8,7 +8,7 @@
         <p class="kicker">Operacion comercial</p>
         <h1>Panel de Ventas</h1>
         <p class="hero-text">
-          Registra ventas rápidas con ticket interno. Solo las boletas y facturas se envían al Facturador en segundo plano.
+          Registra la venta en Azurion y consulta el ticket, boleta o factura oficial generado por el Facturador.
         </p>
       </div>
     </div>
@@ -29,7 +29,7 @@
       <strong>{{ metrics().ventasHoy }}</strong>
     </article>
     <article>
-      <span>Tickets internos</span>
+      <span>Tickets de venta</span>
       <strong>{{ metrics().ticketsInternos }}</strong>
     </article>
     <article>
@@ -74,83 +74,130 @@
       [totalRecords]="ventasTotal()"
       (onLazyLoad)="onVentasPage($event)"
       responsiveLayout="scroll"
+      styleClass="sales-ledger-table"
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>#</th>
+          <th class="selection-column">
+            <input
+              type="checkbox"
+              class="row-checkbox"
+              aria-label="Seleccionar ventas de esta pagina"
+              [checked]="arePageVentasSelected()"
+              (change)="togglePageSelection($any($event.target).checked)"
+            />
+          </th>
           <th>Comprobante</th>
           <th>Cliente</th>
-          <th>Documento</th>
           <th>Fecha</th>
+          <th>Pago</th>
           <th>Importe</th>
           <th>Facturacion</th>
-          <th>Proceso</th>
-          <th>Opciones</th>
+          <th class="actions-column">Acciones</th>
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-venta let-rowIndex="rowIndex">
-        <tr>
-          <td>{{ displayRowNumber(rowIndex) }}</td>
+      <ng-template pTemplate="body" let-venta>
+        <tr [class.is-selected]="isVentaSelected(venta)">
+          <td class="selection-column">
+            <input
+              type="checkbox"
+              class="row-checkbox"
+              [attr.aria-label]="'Seleccionar ' + officialDocumentNumber(venta)"
+              [checked]="isVentaSelected(venta)"
+              (change)="toggleVentaSelection(venta, $any($event.target).checked)"
+            />
+          </td>
           <td>
             <div class="doc-cell">
               <div>
-                <small>{{ documentTypeLabel(venta) }}</small>
-                <strong>{{ venta.externalId }}</strong>
+                <span class="document-badge" [ngClass]="documentClass(venta)">
+                  {{ documentTypeLabel(venta) }}
+                </span>
+                <strong>{{ officialDocumentNumber(venta) }}</strong>
+                <small>Ticket interno {{ internalTicketNumber(venta) }}</small>
               </div>
-              <button type="button" pButton class="p-button-text p-button-rounded p-button-sm" icon="pi pi-copy" (click)="copyComprobante(venta)"></button>
             </div>
           </td>
-          <td>{{ venta.clienteNombre }}</td>
-          <td>{{ venta.clienteDocumento }}</td>
-          <td>{{ venta.fechaVenta | date: 'd/M/yyyy, h:mm:ss a' }}</td>
-          <td class="amount-cell">{{ venta.moneda }} {{ venta.total | number: '1.2-2' }}</td>
           <td>
-            <p-tag [value]="rowEstadoLabel(venta)" [severity]="rowEstadoSeverity(venta)" />
+            <div class="customer-cell">
+              <span class="customer-avatar">{{ clientInitials(venta) }}</span>
+              <div>
+                <strong>{{ venta.clienteNombre || 'Cliente no especificado' }}</strong>
+                <small>{{ venta.clienteDocumento || 'Sin documento' }}</small>
+              </div>
+            </div>
           </td>
           <td>
-            <p-tag [value]="rowFacturadorLabel(venta)" [severity]="rowFacturadorSeverity(venta)" />
+            <div class="date-cell">
+              <strong>{{ venta.fechaVenta | date: 'dd MMM yyyy' }}</strong>
+              <span>{{ venta.fechaVenta | date: 'hh:mm a' }}</span>
+              <small>{{ relativeSaleDate(venta) }}</small>
+            </div>
           </td>
           <td>
+            <div class="payment-cell">
+              <span class="payment-icon"><i [class]="paymentIcon(venta)"></i></span>
+              <span>{{ paymentLabel(venta) }}</span>
+            </div>
+          </td>
+          <td class="amount-cell">{{ currencySymbol(venta) }} {{ venta.total | number: '1.2-2' }}</td>
+          <td>
+            <div class="status-cell">
+              <span class="status-pill" [ngClass]="statusClass(venta)">
+                <i class="pi" [class.pi-check-circle]="statusClass(venta) === 'is-success'" [class.pi-clock]="statusClass(venta) === 'is-warning'" [class.pi-times-circle]="statusClass(venta) === 'is-danger'"></i>
+                {{ statusDisplayLabel(venta) }}
+              </span>
+              <small>{{ statusDetailLabel(venta) }}</small>
+            </div>
+          </td>
+          <td class="actions-column">
             <div class="table-actions">
-              <button pButton type="button" class="p-button-rounded p-button-sm p-button-info p-button-text" icon="pi pi-eye" (click)="openVentaDetalle(venta)"></button>
-              @if (!isInternalTicket(venta)) {
               <button
                 pButton
                 type="button"
-                class="p-button-rounded p-button-sm p-button-help p-button-text"
-                icon="pi pi-code"
-                [disabled]="!hasTrace(venta)"
-                (click)="openTraceForVenta(venta)"
+                class="row-action-button p-button-rounded p-button-sm p-button-outlined"
+                icon="pi pi-eye"
+                title="Ver detalle de la venta"
+                (click)="openVentaDetalle(venta)"
               ></button>
-              <button
-                pButton
-                type="button"
-                class="quick-pdf-button p-button-sm p-button-danger p-button-outlined"
-                icon="pi pi-download"
-                label="PDF"
-                title="Descargar comprobante PDF"
-                [disabled]="!canDownloadAsset(venta, 'pdf')"
-                [loading]="quickPdfVentaId() === venta.id"
-                (click)="quickDownloadPdf(venta)"
-              ></button>
-              <button
-                pButton
-                type="button"
-                class="p-button-rounded p-button-sm p-button-secondary p-button-text"
-                icon="pi pi-file"
-                [disabled]="!canDownloadAsset(venta, 'xml')"
-                (click)="openAsset(venta, 'xml')"
-              ></button>
-              <button
-                pButton
-                type="button"
-                class="p-button-rounded p-button-sm p-button-contrast p-button-text"
-                icon="pi pi-download"
-                [disabled]="!canDownloadAsset(venta, 'cdr')"
-                (click)="openAsset(venta, 'cdr')"
-              ></button>
-              }
+
+              <details class="sale-action-menu">
+                <summary title="Mas acciones" aria-label="Mas acciones">
+                  <i class="pi pi-ellipsis-v"></i>
+                </summary>
+                <div class="sale-action-popover">
+                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="previewPdf(venta)">
+                    <i class="pi pi-eye"></i><span>Ver PDF</span>
+                  </button>
+                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="quickDownloadPdf(venta, 'A4')">
+                    <i class="pi pi-file-pdf"></i><span>Descargar PDF A4</span>
+                  </button>
+                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="quickDownloadPdf(venta, 'TICKET')">
+                    <i class="pi pi-receipt"></i><span>PDF ticket 80 mm</span>
+                  </button>
+                  @if (!isTicketDocument(venta)) {
+                    <button type="button" [disabled]="!canDownloadAsset(venta, 'xml')" (click)="downloadArtifact(venta, 'xml')">
+                      <i class="pi pi-code"></i><span>Descargar XML</span>
+                    </button>
+                    <button type="button" [disabled]="!canDownloadAsset(venta, 'cdr')" (click)="downloadArtifact(venta, 'cdr')">
+                      <i class="pi pi-download"></i><span>Descargar CDR</span>
+                    </button>
+                  }
+                  <span class="menu-separator"></span>
+                  <button type="button" [disabled]="!hasTrace(venta)" (click)="openTraceForVenta(venta)">
+                    <i class="pi pi-sitemap"></i><span>Ver traza del Facturador</span>
+                  </button>
+                  <button type="button" (click)="copyComprobante(venta)">
+                    <i class="pi pi-copy"></i><span>Copiar numero</span>
+                  </button>
+                  @if (canRetryDocument(venta)) {
+                    <button type="button" class="menu-action-danger" [disabled]="retryingVentaId() !== null" (click)="retryVentaDocument(venta)">
+                      <i class="pi pi-refresh"></i><span>Reintentar emision</span>
+                    </button>
+                  }
+                </div>
+              </details>
             </div>
           </td>
         </tr>
@@ -158,7 +205,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="9">No hay ventas registradas para este tenant.</td>
+          <td colspan="8" class="empty-table-cell">No hay ventas registradas para este tenant.</td>
         </tr>
       </ng-template>
     </p-table>
@@ -177,7 +224,7 @@
   <section class="venta-form">
     <div class="fact-alert" [class.fact-alert--local]="isTicketForm()">
       @if (isTicketForm()) {
-        <strong>Venta rápida:</strong> genera ticket interno y termina sin esperar SUNAT.
+        <strong>Venta rápida:</strong> Azurion registra la operación y el Facturador genera el ticket oficial sin SUNAT.
       } @else {
         <strong>Facturación electrónica:</strong> la venta termina primero y el comprobante se procesa en segundo plano.
       }
@@ -426,22 +473,34 @@
       <div><span>Facturacion</span><strong>{{ rowEstadoLabel(selectedVenta()!) }}</strong></div>
       <div><span>Proceso</span><strong>{{ rowFacturadorLabel(selectedVenta()!) }}</strong></div>
     </div>
-    @if (!isInternalTicket(selectedVenta()!)) {
+    @if (!isLegacyInternalTicket(selectedVenta()!)) {
       <div class="detalle-download">
         <div>
-          <strong>Comprobante electrónico</strong>
-          <span>Descarga el PDF listo para guardar o imprimir.</span>
+          <strong>Documento oficial</strong>
+          <span>El mismo comprobante puede imprimirse en hoja A4 o ticket térmico de 80 mm.</span>
         </div>
-        <button
-          pButton
-          type="button"
-          class="p-button-danger"
-          icon="pi pi-download"
-          label="Descargar PDF"
-          [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
-          [loading]="quickPdfVentaId() === selectedVenta()!.id"
-          (click)="quickDownloadPdf(selectedVenta()!)"
-        ></button>
+        <div class="detalle-print-actions">
+          <button
+            pButton
+            type="button"
+            class="p-button-danger p-button-outlined"
+            icon="pi pi-file-pdf"
+            label="A4"
+            [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
+            [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'A4'"
+            (click)="quickDownloadPdf(selectedVenta()!, 'A4')"
+          ></button>
+          <button
+            pButton
+            type="button"
+            class="p-button-info p-button-outlined"
+            icon="pi pi-receipt"
+            label="Ticket 80 mm"
+            [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
+            [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'TICKET'"
+            (click)="quickDownloadPdf(selectedVenta()!, 'TICKET')"
+          ></button>
+        </div>
       </div>
     }
   }

@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom, forkJoin, Observable, throwError } from 'rxjs';
+import { firstValueFrom, forkJoin, Observable, of, throwError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -19,6 +19,7 @@ import {
   AdminSaasApiService,
   Almacen,
   Compra,
+  ConfiguracionTributaria,
   InventorySummary,
   KardexMovimiento,
   PageResponse,
@@ -42,7 +43,8 @@ interface MovimientoForm {
 interface CompraDetalleForm {
   productoId: number | null;
   cantidad: number;
-  costoUnitario: number;
+  costoNetoUnitario: number;
+  porcentajeIgv: number;
   precioVenta: number;
   codigoLote: string;
   fechaFabricacion: string;
@@ -56,6 +58,7 @@ interface CompraForm {
   proveedorDocumento: string;
   proveedorNombre: string;
   almacenId: number | null;
+  creditoFiscalAplicable: boolean;
   clientOperationId: string;
   detalles: CompraDetalleForm[];
 }
@@ -100,6 +103,7 @@ export class InventoryAdminPage {
   protected readonly stockLotes = signal<StockLoteItem[]>([]);
   protected readonly movementLotes = signal<StockLoteItem[]>([]);
   protected readonly compras = signal<Compra[]>([]);
+  protected readonly taxConfig = signal<ConfiguracionTributaria | null>(null);
   protected readonly stockTotal = signal(0);
   protected readonly lotesTotal = signal(0);
   protected readonly kardexTotal = signal(0);
@@ -132,24 +136,29 @@ export class InventoryAdminPage {
 
   protected compraForm: CompraForm = this.emptyCompraForm();
 
-  protected readonly compraTotals = computed(() => {
+  protected compraTotals() {
     const detalles = this.compraForm.detalles;
-    const gasto = detalles.reduce(
-      (sum, item) => sum + Number(item.cantidad || 0) * Number(item.costoUnitario || 0),
-      0,
-    );
-    const venta = detalles.reduce(
-      (sum, item) => sum + Number(item.cantidad || 0) * Number(item.precioVenta || 0),
-      0,
-    );
-    const ganancia = venta - gasto;
+    const subtotalNeto = detalles.reduce(
+      (sum, item) => sum + this.compraDetalleSubtotalNeto(item), 0);
+    const montoIgv = detalles.reduce(
+      (sum, item) => sum + this.compraDetalleIgvTotal(item), 0);
+    const total = subtotalNeto + montoIgv;
+    const costoInventariable = detalles.reduce(
+      (sum, item) => sum + this.compraDetalleCostoInventariableTotal(item), 0);
+    const ventaNeta = detalles.reduce(
+      (sum, item) => sum + this.compraDetalleVentaNetaTotal(item), 0);
+    const ganancia = ventaNeta - costoInventariable;
     return {
-      gasto,
-      venta,
+      subtotalNeto,
+      montoIgv,
+      total,
+      creditoFiscal: this.compraForm.creditoFiscalAplicable ? montoIgv : 0,
+      costoInventariable,
+      ventaNeta,
       ganancia,
-      margen: gasto > 0 ? (ganancia / gasto) * 100 : 0,
+      margen: costoInventariable > 0 ? (ganancia / costoInventariable) * 100 : 0,
     };
-  });
+  }
 
   protected movimientoForm: MovimientoForm = {
     productoId: null,
@@ -232,10 +241,23 @@ export class InventoryAdminPage {
       ),
       compras: this.api.pageCompras('', undefined, 0, this.pageSize),
       summary: this.api.getInventorySummary(),
+      taxConfig: this.api.getConfiguracionTributaria().pipe(
+        catchError(() =>
+          of({
+            id: 0,
+            tipoOperacionDefaultId: '0101',
+            tipoAfectacionDefaultId: '10',
+            tributoDefaultId: '1000',
+            porcentajeIgvDefault: 18,
+            monedaDefault: 'PEN',
+            estado: 'FALLBACK',
+          } satisfies ConfiguracionTributaria),
+        ),
+      ),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ almacenes, productos, stock, kardex, lotes, compras, summary }) => {
+        next: ({ almacenes, productos, stock, kardex, lotes, compras, summary, taxConfig }) => {
           this.almacenes.set(almacenes);
           this.productos.set(productos.content);
           this.applyStockPage(stock);
@@ -245,6 +267,7 @@ export class InventoryAdminPage {
           this.lotesTotal.set(lotes.totalElements);
           this.compras.set(compras.content);
           this.comprasTotal.set(compras.totalElements);
+          this.taxConfig.set(taxConfig);
           this.applySummary(summary);
           this.syncLowStockAlerts(stock.content, lotes.content);
         },
@@ -497,6 +520,56 @@ export class InventoryAdminPage {
     detalle.productoId = productoId;
     const producto = this.productos().find((item) => item.id === productoId);
     detalle.precioVenta = Number(producto?.precioVentaBase ?? producto?.precio ?? 0);
+    detalle.porcentajeIgv = this.productSalesTaxRate(producto);
+  }
+
+  protected onCompraTipoComprobanteChange(
+    tipo: CompraForm['tipoComprobante'],
+  ): void {
+    this.compraForm.tipoComprobante = tipo;
+    this.compraForm.creditoFiscalAplicable = tipo === 'FACTURA';
+  }
+
+  protected compraDetalleSubtotalNeto(detalle: CompraDetalleForm): number {
+    return this.roundMoney(Number(detalle.cantidad || 0) * Number(detalle.costoNetoUnitario || 0));
+  }
+
+  protected compraDetalleIgvUnitario(detalle: CompraDetalleForm): number {
+    const rate = Math.max(0, Number(detalle.porcentajeIgv || 0));
+    return Number(detalle.costoNetoUnitario || 0) * rate / 100;
+  }
+
+  protected compraDetalleIgvTotal(detalle: CompraDetalleForm): number {
+    return this.roundMoney(Number(detalle.cantidad || 0) * this.compraDetalleIgvUnitario(detalle));
+  }
+
+  protected compraDetalleCostoTotalUnitario(detalle: CompraDetalleForm): number {
+    return Number(detalle.costoNetoUnitario || 0) + this.compraDetalleIgvUnitario(detalle);
+  }
+
+  protected compraDetalleCostoInventariableUnitario(detalle: CompraDetalleForm): number {
+    return this.compraForm.creditoFiscalAplicable
+      ? Number(detalle.costoNetoUnitario || 0)
+      : this.compraDetalleCostoTotalUnitario(detalle);
+  }
+
+  protected compraDetalleCostoInventariableTotal(detalle: CompraDetalleForm): number {
+    return this.roundMoney(
+      Number(detalle.cantidad || 0) * this.compraDetalleCostoInventariableUnitario(detalle),
+    );
+  }
+
+  protected compraDetalleVentaNetaUnitario(detalle: CompraDetalleForm): number {
+    const producto = this.productos().find((item) => item.id === detalle.productoId);
+    const rate = this.productSalesTaxRate(producto);
+    const finalPrice = Number(detalle.precioVenta || 0);
+    return rate > 0 ? finalPrice / (1 + rate / 100) : finalPrice;
+  }
+
+  protected compraDetalleVentaNetaTotal(detalle: CompraDetalleForm): number {
+    return this.roundMoney(
+      Number(detalle.cantidad || 0) * this.compraDetalleVentaNetaUnitario(detalle),
+    );
   }
 
   protected compraDetalleControlsExpiry(detalle: CompraDetalleForm): boolean {
@@ -535,12 +608,14 @@ export class InventoryAdminPage {
       (item) =>
         !item.productoId ||
         Number(item.cantidad) <= 0 ||
-        Number(item.costoUnitario) <= 0 ||
+        Number(item.costoNetoUnitario) <= 0 ||
+        Number(item.porcentajeIgv) < 0 ||
+        Number(item.porcentajeIgv) > 100 ||
         Number(item.precioVenta) <= 0,
     );
     if (invalid) {
       this.errorMessage.set(
-        'Cada producto debe tener cantidad, costo de compra y precio de venta mayores a cero.',
+        'Cada producto debe tener cantidad, costo neto y precio final mayores a cero; el IGV debe estar entre 0% y 100%.',
       );
       return;
     }
@@ -580,11 +655,15 @@ export class InventoryAdminPage {
         proveedorDocumento: this.compraForm.proveedorDocumento.trim() || null,
         proveedorNombre: this.compraForm.proveedorNombre.trim() || null,
         almacenId: this.compraForm.almacenId,
+        creditoFiscalAplicable: this.compraForm.creditoFiscalAplicable,
         clientOperationId: this.compraForm.clientOperationId,
         detalles: this.compraForm.detalles.map((item) => ({
           productoId: Number(item.productoId),
           cantidad: Number(item.cantidad),
-          costoUnitario: Number(item.costoUnitario),
+          costoUnitario: this.compraDetalleCostoInventariableUnitario(item),
+          costoNetoUnitario: Number(item.costoNetoUnitario),
+          porcentajeIgv: Number(item.porcentajeIgv),
+          costoTotalUnitario: this.compraDetalleCostoTotalUnitario(item),
           precioVenta: Number(item.precioVenta),
           codigoLote: item.codigoLote.trim() || null,
           fechaFabricacion: item.fechaFabricacion || null,
@@ -596,7 +675,7 @@ export class InventoryAdminPage {
         next: (compra) => {
           this.compraDialogVisible.set(false);
           this.successMessage.set(
-            `Compra ${compra.numeroComprobante} registrada. Inversion S/ ${Number(compra.total).toFixed(2)}; ganancia proyectada S/ ${Number(compra.gananciaProyectada).toFixed(2)}.`,
+            `Compra ${compra.numeroComprobante} registrada. Total S/ ${Number(compra.total).toFixed(2)}; costo inventariable S/ ${Number(compra.totalCostoInventariable).toFixed(2)}.`,
           );
           this.loadData();
         },
@@ -630,6 +709,7 @@ export class InventoryAdminPage {
       proveedorDocumento: '',
       proveedorNombre: '',
       almacenId: this.almacenes()[0]?.id ?? null,
+      creditoFiscalAplicable: true,
       clientOperationId: createClientOperationId('purchase'),
       detalles: [this.emptyCompraDetalle()],
     };
@@ -639,7 +719,8 @@ export class InventoryAdminPage {
     return {
       productoId: null,
       cantidad: 1,
-      costoUnitario: 0,
+      costoNetoUnitario: 0,
+      porcentajeIgv: Number(this.taxConfig()?.porcentajeIgvDefault ?? 18),
       precioVenta: 0,
       codigoLote: '',
       fechaFabricacion: '',
@@ -651,6 +732,28 @@ export class InventoryAdminPage {
     this.movimientoForm.productoId = productoId;
     this.movimientoForm.loteId = null;
     this.refreshMovementLotes();
+  }
+
+  private productSalesTaxRate(producto?: Producto): number {
+    const inherited = producto?.usaConfiguracionEmpresa !== false;
+    const affectation = inherited
+      ? this.taxConfig()?.tipoAfectacionDefaultId
+      : producto?.tipoAfectacionIgvId;
+    const taxable = inherited
+      ? String(affectation || '10').startsWith('1')
+      : producto?.afectoIgv !== false && String(affectation || '10').startsWith('1');
+    if (!taxable) {
+      return 0;
+    }
+    return Number(
+      inherited
+        ? this.taxConfig()?.porcentajeIgvDefault ?? 18
+        : producto?.porcentajeImpuesto ?? 18,
+    );
+  }
+
+  private roundMoney(value: number): number {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   }
 
   protected selectedProductControlsLots(): boolean {

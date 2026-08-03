@@ -289,11 +289,30 @@
     <label>
       <span class="field-label">
         <i class="pi pi-money-bill"></i>
-        Precio de venta (S/)
+        Precio final de venta - incluye IGV (S/)
         <em class="field-required">*</em>
       </span>
       <input pInputText type="number" min="0" step="0.01" name="precio" [(ngModel)]="productForm.precio" placeholder="0.00" required />
+      <small>Este es el importe final que vera y pagara el cliente.</small>
     </label>
+    <div class="price-breakdown span-2" aria-label="Desglose automatico del precio de venta">
+      <span class="price-breakdown__icon"><i class="pi pi-calculator"></i></span>
+      <div>
+        <small>Base imponible</small>
+        <strong>S/ {{ productPriceBreakdown().base | number: '1.2-2' }}</strong>
+      </div>
+      <div>
+        <small>IGV {{ productPriceBreakdown().rate | number: '1.0-2' }}%</small>
+        <strong>S/ {{ productPriceBreakdown().igv | number: '1.2-2' }}</strong>
+      </div>
+      <div class="price-breakdown__final">
+        <small>Precio final</small>
+        <strong>S/ {{ productPriceBreakdown().final | number: '1.2-2' }}</strong>
+      </div>
+      @if (!productPriceBreakdown().taxable) {
+        <em>Producto exonerado, inafecto o de exportacion: IGV S/ 0.00.</em>
+      }
+    </div>
     @if (!productForm.id && productForm.tipoProducto !== 'SERVICIO') {
       <label>
         <span class="field-label">

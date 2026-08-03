@@ -1,0 +1,104 @@
+<article
+  [class.opportunity-quote-card--interest]="appearance() === 'interest'"
+  [class.opportunity-quote-card--negotiation]="mode() === 'negotiation'"
+  [class.opportunity-quote-card--accepted]="negotiationDecision()?.tone === 'accepted'"
+  [class.opportunity-quote-card--adjustment]="negotiationDecision()?.tone === 'adjustment'"
+  [class.opportunity-quote-card--rejected]="negotiationDecision()?.tone === 'rejected'"
+  [class.opportunity-quote-card--waiting]="negotiationDecision()?.tone === 'waiting'"
+>
+  @if (mode() === 'negotiation') {
+    @if (negotiationDecision(); as decision) {
+      <header class="negotiation-heading">
+        <strong>COT-{{ quote().id | number: '3.0-0' }}</strong>
+        <span>{{ quote().fechaEmision | date: 'dd/MM/yyyy' }}</span>
+        <b>S/ {{ quote().total | number: '1.2-2' }}</b>
+        <em [class]="'negotiation-decision negotiation-decision--' + decision.tone">
+          {{ decision.label }}
+        </em>
+      </header>
+    }
+  } @else {
+    <header>
+      <div>
+        <strong>COT-{{ quote().id | number: '3.0-0' }}</strong>
+        <span
+          >{{ quote().fechaEmision | date: 'dd/MM/yyyy' }} &middot; S/
+          {{ quote().total | number: '1.2-2' }}</span
+        >
+      </div>
+      <em [class]="'quote-status quote-status--' + statusTone()">{{ statusLabel() }}</em>
+    </header>
+    <p>{{ nextStep() }}</p>
+  }
+
+  <nav aria-label="Acciones de la cotizacion">
+    <button type="button" [disabled]="actionInProgress()" (click)="downloadRequested.emit()">
+      <i class="pi pi-file-pdf"></i> PDF
+    </button>
+
+    @if (whatsappAvailable()) {
+      <button
+        type="button"
+        [disabled]="whatsappSending() || whatsappLocked()"
+        (click)="whatsappRequested.emit()"
+      >
+        <i [class]="whatsappProcessing() ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+        {{ whatsappLabel() }}
+      </button>
+    } @else if (mode() === 'standard') {
+      <button
+        type="button"
+        disabled
+        title="Registra un telefono valido en el prospecto para habilitar WhatsApp"
+      >
+        <i class="pi pi-whatsapp"></i> WhatsApp
+      </button>
+    }
+
+    @if (emailAvailable()) {
+      <button
+        type="button"
+        [disabled]="actionInProgress() || emailSending()"
+        (click)="emailRequested.emit()"
+      >
+        <i [class]="emailSending() ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+        {{ emailSending() ? 'Enviando...' : 'Correo' }}
+      </button>
+    } @else if (mode() === 'standard') {
+      <button
+        type="button"
+        disabled
+        title="Registra un correo en el contacto para habilitar este envio"
+      >
+        <i class="pi pi-envelope"></i> Correo
+      </button>
+    }
+
+    @if (mode() === 'negotiation') {
+      <button type="button" [disabled]="actionInProgress()" (click)="adjustmentRequested.emit()">
+        <i class="pi pi-sliders-h"></i> Crear ajuste
+      </button>
+    } @else if (canFollowUp()) {
+      <button type="button" [disabled]="actionInProgress()" (click)="followUpRequested.emit()">
+        <i class="pi pi-calendar-clock"></i> Seguimiento
+      </button>
+    }
+
+    @if (mode() === 'standard' && canDecide()) {
+      <button type="button" [disabled]="actionInProgress()" (click)="acceptedRequested.emit()">
+        <i class="pi pi-check"></i> Acepta condiciones
+      </button>
+      <button type="button" [disabled]="actionInProgress()" (click)="adjustmentRequested.emit()">
+        <i class="pi pi-sliders-h"></i> No acepta / ajustar
+      </button>
+      <button
+        type="button"
+        class="danger-action"
+        [disabled]="actionInProgress()"
+        (click)="rejectedRequested.emit()"
+      >
+        <i class="pi pi-times"></i> Rechazar
+      </button>
+    }
+  </nav>
+</article>

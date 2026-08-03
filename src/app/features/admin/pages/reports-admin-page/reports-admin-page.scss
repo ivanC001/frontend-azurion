@@ -135,6 +135,99 @@
   padding: 0.8rem 0.95rem;
 }
 
+.fiscal-panel {
+  background: #ffffff;
+  border: 1px solid #dbe5ef;
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.fiscal-panel__head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  justify-content: space-between;
+
+  > div {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  span {
+    align-items: center;
+    color: #0f172a;
+    display: inline-flex;
+    font-weight: 900;
+    gap: 0.45rem;
+  }
+
+  i {
+    color: #2563eb;
+  }
+
+  small,
+  em {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-style: normal;
+  }
+}
+
+.fiscal-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+}
+
+.fiscal-grid article {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.8rem;
+
+  span {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 1.1rem;
+  }
+
+  small {
+    color: #92400e;
+    font-size: 0.7rem;
+  }
+}
+
+.fiscal-card--tax {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+.fiscal-card--credit {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.fiscal-card--payable {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+}
+
+.fiscal-card--warning {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
 .pipeline-report-panel {
   background: #ffffff;
   border: 1px solid #dbe5ef;

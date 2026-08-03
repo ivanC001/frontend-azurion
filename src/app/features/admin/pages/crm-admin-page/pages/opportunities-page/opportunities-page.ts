@@ -5,44 +5,12 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 
 import { CrmOportunidad } from '../../../../data/admin-saas-api.service';
-
-export interface OpportunitySummaryCard {
-  label: string;
-  value: string;
-  delta: string;
-  detail: string;
-  icon: string;
-  tone: string;
-}
-
-export interface OpportunityFilterOption<T = string | null> {
-  label: string;
-  value: T;
-}
-
-export interface OpportunityPageRow {
-  opportunity: CrmOportunidad;
-  typeLabel: string;
-  contactName: string;
-  companyLabel: string;
-  stageName: string;
-  stageBackground: string;
-  stageColor: string;
-  temperatureLabel: string;
-  temperatureTone: string;
-  ownerInitials: string;
-  ownerName: string;
-  statusLabel: string;
-  statusTone: string;
-}
-
-export interface OpportunityPageMeta {
-  page: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
-  rangeLabel: string;
-}
+import type {
+  OpportunityFilterOption,
+  OpportunityPageMeta,
+  OpportunityPageRow,
+  OpportunitySummaryCard,
+} from '../../models';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,

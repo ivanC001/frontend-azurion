@@ -25,8 +25,14 @@
       <ng-template pTemplate="body" let-row>
         <tr>
           <td><input type="checkbox" aria-label="Seleccionar oportunidad" /></td>
-          <td><strong>{{ row.opportunity.titulo }}</strong><span>{{ row.typeLabel }}</span></td>
-          <td><strong>{{ row.contactName }}</strong><span>{{ row.companyLabel }}</span></td>
+          <td><div class="opportunity-primary-cell">
+            <strong>{{ row.opportunity.titulo }}</strong>
+            <span>{{ row.typeLabel }}</span>
+          </div></td>
+          <td><div class="opportunity-contact-cell">
+            <strong>{{ row.contactName }}</strong>
+            <span>{{ row.companyLabel }}</span>
+          </div></td>
           <td><span class="opportunity-stage-pill" [style.background]="row.stageBackground" [style.color]="row.stageColor">{{ row.stageName }}</span></td>
           <td>S/ {{ row.opportunity.montoEstimado | number: '1.2-2' }}</td>
           <td><span [class]="'opportunity-temperature opportunity-temperature--' + row.temperatureTone">{{ row.temperatureLabel }}</span></td>

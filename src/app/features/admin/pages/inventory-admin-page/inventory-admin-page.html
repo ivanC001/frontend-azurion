@@ -50,11 +50,11 @@
       <strong>{{ inventoryMetrics().purchases }}</strong>
     </article>
     <article>
-      <span>Inversion acumulada</span>
+      <span>Costo inventariable acumulado</span>
       <strong>S/ {{ inventoryMetrics().invested | number: '1.2-2' }}</strong>
     </article>
     <article>
-      <span>Ganancia proyectada</span>
+      <span>Margen real proyectado</span>
       <strong>S/ {{ inventoryMetrics().projectedProfit | number: '1.2-2' }}</strong>
     </article>
   </section>
@@ -63,7 +63,7 @@
     <div class="table-head">
       <div>
         <h2>Compras e ingresos por comprobante</h2>
-        <p>Consulta cuanto se invirtio y la rentabilidad proyectada de cada compra.</p>
+        <p>Consulta costo neto, IGV, costo inventariable y margen real proyectado.</p>
       </div>
     </div>
     <p-table
@@ -82,10 +82,12 @@
           <th>Comprobante</th>
           <th>Proveedor</th>
           <th>Almacen</th>
-          <th>Productos</th>
-          <th>Inversion</th>
-          <th>Venta proyectada</th>
-          <th>Ganancia proyectada</th>
+          <th>Compra neta</th>
+          <th>IGV</th>
+          <th>Total comprobante</th>
+          <th>Costo inventariable</th>
+          <th>Venta neta proyectada</th>
+          <th>Margen real</th>
           <th>Margen</th>
         </tr>
       </ng-template>
@@ -95,15 +97,26 @@
           <td><strong>{{ item.tipoComprobante }} {{ item.numeroComprobante }}</strong></td>
           <td>{{ item.proveedorDocumento || '' }} {{ item.proveedorNombre || 'Sin proveedor' }}</td>
           <td>{{ item.almacenCodigo }}</td>
-          <td>{{ item.detalles.length }}</td>
+          @if (item.tratamientoIgv === 'DESGLOSADO') {
+            <td>S/ {{ item.subtotalNeto | number: '1.2-2' }}</td>
+            <td>S/ {{ item.montoIgv | number: '1.2-2' }}</td>
+          } @else {
+            <td class="historical-metric" title="El registro anterior no conserva el desglose tributario">No disponible</td>
+            <td class="historical-metric" title="El registro anterior no conserva el desglose tributario">No disponible</td>
+          }
           <td>S/ {{ item.total | number: '1.2-2' }}</td>
-          <td>S/ {{ item.ventaProyectada | number: '1.2-2' }}</td>
-          <td><strong [class.profit-negative]="item.gananciaProyectada < 0">S/ {{ item.gananciaProyectada | number: '1.2-2' }}</strong></td>
-          <td>{{ item.margenPorcentaje | number: '1.2-2' }}%</td>
+          <td>S/ {{ item.totalCostoInventariable | number: '1.2-2' }}</td>
+          @if (item.tratamientoIgv === 'DESGLOSADO') {
+            <td>S/ {{ item.ventaProyectada | number: '1.2-2' }}</td>
+            <td><strong [class.profit-negative]="item.gananciaProyectada < 0">S/ {{ item.gananciaProyectada | number: '1.2-2' }}</strong></td>
+            <td>{{ item.margenPorcentaje | number: '1.2-2' }}%</td>
+          } @else {
+            <td colspan="3" class="historical-metric">Histórico sin desglose: margen no disponible</td>
+          }
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="9">Todavia no hay compras registradas por comprobante.</td></tr>
+        <tr><td colspan="11">Todavia no hay compras registradas por comprobante.</td></tr>
       </ng-template>
     </p-table>
   </section>
@@ -301,7 +314,12 @@
       <div class="purchase-grid">
         <label>
           Tipo comprobante <span class="required">*</span>
-          <p-select name="tipoComprobanteCompra" [options]="comprobanteCompraOptions" [(ngModel)]="compraForm.tipoComprobante" />
+          <p-select
+            name="tipoComprobanteCompra"
+            [options]="comprobanteCompraOptions"
+            [(ngModel)]="compraForm.tipoComprobante"
+            (ngModelChange)="onCompraTipoComprobanteChange($event)"
+          />
         </label>
         <label>
           Numero comprobante <span class="required">*</span>
@@ -324,13 +342,24 @@
           <input pInputText name="proveedorNombreCompra" [(ngModel)]="compraForm.proveedorNombre" placeholder="Razon social o nombre" />
         </label>
       </div>
+      <label class="tax-credit-card">
+        <input
+          type="checkbox"
+          name="creditoFiscalAplicable"
+          [(ngModel)]="compraForm.creditoFiscalAplicable"
+        />
+        <span>
+          <strong>Esta compra da derecho a credito fiscal</strong>
+          <small>Si esta activo, el IGV recuperable no aumenta el costo del inventario. Verifica que el comprobante y proveedor cumplan los requisitos tributarios.</small>
+        </span>
+      </label>
     </section>
 
     <section class="purchase-section">
       <div class="purchase-section__head">
         <div>
           <strong>Productos comprados</strong>
-          <span>Registra costo y precio esperado para calcular rentabilidad.</span>
+          <span>Registra el costo sin IGV. El precio de venta siempre es el importe final que pagara el cliente.</span>
         </div>
         <button type="button" pButton class="az-secondary p-button-outlined" icon="pi pi-plus" label="Agregar producto" (click)="addCompraDetalle()"></button>
       </div>
@@ -356,11 +385,15 @@
                 <input pInputText type="number" min="0.01" [name]="'compraCantidad-' + $index" [(ngModel)]="detalle.cantidad" />
               </label>
               <label>
-                Costo unitario <span class="required">*</span>
-                <input pInputText type="number" min="0.01" [name]="'compraCosto-' + $index" [(ngModel)]="detalle.costoUnitario" />
+                Costo neto unit. <span class="required">*</span>
+                <input pInputText type="number" min="0.01" [name]="'compraCostoNeto-' + $index" [(ngModel)]="detalle.costoNetoUnitario" />
               </label>
               <label>
-                Precio venta <span class="required">*</span>
+                IGV compra (%)
+                <input pInputText type="number" min="0" max="100" [name]="'compraIgv-' + $index" [(ngModel)]="detalle.porcentajeIgv" />
+              </label>
+              <label>
+                Precio final venta <span class="required">*</span>
                 <input pInputText type="number" min="0.01" [name]="'compraVenta-' + $index" [(ngModel)]="detalle.precioVenta" />
               </label>
               <button type="button" class="purchase-remove" title="Quitar producto" (click)="removeCompraDetalle($index)">
@@ -368,9 +401,12 @@
               </button>
             </div>
             <div class="purchase-line__result">
-              <span>Gasto <strong>S/ {{ (detalle.cantidad * detalle.costoUnitario) | number: '1.2-2' }}</strong></span>
-              <span>Venta proyectada <strong>S/ {{ (detalle.cantidad * detalle.precioVenta) | number: '1.2-2' }}</strong></span>
-              <span>Ganancia <strong>S/ {{ (detalle.cantidad * (detalle.precioVenta - detalle.costoUnitario)) | number: '1.2-2' }}</strong></span>
+              <span>Compra neta <strong>S/ {{ compraDetalleSubtotalNeto(detalle) | number: '1.2-2' }}</strong></span>
+              <span>IGV <strong>S/ {{ compraDetalleIgvTotal(detalle) | number: '1.2-2' }}</strong></span>
+              <span>Total compra <strong>S/ {{ (compraDetalleSubtotalNeto(detalle) + compraDetalleIgvTotal(detalle)) | number: '1.2-2' }}</strong></span>
+              <span>Costo inventariable <strong>S/ {{ compraDetalleCostoInventariableTotal(detalle) | number: '1.2-2' }}</strong></span>
+              <span>Venta neta <strong>S/ {{ compraDetalleVentaNetaTotal(detalle) | number: '1.2-2' }}</strong></span>
+              <span>Margen real <strong>S/ {{ (compraDetalleVentaNetaTotal(detalle) - compraDetalleCostoInventariableTotal(detalle)) | number: '1.2-2' }}</strong></span>
             </div>
             @if (compraDetalleControlsLot(detalle)) {
               <div class="purchase-lot-grid">
@@ -394,9 +430,13 @@
     </section>
 
     <section class="purchase-totals">
-      <span>Inversion <strong>S/ {{ compraTotals().gasto | number: '1.2-2' }}</strong></span>
-      <span>Venta proyectada <strong>S/ {{ compraTotals().venta | number: '1.2-2' }}</strong></span>
-      <span>Ganancia proyectada <strong>S/ {{ compraTotals().ganancia | number: '1.2-2' }}</strong></span>
+      <span>Compra neta <strong>S/ {{ compraTotals().subtotalNeto | number: '1.2-2' }}</strong></span>
+      <span>IGV compra <strong>S/ {{ compraTotals().montoIgv | number: '1.2-2' }}</strong></span>
+      <span>Total comprobante <strong>S/ {{ compraTotals().total | number: '1.2-2' }}</strong></span>
+      <span>Credito fiscal <strong>S/ {{ compraTotals().creditoFiscal | number: '1.2-2' }}</strong></span>
+      <span>Costo inventariable <strong>S/ {{ compraTotals().costoInventariable | number: '1.2-2' }}</strong></span>
+      <span>Venta neta <strong>S/ {{ compraTotals().ventaNeta | number: '1.2-2' }}</strong></span>
+      <span>Margen real <strong>S/ {{ compraTotals().ganancia | number: '1.2-2' }}</strong></span>
       <span>Margen <strong>{{ compraTotals().margen | number: '1.2-2' }}%</strong></span>
     </section>
   </form>
