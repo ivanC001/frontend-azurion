@@ -24,7 +24,8 @@ export interface ExcelReportSheet {
 export class ExcelReportService {
   async exportWorkbook(fileName: string, sheets: ExcelReportSheet[]): Promise<void> {
     const ExcelJSModule = await import('exceljs');
-    const workbook = new ExcelJSModule.Workbook();
+    const Workbook = this.resolveWorkbookConstructor(ExcelJSModule);
+    const workbook = new Workbook();
     workbook.creator = 'Azurion';
     workbook.lastModifiedBy = 'Azurion';
     workbook.created = new Date();
@@ -39,6 +40,17 @@ export class ExcelReportService {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
     this.downloadBlob(blob, this.ensureXlsxName(fileName));
+  }
+
+  private resolveWorkbookConstructor(module: typeof import('exceljs')): typeof ExcelJS.Workbook {
+    const candidate = module as typeof import('exceljs') & {
+      default?: typeof import('exceljs');
+    };
+    const Workbook = candidate.Workbook ?? candidate.default?.Workbook;
+    if (!Workbook) {
+      throw new Error('La libreria ExcelJS no cargo el constructor Workbook.');
+    }
+    return Workbook;
   }
 
   private addSheet(workbook: ExcelJS.Workbook, report: ExcelReportSheet): void {
