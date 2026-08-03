@@ -35,7 +35,7 @@ export class ExcelReportService {
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
+    const blob = new Blob([this.toBlobPart(buffer)], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
     this.downloadBlob(blob, this.ensureXlsxName(fileName));
@@ -214,13 +214,23 @@ export class ExcelReportService {
     };
   }
 
+  private toBlobPart(buffer: ArrayBuffer | Uint8Array): BlobPart {
+    if (buffer instanceof ArrayBuffer) {
+      return buffer;
+    }
+    return new Uint8Array(buffer);
+  }
+
   private downloadBlob(blob: Blob, fileName: string): void {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   private safeSheetName(name: string): string {

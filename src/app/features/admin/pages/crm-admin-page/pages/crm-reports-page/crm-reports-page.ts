@@ -371,7 +371,7 @@ export class CrmReportsPage implements OnDestroy {
       const capped = rows.length === 5000 ? ' Se aplico el limite seguro de 5,000 filas.' : '';
       this.successMessage.set(`Reporte ${format.toUpperCase()} generado con ${rows.length} registro(s).${capped}`);
     } catch (error: unknown) {
-      this.errorMessage.set(this.resolveError(error));
+      this.errorMessage.set(this.resolveError(error, format));
     } finally {
       this.exporting.set(false);
     }
@@ -410,10 +410,16 @@ export class CrmReportsPage implements OnDestroy {
     URL.revokeObjectURL(url);
   }
 
-  private resolveError(error: unknown): string {
+  private resolveError(error: unknown, format?: 'csv' | 'xlsx'): string {
     if (typeof error === 'object' && error !== null && 'error' in error) {
       const payload = (error as { error?: { message?: string; details?: string[] } }).error;
       return payload?.details?.[0] || payload?.message || 'No se pudo cargar el reporte CRM.';
+    }
+    if (error instanceof Error && format === 'xlsx') {
+      return 'No se pudo generar el Excel: ' + error.message;
+    }
+    if (format === 'xlsx') {
+      return 'No se pudo generar el Excel del reporte CRM.';
     }
     return 'No se pudo cargar el reporte CRM.';
   }
