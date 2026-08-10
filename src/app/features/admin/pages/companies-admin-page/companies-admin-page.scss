@@ -507,6 +507,11 @@
   }
 }
 
+.required-marker {
+  color: var(--az-danger, #dc2626);
+  font-weight: 900;
+}
+
 .modules-field {
   background: var(--az-surface-hover);
   border: 1px solid var(--az-border);

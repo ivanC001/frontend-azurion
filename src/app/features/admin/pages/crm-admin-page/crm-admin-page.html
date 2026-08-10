@@ -96,7 +96,7 @@
     }
 
     @if (activeTab() !== 'dashboard' && activeTab() !== 'embudo' && activeTab() !== 'catalogo' && activeTab() !== 'seguimientoPagos' && !isCommercialStageTab() && !isCrmConfigTab()) {
-      <nav class="crm-section-nav" aria-label="Submodulos CRM">
+      <nav class="crm-section-nav" aria-label="Submódulos CRM">
         @for (item of sectionTabs(); track item.tab) {
           <button type="button" [class.active]="activeTab() === item.tab" (click)="setTab(item.tab)">
             <i [class]="item.icon"></i>
@@ -170,7 +170,7 @@
         }
         @if (canCloseCrmOpportunities() && opportunityView() !== 'GANADAS') {
           <button type="button" pButton class="p-button-text p-button-rounded success-action" icon="pi pi-check-circle" title="Marcar ganada" aria-label="Marcar ganada" [loading]="actionId() === item.id" (click)="markWon(item)"></button>
-          <button type="button" pButton class="p-button-text p-button-rounded danger-action" icon="pi pi-times-circle" title="Marcar perdida" aria-label="Marcar perdida" [loading]="actionId() === item.id" (click)="markLost(item)"></button>
+          <button type="button" pButton class="p-button-text p-button-rounded danger-action" icon="pi pi-times-circle" title="Marcar pérdida" aria-label="Marcar pérdida" [loading]="actionId() === item.id" (click)="markLost(item)"></button>
         }
       </div>
     </ng-template>
@@ -235,7 +235,7 @@
           <i class="pi pi-sitemap"></i>
           <div>
             <strong>Separado del ERP</strong>
-            <span>Este catalogo no descuenta stock; sirve para captacion, oportunidades y reportes CRM.</span>
+            <span>Este catálogo no descuenta stock; sirve para captación, oportunidades y reportes CRM.</span>
           </div>
         </article>
         <article>
@@ -320,7 +320,7 @@
               </td>
               <td class="money-cell">
                 <i class="pi pi-wallet"></i>
-                <strong>S/ {{ item.precioReferencial | number: '1.2-2' }}</strong>
+                <strong>{{ catalogCurrencyPrefix(item.moneda) }} {{ item.precioReferencial | number: '1.2-2' }}</strong>
                 <small>Valor referencial</small>
               </td>
               <td class="catalog-usage-cell">
@@ -404,7 +404,7 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="emptymessage">
-            <tr><td colspan="8" class="empty-cell">Aun no hay ofertas comerciales CRM.</td></tr>
+            <tr><td colspan="8" class="empty-cell">Aún no hay ofertas comerciales CRM.</td></tr>
           </ng-template>
         </p-table>
       </section>
@@ -452,7 +452,7 @@
             <i class="pi pi-dollar"></i>
             <span>Monedas</span>
             <strong>{{ crmCurrencyConfigs().length }}</strong>
-            <p>Define dolar, euro, tipo de cambio y margen de conversion para cotizaciones CRM.</p>
+            <p>Define dólar, euro, tipo de cambio y margen de conversión para cotizaciones CRM.</p>
             <button type="button" (click)="setTab('administracionMonedas')">Configurar monedas</button>
           </article>
           @if (canManageCrmConfig()) {
@@ -474,7 +474,7 @@
         <section class="crm-integration-admin-card">
           <header>
             <div>
-              <span>Captacion e integraciones</span>
+              <span>Captación e integraciones</span>
               <h3>Tokens por canal</h3>
               <p>Configura las credenciales que usan landings, WhatsApp, Instagram y Facebook para enviar leads al CRM.</p>
             </div>
@@ -482,7 +482,7 @@
           </header>
 
           @if (crmIntegraciones().length) {
-            <nav class="crm-integration-channels" aria-label="Canales de captacion">
+            <nav class="crm-integration-channels" aria-label="Canales de captación">
               @for (integration of crmIntegraciones(); track integration.canal) {
                 <button
                   type="button"
@@ -575,7 +575,7 @@
                         <button type="button" title="Copiar verify token" [disabled]="!whatsappGeneratedVerifyToken()" (click)="copyWhatsappValue(whatsappGeneratedVerifyToken(), 'Verify token')"><i class="pi pi-copy"></i> Copiar</button>
                       </div>
                       @if (whatsappGeneratedVerifyToken()) {
-                        <p><i class="pi pi-exclamation-circle"></i> Copialo ahora: por seguridad no volvera a mostrarse al recargar la pagina.</p>
+                        <p><i class="pi pi-exclamation-circle"></i> Cópialo ahora: por seguridad no volverá a mostrarse al recargar la página.</p>
                       }
                     </section>
 
@@ -583,7 +583,7 @@
                       <header>
                         <div>
                           <strong>Callback URL para registrar en Meta</strong>
-                          <small>Esta direccion se calcula automaticamente y no se edita.</small>
+                          <small>Esta dirección se calcula automáticamente y no se edita.</small>
                         </div>
                       </header>
                       <div class="crm-copy-row">
@@ -603,7 +603,7 @@
                           <span [class.ok]="status.webhookVerificado"><i [class]="status.webhookVerificado ? 'pi pi-check-circle' : 'pi pi-times-circle'"></i> Webhook verificado</span>
                           <span [class.ok]="status.lastWebhookAt"><i [class]="status.lastWebhookAt ? 'pi pi-check-circle' : 'pi pi-clock'"></i> Eventos recibidos</span>
                         </div>
-                        <p>{{ status.message || (status.conectado ? 'WhatsApp esta conectado.' : 'La conexion aun esta incompleta.') }}</p>
+                        <p>{{ status.message || (status.conectado ? 'WhatsApp está conectado.' : 'La conexión aún está incompleta.') }}</p>
                         @if (status.displayPhoneNumber || status.verifiedName) {
                           <small>{{ status.verifiedName || 'WhatsApp Business' }} · {{ status.displayPhoneNumber || 'Numero sin mostrar' }} @if (status.qualityRating) { · Calidad: {{ status.qualityRating }} }</small>
                         }
@@ -611,12 +611,12 @@
                           <small>Ultimo webhook: {{ status.lastWebhookAt | date:'dd/MM/yyyy HH:mm' }} @if (status.lastInboundMessageAt) { · Ultimo mensaje: {{ status.lastInboundMessageAt | date:'dd/MM/yyyy HH:mm' }} }</small>
                         }
                       } @else {
-                        <p>Aun no se ha comprobado la conexion con Meta.</p>
+                        <p>Aún no se ha comprobado la conexión con Meta.</p>
                       }
                       <div class="crm-whatsapp-actions">
                         <button type="button" class="crm-whatsapp-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal || whatsappTesting()" (click)="saveCrmIntegration(integration)">
                           <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-                          {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
+                          {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuración' }}
                         </button>
                         <button type="button" class="crm-whatsapp-subscribe" [disabled]="!canManageCrmConfig() || whatsappSubscribing() || integrationSaving() === integration.canal || !integration.accessTokenConfigured || !integration.appSecretConfigured || !integration.appId || !integration.wabaId || !integration.phoneNumberId" (click)="subscribeWhatsappApp()">
                           <i [class]="whatsappSubscribing() ? 'pi pi-spin pi-spinner' : 'pi pi-link'"></i>
@@ -624,7 +624,7 @@
                         </button>
                         <button type="button" class="crm-whatsapp-test" [disabled]="!canManageCrmConfig() || whatsappTesting() || integrationSaving() === integration.canal" (click)="testWhatsappConnection()">
                           <i [class]="whatsappTesting() ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"></i>
-                          {{ whatsappTesting() ? 'Comprobando...' : 'Probar conexion' }}
+                          {{ whatsappTesting() ? 'Comprobando...' : 'Probar conexión' }}
                         </button>
                       </div>
                     </section>
@@ -683,7 +683,7 @@
                   @if (integration.canal !== 'WHATSAPP') {
                     <button type="button" class="crm-integration-save" [disabled]="!canManageCrmConfig() || integrationSaving() === integration.canal || (integration.activo && (integration.canal === 'FACEBOOK' || integration.canal === 'INSTAGRAM') && !metaIntegrationReady(integration))" (click)="saveCrmIntegration(integration)">
                       <i [class]="integrationSaving() === integration.canal ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-                      {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuracion' }}
+                      {{ integrationSaving() === integration.canal ? 'Guardando...' : 'Guardar configuración' }}
                     </button>
                   }
                 </footer>
@@ -700,57 +700,16 @@
         }
 
         @if (activeTab() === 'administracionMonedas') {
-        <section class="crm-promotion-admin-card crm-currency-admin-card">
-          <header>
-            <div>
-              <span>Monedas CRM</span>
-              <h3>Dolar, euro y margen de conversion</h3>
-              <p>El tipo de cambio final se calcula con el margen comercial antes de usarlo en cotizaciones o acuerdos.</p>
-            </div>
-            <strong>{{ crmCurrencyConfigs().length }} moneda(s)</strong>
-          </header>
-
-          <div class="crm-promotion-admin-layout">
-            @for (currency of crmCurrencyConfigs(); track currency.moneda) {
-              <article class="crm-promotion-admin-form">
-                <div class="wide-field">
-                  <span>{{ currency.simbolo }}</span>
-                  <div>
-                    <small>{{ currency.moneda }}</small>
-                    <input pInputText [name]="'crmCurrencyName' + currency.moneda" [ngModel]="currency.nombre" (ngModelChange)="updateCrmCurrencyField(currency.moneda, 'nombre', $event)" [disabled]="!canManageCrmConfig()" />
-                  </div>
-                  <label class="crm-currency-switch">
-                    <input type="checkbox" [name]="'crmCurrencyActive' + currency.moneda" [ngModel]="currency.activo" (ngModelChange)="toggleCrmCurrency(currency.moneda, $event)" [disabled]="!canManageCrmConfig()" />
-                    <b>{{ currency.activo ? 'Activa' : 'Inactiva' }}</b>
-                  </label>
-                </div>
-
-                <div class="crm-currency-fields">
-                  <label>Simbolo
-                    <input pInputText [name]="'crmCurrencySymbol' + currency.moneda" [ngModel]="currency.simbolo" (ngModelChange)="updateCrmCurrencyField(currency.moneda, 'simbolo', $event)" [disabled]="!canManageCrmConfig()" />
-                  </label>
-                  <label>Tipo cambio base
-                    <input pInputText type="number" min="0.000001" step="0.000001" [name]="'crmCurrencyRate' + currency.moneda" [ngModel]="currency.tipoCambioBase" (ngModelChange)="updateCrmCurrencyField(currency.moneda, 'tipoCambioBase', $event)" [disabled]="!canManageCrmConfig()" />
-                  </label>
-                  <label>Margen conversion %
-                    <input pInputText type="number" min="0" step="0.01" [name]="'crmCurrencyMargin' + currency.moneda" [ngModel]="currency.margenConversionPorcentaje" (ngModelChange)="updateCrmCurrencyField(currency.moneda, 'margenConversionPorcentaje', $event)" [disabled]="!canManageCrmConfig()" />
-                  </label>
-                </div>
-
-                <div class="crm-currency-result">
-                  <span>Tipo cambio final</span>
-                  <strong>{{ currency.simbolo }} {{ currency.tipoCambioVenta | number: '1.4-6' }}</strong>
-                  <small>Base {{ currency.tipoCambioBase | number: '1.4-6' }} + margen {{ currency.margenConversionPorcentaje | number: '1.2-4' }}%</small>
-                </div>
-
-                <button type="button" class="crm-promotion-admin-save" [disabled]="!canManageCrmConfig() || currencySaving() === currency.moneda" (click)="saveCrmCurrency(currency)">
-                  <i [class]="currencySaving() === currency.moneda ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-                  {{ currencySaving() === currency.moneda ? 'Guardando...' : 'Guardar moneda' }}
-                </button>
-              </article>
-            }
-          </div>
-        </section>
+        <app-crm-currency-config-panel
+          [currencies]="crmCurrencyConfigs()"
+          [baseCurrencyCode]="tenantBaseCurrencyCode()"
+          [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
+          [canManage]="canManageCrmConfig()"
+          [savingCurrency]="currencySaving()"
+          (fieldChange)="updateCrmCurrencyField($event.moneda, $event.field, $event.value)"
+          (activeChange)="toggleCrmCurrency($event.moneda, $event.activo)"
+          (saveCurrency)="saveCrmCurrency($event)"
+        />
         }
 
         @if (activeTab() === 'administracionPromociones') {
@@ -761,13 +720,13 @@
               <h3>Promociones reutilizables para cotizaciones</h3>
               <p>El administrador registra descuentos o campanas y el vendedor solo las aplica al cotizar una oportunidad.</p>
             </div>
-            <strong>{{ promocionesCotizacion().length }} promocion(es)</strong>
+            <strong>{{ promocionesCotizacion().length }} promoción(es)</strong>
           </header>
 
           <div class="crm-promotion-admin-layout">
             <form class="crm-promotion-admin-form">
               <label>
-                Codigo <span class="required">*</span>
+                Código <span class="required">*</span>
                 <input pInputText name="adminPromoCode" [(ngModel)]="promotionForm.codigo" placeholder="PROMO10" />
               </label>
               <label>
@@ -796,7 +755,7 @@
               </label>
               <button type="button" class="crm-promotion-admin-save" [disabled]="saving()" (click)="savePromotion()">
                 <i class="pi pi-save"></i>
-                Guardar promocion
+                Guardar promoción
               </button>
             </form>
 
@@ -815,7 +774,7 @@
               } @empty {
                 <div class="crm-promotion-empty">
                   <i class="pi pi-ticket"></i>
-                  <span>Aun no hay promociones. Registra la primera para usarla en cotizaciones.</span>
+                  <span>Aún no hay promociones. Registra la primera para usarla en cotizaciones.</span>
                 </div>
               }
             </div>
@@ -891,8 +850,8 @@
                   <th>Contacto</th>
                   <th>Etapa</th>
                   <th>Valor</th>
-                  <th>Interes</th>
-                  <th>Proxima accion</th>
+                  <th>Interés</th>
+                  <th>Próxima acción</th>
                   <th>Cierre</th>
                   <th>Acciones</th>
                 </tr>
@@ -1010,7 +969,7 @@
                   <small>{{ quoteNextStep(item) }}</small>
                 </article>
               } @empty {
-                <div class="quotes-empty">Todavia no hay cotizaciones registradas.</div>
+                <div class="quotes-empty">Todavía no hay cotizaciones registradas.</div>
               }
             </div>
           </article>
@@ -1039,7 +998,7 @@
 
         <button type="button" class="quotes-create-button" (click)="openCreateOpportunity()">
           <i class="pi pi-plus"></i>
-          Nueva cotizacion
+          Nueva cotización
         </button>
       </section>
     }
@@ -1052,13 +1011,13 @@
           </div>
           <div>
             <span>5</span>
-            <h2>Negociacion</h2>
+            <h2>Negociación</h2>
             <p><i class="pi pi-circle-fill"></i> Precio y cierre</p>
           </div>
           <strong>{{ negotiationDashboardItems().length }}</strong>
         </header>
 
-        <section class="quotes-metrics negotiation-metrics" aria-label="Resumen de negociacion">
+        <section class="quotes-metrics negotiation-metrics" aria-label="Resumen de negociación">
           @for (metric of negotiationDashboardMetrics(); track metric.label) {
             <article>
               <span>{{ metric.label }}</span>
@@ -1084,16 +1043,16 @@
                   </div>
                   <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
                   <em>{{ opportunityProgress(item) }}%</em>
-                  <span class="negotiation-pill">Negociacion</span>
-                  <nav class="opportunity-row-actions" aria-label="Acciones de negociacion">
+                  <span class="negotiation-pill">Negociación</span>
+                  <nav class="opportunity-row-actions" aria-label="Acciones de negociación">
                     <button type="button" title="Ver detalle" aria-label="Ver detalle" (click)="$event.stopPropagation(); openPipelineOpportunityDetail(item, 'NEGOCIACION')"><i class="pi pi-eye"></i></button>
-                    <button type="button" title="Registrar negociacion" aria-label="Registrar negociacion" (click)="$event.stopPropagation(); openOpportunityNegotiationDialog(item)"><i class="pi pi-handshake"></i></button>
+                    <button type="button" title="Registrar negociación" aria-label="Registrar negociación" (click)="$event.stopPropagation(); openOpportunityNegotiationDialog(item)"><i class="pi pi-handshake"></i></button>
                     <button type="button" title="Registrar acuerdo final" aria-label="Registrar acuerdo final" (click)="$event.stopPropagation(); openOpportunityAgreementDialog(item)"><i class="pi pi-file-check"></i></button>
                     <button type="button" title="Marcar perdido" aria-label="Marcar perdido" (click)="$event.stopPropagation(); openOpportunityLostDialog(item)"><i class="pi pi-times"></i></button>
                   </nav>
                 </article>
               } @empty {
-                <div class="quotes-empty">Todavia no hay negociaciones activas.</div>
+                <div class="quotes-empty">Todavía no hay negociaciones activas.</div>
               }
             </div>
           </article>

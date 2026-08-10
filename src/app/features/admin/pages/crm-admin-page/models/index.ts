@@ -7,6 +7,7 @@ export * from './followup.model';
 export * from './opportunity.model';
 export * from './opportunity-view.model';
 export * from './payment.model';
+export * from './phone-country.model';
 export * from './prospect.model';
 export * from './prospect-identification.model';
 export * from './quotation.model';

@@ -6,7 +6,7 @@
         <i class="pi pi-bullseye or-ico"></i>
         <span>Origen</span>
         <strong>{{ host().opportunityForm.prospectoId || host().opportunityForm.clienteId ? host().opportunityTargetLabel() : 'Nueva oportunidad comercial' }}</strong>
-        <p>Cliente e interes vienen del prospecto. Solo confirma monto, responsable y fecha de cierre.</p>
+        <p>El cliente y el interés provienen del prospecto. Solo confirma el monto, el responsable y la fecha de cierre.</p>
         <b>S/ {{ (host().opportunityForm.montoEstimado || 0) | number: '1.2-2' }}</b>
       </article>
       <article class="or-card" style="--c:#3b82f6;--b:#eff6ff">
@@ -17,7 +17,7 @@
       </article>
       <article class="or-card" style="--c:#8b5cf6;--b:#faf5ff">
         <i class="pi pi-tag or-ico"></i>
-        <span>Interes comercial</span>
+        <span>Interés comercial</span>
         <strong>{{ host().opportunityInterestLabel() }}</strong>
         <p>{{ host().opportunityInterestDetail() }}</p>
       </article>
@@ -49,8 +49,8 @@
         <label>Etapa<p-select name="opEtapa" [options]="host().etapaOptions()" [(ngModel)]="host().opportunityForm.etapa" appendTo="body" /></label>
         @if (!host().opportunityForm.id) {
           <div class="or-mini">
-            <label>Siguiente accion <span class="required">*</span><input pInputText name="opProximaAccion" [(ngModel)]="host().opportunityForm.proximaAccion" placeholder="Ej. Llamada inicial" /></label>
-            <label>Fecha de la accion <span class="required">*</span><input pInputText type="datetime-local" name="opFechaProximaAccion" [(ngModel)]="host().opportunityForm.fechaProximaAccion" /></label>
+            <label>Siguiente acción <span class="required">*</span><input pInputText name="opProximaAccion" [(ngModel)]="host().opportunityForm.proximaAccion" placeholder="Ej. Llamada inicial" /></label>
+            <label>Fecha de la acción <span class="required">*</span><input pInputText type="datetime-local" name="opFechaProximaAccion" [(ngModel)]="host().opportunityForm.fechaProximaAccion" /></label>
           </div>
         }
       </section>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createActivityForm,
+  createCatalogForm,
   createOpportunityForm,
   createProspectForm,
   createQuoteForm,
@@ -13,6 +14,8 @@ describe('CRM admin form factories', () => {
     const form = createProspectForm('CO', 'seller-7');
 
     expect(form.paisCodigo).toBe('CO');
+    expect(form.telefonoPaisCodigo).toBe('CO');
+    expect(form.telefonoCodigoPais).toBe('57');
     expect(form.responsableId).toBe('seller-7');
     expect(form.estado).toBe('NUEVO');
     expect(form.catalogoItemId).toBeNull();
@@ -25,6 +28,11 @@ describe('CRM admin form factories', () => {
     expect(form.etapa).toBe('INTERESADO');
     expect(form.fechaCierreEstimada).toBe('2026-08-20');
     expect(form.fechaProximaAccion).toBe('2026-08-03T09:00');
+  });
+
+  it('uses the tenant currency in new catalog and quote forms', () => {
+    expect(createCatalogForm('USD').moneda).toBe('USD');
+    expect(createQuoteForm('EUR').moneda).toBe('EUR');
   });
 
   it('does not share mutable quote lines between forms', () => {

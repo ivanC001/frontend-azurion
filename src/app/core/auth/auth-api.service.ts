@@ -15,6 +15,32 @@ export interface LoginRequest {
   readonly deviceName?: string;
 }
 
+export interface CurrentUserProfile {
+  readonly id: number;
+  readonly username: string;
+  readonly nombres: string;
+  readonly email: string | null;
+  readonly activo: boolean;
+  readonly puedeEditarDatosPersonales: boolean;
+  readonly puedeCambiarContrasena: boolean;
+  readonly tipoCuenta: string;
+  readonly roles: readonly string[];
+  readonly sucursales: readonly {
+    readonly id: number;
+    readonly codigo: string;
+    readonly nombre: string;
+  }[];
+}
+
+export interface UpdateCurrentUserProfileRequest {
+  readonly nombres: string;
+}
+
+export interface ChangeCurrentUserPasswordRequest {
+  readonly contrasenaActual: string;
+  readonly nuevaContrasena: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthApiService {
   private readonly http = inject(HttpClient);
@@ -53,6 +79,35 @@ export class AuthApiService {
       {},
       { headers: this.session.apiHeaders() },
     );
+  }
+
+  getCurrentProfile() {
+    return this.http
+      .get<ApiResponse<CurrentUserProfile>>(
+        this.apiUrl.url('saasCore', '/v1/auth/profile'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCurrentProfile(request: UpdateCurrentUserProfileRequest) {
+    return this.http
+      .put<ApiResponse<CurrentUserProfile>>(
+        this.apiUrl.url('saasCore', '/v1/auth/profile'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  changeCurrentPassword(request: ChangeCurrentUserPasswordRequest) {
+    return this.http
+      .put<ApiResponse<void>>(
+        this.apiUrl.url('saasCore', '/v1/auth/profile/password'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
   }
 
   private withDevice<T extends object>(request: T): T & Pick<LoginRequest, 'deviceId' | 'deviceName'> {

@@ -16,10 +16,10 @@
 
     <div class="lead-hero">
       <section class="offer-panel">
-        <p class="eyebrow">Captacion comercial</p>
+        <p class="eyebrow">Captación comercial</p>
         <h1>{{ catalogoItem()?.nombre || 'Oferta conectada al CRM' }}</h1>
         <p class="hero-copy">
-          Registra tu interes y el equipo comercial recibira el prospecto en AZURION con la oferta, campania y contexto listos para seguimiento.
+          Registra tu interés y el equipo comercial recibirá el prospecto en AZURION con la oferta, la campaña y el contexto listos para el seguimiento.
         </p>
 
         @if (catalogoItem()) {
@@ -43,7 +43,7 @@
             <div>
               <span>{{ loadingCatalog() ? 'Validando enlace' : 'Enlace pendiente' }}</span>
               <strong>{{ loadingCatalog() ? 'Cargando oferta CRM...' : 'Falta tenant, catalogoItemId o token' }}</strong>
-              <p>Genera el enlace desde Productos CRM para que esta landing envie leads seguros al tenant correcto.</p>
+              <p>Genera el enlace desde Productos CRM para que esta landing envíe leads de forma segura al tenant correcto.</p>
             </div>
           </div>
         }
@@ -61,7 +61,7 @@
       <form class="lead-form" (ngSubmit)="submit()">
         <div class="form-heading">
           <div>
-            <span>Formulario rapido</span>
+            <span>Formulario rápido</span>
             <h2>Enviar lead al CRM</h2>
           </div>
           <i class="pi pi-send"></i>
@@ -90,7 +90,7 @@
             <input pInputText value="Landing web" disabled />
           </label>
           <label>
-            Tipo documento
+            Tipo de documento
             <p-select name="tipoDocumento" [options]="documentTypeOptions" [(ngModel)]="form.tipoDocumento" [disabled]="form.tipoPersona === 'SIN_DEFINIR'" appendTo="body" placeholder="Primero clasifica el lead" />
           </label>
           <label>
@@ -106,11 +106,11 @@
             <input pInputText name="empresa" [(ngModel)]="form.empresa" autocomplete="organization" placeholder="Opcional" />
           </label>
           <label>
-            Fecha de interes
+            Fecha de interés
             <input pInputText type="date" name="fechaInteres" [(ngModel)]="form.fechaInteres" />
           </label>
           <label>
-            Telefono
+            Teléfono
             <input pInputText name="telefono" [(ngModel)]="form.telefono" autocomplete="tel" />
           </label>
           <label>
@@ -118,7 +118,7 @@
             <input pInputText type="email" name="correo" [(ngModel)]="form.correo" autocomplete="email" />
           </label>
           <label class="span-2">
-            Direccion
+            Dirección
             <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Opcional" />
           </label>
           <label class="bot-field" aria-hidden="true">
@@ -137,7 +137,7 @@
             <strong>{{ form.tenantId || 'No configurado' }}</strong>
           </div>
           <div>
-            <span>Campania</span>
+            <span>Campaña</span>
             <strong>{{ campaignLabel }}</strong>
           </div>
           <div>

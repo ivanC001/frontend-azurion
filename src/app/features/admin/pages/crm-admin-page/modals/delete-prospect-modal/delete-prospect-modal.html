@@ -14,7 +14,7 @@
     <div class="delete-prospect__copy">
       <h2>Eliminar prospecto</h2>
       <p>Se eliminara a <strong>{{ prospect()?.nombre }}</strong> de la bandeja de leads nuevos.</p>
-      <small>Esta accion tambien retira su actividad inicial e intereses captados. No puede deshacerse.</small>
+      <small>Esta acción también elimina su actividad inicial y los intereses captados. No se puede deshacer.</small>
     </div>
     <button type="button" class="delete-prospect__close" aria-label="Cerrar" [disabled]="deleting()" (click)="closed.emit()"><i class="pi pi-times"></i></button>
     <footer>

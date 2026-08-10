@@ -17,7 +17,7 @@ type PlatformArea = {
 })
 export class HeroComponent {
   protected readonly platformAreas: readonly PlatformArea[] = [
-    { icon: 'pi-megaphone', label: 'Captacion', detail: 'Leads y campanas' },
+    { icon: 'pi-megaphone', label: 'Captación', detail: 'Leads y campañas' },
     { icon: 'pi-chart-line', label: 'Pipeline', detail: 'Ventas y oportunidades' },
     { icon: 'pi-wallet', label: 'Cobranza', detail: 'Cuotas y vencimientos' },
     { icon: 'pi-file-check', label: 'SUNAT', detail: 'Facturacion electronica' },

@@ -268,7 +268,7 @@ export class CompaniesAdminPage {
 
     if (!this.isValidForm()) {
       this.errorMessage.set(
-        'Completa identificador fiscal, pais, razon social, tenantId, schemaName, plan, fecha de inicio y al menos un modulo inicial.',
+        'Completa el identificador fiscal, el país, la razón social, el Tenant ID, el nombre del esquema, el plan y la fecha de inicio. El plan debe incluir al menos un módulo.',
       );
       return;
     }
@@ -306,7 +306,7 @@ export class CompaniesAdminPage {
 
           this.successMessage.set(
             this.form.moduloCodigos.includes('ERP')
-              ? 'Empresa registrada. El facturador se aprovisionara automaticamente en modo ticket.'
+              ? 'Empresa registrada. El facturador se aprovisionará automáticamente en modo ticket.'
               : 'Empresa registrada correctamente.',
           );
         },
@@ -437,7 +437,7 @@ export class CompaniesAdminPage {
       return (
         this.extractErrorMessage(httpError.error) ||
         httpError.message ||
-        'No se pudo completar la operacion.'
+        'No se pudo completar la operación.'
       );
     }
 
@@ -445,7 +445,7 @@ export class CompaniesAdminPage {
       return error.message.trim();
     }
 
-    return 'No se pudo completar la operacion.';
+    return 'No se pudo completar la operación.';
   }
 
   private extractErrorMessage(payload: unknown): string {

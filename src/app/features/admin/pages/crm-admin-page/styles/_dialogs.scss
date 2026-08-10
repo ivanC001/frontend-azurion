@@ -632,6 +632,75 @@
   font-weight: 850;
 }
 
+.quote-line-product-summary {
+  background: color-mix(in srgb, #eff6ff 72%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #93c5fd 55%, var(--az-border));
+  border-radius: 0.8rem;
+  display: grid;
+  gap: 0.55rem;
+  margin-top: -0.25rem;
+  padding: 0.7rem 0.85rem;
+}
+
+.quote-line-product-summary > div {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.quote-line-product-summary i {
+  color: #2563eb;
+  margin-top: 0.15rem;
+}
+
+.quote-line-product-summary p,
+.quote-line-product-summary strong,
+.quote-line-product-summary span {
+  display: block;
+  margin: 0;
+}
+
+.quote-line-product-summary strong {
+  color: var(--az-text);
+  font-size: 0.78rem;
+}
+
+.quote-line-product-summary p > span,
+.quote-line-product-summary small {
+  color: var(--az-text-soft);
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+.quote-line-product-summary ul {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.quote-line-product-summary li {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.55rem;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+}
+
+.quote-line-product-summary li span {
+  color: var(--az-text-soft);
+  font-size: 0.62rem;
+}
+
+.quote-line-product-summary li b {
+  color: var(--az-text);
+  display: block;
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
 .quote-modern-form {
   gap: 0.95rem;
   grid-template-columns: minmax(0, 1fr);

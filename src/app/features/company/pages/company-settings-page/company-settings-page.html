@@ -1,7 +1,9 @@
 <section class="company-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">{{ isFacturadorView ? 'Facturacion electronica' : 'Administracion empresarial' }}</p>
+      <p class="page-eyebrow">
+        {{ isFacturadorView ? 'Facturacion electronica' : 'Administracion empresarial' }}
+      </p>
       <h1>{{ pageTitle }}</h1>
       <p>{{ pageDescription }}</p>
     </div>
@@ -30,17 +32,61 @@
 
   <section class="company-summary" aria-label="Resumen de configuracion">
     @if (!isFacturadorView) {
-      <article><i class="pi pi-building"></i><div><span>Empresa</span><strong>{{ form.business_name || 'Sin razon social' }}</strong></div></article>
-      <article><i class="pi pi-id-card"></i><div><span>{{ fiscalIdLabel() }}</span><strong>{{ form.ruc || 'No registrado' }}</strong></div></article>
-      <article><i class="pi pi-image"></i><div><span>Logo del panel</span><strong>{{ panelLogoStatusLabel() }}</strong></div></article>
+      <article>
+        <i class="pi pi-building"></i>
+        <div>
+          <span>Empresa</span><strong>{{ form.business_name || 'Sin razon social' }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-id-card"></i>
+        <div>
+          <span>{{ fiscalIdLabel() }}</span
+          ><strong>{{ form.ruc || 'No registrado' }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-image"></i>
+        <div>
+          <span>Logo del panel</span><strong>{{ panelLogoStatusLabel() }}</strong>
+        </div>
+      </article>
     } @else if (isPeruTenant()) {
-      <article><i class="pi pi-send"></i><div><span>Entorno SUNAT</span><strong>{{ sunatModeLabel() }}</strong></div></article>
-      <article><i class="pi pi-file-check"></i><div><span>Certificado</span><strong>{{ sunatCertificateStatusLabel() }}</strong></div></article>
-      <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
+      <article [class.summary-card--ready]="facturadorIsReady()">
+        <i class="pi pi-send"></i>
+        <div>
+          <span>Entorno SUNAT</span><strong>{{ sunatModeLabel() }}</strong>
+        </div>
+      </article>
+      <article [class.summary-card--ready]="sunatCertificateIsConfigured()">
+        <i class="pi pi-file-check"></i>
+        <div>
+          <span>Certificado</span><strong>{{ sunatCertificateStatusLabel() }}</strong>
+        </div>
+      </article>
+      <article [class.summary-card--ready]="facturadorIsReady()">
+        <i class="pi pi-link"></i>
+        <div>
+          <span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong>
+        </div>
+      </article>
     } @else {
-      <article><i class="pi pi-receipt"></i><div><span>Documento disponible</span><strong>Ticket de venta</strong></div></article>
-      <article><i class="pi pi-globe"></i><div><span>Pais fiscal</span><strong>{{ form.country_name || form.country_code }}</strong></div></article>
-      <article><i class="pi pi-link"></i><div><span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong></div></article>
+      <article>
+        <i class="pi pi-receipt"></i>
+        <div><span>Documento disponible</span><strong>Ticket de venta</strong></div>
+      </article>
+      <article>
+        <i class="pi pi-globe"></i>
+        <div>
+          <span>Pais fiscal</span><strong>{{ form.country_name || form.country_code }}</strong>
+        </div>
+      </article>
+      <article>
+        <i class="pi pi-link"></i>
+        <div>
+          <span>Facturador</span><strong>{{ facturadorStatusLabel() }}</strong>
+        </div>
+      </article>
     }
   </section>
 
@@ -49,12 +95,24 @@
       <div class="tenant-profile-grid">
         <article class="panel logo-card tenant-logo-card">
           <header class="profile-panel__header">
-            <span class="profile-panel__icon profile-panel__icon--blue"><i class="pi pi-image"></i></span>
-            <div><h2>Logo de la empresa</h2><p>Aparecera en el sistema y documentos.</p></div>
+            <span class="profile-panel__icon profile-panel__icon--blue"
+              ><i class="pi pi-image"></i
+            ></span>
+            <div>
+              <h2>Logo de la empresa</h2>
+              <p>Aparecera en el sistema y documentos.</p>
+            </div>
           </header>
 
-          <div class="identity-logo" [class.identity-logo--fallback]="panelLogoLoadFailed() || !panelLogoPreviewUrl()">
-            <img [src]="panelLogoDisplayUrl()" alt="Logo de la empresa" (error)="handlePanelLogoError($event)" />
+          <div
+            class="identity-logo"
+            [class.identity-logo--fallback]="panelLogoLoadFailed() || !panelLogoPreviewUrl()"
+          >
+            <img
+              [src]="panelLogoDisplayUrl()"
+              alt="Logo de la empresa"
+              (error)="handlePanelLogoError($event)"
+            />
           </div>
           @if (panelLogoLoadFailed()) {
             <small class="logo-warning">El logo guardado no esta disponible. Sube uno nuevo.</small>
@@ -74,7 +132,12 @@
             <span class="logo-upload__control"><i class="pi pi-upload"></i>Cambiar logo</span>
           </label>
           @if (panelLogoPreviewUrl() || panelLogoSelectedFileName()) {
-            <button type="button" class="logo-clear-button" [disabled]="saving()" (click)="clearPanelLogoSelection()">
+            <button
+              type="button"
+              class="logo-clear-button"
+              [disabled]="saving()"
+              (click)="clearPanelLogoSelection()"
+            >
               <i class="pi pi-trash"></i>Eliminar logo
             </button>
           }
@@ -87,23 +150,41 @@
 
         <article class="panel profile-panel profile-panel--general">
           <header class="profile-panel__header">
-            <span class="profile-panel__icon profile-panel__icon--green"><i class="pi pi-building"></i></span>
-            <div><h2>Informacion general</h2><p>Identificacion fiscal y domicilio principal del tenant.</p></div>
+            <span class="profile-panel__icon profile-panel__icon--green"
+              ><i class="pi pi-building"></i
+            ></span>
+            <div>
+              <h2>Informacion general</h2>
+              <p>Identificacion fiscal y domicilio principal del tenant.</p>
+            </div>
           </header>
           <div class="profile-fields profile-fields--general">
             <label>
               Tipo de identificador
               <select [(ngModel)]="form.fiscal_document_type" name="fiscal_document_type">
-                @for (document of fiscalDocumentOptions; track document) { <option [value]="document">{{ document }}</option> }
+                @for (document of fiscalDocumentOptions; track document) {
+                  <option [value]="document">{{ document }}</option>
+                }
               </select>
             </label>
             <label>
               {{ fiscalIdLabel() }}
-              <input pInputText maxlength="40" [(ngModel)]="form.ruc" name="ruc" autocomplete="off" />
+              <input
+                pInputText
+                maxlength="40"
+                [(ngModel)]="form.ruc"
+                name="ruc"
+                autocomplete="off"
+              />
             </label>
             <label>
               Razon social
-              <input pInputText maxlength="180" [(ngModel)]="form.business_name" name="business_name" />
+              <input
+                pInputText
+                maxlength="180"
+                [(ngModel)]="form.business_name"
+                name="business_name"
+              />
             </label>
             <label>
               Nombre comercial
@@ -111,7 +192,12 @@
             </label>
             <label class="span-2">
               Direccion fiscal
-              <input pInputText maxlength="240" [(ngModel)]="form.fiscal_address" name="fiscal_address" />
+              <input
+                pInputText
+                maxlength="240"
+                [(ngModel)]="form.fiscal_address"
+                name="fiscal_address"
+              />
             </label>
             <label>
               Distrito / Ciudad
@@ -127,8 +213,14 @@
             </label>
             <label>
               Pais
-              <select [ngModel]="form.country_code" (ngModelChange)="onCountryChanged($event)" name="country_code">
-                @for (country of countryOptions; track country.code) { <option [value]="country.code">{{ country.name }}</option> }
+              <select
+                [ngModel]="form.country_code"
+                (ngModelChange)="onCountryChanged($event)"
+                name="country_code"
+              >
+                @for (country of countryOptions; track country.code) {
+                  <option [value]="country.code">{{ country.name }}</option>
+                }
               </select>
             </label>
             <label>
@@ -142,46 +234,172 @@
       <div class="tenant-details-grid">
         <article class="panel profile-panel">
           <header class="profile-panel__header">
-            <span class="profile-panel__icon profile-panel__icon--blue"><i class="pi pi-address-book"></i></span>
-            <div><h2>Informacion de contacto</h2><p>Canales oficiales de la empresa.</p></div>
+            <span class="profile-panel__icon profile-panel__icon--blue"
+              ><i class="pi pi-address-book"></i
+            ></span>
+            <div>
+              <h2>Informacion de contacto</h2>
+              <p>Canales oficiales de la empresa.</p>
+            </div>
           </header>
           <div class="profile-fields profile-fields--two">
-            <label class="span-2">Correo principal<input pInputText type="email" maxlength="180" [(ngModel)]="form.primary_email" name="primary_email" /></label>
-            <label>Telefono<input pInputText maxlength="40" [(ngModel)]="form.phone" name="phone" /></label>
-            <label>Celular<input pInputText maxlength="40" [(ngModel)]="form.mobile" name="mobile" /></label>
-            <label class="span-2">Sitio web<input pInputText maxlength="220" [(ngModel)]="form.website" name="website" placeholder="https://empresa.com" /></label>
-            <label>Facebook<input pInputText maxlength="220" [(ngModel)]="form.facebook" name="facebook" /></label>
-            <label>Instagram<input pInputText maxlength="220" [(ngModel)]="form.instagram" name="instagram" /></label>
+            <label class="span-2"
+              >Correo principal<input
+                pInputText
+                type="email"
+                maxlength="180"
+                [(ngModel)]="form.primary_email"
+                name="primary_email"
+            /></label>
+            <label
+              >Telefono<input pInputText maxlength="40" [(ngModel)]="form.phone" name="phone"
+            /></label>
+            <label
+              >Celular<input pInputText maxlength="40" [(ngModel)]="form.mobile" name="mobile"
+            /></label>
+            <label class="span-2"
+              >Sitio web<input
+                pInputText
+                maxlength="220"
+                [(ngModel)]="form.website"
+                name="website"
+                placeholder="https://empresa.com"
+            /></label>
+            <label
+              >Facebook<input
+                pInputText
+                maxlength="220"
+                [(ngModel)]="form.facebook"
+                name="facebook"
+            /></label>
+            <label
+              >Instagram<input
+                pInputText
+                maxlength="220"
+                [(ngModel)]="form.instagram"
+                name="instagram"
+            /></label>
           </div>
         </article>
 
         <article class="panel profile-panel">
           <header class="profile-panel__header">
-            <span class="profile-panel__icon profile-panel__icon--purple"><i class="pi pi-user"></i></span>
-            <div><h2>Representante legal</h2><p>Persona responsable ante la organizacion.</p></div>
+            <span class="profile-panel__icon profile-panel__icon--purple"
+              ><i class="pi pi-user"></i
+            ></span>
+            <div>
+              <h2>Representante legal</h2>
+              <p>Persona responsable ante la organizacion.</p>
+            </div>
           </header>
           <div class="profile-fields profile-fields--two">
-            <label class="span-2">Nombre completo<input pInputText maxlength="180" [(ngModel)]="form.legal_representative_name" name="legal_representative_name" /></label>
-            <label>Tipo de documento<select [(ngModel)]="form.legal_representative_document_type" name="legal_representative_document_type">@for (document of representativeDocumentOptions; track document) { <option [value]="document">{{ document }}</option> }</select></label>
-            <label>Numero de documento<input pInputText maxlength="40" [(ngModel)]="form.legal_representative_document" name="legal_representative_document" /></label>
-            <label class="span-2">Cargo<input pInputText maxlength="120" [(ngModel)]="form.legal_representative_role" name="legal_representative_role" /></label>
-            <label>Correo<input pInputText type="email" maxlength="180" [(ngModel)]="form.legal_representative_email" name="legal_representative_email" /></label>
-            <label>Telefono<input pInputText maxlength="40" [(ngModel)]="form.legal_representative_phone" name="legal_representative_phone" /></label>
+            <label class="span-2"
+              >Nombre completo<input
+                pInputText
+                maxlength="180"
+                [(ngModel)]="form.legal_representative_name"
+                name="legal_representative_name"
+            /></label>
+            <label
+              >Tipo de documento<select
+                [(ngModel)]="form.legal_representative_document_type"
+                name="legal_representative_document_type"
+              >
+                @for (document of representativeDocumentOptions; track document) {
+                  <option [value]="document">{{ document }}</option>
+                }
+              </select></label
+            >
+            <label
+              >Numero de documento<input
+                pInputText
+                maxlength="40"
+                [(ngModel)]="form.legal_representative_document"
+                name="legal_representative_document"
+            /></label>
+            <label class="span-2"
+              >Cargo<input
+                pInputText
+                maxlength="120"
+                [(ngModel)]="form.legal_representative_role"
+                name="legal_representative_role"
+            /></label>
+            <label
+              >Correo<input
+                pInputText
+                type="email"
+                maxlength="180"
+                [(ngModel)]="form.legal_representative_email"
+                name="legal_representative_email"
+            /></label>
+            <label
+              >Telefono<input
+                pInputText
+                maxlength="40"
+                [(ngModel)]="form.legal_representative_phone"
+                name="legal_representative_phone"
+            /></label>
           </div>
         </article>
 
         <article class="panel profile-panel">
           <header class="profile-panel__header">
-            <span class="profile-panel__icon profile-panel__icon--orange"><i class="pi pi-globe"></i></span>
-            <div><h2>Configuracion regional</h2><p>Formatos aplicados en CRM y ERP.</p></div>
+            <span class="profile-panel__icon profile-panel__icon--orange"
+              ><i class="pi pi-globe"></i
+            ></span>
+            <div>
+              <h2>Configuracion regional</h2>
+              <p>Formatos aplicados en CRM y ERP.</p>
+            </div>
           </header>
           <div class="profile-fields profile-fields--two">
-            <label class="span-2">Zona horaria<select [(ngModel)]="form.timezone" name="timezone">@for (timezone of timezoneOptions; track timezone) { <option [value]="timezone">{{ timezone }}</option> }</select></label>
-            <label class="span-2">Idioma<select [(ngModel)]="form.language" name="language">@for (language of languageOptions; track language.value) { <option [value]="language.value">{{ language.label }}</option> }</select></label>
-            <label>Formato de fecha<select [(ngModel)]="form.date_format" name="date_format"><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></select></label>
-            <label>Formato de hora<select [(ngModel)]="form.time_format" name="time_format"><option value="24H">24 horas</option><option value="12H">12 horas</option></select></label>
-            <label>Moneda<select [ngModel]="form.currency_code" (ngModelChange)="onCurrencyChanged($event)" name="currency_code">@for (currency of currencyOptions; track currency.code) { <option [value]="currency.code">{{ currency.code }} - {{ currency.symbol }}</option> }</select></label>
-            <label>Simbolo de moneda<input pInputText maxlength="12" [(ngModel)]="form.currency_symbol" name="currency_symbol" /></label>
+            <label class="span-2"
+              >Zona horaria<select [(ngModel)]="form.timezone" name="timezone">
+                @for (timezone of timezoneOptions; track timezone) {
+                  <option [value]="timezone">{{ timezone }}</option>
+                }
+              </select></label
+            >
+            <label class="span-2"
+              >Idioma<select [(ngModel)]="form.language" name="language">
+                @for (language of languageOptions; track language.value) {
+                  <option [value]="language.value">{{ language.label }}</option>
+                }
+              </select></label
+            >
+            <label
+              >Formato de fecha<select [(ngModel)]="form.date_format" name="date_format">
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              </select></label
+            >
+            <label
+              >Formato de hora<select [(ngModel)]="form.time_format" name="time_format">
+                <option value="24H">24 horas</option>
+                <option value="12H">12 horas</option>
+              </select></label
+            >
+            <label
+              >Moneda<select
+                [ngModel]="form.currency_code"
+                (ngModelChange)="onCurrencyChanged($event)"
+                name="currency_code"
+              >
+                @for (currency of currencyOptions; track currency.code) {
+                  <option [value]="currency.code">
+                    {{ currency.code }} - {{ currency.symbol }}
+                  </option>
+                }
+              </select></label
+            >
+            <label
+              >Simbolo de moneda<input
+                pInputText
+                maxlength="12"
+                [(ngModel)]="form.currency_symbol"
+                name="currency_symbol"
+            /></label>
           </div>
         </article>
       </div>
@@ -189,127 +407,278 @@
 
     @if (isFacturadorView && isPeruTenant()) {
       <article class="panel panel--sunat">
-      <header class="panel__header">
-        <div><span class="panel__icon panel__icon--sunat"><i class="pi pi-file-edit"></i></span><div><h2>SUNAT y facturacion</h2><p>Credenciales, certificado y marca de documentos fiscales.</p></div></div>
-      </header>
-
-      <div class="mode-row">
-        <span>MODO ENTORNO</span>
-        <label class="mode-switch">
-          <input
-            type="checkbox"
-            [checked]="isProductionMode()"
-            (change)="onSunatModeToggle($any($event.target).checked)"
-          />
-          <span class="mode-pill" [class.mode-pill--production]="isProductionMode()">
-            {{ isProductionMode() ? 'EN PRODUCCION' : 'EN BETA' }}
-          </span>
-        </label>
-      </div>
-
-      @if (!isProductionMode()) {
-        <div class="sunat-environment sunat-environment--beta">
-          <span class="sunat-environment__icon"><i class="pi pi-shield"></i></span>
+        <header class="panel__header">
           <div>
-            <strong>Entorno de pruebas SUNAT</strong>
-            <p>Azurion usa automaticamente el RUC, usuario SOL, clave y certificado oficiales de prueba. No necesitas cargar credenciales.</p>
-            <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
-            <small><b>Cola:</b> {{ sunatQueueName() }}</small>
+            <span class="panel__icon panel__icon--sunat"><i class="pi pi-file-edit"></i></span>
+            <div>
+              <h2>SUNAT y facturacion</h2>
+              <p>Credenciales, certificado y marca de documentos fiscales.</p>
+            </div>
           </div>
-        </div>
-      } @else {
-        <div class="sunat-environment sunat-environment--production">
-          <span class="sunat-environment__icon"><i class="pi pi-exclamation-triangle"></i></span>
-          <div>
-            <strong>Entorno real SUNAT</strong>
-            <p>Los comprobantes tienen efecto tributario. Usa credenciales SOL y certificado digital reales de esta empresa.</p>
-            <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
-            <small><b>Cola:</b> {{ sunatQueueName() }}</small>
-          </div>
-        </div>
-      }
+        </header>
 
-      <div class="form-grid">
-        <div class="identity-logo identity-logo--invoice">
-          @if (invoiceLogoPreviewUrl()) {
-            <img [src]="invoiceLogoPreviewUrl()!" alt="Logo facturacion" />
-          } @else {
-            <div class="logo-placeholder">PDF</div>
-          }
-        </div>
-        <label class="full">
-          Subir logo para facturacion
-          <input
-            type="file"
-            name="invoice_logo_file"
-            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-            (change)="onInvoiceLogoFileSelected($event)"
-          />
-          <small>Este logo se imprime en facturas, boletas, notas y PDFs.</small>
-          <small>PNG, JPG, JPEG o WEBP (max. 2MB)</small>
-          @if (form.invoice_logo_file) {
-            <small>Archivo: {{ form.invoice_logo_file.name }}</small>
-          }
-        </label>
-        @if (isProductionMode()) {
-          <label>
-            Usuario SOL real
-            <input pInputText [(ngModel)]="form.usuario_sol" name="usuario_sol" autocomplete="off" />
-          </label>
-          <label>
-            RUC SOL real
-            <input pInputText maxlength="11" [(ngModel)]="form.ruc_sol" name="ruc_sol" autocomplete="off" />
-          </label>
-          <label>
-            Clave SOL real
-            <p-password [(ngModel)]="form.clave_sol" name="clave_sol" [feedback]="false" [toggleMask]="true" />
-          </label>
-          <label>
-            Clave certificado
-            <p-password
-              [(ngModel)]="form.certificado_password"
-              name="certificado_password"
-              [feedback]="false"
-              [toggleMask]="true"
+        <section class="facturador-current" aria-label="Configuracion actual del facturador">
+          <header class="facturador-current__header">
+            <div>
+              <span class="facturador-current__icon"><i class="pi pi-sliders-h"></i></span>
+              <div>
+                <p>CONFIGURACION ACTUAL</p>
+                <h3>Estado operativo del tenant</h3>
+              </div>
+            </div>
+            <span
+              class="status-chip"
+              [class.status-chip--ready]="facturadorIsReady()"
+              [class.status-chip--warning]="!facturadorIsReady()"
+            >
+              <i [class]="facturadorIsReady() ? 'pi pi-check-circle' : 'pi pi-clock'"></i>
+              {{ facturadorStatusLabel() }}
+            </span>
+          </header>
+
+          <div class="facturador-health-grid">
+            <article [class.facturador-health-card--ready]="facturadorIsReady()">
+              <span class="facturador-health-card__icon facturador-health-card__icon--blue"
+                ><i class="pi pi-link"></i
+              ></span>
+              <div>
+                <span>Conexion</span><strong>{{ facturadorStatusLabel() }}</strong
+                ><small>{{ facturadorConnectionDescription() }}</small>
+              </div>
+            </article>
+            <article [class.facturador-health-card--ready]="isElectronicEmissionEnabled()">
+              <span class="facturador-health-card__icon facturador-health-card__icon--purple"
+                ><i class="pi pi-receipt"></i
+              ></span>
+              <div>
+                <span>Emision habilitada</span><strong>{{ documentCapabilityLabel() }}</strong
+                ><small>{{ fiscalCapabilityLabel() }}</small>
+              </div>
+            </article>
+            <article [class.facturador-health-card--ready]="sunatCertificateIsConfigured()">
+              <span class="facturador-health-card__icon facturador-health-card__icon--green"
+                ><i class="pi pi-shield"></i
+              ></span>
+              <div>
+                <span>Credenciales</span><strong>{{ sunatCertificateStatusLabel() }}</strong
+                ><small>{{ credentialStatusDescription() }}</small>
+              </div>
+            </article>
+            <article [class.facturador-health-card--ready]="invoiceBrandIsConfigured()">
+              <span class="facturador-health-card__icon facturador-health-card__icon--orange"
+                ><i class="pi pi-image"></i
+              ></span>
+              <div>
+                <span>Marca en PDF</span><strong>{{ invoiceBrandLabel() }}</strong
+                ><small>{{ invoiceBrandDescription() }}</small>
+              </div>
+            </article>
+          </div>
+
+          <div class="facturador-current__details">
+            <section class="facturador-detail-group">
+              <h4><i class="pi pi-cog"></i> Operacion</h4>
+              <dl>
+                <div>
+                  <dt>Entorno SUNAT</dt>
+                  <dd>{{ sunatModeLabel() }}</dd>
+                </div>
+                <div>
+                  <dt>Estado fiscal</dt>
+                  <dd>{{ fiscalCapabilityLabel() }}</dd>
+                </div>
+                <div>
+                  <dt>Cliente de integracion</dt>
+                  <dd>{{ facturadorApiClientLabel() }}</dd>
+                </div>
+                <div>
+                  <dt>Moneda base</dt>
+                  <dd>{{ configuredCurrencyLabel() }}</dd>
+                </div>
+                <div>
+                  <dt>IGV configurado</dt>
+                  <dd>{{ configuredIgvLabel() }}</dd>
+                </div>
+              </dl>
+            </section>
+            <section class="facturador-detail-group">
+              <h4><i class="pi pi-hashtag"></i> Series de documentos</h4>
+              <dl class="facturador-series">
+                <div>
+                  <dt>Factura</dt>
+                  <dd>{{ configuredSerie('factura') }}</dd>
+                </div>
+                <div>
+                  <dt>Boleta</dt>
+                  <dd>{{ configuredSerie('boleta') }}</dd>
+                </div>
+                <div>
+                  <dt>Nota de credito</dt>
+                  <dd>{{ configuredSerie('nc') }}</dd>
+                </div>
+                <div>
+                  <dt>Nota de debito</dt>
+                  <dd>{{ configuredSerie('nd') }}</dd>
+                </div>
+                <div>
+                  <dt>Guia de remision</dt>
+                  <dd>{{ configuredSerie('guia') }}</dd>
+                </div>
+              </dl>
+            </section>
+          </div>
+
+          <footer class="facturador-current__connection">
+            <span
+              ><i class="pi pi-server"></i><b>Servicio:</b>
+              {{ currentSunatBillingEndpoint() }}</span
+            >
+            <span><i class="pi pi-database"></i><b>Cola:</b> {{ currentSunatQueueName() }}</span>
+          </footer>
+        </section>
+
+        <div class="mode-row">
+          <span>MODO ENTORNO</span>
+          <label class="mode-switch">
+            <input
+              type="checkbox"
+              [checked]="isProductionMode()"
+              (change)="onSunatModeToggle($any($event.target).checked)"
             />
+            <span class="mode-pill" [class.mode-pill--production]="isProductionMode()">
+              {{ isProductionMode() ? 'EN PRODUCCION' : 'EN BETA' }}
+            </span>
           </label>
+        </div>
+
+        @if (!isProductionMode()) {
+          <div class="sunat-environment sunat-environment--beta">
+            <span class="sunat-environment__icon"><i class="pi pi-shield"></i></span>
+            <div>
+              <strong>Entorno de pruebas SUNAT</strong>
+              <p>
+                Azurion usa automaticamente el RUC, usuario SOL, clave y certificado oficiales de
+                prueba. No necesitas cargar credenciales.
+              </p>
+              <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
+              <small><b>Cola:</b> {{ sunatQueueName() }}</small>
+            </div>
+          </div>
+        } @else {
+          <div class="sunat-environment sunat-environment--production">
+            <span class="sunat-environment__icon"><i class="pi pi-exclamation-triangle"></i></span>
+            <div>
+              <strong>Entorno real SUNAT</strong>
+              <p>
+                Los comprobantes tienen efecto tributario. Usa credenciales SOL y certificado
+                digital reales de esta empresa.
+              </p>
+              <small><b>Boletas y facturas:</b> {{ sunatBillingEndpoint() }}</small>
+              <small><b>Cola:</b> {{ sunatQueueName() }}</small>
+            </div>
+          </div>
+        }
+
+        <div class="form-grid">
+          <div class="identity-logo identity-logo--invoice">
+            @if (invoiceLogoPreviewUrl()) {
+              <img [src]="invoiceLogoPreviewUrl()!" alt="Logo facturacion" />
+            } @else {
+              <div class="logo-placeholder">PDF</div>
+            }
+          </div>
           <label class="full">
-            Archivo de firma digital real
+            Subir logo para facturacion
             <input
               type="file"
-              name="certificado_file"
-              accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
-              (change)="onCertificateFileSelected($event)"
+              name="invoice_logo_file"
+              accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+              (change)="onInvoiceLogoFileSelected($event)"
             />
-            <small>PEM, PFX o P12 (max. 5MB)</small>
-            @if (form.certificado_file) {
-              <small>Archivo: {{ form.certificado_file.name }}</small>
-            }
-            @if (!form.certificado_file && productionCertificateConfigured()) {
-              <small>Certificado actual: Activo</small>
-            }
-            @if (!form.certificado_file && !productionCertificateConfigured()) {
-              <small class="warn">En produccion este archivo es obligatorio.</small>
+            <small>Este logo se imprime en facturas, boletas, notas y PDFs.</small>
+            <small>PNG, JPG, JPEG o WEBP (max. 2MB)</small>
+            @if (form.invoice_logo_file) {
+              <small>Archivo: {{ form.invoice_logo_file.name }}</small>
             }
           </label>
-        }
-      </div>
+          @if (isProductionMode()) {
+            <label>
+              Usuario SOL real
+              <input
+                pInputText
+                [(ngModel)]="form.usuario_sol"
+                name="usuario_sol"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              RUC SOL real
+              <input
+                pInputText
+                maxlength="11"
+                [(ngModel)]="form.ruc_sol"
+                name="ruc_sol"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              Clave SOL real
+              <p-password
+                [(ngModel)]="form.clave_sol"
+                name="clave_sol"
+                [feedback]="false"
+                [toggleMask]="true"
+              />
+            </label>
+            <label>
+              Clave certificado
+              <p-password
+                [(ngModel)]="form.certificado_password"
+                name="certificado_password"
+                [feedback]="false"
+                [toggleMask]="true"
+              />
+            </label>
+            <label class="full">
+              Archivo de firma digital real
+              <input
+                type="file"
+                name="certificado_file"
+                accept=".pem,.pfx,.p12,application/x-pkcs12,application/pkcs12,application/x-pem-file"
+                (change)="onCertificateFileSelected($event)"
+              />
+              <small>PEM, PFX o P12 (max. 5MB)</small>
+              @if (form.certificado_file) {
+                <small>Archivo: {{ form.certificado_file.name }}</small>
+              }
+              @if (!form.certificado_file && productionCertificateConfigured()) {
+                <small>Certificado actual: Activo</small>
+              }
+              @if (!form.certificado_file && !productionCertificateConfigured()) {
+                <small class="warn">En produccion este archivo es obligatorio.</small>
+              }
+            </label>
+          }
+        </div>
 
-      <div class="section-title">
-        <h3>Parametros de integracion</h3>
-      </div>
+        <div class="section-title">
+          <h3>Parametros de integracion</h3>
+        </div>
 
-      <div class="form-grid form-grid--compact">
-        <label>
-          Cliente API
-          <input pInputText [(ngModel)]="form.api_client_name" name="api_client_name" />
-        </label>
-      </div>
+        <div class="form-grid form-grid--compact">
+          <label>
+            Cliente API
+            <input pInputText [(ngModel)]="form.api_client_name" name="api_client_name" />
+          </label>
+        </div>
 
-      <div class="info-banner info-banner--neutral">
-        <i class="pi pi-info-circle"></i>
-        <span>El logo fiscal se mantiene separado del panel para no mezclar branding operativo con branding tributario.</span>
-      </div>
+        <div class="info-banner info-banner--neutral">
+          <i class="pi pi-info-circle"></i>
+          <span
+            >El logo fiscal se mantiene separado del panel para no mezclar branding operativo con
+            branding tributario.</span
+          >
+        </div>
       </article>
     } @else if (isFacturadorView) {
       <article class="panel panel--ticket-only">
@@ -326,7 +695,115 @@
           <i class="pi pi-info-circle"></i>
           <span>
             Boletas y facturas electronicas SUNAT se habilitan exclusivamente para empresas de Peru.
-            Este tenant puede registrar ventas y emitir tickets en su moneda configurada sin enviar documentos a SUNAT.
+            Este tenant puede registrar ventas y emitir tickets en su moneda configurada sin enviar
+            documentos a SUNAT.
+          </span>
+        </div>
+      </article>
+    }
+
+    @if (isFacturadorView) {
+      <article class="panel panel--banks">
+        <header class="panel__header bank-panel__header">
+          <div>
+            <span class="panel__icon panel__icon--bank"
+              ><i class="pi pi-building-columns"></i
+            ></span>
+            <div>
+              <h2>Cuentas bancarias del comprobante</h2>
+              <p>Se mostrarán en tickets, boletas, facturas y sus versiones A4.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="bank-add-button"
+            [disabled]="form.bank_accounts.length >= 3"
+            (click)="addBankAccount()"
+          >
+            <i class="pi pi-plus"></i>
+            Agregar cuenta
+          </button>
+        </header>
+
+        @if (form.bank_accounts.length === 0) {
+          <div class="bank-empty-state">
+            <i class="pi pi-info-circle"></i>
+            <div>
+              <strong>No hay cuentas configuradas</strong>
+              <span
+                >Agrega hasta tres cuentas para completar la sección bancaria del comprobante.</span
+              >
+            </div>
+          </div>
+        } @else {
+          <div class="bank-account-list">
+            @for (account of form.bank_accounts; track $index) {
+              <section class="bank-account-card">
+                <header>
+                  <strong>Cuenta bancaria {{ $index + 1 }}</strong>
+                  <button
+                    type="button"
+                    class="bank-remove-button"
+                    [attr.aria-label]="'Eliminar cuenta bancaria ' + ($index + 1)"
+                    (click)="removeBankAccount($index)"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </header>
+                <div class="bank-account-fields">
+                  <label>
+                    Entidad financiera
+                    <input
+                      pInputText
+                      maxlength="120"
+                      [(ngModel)]="account.banco"
+                      [name]="'bank_name_' + $index"
+                      placeholder="Ej. BCP"
+                    />
+                  </label>
+                  <label>
+                    Moneda
+                    <select [(ngModel)]="account.moneda" [name]="'bank_currency_' + $index">
+                      @for (currency of currencyOptions; track currency.code) {
+                        <option [value]="currency.code">
+                          {{ currency.code }} - {{ currency.symbol }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                  <label>
+                    Número de cuenta
+                    <input
+                      pInputText
+                      maxlength="50"
+                      [(ngModel)]="account.cuenta"
+                      [name]="'bank_account_' + $index"
+                      placeholder="Ej. 191-1234567-0-12"
+                    />
+                  </label>
+                  <label>
+                    Código CCI / interbancario
+                    <input
+                      pInputText
+                      maxlength="34"
+                      [(ngModel)]="account.cci"
+                      [name]="'bank_cci_' + $index"
+                      placeholder="Ej. 00219100123456789012"
+                    />
+                  </label>
+                </div>
+              </section>
+            }
+          </div>
+        }
+
+        <div class="info-banner info-banner--neutral">
+          <i class="pi pi-shield"></i>
+          <span>
+            Registra datos reales. Azurion no genera números bancarios automáticamente. La razón
+            social, dirección fiscal, teléfono, correo y sitio web se toman de
+            <b>Configuración del tenant</b>; los datos del comprador se toman de su ficha de
+            cliente.
           </span>
         </div>
       </article>
@@ -334,14 +811,12 @@
   </div>
 
   <footer class="actions-bar">
-    @if (!isFacturadorView || isPeruTenant()) {
-      <p-button
-        [label]="saveLabel"
-        icon="pi pi-save"
-        styleClass="az-primary save-btn"
-        [loading]="saving()"
-        (onClick)="save()"
-      />
-    }
+    <p-button
+      [label]="saveLabel"
+      icon="pi pi-save"
+      styleClass="az-primary save-btn"
+      [loading]="saving()"
+      (onClick)="save()"
+    />
   </footer>
 </section>

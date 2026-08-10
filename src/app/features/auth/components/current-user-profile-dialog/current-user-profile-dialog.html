@@ -1,0 +1,142 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="!$event && close()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!savingProfile() && !savingPassword()"
+  [style]="{ width: 'min(54rem, calc(100vw - 2rem))' }"
+  styleClass="current-user-profile-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="profile-dialog-title">
+      <span class="profile-dialog-title__icon"><i class="pi pi-user-edit"></i></span>
+      <span>
+        <strong>Mi perfil</strong>
+        <small>Administra tus datos personales y seguridad de acceso.</small>
+      </span>
+    </div>
+  </ng-template>
+
+  @if (loading()) {
+    <div class="profile-dialog-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Cargando tu perfil...</span>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="profile-dialog-error">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ errorMessage() }}</span>
+      <button type="button" class="profile-link-button" (click)="retry()">Reintentar</button>
+    </div>
+  } @else if (profile(); as current) {
+    <section class="profile-dialog-summary">
+      <span class="profile-dialog-avatar">{{ initials() || 'US' }}</span>
+      <div>
+        <strong>{{ current.nombres || current.username }}</strong>
+        <small>{{ current.tipoCuenta }}</small>
+      </div>
+      <span class="profile-dialog-status" [class.profile-dialog-status--inactive]="!current.activo">
+        <i [class]="current.activo ? 'pi pi-check-circle' : 'pi pi-ban'"></i>
+        {{ current.activo ? 'Cuenta activa' : 'Cuenta inactiva' }}
+      </span>
+    </section>
+
+    <div class="profile-dialog-grid">
+      <section class="profile-dialog-section">
+        <header>
+          <span><i class="pi pi-user"></i></span>
+          <div>
+            <h3>Datos personales</h3>
+            <p>Estos datos se muestran en tu sesión y en las asignaciones internas.</p>
+          </div>
+        </header>
+
+        @if (current.puedeEditarDatosPersonales) {
+          <div class="profile-fields">
+            <label>
+              Nombre completo <b>*</b>
+              <input pInputText name="profileNombres" maxlength="160" [(ngModel)]="personalForm.nombres" autocomplete="name" />
+            </label>
+            <label class="profile-readonly-field">
+              <span>Correo electrónico <i class="pi pi-lock" aria-hidden="true"></i></span>
+              <input pInputText type="email" name="profileEmail" [value]="current.email || 'Sin correo registrado'" readonly aria-readonly="true" />
+              <small>El correo identifica tu cuenta y solo puede cambiarlo un administrador autorizado.</small>
+            </label>
+          </div>
+          <div class="profile-section-actions">
+            <button type="button" class="profile-button profile-button--primary" [disabled]="savingProfile()" (click)="savePersonalData()">
+              <i [class]="savingProfile() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+              {{ savingProfile() ? 'Guardando...' : 'Guardar nombre' }}
+            </button>
+          </div>
+        } @else {
+          <div class="profile-readonly-note">
+            <i class="pi pi-lock"></i>
+            <span>Los datos de la cuenta de plataforma se administran desde Seguridad de plataforma.</span>
+          </div>
+        }
+      </section>
+
+      <section class="profile-dialog-section profile-dialog-section--security">
+        <header>
+          <span><i class="pi pi-shield"></i></span>
+          <div>
+            <h3>Seguridad</h3>
+            <p>Usa tu contraseña actual para autorizar cualquier cambio.</p>
+          </div>
+        </header>
+
+        <div class="profile-fields">
+          <label>
+            Contraseña actual <b>*</b>
+            <input pInputText type="password" name="currentPassword" [(ngModel)]="passwordForm.contrasenaActual" autocomplete="current-password" />
+          </label>
+          <label>
+            Nueva contraseña <b>*</b>
+            <input pInputText type="password" name="newPassword" [(ngModel)]="passwordForm.nuevaContrasena" minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+          </label>
+          <label class="profile-field--wide">
+            Confirmar nueva contraseña <b>*</b>
+            <input pInputText type="password" name="confirmPassword" [(ngModel)]="passwordForm.confirmarContrasena" minlength="8" autocomplete="new-password" />
+          </label>
+        </div>
+        <div class="profile-section-actions">
+          <button type="button" class="profile-button profile-button--secondary" [disabled]="savingPassword()" (click)="changePassword()">
+            <i [class]="savingPassword() ? 'pi pi-spin pi-spinner' : 'pi pi-key'"></i>
+            {{ savingPassword() ? 'Actualizando...' : 'Actualizar contraseña' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="profile-dialog-section profile-dialog-section--readonly">
+        <header>
+          <span><i class="pi pi-lock"></i></span>
+          <div>
+            <h3>Datos administrados</h3>
+            <p>Solo lectura. Protegen el acceso y el alcance operativo de tu cuenta.</p>
+          </div>
+        </header>
+        <dl class="profile-readonly-grid">
+          <div><dt>Usuario</dt><dd>{{ current.username }}</dd></div>
+          <div class="profile-readonly-item--roles">
+            <dt>Roles asignados</dt>
+            <dd class="profile-role-list">
+              @for (role of current.roles; track role) {
+                <span>{{ role.replaceAll('_', ' ') }}</span>
+              } @empty {
+                <em>Sin rol asignado</em>
+              }
+            </dd>
+          </div>
+          <div><dt>Sucursales</dt><dd>{{ assignedBranches() }}</dd></div>
+          <div><dt>Estado</dt><dd>{{ current.activo ? 'Activo' : 'Inactivo' }}</dd></div>
+        </dl>
+      </section>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button type="button" class="profile-button profile-button--ghost" [disabled]="savingProfile() || savingPassword()" (click)="close()">Cerrar</button>
+  </ng-template>
+</p-dialog>

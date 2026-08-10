@@ -35,13 +35,13 @@
             <div class="followup-prospect-info">
               <span><b>Nombre</b>{{ detail.prospecto.nombre }}</span>
               <span><b>Empresa</b>{{ detail.prospecto.razonSocial || detail.prospecto.nombreComercial || 'Sin empresa' }}</span>
-              <span><b>Telefono</b>{{ detail.prospecto.telefono || 'Sin telefono' }}</span>
+              <span><b>Teléfono</b>{{ detail.prospecto.telefono || 'Sin teléfono' }}</span>
               <span><b>Correo</b>{{ detail.prospecto.correo || 'Sin correo' }}</span>
-              <span><b>Ubicacion</b>{{ detail.prospecto.direccion || 'Sin direccion' }}</span>
+              <span><b>Ubicación</b>{{ detail.prospecto.direccion || 'Sin dirección' }}</span>
               <span><b>Responsable</b>{{ host().responsibleName(detail.prospecto.responsableId) }}</span>
             </div>
             <div class="detail-status-card detail-status-card--horizontal">
-              <strong>Calificacion</strong>
+              <strong>Calificación</strong>
               <span [class]="'qualification-temp qualification-temp--' + detail.qualification.temperatura.toLowerCase()">
                 {{ detail.qualification.score }}/100 · {{ host().qualificationTemperatureLabel(detail.qualification.temperatura) }}
               </span>
@@ -50,7 +50,7 @@
               </div>
               <p>Estado <strong>{{ detail.qualification.label }}</strong></p>
               <p>Necesidad <strong>{{ host().qualificationNeedLabel(detail.prospecto) }}</strong></p>
-              <p>Interes <strong>{{ host().qualificationInterestLabel(detail.prospecto) }}</strong></p>
+              <p>Interés <strong>{{ host().qualificationInterestLabel(detail.prospecto) }}</strong></p>
               @if (detail.qualification.missing.length) {
                 <small>Falta: {{ detail.qualification.missing.join(', ') }}</small>
               }
@@ -67,7 +67,7 @@
               <strong>{{ detail.qualification.canConvert ? 'Listo para oportunidad' : 'Seguir calificando' }}</strong>
               <span>
                 {{ detail.qualification.canConvert
-                  ? 'Cumple necesidad identificada e interes medio o alto.'
+                  ? 'Cumple: necesidad identificada e interés medio o alto.'
                   : 'Registra una actividad con resultado real antes de crear oportunidad.' }}
               </span>
             </div>
@@ -92,7 +92,7 @@
           <section class="followup-detail-grid">
             <article class="detail-card">
               <div class="detail-card-head">
-                <h3>Proximas actividades</h3>
+                <h3>Próximas actividades</h3>
                 <button type="button" (click)="host().openCreateActivity(detail.prospecto)">Ver calendario</button>
               </div>
               <div class="upcoming-detail-list">
@@ -134,7 +134,7 @@
                         <small class="activity-result-line">
                           {{ item.resultadoContacto ? host().activityResultText(item.resultadoContacto) : 'Sin resultado' }}
                           @if (item.nivelInteres) {
-                            <span> · Interes {{ host().humanize(item.nivelInteres) }}</span>
+                            <span> · Interés {{ host().humanize(item.nivelInteres) }}</span>
                           }
                         </small>
                       }
@@ -142,7 +142,7 @@
                     </div>
                   </article>
                 } @empty {
-                  <div class="pipeline-empty">Aun no hay historial realizado para este prospecto.</div>
+                  <div class="pipeline-empty">Aún no hay actividades completadas para este prospecto.</div>
                 }
               </div>
               <button type="button" class="detail-add-followup" (click)="host().openQuickActivity(detail.prospecto, 'LLAMADA', 'Llamar a ' + detail.prospecto.nombre)">

@@ -68,12 +68,12 @@ export const DEFAULT_CRM_INTEGRATIONS: readonly CrmCanalTokenConfig[] = [
 export const DEFAULT_CRM_CURRENCIES: readonly CrmCurrencyConfig[] = [
   {
     moneda: 'USD',
-    nombre: 'Dolar americano',
+    nombre: 'Dólar americano',
     simbolo: '$',
     tipoCambioBase: 3.8,
     margenConversionPorcentaje: 0,
     tipoCambioVenta: 3.8,
-    activo: true,
+    activo: false,
   },
   {
     moneda: 'EUR',
@@ -82,7 +82,7 @@ export const DEFAULT_CRM_CURRENCIES: readonly CrmCurrencyConfig[] = [
     tipoCambioBase: 4.1,
     margenConversionPorcentaje: 0,
     tipoCambioVenta: 4.1,
-    activo: true,
+    activo: false,
   },
 ];
 export const CRM_ACTIVE_PIPELINE_STAGES = new Set<string>([
@@ -112,6 +112,8 @@ export interface ProspectForm {
   nombre: string;
   razonSocial: string;
   nombreComercial: string;
+  telefonoPaisCodigo: string;
+  telefonoCodigoPais: string;
   telefono: string;
   correo: string;
   direccion: string;
@@ -164,6 +166,7 @@ export interface CatalogoForm {
   nombre: string;
   descripcion: string;
   precioReferencial: number;
+  moneda: string;
   estado: string;
   metadataJson: string;
   publicEnabled: boolean;

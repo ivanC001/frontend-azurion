@@ -1,15 +1,28 @@
-<p-dialog [showHeader]="false" [modal]="true" [draggable]="false" [resizable]="false" [visible]="host().activeDialog() === 'prospecto'" (visibleChange)="!$event && host().activeDialog.set(null)" styleClass="crm-dialog crm-dialog--prospect-register">
+<p-dialog
+  [showHeader]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().activeDialog() === 'prospecto'"
+  (visibleChange)="!$event && host().activeDialog.set(null)"
+  styleClass="crm-dialog crm-dialog--prospect-register"
+>
   <form class="prospect-register-form">
     <header class="prospect-register-head">
       <div class="prospect-title-block">
         <i class="pi pi-user-plus"></i>
         <div>
           <h2>Registrar prospecto</h2>
-          <p>Completa la informacion para registrar un nuevo prospecto.</p>
+          <p>Completa la información para registrar un nuevo prospecto.</p>
         </div>
       </div>
       <div class="prospect-head-actions">
-        <button type="button" class="icon-close-button" aria-label="Cerrar" (click)="host().activeDialog.set(null)">
+        <button
+          type="button"
+          class="icon-close-button"
+          aria-label="Cerrar"
+          (click)="host().activeDialog.set(null)"
+        >
           <i class="pi pi-times"></i>
         </button>
       </div>
@@ -27,50 +40,251 @@
         <div class="section-title">
           <i class="pi pi-id-card"></i>
           <div>
-          <strong>Información general</strong>
-          <span>Clasificación, identificación y datos de contacto.</span>
+            <strong>Información general</strong>
+            <span>Clasificación, identificación y datos de contacto.</span>
           </div>
         </div>
         <div class="prospect-input-grid">
-          <label>Tipo de prospecto <span class="required">*</span><p-select name="nuevoTipoPersona" [options]="host().tipoPersonaOptions" [ngModel]="host().prospectForm.tipoPersona" (ngModelChange)="host().onProspectPersonTypeChange($event)" appendTo="body" /></label>
-          <label>País <span class="required">*</span><p-select name="nuevoPaisCodigo" [options]="host().prospectCountryOptions" [ngModel]="host().prospectForm.paisCodigo" (ngModelChange)="host().onProspectCountryChange($event)" [filter]="true" filterBy="label" appendTo="body" /></label>
-          <label>Origen <span class="required">*</span><p-select name="nuevoOrigen" [options]="host().origenOptions" [(ngModel)]="host().prospectForm.origen" appendTo="body" /></label>
-          <label>Fecha de registro<input pInputText type="date" name="nuevoFechaInteres" [(ngModel)]="host().prospectForm.fechaInteres" /></label>
+          <label
+            >Tipo de prospecto <span class="required">*</span
+            ><p-select
+              name="nuevoTipoPersona"
+              [options]="host().tipoPersonaOptions"
+              [ngModel]="host().prospectForm.tipoPersona"
+              (ngModelChange)="host().onProspectPersonTypeChange($event)"
+              appendTo="body"
+          /></label>
+          <label
+            >País <span class="required">*</span
+            ><p-select
+              name="nuevoPaisCodigo"
+              [options]="host().prospectCountryOptions"
+              [ngModel]="host().prospectForm.paisCodigo"
+              (ngModelChange)="host().onProspectCountryChange($event)"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+          /></label>
+          <label
+            >Origen <span class="required">*</span
+            ><p-select
+              name="nuevoOrigen"
+              [options]="host().origenOptions"
+              [(ngModel)]="host().prospectForm.origen"
+              appendTo="body"
+          /></label>
+          <label
+            >Fecha de registro<input
+              pInputText
+              type="date"
+              name="nuevoFechaInteres"
+              [(ngModel)]="host().prospectForm.fechaInteres"
+          /></label>
 
           @if (host().isNaturalProspect()) {
             <div class="prospect-identity-heading span-full">
               <i class="pi pi-user"></i>
               <div>
                 <strong>Datos de la persona</strong>
-                <span>Identificación personal correspondiente a {{ host().prospectCountryName() }}.</span>
+                <span
+                  >Identificación personal correspondiente a
+                  {{ host().prospectCountryName() }}.</span
+                >
               </div>
             </div>
-            <label>Tipo de identificación <span class="required">*</span><p-select name="nuevoTipoDocumento" [options]="host().prospectDocumentOptions()" [ngModel]="host().prospectForm.tipoDocumento" (ngModelChange)="host().onProspectDocumentTypeChange($event)" appendTo="body" /></label>
-            <label>Número de identificación <span class="required">*</span><input pInputText name="nuevoNumeroDocumento" [(ngModel)]="host().prospectForm.numeroDocumento" (blur)="host().normalizeProspectDocumentNumber()" [attr.inputmode]="host().prospectDocumentInputMode()" maxlength="30" [placeholder]="host().prospectDocumentPlaceholder()" /><small class="prospect-field-help">{{ host().prospectDocumentHelp() }}</small></label>
-            <label class="span-2">Nombre completo <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Nombres y apellidos" /></label>
+            <label
+              >Tipo de identificación <span class="required">*</span
+              ><p-select
+                name="nuevoTipoDocumento"
+                [options]="host().prospectDocumentOptions()"
+                [ngModel]="host().prospectForm.tipoDocumento"
+                (ngModelChange)="host().onProspectDocumentTypeChange($event)"
+                appendTo="body"
+            /></label>
+            <label
+              >Número de identificación <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoNumeroDocumento"
+                [(ngModel)]="host().prospectForm.numeroDocumento"
+                (blur)="host().normalizeProspectDocumentNumber()"
+                [attr.inputmode]="host().prospectDocumentInputMode()"
+                maxlength="30"
+                [placeholder]="host().prospectDocumentPlaceholder()"
+              /><small class="prospect-field-help">{{
+                host().prospectDocumentHelp()
+              }}</small></label
+            >
+            <label class="span-2"
+              >Nombre completo <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoNombre"
+                [(ngModel)]="host().prospectForm.nombre"
+                placeholder="Nombres y apellidos"
+            /></label>
           } @else if (host().isCompanyProspect()) {
             <div class="prospect-identity-heading prospect-identity-heading--company span-full">
               <i class="pi pi-building"></i>
               <div>
                 <strong>Datos de la empresa</strong>
-                <span>Identificación fiscal correspondiente a {{ host().prospectCountryName() }}.</span>
+                <span
+                  >Identificación fiscal correspondiente a {{ host().prospectCountryName() }}.</span
+                >
               </div>
             </div>
-            <label>Identificación fiscal <span class="required">*</span><p-select name="nuevoTipoDocumento" [options]="host().prospectDocumentOptions()" [ngModel]="host().prospectForm.tipoDocumento" (ngModelChange)="host().onProspectDocumentTypeChange($event)" appendTo="body" /></label>
-            <label>Número fiscal <span class="required">*</span><input pInputText name="nuevoNumeroDocumento" [(ngModel)]="host().prospectForm.numeroDocumento" (blur)="host().normalizeProspectDocumentNumber()" [attr.inputmode]="host().prospectDocumentInputMode()" maxlength="30" [placeholder]="host().prospectDocumentPlaceholder()" /><small class="prospect-field-help">{{ host().prospectDocumentHelp() }}</small></label>
-            <label class="span-2">Razón social <span class="required">*</span><input pInputText name="nuevoRazonSocial" [(ngModel)]="host().prospectForm.razonSocial" placeholder="Nombre legal de la empresa" /></label>
-            <label class="span-2">Nombre de contacto <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Persona responsable del contacto" /></label>
-            <label class="span-2">Nombre comercial<input pInputText name="nuevoNombreComercial" [(ngModel)]="host().prospectForm.nombreComercial" placeholder="Opcional" /></label>
+            <label
+              >Identificación fiscal <span class="required">*</span
+              ><p-select
+                name="nuevoTipoDocumento"
+                [options]="host().prospectDocumentOptions()"
+                [ngModel]="host().prospectForm.tipoDocumento"
+                (ngModelChange)="host().onProspectDocumentTypeChange($event)"
+                appendTo="body"
+            /></label>
+            <label
+              >Número fiscal <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoNumeroDocumento"
+                [(ngModel)]="host().prospectForm.numeroDocumento"
+                (blur)="host().normalizeProspectDocumentNumber()"
+                [attr.inputmode]="host().prospectDocumentInputMode()"
+                maxlength="30"
+                [placeholder]="host().prospectDocumentPlaceholder()"
+              /><small class="prospect-field-help">{{
+                host().prospectDocumentHelp()
+              }}</small></label
+            >
+            <label class="span-2"
+              >Razón social <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoRazonSocial"
+                [(ngModel)]="host().prospectForm.razonSocial"
+                placeholder="Nombre legal de la empresa"
+            /></label>
+            <label class="span-2"
+              >Nombre de contacto <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoNombre"
+                [(ngModel)]="host().prospectForm.nombre"
+                placeholder="Persona responsable del contacto"
+            /></label>
+            <label class="span-2"
+              >Nombre comercial<input
+                pInputText
+                name="nuevoNombreComercial"
+                [(ngModel)]="host().prospectForm.nombreComercial"
+                placeholder="Opcional"
+            /></label>
           } @else {
             <div class="manual-origin-note span-full">
               <i class="pi pi-info-circle"></i>
-              <span>Selecciona persona natural o empresa para solicitar los datos de identificación correspondientes al país. También puedes guardar el lead por clasificar.</span>
+              <span
+                >Selecciona persona natural o empresa para solicitar los datos de identificación
+                correspondientes al país. También puedes guardar el lead por clasificar.</span
+              >
             </div>
-            <label class="span-2">Nombre / Contacto <span class="required">*</span><input pInputText name="nuevoNombre" [(ngModel)]="host().prospectForm.nombre" placeholder="Nombre del contacto" /></label>
+            <label class="span-2"
+              >Nombre / Contacto <span class="required">*</span
+              ><input
+                pInputText
+                name="nuevoNombre"
+                [(ngModel)]="host().prospectForm.nombre"
+                placeholder="Nombre del contacto"
+            /></label>
           }
-          <label>Teléfono<input pInputText type="tel" name="nuevoTelefono" [(ngModel)]="host().prospectForm.telefono" placeholder="Código de país y número" /></label>
-          <label class="span-2">Correo electrónico<input pInputText type="email" name="nuevoCorreo" [(ngModel)]="host().prospectForm.correo" placeholder="contacto@empresa.com" /></label>
-          <label class="span-full">Dirección<input pInputText name="nuevoDireccion" [(ngModel)]="host().prospectForm.direccion" placeholder="Dirección referencial" /></label>
+          <label class="prospect-phone-field"
+            >Teléfono
+            <div class="prospect-phone-input">
+              <p-select
+                name="nuevoTelefonoPais"
+                styleClass="prospect-phone-country-select"
+                panelStyleClass="prospect-phone-country-panel"
+                [options]="host().prospectPhoneCountryOptions"
+                optionLabel="name"
+                optionValue="code"
+                [ngModel]="host().prospectForm.telefonoPaisCodigo"
+                (ngModelChange)="host().onProspectPhoneCountryChange($event)"
+                [filter]="true"
+                filterBy="searchText"
+                filterPlaceholder="Buscar país o prefijo"
+                placeholder="🌐"
+                appendTo="body"
+                ariaLabel="País del teléfono"
+              >
+                <ng-template pTemplate="selectedItem" let-country>
+                  <span
+                    class="phone-country-selected"
+                    [title]="country?.name || 'Seleccionar país'"
+                  >
+                    <i class="pi pi-globe"></i>
+                    <span>{{ country?.name || 'Seleccionar país' }}</span>
+                  </span>
+                </ng-template>
+                <ng-template pTemplate="item" let-country>
+                  <span class="phone-country-option">
+                    <span class="phone-country-option__code">{{ country.code }}</span>
+                    <span class="phone-country-option__name">
+                      <strong>{{ country.name }}</strong>
+                      <small>Código internacional</small>
+                    </span>
+                    <span class="phone-country-option__dial">+{{ country.dialCode }}</span>
+                  </span>
+                </ng-template>
+              </p-select>
+              <span class="prospect-phone-prefix">
+                <span>+</span>
+                <input
+                  type="text"
+                  name="nuevoTelefonoCodigoPais"
+                  [ngModel]="host().prospectForm.telefonoCodigoPais"
+                  (ngModelChange)="host().onProspectPhoneDialCodeChange($event)"
+                  inputmode="numeric"
+                  autocomplete="tel-country-code"
+                  maxlength="4"
+                  aria-label="Código telefónico internacional"
+                />
+              </span>
+              <input
+                pInputText
+                type="tel"
+                name="nuevoTelefono"
+                [ngModel]="host().prospectForm.telefono"
+                (ngModelChange)="host().onProspectPhoneChange($event)"
+                inputmode="tel"
+                autocomplete="tel-national"
+                placeholder="Número local"
+              />
+            </div>
+            <small class="prospect-phone-meta">
+              <span class="prospect-phone-meta__channel">
+                <i class="pi pi-whatsapp"></i>
+                WhatsApp
+              </span>
+              <strong>{{
+                host().prospectPhonePreview() || '+' + host().prospectPhoneDialCode()
+              }}</strong>
+              <span class="prospect-phone-meta__hint">El prefijo es editable</span>
+            </small>
+          </label>
+          <label class="span-2"
+            >Correo electrónico<input
+              pInputText
+              type="email"
+              name="nuevoCorreo"
+              [(ngModel)]="host().prospectForm.correo"
+              placeholder="contacto@empresa.com"
+          /></label>
+          <label class="span-full"
+            >Dirección<input
+              pInputText
+              name="nuevoDireccion"
+              [(ngModel)]="host().prospectForm.direccion"
+              placeholder="Dirección referencial"
+          /></label>
         </div>
       </article>
     </section>
@@ -85,12 +299,23 @@
       </div>
       <div class="product-register-grid">
         <div class="product-help">
-          <strong>Que producto o servicio le interesa?</strong>
-          <p>Selecciona una oferta registrada en Productos CRM. AZURION tomara el rubro, nombre y precio referencial automaticamente.</p>
+          <strong>¿Qué producto o servicio le interesa?</strong>
+          <p>
+            Selecciona una oferta registrada en Productos CRM. AZURION tomara el rubro, nombre y
+            precio referencial automaticamente.
+          </p>
         </div>
         <label>
           Oferta registrada
-          <p-select name="nuevoCatalogoItemId" [options]="host().catalogoOptions()" [ngModel]="host().prospectForm.catalogoItemId" (ngModelChange)="host().onProspectCatalogChange($event)" [showClear]="true" appendTo="body" placeholder="Selecciona producto, curso, vehiculo, inmueble o servicio" />
+          <p-select
+            name="nuevoCatalogoItemId"
+            [options]="host().catalogoOptions()"
+            [ngModel]="host().prospectForm.catalogoItemId"
+            (ngModelChange)="host().onProspectCatalogChange($event)"
+            [showClear]="true"
+            appendTo="body"
+            placeholder="Selecciona producto, curso, vehiculo, inmueble o servicio"
+          />
         </label>
         <button type="button" class="outline-success-button" (click)="host().openCreateCatalogo()">
           <i class="pi pi-plus"></i>
@@ -102,7 +327,11 @@
           <i class="pi pi-tags"></i>
           <div>
             <strong>{{ oferta.nombre }}</strong>
-            <span>{{ host().opportunityTypeLabel(oferta.tipoItem) }} · S/ {{ oferta.precioReferencial | number: '1.2-2' }}</span>
+            <span
+              >{{ host().opportunityTypeLabel(oferta.tipoItem) }} ·
+              {{ host().catalogCurrencyPrefix(oferta.moneda) }}
+              {{ oferta.precioReferencial | number: '1.2-2' }}</span
+            >
             <p>{{ oferta.descripcion || 'Oferta lista para seguimiento comercial.' }}</p>
           </div>
         </article>
@@ -110,7 +339,9 @@
         <article class="prospect-offer-empty compact-preview">
           <i class="pi pi-info-circle"></i>
           <span>Primero registra lo que vendes en Productos CRM para asociarlo al prospecto.</span>
-          <button type="button" (click)="host().openCreateCatalogo()">Registrar producto CRM</button>
+          <button type="button" (click)="host().openCreateCatalogo()">
+            Registrar producto CRM
+          </button>
         </article>
       }
     </section>
@@ -118,36 +349,111 @@
     <section class="prospect-detail-grid">
       <article class="prospect-form-card">
         <div class="compact-fields-grid">
-          <label>Presupuesto estimado<input pInputText type="number" min="0" name="nuevoPresupuesto" [(ngModel)]="host().prospectForm.presupuestoEstimado" /></label>
-          <label>Interes principal<input pInputText name="nuevoInteresPrincipal" [(ngModel)]="host().prospectForm.interesPrincipal" placeholder="Se completa al elegir la oferta" /></label>
-          <label>Estado<p-select name="nuevoEstado" [options]="host().prospectoEstadoOptions" [(ngModel)]="host().prospectForm.estado" appendTo="body" /></label>
-          <label>Responsable<p-select name="nuevoResponsable" [options]="host().responsableOptions()" [(ngModel)]="host().prospectForm.responsableId" [showClear]="true" appendTo="body" /></label>
-          <label>Canal ingreso<p-select name="nuevoCanalIngreso" [options]="host().canalIngresoOptions" [(ngModel)]="host().prospectForm.canalIngreso" appendTo="body" /></label>
+          <label
+            >Presupuesto estimado<input
+              pInputText
+              type="number"
+              min="0"
+              name="nuevoPresupuesto"
+              [(ngModel)]="host().prospectForm.presupuestoEstimado"
+          /></label>
+          <label
+            >Interés principal<input
+              pInputText
+              name="nuevoInteresPrincipal"
+              [(ngModel)]="host().prospectForm.interesPrincipal"
+              placeholder="Se completa al elegir la oferta"
+          /></label>
+          <label
+            >Estado<p-select
+              name="nuevoEstado"
+              [options]="host().prospectoEstadoOptions"
+              [(ngModel)]="host().prospectForm.estado"
+              appendTo="body"
+          /></label>
+          <label
+            >Responsable<p-select
+              name="nuevoResponsable"
+              [options]="host().responsableOptions()"
+              [(ngModel)]="host().prospectForm.responsableId"
+              [showClear]="true"
+              appendTo="body"
+          /></label>
+          <label
+            >Canal ingreso<p-select
+              name="nuevoCanalIngreso"
+              [options]="host().canalIngresoOptions"
+              [(ngModel)]="host().prospectForm.canalIngreso"
+              appendTo="body"
+          /></label>
           @if (host().isManualProspect()) {
             <div class="manual-origin-note">
               <i class="pi pi-pencil"></i>
               <span>Ingreso manual</span>
             </div>
           } @else {
-            <label>Campaña<input pInputText name="nuevoCampania" [(ngModel)]="host().prospectForm.campania" placeholder="Demo junio, Facebook Ads..." /></label>
-            <label class="span-2">URL landing<input pInputText name="nuevoLandingUrl" [(ngModel)]="host().prospectForm.landingUrl" placeholder="https://..." /></label>
+            <label
+              >Campaña<input
+                pInputText
+                name="nuevoCampania"
+                [(ngModel)]="host().prospectForm.campania"
+                placeholder="Demo junio, Facebook Ads..."
+            /></label>
+            <label class="span-2"
+              >URL landing<input
+                pInputText
+                name="nuevoLandingUrl"
+                [(ngModel)]="host().prospectForm.landingUrl"
+                placeholder="https://..."
+            /></label>
           }
         </div>
       </article>
       <article class="prospect-form-card">
         <div class="compact-fields-grid notes-grid">
-          <label>Detalle de la necesidad<textarea pTextarea name="nuevoInteresDetalle" rows="4" [(ngModel)]="host().prospectForm.interesDetalle" placeholder="Mensaje del cliente, condiciones, dudas o datos enviados por landing"></textarea></label>
+          <label
+            >Detalle de la necesidad<textarea
+              pTextarea
+              name="nuevoInteresDetalle"
+              rows="4"
+              [(ngModel)]="host().prospectForm.interesDetalle"
+              placeholder="Mensaje del cliente, condiciones, dudas o datos enviados por landing"
+            ></textarea>
+          </label>
           @if (!host().isManualProspect()) {
-            <label>Mensaje del lead<textarea pTextarea name="nuevoMensajeLead" rows="4" [(ngModel)]="host().prospectForm.mensaje" placeholder="Mensaje recibido desde landing o canal externo"></textarea></label>
+            <label
+              >Mensaje del lead<textarea
+                pTextarea
+                name="nuevoMensajeLead"
+                rows="4"
+                [(ngModel)]="host().prospectForm.mensaje"
+                placeholder="Mensaje recibido desde landing o canal externo"
+              ></textarea>
+            </label>
           }
-          <label>Observacion<textarea pTextarea name="nuevoObservacion" rows="4" [(ngModel)]="host().prospectForm.observacion" placeholder="Detalle breve del interes o necesidad"></textarea></label>
+          <label
+            >Observacion<textarea
+              pTextarea
+              name="nuevoObservacion"
+              rows="4"
+              [(ngModel)]="host().prospectForm.observacion"
+              placeholder="Detalle breve del interés o la necesidad"
+            ></textarea>
+          </label>
         </div>
       </article>
     </section>
 
     <footer class="prospect-register-footer">
-      <button type="button" class="soft-button" (click)="host().activeDialog.set(null)">Cancelar</button>
-      <button type="button" class="save-button" [disabled]="host().saving()" (click)="host().saveProspect()">
+      <button type="button" class="soft-button" (click)="host().activeDialog.set(null)">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="save-button"
+        [disabled]="host().saving()"
+        (click)="host().saveProspect()"
+      >
         <i [class]="host().saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
         {{ host().saving() ? 'Guardando...' : 'Guardar prospecto' }}
       </button>

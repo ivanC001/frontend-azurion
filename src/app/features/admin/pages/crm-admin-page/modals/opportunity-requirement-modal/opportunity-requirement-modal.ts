@@ -17,6 +17,7 @@ import type { CrmAdminPage } from '../../crm-admin-page';
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule, TableModule, TagModule, TextareaModule],
   templateUrl: './opportunity-requirement-modal.html',
+  styleUrl: './opportunity-requirement-modal.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class OpportunityRequirementModal {

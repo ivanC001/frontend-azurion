@@ -198,7 +198,10 @@
     color: #162033;
     text-align: left;
     cursor: pointer;
-    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease;
 
     > i:first-child {
       display: grid;
@@ -254,7 +257,9 @@
     background: transparent;
     color: #a8b4c3;
     font-size: 0.75rem;
-    transition: color 150ms ease, transform 150ms ease;
+    transition:
+      color 150ms ease,
+      transform 150ms ease;
   }
 
   .catalog-registration-layout {
@@ -397,8 +402,30 @@
     grid-column: 1 / -1;
   }
 
+  .catalog-price-fields {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(12rem, 1.2fr);
+    gap: 0.65rem;
+    min-width: 0;
+
+    > label {
+      display: grid;
+      align-content: start;
+      gap: 0.4rem;
+      min-width: 0;
+    }
+  }
+
   .required {
     color: #dc2626;
+  }
+
+  .catalog-field-label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    min-width: 0;
+    line-height: 1.25;
   }
 
   .catalog-public-toggle {
@@ -717,6 +744,10 @@
     }
 
     .catalog-input-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .catalog-price-fields {
       grid-template-columns: minmax(0, 1fr);
     }
 

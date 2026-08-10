@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { PROSPECT_COUNTRIES, prospectCountry, prospectDocuments } from './prospect-identification.model';
+import {
+  PROSPECT_COUNTRIES,
+  prospectCountry,
+  prospectDocuments,
+  prospectLocalPhone,
+  normalizeProspectPhoneDialCode,
+  prospectPhoneDialCode,
+  prospectPhoneDialCodeFromValue,
+  prospectPhoneE164,
+} from './prospect-identification.model';
 
 describe('prospect identification catalog', () => {
   it('offers personal identifiers for a natural person in Peru', () => {
@@ -37,5 +46,24 @@ describe('prospect identification catalog', () => {
   it('falls back to Peru for an unknown country code', () => {
     expect(prospectCountry('XX').code).toBe('PE');
     expect(PROSPECT_COUNTRIES.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it('builds an E.164 phone using the selected country and avoids duplicate prefixes', () => {
+    expect(prospectPhoneDialCode('PE')).toBe('51');
+    expect(prospectPhoneE164('974 865 008', 'PE')).toBe('51974865008');
+    expect(prospectPhoneE164('+51 974 865 008', 'PE')).toBe('51974865008');
+    expect(prospectLocalPhone('525512345678', 'MX')).toBe('5512345678');
+  });
+
+  it('allows an editable dialing code independent from the fiscal country', () => {
+    expect(normalizeProspectPhoneDialCode('+52', 'ES')).toBe('52');
+    expect(prospectPhoneE164('55 1234 5678', 'ES', '+52')).toBe('525512345678');
+    expect(prospectLocalPhone('+52 55 1234 5678', 'ES', '52')).toBe('5512345678');
+    expect(prospectPhoneDialCodeFromValue('525512345678', 'ES')).toBe('52');
+  });
+
+  it('detects calling codes outside the fiscal country catalog', () => {
+    expect(prospectPhoneDialCode('JP')).toBe('81');
+    expect(prospectPhoneDialCodeFromValue('+81 90 1234 5678', 'PE')).toBe('81');
   });
 });

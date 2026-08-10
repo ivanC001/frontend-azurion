@@ -11,6 +11,7 @@ import type {
   ProspectForm,
   QuoteForm,
 } from '../models';
+import { prospectPhoneDialCode } from '../models/prospect-identification.model';
 
 type OpportunityRequirementSeed = Pick<
   OpportunityRequirementForm,
@@ -27,6 +28,8 @@ export function createProspectForm(defaultCountryCode: string, userKey: string):
     nombre: '',
     razonSocial: '',
     nombreComercial: '',
+    telefonoPaisCodigo: defaultCountryCode,
+    telefonoCodigoPais: prospectPhoneDialCode(defaultCountryCode),
     telefono: '',
     correo: '',
     direccion: '',
@@ -48,13 +51,14 @@ export function createProspectForm(defaultCountryCode: string, userKey: string):
   };
 }
 
-export function createCatalogForm(): CatalogoForm {
+export function createCatalogForm(defaultCurrency = 'PEN'): CatalogoForm {
   return {
     id: null,
     tipoItem: 'PRODUCTO',
     nombre: '',
     descripcion: '',
     precioReferencial: 0,
+    moneda: defaultCurrency,
     estado: 'ACTIVO',
     metadataJson: '',
     publicEnabled: true,
@@ -120,12 +124,12 @@ export function createActivityForm(
   };
 }
 
-export function createQuoteForm(): QuoteForm {
+export function createQuoteForm(defaultCurrency = 'PEN'): QuoteForm {
   return {
     oportunidadId: null,
     clienteId: null,
     sucursalId: null,
-    moneda: 'PEN',
+    moneda: defaultCurrency,
     fechaVencimiento: '',
     observacion: '',
     detalles: [

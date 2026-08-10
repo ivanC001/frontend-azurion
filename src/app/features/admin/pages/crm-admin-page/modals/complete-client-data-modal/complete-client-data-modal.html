@@ -41,7 +41,7 @@
       <section class="client-completion-fields">
         <header>
           <i class="pi pi-address-book"></i>
-          <div><strong>Identificacion y contacto</strong><small>Los campos con * son necesarios para continuar.</small></div>
+          <div><strong>Identificación y contacto</strong><small>Los campos con * son necesarios para continuar.</small></div>
         </header>
         <div class="client-completion-grid">
           <label>
@@ -53,14 +53,14 @@
             <p-select name="clientTipoDocumento" [options]="documentTypeOptions()" [ngModel]="form().tipoDocumento" (ngModelChange)="patchForm('tipoDocumento', $event)" [disabled]="form().tipoPersona === 'SIN_DEFINIR'" appendTo="body" />
           </label>
           <label>
-            <span>Numero de documento <b>*</b></span>
+            <span>Número de documento <b>*</b></span>
             <input pInputText inputmode="numeric" maxlength="11" name="clientNumeroDocumento" [ngModel]="form().numeroDocumento" (ngModelChange)="patchForm('numeroDocumento', $event)" [disabled]="form().tipoPersona === 'SIN_DEFINIR'" placeholder="DNI o RUC" />
             <small>{{ documentHint() }}</small>
           </label>
 
           @if (form().tipoPersona === 'JURIDICA') {
             <label class="span-2">
-              <span>Razon social <b>*</b></span>
+              <span>Razón social <b>*</b></span>
               <input pInputText name="clientRazonSocial" [ngModel]="form().razonSocial" (ngModelChange)="patchForm('razonSocial', $event)" placeholder="Nombre legal de la empresa" />
             </label>
             <label>
@@ -75,19 +75,19 @@
           }
 
           <label>
-            <span>Telefono</span>
+            <span>Teléfono</span>
             <input pInputText inputmode="tel" maxlength="30" name="clientTelefono" [ngModel]="form().telefono" (ngModelChange)="patchForm('telefono', $event)" placeholder="999999999" />
           </label>
           <label class="span-2">
-            <span>Correo electronico</span>
+            <span>Correo electrónico</span>
             <input pInputText type="email" name="clientCorreo" [ngModel]="form().correo" (ngModelChange)="patchForm('correo', $event)" placeholder="cliente@correo.com" />
           </label>
           <label class="span-3">
-            <span>Direccion</span>
-            <input pInputText name="clientDireccion" [ngModel]="form().direccion" (ngModelChange)="patchForm('direccion', $event)" placeholder="Direccion fiscal o de contacto" />
+            <span>Dirección</span>
+            <input pInputText name="clientDireccion" [ngModel]="form().direccion" (ngModelChange)="patchForm('direccion', $event)" placeholder="Dirección fiscal o de contacto" />
           </label>
         </div>
-        <p class="client-contact-note"><i class="pi pi-phone"></i> Registra al menos un medio de contacto: telefono o correo.</p>
+        <p class="client-contact-note"><i class="pi pi-phone"></i> Registra al menos un medio de contacto: teléfono o correo electrónico.</p>
       </section>
     </div>
 

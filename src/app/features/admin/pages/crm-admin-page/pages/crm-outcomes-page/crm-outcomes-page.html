@@ -2,7 +2,7 @@
   <header class="outcomes-header">
     <div>
       <span>CIERRE COMERCIAL</span>
-      <h1>Ganadas y perdidas</h1>
+      <h1>Ganadas y pérdidas</h1>
       <p>Analiza los resultados finales sin mezclar cierres con el pipeline activo.</p>
     </div>
     <div class="outcomes-header__actions">
@@ -75,7 +75,7 @@
             <tr>
               <td><b>{{ item.titulo }}</b><small>OP-{{ item.id }} · {{ item.tipoOportunidad || 'Oportunidad' }}</small></td>
               <td><b>{{ contactName(item) }}</b><small>{{ item.descripcion || 'Sin descripcion' }}</small></td>
-              <td><span [class]="item.estado === 'GANADA' ? 'result-badge result-badge--won' : 'result-badge result-badge--lost'">{{ item.estado === 'GANADA' ? 'Ganada' : 'Perdida' }}</span></td>
+              <td><span [class]="item.estado === 'GANADA' ? 'result-badge result-badge--won' : 'result-badge result-badge--lost'">{{ item.estado === 'GANADA' ? 'Ganada' : 'Pérdida' }}</span></td>
               <td class="outcome-money">S/ {{ money(item.montoReal || item.montoEstimado) }}</td>
               <td>{{ closureDate(item) | date: 'dd/MM/yyyy' }}</td>
               <td>{{ item.responsableId || 'Sin responsable' }}</td>
@@ -91,9 +91,9 @@
     <footer class="outcomes-pagination">
       <span>{{ pageLabel() }}</span>
       <div>
-        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Página anterior"><i class="pi pi-chevron-left"></i></button>
         <strong>{{ pageData().page + 1 }} / {{ pageData().totalPages || 1 }}</strong>
-        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Página siguiente"><i class="pi pi-chevron-right"></i></button>
       </div>
     </footer>
   </section>

@@ -19,7 +19,7 @@ export class FeaturesComponent {
   protected readonly newCapabilities: readonly IconItem[] = [
     {
       icon: 'pi-megaphone',
-      title: 'Captacion multicanal',
+      title: 'Captación multicanal',
       description: 'Recibe leads de landings, WhatsApp y redes con campania, producto y origen.',
     },
     {
@@ -30,11 +30,11 @@ export class FeaturesComponent {
     {
       icon: 'pi-chart-line',
       title: 'Pipeline con reglas de avance',
-      description: 'Gestiona Interesado, Cotizado, Negociacion, Ganado y Perdido con trazabilidad.',
+      description: 'Gestiona Interesado, Cotizado, Negociación, Ganado y Perdido con trazabilidad.',
     },
     {
       icon: 'pi-file-edit',
-      title: 'Cotizaciones y negociacion',
+      title: 'Cotizaciones y negociación',
       description: 'Versiona propuestas, registra ajustes, acuerdos y condiciones de cierre.',
     },
     {
@@ -45,7 +45,7 @@ export class FeaturesComponent {
     {
       icon: 'pi-chart-bar',
       title: 'Reportes CRM detallados',
-      description: 'Analiza prospectos, seguimiento, oportunidades, ganancias y perdidas.',
+      description: 'Analiza prospectos, seguimiento, oportunidades, ganancias y pérdidas.',
     },
   ];
 
@@ -73,7 +73,7 @@ export class FeaturesComponent {
     {
       icon: 'pi-file-check',
       title: 'Facturacion SUNAT',
-      description: 'Facturas, boletas, notas, XML, PDF y CDR dentro de la misma operacion.',
+      description: 'Facturas, boletas, notas, XML, PDF y CDR dentro de la misma operación.',
     },
     {
       icon: 'pi-chart-bar',
@@ -86,7 +86,7 @@ export class FeaturesComponent {
     {
       icon: 'pi-building',
       title: 'Multiempresa',
-      description: 'Cada tenant opera con sus propios datos y configuracion.',
+      description: 'Cada tenant opera con sus propios datos y configuración.',
     },
     {
       icon: 'pi-sitemap',
@@ -101,14 +101,14 @@ export class FeaturesComponent {
     {
       icon: 'pi-bolt',
       title: 'Datos escalables',
-      description: 'Paginacion de servidor y filtros preparados para alto volumen.',
+      description: 'Paginación de servidor y filtros preparados para alto volumen.',
     },
   ];
 
   protected readonly invoiceItems = [
     'Facturas',
     'Boletas',
-    'Notas de credito',
+    'Notas de crédito',
     'Notas de debito',
     'Guias de remision',
     'XML',
@@ -119,8 +119,8 @@ export class FeaturesComponent {
   protected readonly flow = [
     { icon: 'pi-megaphone', title: 'Lead' },
     { icon: 'pi-comments', title: 'Seguimiento' },
-    { icon: 'pi-file-edit', title: 'Cotizacion' },
-    { icon: 'pi-chart-line', title: 'Negociacion' },
+    { icon: 'pi-file-edit', title: 'Cotización' },
+    { icon: 'pi-chart-line', title: 'Negociación' },
     { icon: 'pi-trophy', title: 'Cliente' },
     { icon: 'pi-credit-card', title: 'Cobranza' },
   ];

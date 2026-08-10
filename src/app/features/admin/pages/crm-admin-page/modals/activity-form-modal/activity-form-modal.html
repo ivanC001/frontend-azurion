@@ -60,7 +60,7 @@
             <span>Nuevo seguimiento</span>
             <strong>Elige el contacto</strong>
             <p>Relaciona la actividad con un prospecto, oportunidad o cliente.</p>
-            <small>Despues registra si quedo pendiente o si ya se realizo.</small>
+            <small>Después registra si quedó pendiente o si ya se realizó.</small>
           </div>
         </aside>
       }
@@ -98,7 +98,7 @@
             <label>Tipo <span class="required">*</span><p-select name="actTipo" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().tipoActividadOptions" [(ngModel)]="host().activityForm.tipoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
             <label>Estado <span class="required">*</span><p-select name="actEstadoActividad" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().actividadEstadoOptions" [(ngModel)]="host().activityForm.estadoActividad" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option activity-select-option--state"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
             <label>Fecha y hora <span class="required">*</span><input pInputText type="datetime-local" name="actFecha" [(ngModel)]="host().activityForm.fechaProgramada" /></label>
-            <label>Asunto <span class="required">*</span><input pInputText name="actAsunto" [(ngModel)]="host().activityForm.asunto" placeholder="Ej. Llamar para confirmar interes" /></label>
+            <label>Asunto <span class="required">*</span><input pInputText name="actAsunto" [(ngModel)]="host().activityForm.asunto" placeholder="Ej. Llamar para confirmar interés" /></label>
           </div>
         </section>
 
@@ -107,7 +107,7 @@
           <div class="activity-qualification-note">
             <i class="pi pi-info-circle"></i>
             <strong>Regla de seguimiento</strong>
-            <span>Contactado solo prueba contacto. Interesado o solicita propuesta confirma necesidad e interes y puede dejarlo calificado.</span>
+            <span>«Contactado» solo confirma que hubo comunicación. «Interesado» o «Solicita propuesta» confirman la necesidad y el interés, y permiten calificar al prospecto.</span>
           </div>
           <div class="dialog-grid dialog-grid--activity activity-result-grid">
             <label>Resultado del contacto<p-select name="actResultado" styleClass="activity-mini-select" panelStyleClass="activity-mini-panel" [options]="host().activityResultOptions" [ngModel]="host().activityForm.resultadoContacto" (ngModelChange)="host().onActivityResultChange($event)" appendTo="body"><ng-template pTemplate="selectedItem" let-option><span class="activity-select-option"><i [class]="option?.icon"></i>{{ option?.label }}</span></ng-template><ng-template pTemplate="item" let-option><span class="activity-select-option"><i [class]="option.icon"></i>{{ option.label }}</span></ng-template></p-select></label>
@@ -124,7 +124,7 @@
             </label>
           </div>
           @if (host().activityForm.prospectoId) {
-            <p class="activity-help-note"><i class="pi pi-check-circle"></i> Si confirmas interes, el prospecto queda listo para crear oportunidad sin duplicar informacion.</p>
+            <p class="activity-help-note"><i class="pi pi-check-circle"></i> Si confirmas interés, el prospecto queda listo para crear una oportunidad sin duplicar información.</p>
           }
           @if (!host().activityForm.id) {
             <footer class="activity-create-summary">

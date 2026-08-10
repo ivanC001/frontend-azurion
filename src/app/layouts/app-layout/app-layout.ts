@@ -28,6 +28,7 @@ import { LowStockAlertService } from '@core/services/low-stock-alert.service';
 import { CrmWhatsappNotificationService } from '@core/services/crm-whatsapp-notification.service';
 import { InternalMessageNotificationService } from '@core/services/internal-message-notification.service';
 import { CrmInboxChannelStateService } from '@features/admin/pages/crm-admin-page/services/crm-inbox-channel-state.service';
+import { CurrentUserProfileDialog } from '@features/auth/components/current-user-profile-dialog/current-user-profile-dialog';
 
 interface NavLinkItem {
   label: string;
@@ -75,7 +76,7 @@ interface AccountMenuItem {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, CurrentUserProfileDialog],
   templateUrl: './app-layout.html',
   styleUrl: './app-layout.css',
 })
@@ -102,6 +103,7 @@ export class AppLayout {
   protected readonly themeMode = signal<ThemeMode>(this.resolveThemeMode());
   protected readonly notificationsPanelOpen = signal(false);
   protected readonly accountPanelOpen = signal(false);
+  protected readonly profileDialogVisible = signal(false);
   protected readonly activeWorkspace = signal<WorkspaceMode>(this.resolveInitialWorkspace());
   private readonly failedBrandLogoUrl = signal<string | null>(null);
 
@@ -353,17 +355,17 @@ export class AppLayout {
 
   protected readonly accountMenuItems = computed<AccountMenuItem[]>(() => [
     {
-      label: 'Profile',
+      label: 'Mi perfil',
       icon: 'pi-user',
       action: 'profile',
     },
     {
-      label: 'Settings',
+      label: 'Configuracion',
       icon: 'pi-cog',
       action: 'settings',
     },
     {
-      label: 'Log out',
+      label: 'Cerrar sesion',
       icon: 'pi-sign-out',
       action: 'logout',
     },
@@ -567,7 +569,7 @@ export class AppLayout {
     this.closeHeaderPanels();
     switch (item.action) {
       case 'profile':
-        void this.router.navigate(['/admin/configuracion-empresa']);
+        this.profileDialogVisible.set(true);
         break;
       case 'settings':
         void this.router.navigate(['/admin/configuracion-empresa']);

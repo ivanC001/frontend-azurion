@@ -48,7 +48,7 @@ export class CrmReportsPage implements OnDestroy {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly reportOptions: readonly CrmReportOption[] = [
-    { value: 'PROSPECTOS', label: 'Prospectos', detail: 'Captacion y calificacion', icon: 'pi pi-address-book', tone: 'green' },
+    { value: 'PROSPECTOS', label: 'Prospectos', detail: 'Captación y calificación', icon: 'pi pi-address-book', tone: 'green' },
     { value: 'SEGUIMIENTO', label: 'Seguimiento', detail: 'Actividades y resultados', icon: 'pi pi-comments', tone: 'blue' },
     { value: 'OPORTUNIDADES', label: 'Oportunidades', detail: 'Pipeline y cierres', icon: 'pi pi-briefcase', tone: 'violet' },
   ];
@@ -75,13 +75,13 @@ export class CrmReportsPage implements OnDestroy {
         { key: 'documento', label: 'Documento', width: 18 },
         { key: 'contacto', label: 'Contacto', width: 28 },
         { key: 'origen', label: 'Origen / canal', width: 19 },
-        { key: 'campania', label: 'Campania', width: 20 },
-        { key: 'interes', label: 'Interes principal', width: 28 },
+        { key: 'campania', label: 'Campaña', width: 20 },
+        { key: 'interes', label: 'Interés principal', width: 28 },
         { key: 'presupuesto', label: 'Presupuesto', width: 16, format: 'currency', align: 'right' },
         { key: 'estado', label: 'Estado', width: 16, align: 'center' },
         { key: 'nivel', label: 'Nivel / temperatura', width: 19 },
         { key: 'responsable', label: 'Responsable', width: 22 },
-        { key: 'fecha', label: 'Fecha de interes', width: 17, format: 'date' },
+        { key: 'fecha', label: 'Fecha de interés', width: 17, format: 'date' },
       ];
     }
     if (this.reportKind() === 'SEGUIMIENTO') {
@@ -94,7 +94,7 @@ export class CrmReportsPage implements OnDestroy {
         { key: 'estado', label: 'Estado', width: 16, align: 'center' },
         { key: 'resultado', label: 'Resultado comercial', width: 26 },
         { key: 'contactoResultado', label: 'Resultado contacto', width: 22 },
-        { key: 'interes', label: 'Nivel de interes', width: 18 },
+        { key: 'interes', label: 'Nivel de interés', width: 18 },
         { key: 'programada', label: 'Programada', width: 19, format: 'datetime' },
         { key: 'realizada', label: 'Realizada', width: 19, format: 'datetime' },
         { key: 'responsable', label: 'Responsable', width: 22 },
@@ -113,7 +113,7 @@ export class CrmReportsPage implements OnDestroy {
       { key: 'cierreEstimado', label: 'Cierre estimado', width: 18, format: 'date' },
       { key: 'cierreReal', label: 'Cierre real', width: 18, format: 'date' },
       { key: 'responsable', label: 'Responsable', width: 22 },
-      { key: 'motivo', label: 'Motivo de perdida', width: 28 },
+      { key: 'motivo', label: 'Motivo de pérdida', width: 28 },
     ];
   });
 

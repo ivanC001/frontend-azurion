@@ -9,7 +9,10 @@
 >
   <form class="catalog-quick-form">
     <ol class="catalog-flow" aria-label="Pasos del registro">
-      <li [class.is-active]="host().catalogStep() === 'select'" [class.is-complete]="host().catalogStep() === 'form'">
+      <li
+        [class.is-active]="host().catalogStep() === 'select'"
+        [class.is-complete]="host().catalogStep() === 'form'"
+      >
         <span>1</span>
         <div><strong>Rubro</strong><small>Clasifica la oferta</small></div>
       </li>
@@ -34,7 +37,10 @@
       <header class="catalog-selector-head">
         <span>Selecciona el tipo de oferta</span>
         <h2>¿Qué vas a registrar?</h2>
-        <p>Elige un rubro. El siguiente paso mostrará únicamente los datos necesarios para cotizarlo, publicarlo y usarlo en oportunidades.</p>
+        <p>
+          Elige un rubro. El siguiente paso mostrará únicamente los datos necesarios para cotizarlo,
+          publicarlo y usarlo en oportunidades.
+        </p>
       </header>
 
       <div class="catalog-type-groups">
@@ -46,7 +52,11 @@
             </header>
             <div class="catalog-type-grid">
               @for (type of group.types; track type.value) {
-                <button type="button" class="catalog-type-card" (click)="host().selectCatalogType(type.value)">
+                <button
+                  type="button"
+                  class="catalog-type-card"
+                  (click)="host().selectCatalogType(type.value)"
+                >
                   <i [class]="type.icon"></i>
                   <span class="catalog-type-copy">
                     <strong>{{ type.label }}</strong>
@@ -75,14 +85,19 @@
                   <span>{{ host().catalogRegistrationDefinition().description }}</span>
                 </div>
                 @if (!host().catalogoForm.id) {
-                  <button type="button" (click)="host().backToCatalogTypeSelection()">Cambiar</button>
+                  <button type="button" (click)="host().backToCatalogTypeSelection()">
+                    Cambiar
+                  </button>
                 }
               </div>
             </div>
 
             <div class="catalog-input-grid">
               <label class="catalog-field--wide">
-                {{ host().catalogRegistrationDefinition().nameLabel }} <span class="required">*</span>
+                <span class="catalog-field-label">
+                  {{ host().catalogRegistrationDefinition().nameLabel }}
+                  <span class="required">*</span>
+                </span>
                 <input
                   pInputText
                   name="catNombre"
@@ -91,13 +106,42 @@
                   [placeholder]="host().catalogNamePlaceholder()"
                 />
               </label>
+              <div class="catalog-price-fields">
+                <label>
+                  <span class="catalog-field-label">
+                    Moneda del precio
+                    <span class="required">*</span>
+                  </span>
+                  <p-select
+                    name="catMoneda"
+                    [options]="host().catalogCurrencyOptions()"
+                    [(ngModel)]="host().catalogoForm.moneda"
+                    appendTo="body"
+                    placeholder="Selecciona moneda"
+                  />
+                  <small>Moneda en la que se ofrece este producto.</small>
+                </label>
+                <label>
+                  <span class="catalog-field-label">
+                    {{ host().catalogRegistrationDefinition().priceLabel }}
+                  </span>
+                  <input
+                    pInputText
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    name="catPrecio"
+                    [(ngModel)]="host().catalogoForm.precioReferencial"
+                    placeholder="0.00"
+                  />
+                  <small>{{ host().catalogRegistrationDefinition().priceHelp }}</small>
+                </label>
+              </div>
               <label>
-                {{ host().catalogRegistrationDefinition().priceLabel }}
-                <input pInputText type="number" min="0" step="0.01" name="catPrecio" [(ngModel)]="host().catalogoForm.precioReferencial" placeholder="0.00" />
-                <small>{{ host().catalogRegistrationDefinition().priceHelp }}</small>
-              </label>
-              <label>
-                Estado de la oferta <span class="required">*</span>
+                <span class="catalog-field-label">
+                  Estado de la oferta
+                  <span class="required">*</span>
+                </span>
                 <p-select
                   name="catEstado"
                   [options]="host().catalogStatusOptions"
@@ -107,7 +151,10 @@
                 />
               </label>
               <label class="catalog-field--wide">
-                Descripción comercial <span class="required">*</span>
+                <span class="catalog-field-label">
+                  Descripción comercial
+                  <span class="required">*</span>
+                </span>
                 <textarea
                   pTextarea
                   name="catDescripcion"
@@ -115,7 +162,10 @@
                   [(ngModel)]="host().catalogoForm.descripcion"
                   [placeholder]="host().catalogDescriptionPlaceholder()"
                 ></textarea>
-                <small>Esta información acompañará al producto en el CRM y ayudará al asesor a responder correctamente.</small>
+                <small
+                  >Esta información acompañará al producto en el CRM y ayudará al asesor a responder
+                  correctamente.</small
+                >
               </label>
             </div>
           </section>
@@ -124,14 +174,22 @@
             <div class="catalog-section-heading">
               <div>
                 <span>Datos del rubro</span>
-                <strong>Información específica de {{ host().catalogRegistrationDefinition().label.toLowerCase() }}</strong>
+                <strong
+                  >Información específica de
+                  {{ host().catalogRegistrationDefinition().label.toLowerCase() }}</strong
+                >
               </div>
               <small>Los campos con * son necesarios para un registro útil.</small>
             </div>
             <div class="catalog-input-grid catalog-attributes-grid">
               @for (field of host().catalogFields(); track field.key) {
                 <label [class.catalog-field--wide]="field.wide">
-                  {{ field.label }} @if (field.required) { <span class="required">*</span> }
+                  <span class="catalog-field-label">
+                    {{ field.label }}
+                    @if (field.required) {
+                      <span class="required">*</span>
+                    }
+                  </span>
                   @if (field.type === 'select') {
                     <p-select
                       [name]="'catAttr' + field.key"
@@ -163,7 +221,9 @@
                       [placeholder]="field.placeholder"
                     />
                   }
-                  @if (field.help) { <small>{{ field.help }}</small> }
+                  @if (field.help) {
+                    <small>{{ field.help }}</small>
+                  }
                 </label>
               }
             </div>
@@ -191,14 +251,25 @@
             @if (host().catalogoForm.publicEnabled) {
               <label class="catalog-slug-field">
                 Slug de la landing
-                <div><span>/crm-lead/</span><input pInputText name="catLandingSlug" [(ngModel)]="host().catalogoForm.landingSlug" (blur)="host().normalizeCatalogLandingSlug()" placeholder="nombre-de-la-oferta" /></div>
+                <div>
+                  <span>/crm-lead/</span
+                  ><input
+                    pInputText
+                    name="catLandingSlug"
+                    [(ngModel)]="host().catalogoForm.landingSlug"
+                    (blur)="host().normalizeCatalogLandingSlug()"
+                    placeholder="nombre-de-la-oferta"
+                  />
+                </div>
                 <small>Se genera desde el nombre; puedes personalizarlo antes de guardar.</small>
               </label>
             }
             @if (host().catalogoForm.estado !== 'ACTIVO' && host().catalogoForm.publicEnabled) {
               <div class="catalog-help catalog-help--warning">
                 <i class="pi pi-exclamation-triangle"></i>
-                <span>La landing no recibirá leads hasta que la oferta cambie a estado Activo.</span>
+                <span
+                  >La landing no recibirá leads hasta que la oferta cambie a estado Activo.</span
+                >
               </div>
             }
           </section>
@@ -206,7 +277,9 @@
 
         <aside class="catalog-preview-card">
           <span class="catalog-preview-eyebrow">Vista previa</span>
-          <div class="catalog-preview-icon"><i [class]="host().catalogRegistrationDefinition().icon"></i></div>
+          <div class="catalog-preview-icon">
+            <i [class]="host().catalogRegistrationDefinition().icon"></i>
+          </div>
           <small>{{ host().catalogRegistrationDefinition().label }}</small>
           <h3>{{ host().catalogoForm.nombre || host().catalogNamePlaceholder() }}</h3>
           <strong class="catalog-preview-price">{{ host().catalogPricePreview() }}</strong>
@@ -214,13 +287,23 @@
           @if (host().catalogPreviewAttributes().length) {
             <dl>
               @for (attribute of host().catalogPreviewAttributes(); track attribute.label) {
-                <div><dt>{{ attribute.label }}</dt><dd>{{ attribute.value }}</dd></div>
+                <div>
+                  <dt>{{ attribute.label }}</dt>
+                  <dd>{{ attribute.value }}</dd>
+                </div>
               }
             </dl>
           } @else {
-            <div class="catalog-preview-empty">Completa los datos del rubro para enriquecer la ficha.</div>
+            <div class="catalog-preview-empty">
+              Completa los datos del rubro para enriquecer la ficha.
+            </div>
           }
-          <div class="catalog-preview-publication" [class.is-public]="host().catalogoForm.publicEnabled && host().catalogoForm.estado === 'ACTIVO'">
+          <div
+            class="catalog-preview-publication"
+            [class.is-public]="
+              host().catalogoForm.publicEnabled && host().catalogoForm.estado === 'ACTIVO'
+            "
+          >
             <i [class]="host().catalogoForm.publicEnabled ? 'pi pi-globe' : 'pi pi-lock'"></i>
             <span>{{ host().catalogPublicationLabel() }}</span>
           </div>
@@ -229,11 +312,29 @@
 
       <footer class="catalog-dialog-actions">
         @if (!host().catalogoForm.id) {
-          <button type="button" class="catalog-back-button" (click)="host().backToCatalogTypeSelection()"><i class="pi pi-arrow-left"></i> Volver al rubro</button>
+          <button
+            type="button"
+            class="catalog-back-button"
+            (click)="host().backToCatalogTypeSelection()"
+          >
+            <i class="pi pi-arrow-left"></i> Volver al rubro
+          </button>
         }
         <span></span>
-        <p-button type="button" label="Cancelar" severity="secondary" [outlined]="true" (onClick)="host().catalogDrawerOpen.set(false)" />
-        <p-button type="button" [label]="host().catalogoForm.id ? 'Guardar cambios' : 'Registrar oferta'" icon="pi pi-save" [loading]="host().saving()" (onClick)="host().saveCatalogo()" />
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="host().catalogDrawerOpen.set(false)"
+        />
+        <p-button
+          type="button"
+          [label]="host().catalogoForm.id ? 'Guardar cambios' : 'Registrar oferta'"
+          icon="pi pi-save"
+          [loading]="host().saving()"
+          (onClick)="host().saveCatalogo()"
+        />
       </footer>
     }
   </form>

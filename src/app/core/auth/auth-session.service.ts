@@ -268,6 +268,18 @@ export class AuthSessionService {
     this.setSession(next);
   }
 
+  updateCurrentProfile(nombres: string): void {
+    const current = this.session();
+    if (!current) {
+      return;
+    }
+
+    this.setSession({
+      ...current,
+      nombres,
+    });
+  }
+
   updateModules(modules: readonly string[]): void {
     const current = this.session();
     if (!current) {

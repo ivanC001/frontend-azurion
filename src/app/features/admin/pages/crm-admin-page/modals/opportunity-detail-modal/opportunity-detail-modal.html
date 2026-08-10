@@ -154,27 +154,44 @@
                 ) {
                   <section class="interest-requirement-row">
                     <div class="requirement-fields">
-                      <p>
-                        <span>Curso / Producto:</span><b>{{ requirement.nombre }}</b>
+                      <header class="requirement-product-head">
+                        <div>
+                          <small>{{ host().opportunityTypeLabel(host().requirementCatalogItem(requirement)?.tipoItem) || 'Oferta CRM' }}</small>
+                          <h4>{{ requirement.nombre }}</h4>
+                        </div>
+                        @if (host().requirementCatalogItem(requirement); as catalogItem) {
+                          <span>{{ catalogItem.moneda }}</span>
+                        }
+                      </header>
+                      <p class="requirement-description">
+                        {{ host().requirementDescription(requirement) }}
                       </p>
-                      <p>
-                        <span>Vacantes / Cantidad:</span
-                        ><b>{{ requirement.cantidad }} participante(s)</b>
-                      </p>
-                      <p>
-                        <span>Precio unitario referencial:</span
-                        ><b>S/ {{ requirement.precioUnitario | number: '1.2-2' }}</b>
-                      </p>
-                      <p>
-                        <span>Total estimado:</span
-                        ><b class="amount"
-                          >S/ {{ host().requirementTotal(requirement) | number: '1.2-2' }}</b
-                        >
-                      </p>
-                      <p class="requirement-note">
-                        <span>Observacion:</span
-                        ><em>{{ requirement.observacion || 'Sin observacion registrada.' }}</em>
-                      </p>
+                      <div class="requirement-commercial-summary">
+                        <p>
+                          <span>{{ host().requirementQuantityLabel(requirement) }}</span>
+                          <b>{{ requirement.cantidad }}</b>
+                        </p>
+                        <p>
+                          <span>Precio unitario</span>
+                          <b>{{ host().requirementCurrencyPrefix(requirement) }} {{ requirement.precioUnitario | number: '1.2-2' }}</b>
+                        </p>
+                        <p>
+                          <span>Total estimado</span>
+                          <b class="amount">{{ host().requirementCurrencyPrefix(requirement) }} {{ host().requirementTotal(requirement) | number: '1.2-2' }}</b>
+                        </p>
+                      </div>
+                      @if (host().catalogCommercialAttributes(host().requirementCatalogItem(requirement)); as attributes) {
+                        @if (attributes.length) {
+                          <div class="requirement-attributes">
+                            @for (attribute of attributes; track attribute.key) {
+                              <p><span>{{ attribute.label }}</span><b>{{ attribute.value }}</b></p>
+                            }
+                          </div>
+                        }
+                      }
+                      @if (host().requirementObservation(requirement); as observation) {
+                        <p class="requirement-note"><span>Nota del cliente</span><em>{{ observation }}</em></p>
+                      }
                     </div>
                     <nav>
                       <button
@@ -205,7 +222,7 @@
                 <div>
                   <h3>Cotizaciones de la oportunidad</h3>
                   <small
-                    >{{ host().selectedOpportunityQuotes().length }} cotizacion(es)
+                    >{{ host().selectedOpportunityQuotes().length }} cotización(es)
                     vinculada(s)</small
                   >
                 </div>
@@ -215,7 +232,7 @@
                   (click)="host().openQuoteFromRequirements(detail)"
                 >
                   <i class="pi pi-plus"></i>
-                  Nueva cotizacion
+                  Nueva cotización
                 </button>
               </header>
               <div class="opportunity-quote-list opportunity-quote-list--interest">
@@ -243,9 +260,9 @@
                 } @empty {
                   <div class="interest-empty-quotes">
                     <i class="pi pi-file-edit"></i>
-                    <strong>Aun no hay cotizaciones</strong>
+                    <strong>Aún no hay cotizaciones</strong>
                     <span
-                      >Crea una cotizacion con los requerimientos y luego enviala para pasar a
+                      >Crea una cotización con los requerimientos y luego envíala para pasar a
                       Cotizado.</span
                     >
                   </div>
@@ -257,7 +274,7 @@
               <article class="interest-mini-card interest-next-action">
                 <header>
                   <span><i class="pi pi-calendar"></i></span>
-                  <h3>Proxima actividad</h3>
+                  <h3>Próxima actividad</h3>
                 </header>
                 @if (host().selectedOpportunityNextActivity(); as nextActivity) {
                   <div class="interest-activity-box">
@@ -287,7 +304,7 @@
                     </div>
                   </div>
                 } @else {
-                  <div class="opportunity-empty-detail">No tiene actividad proxima.</div>
+                  <div class="opportunity-empty-detail">No tiene una próxima actividad.</div>
                 }
                 <button
                   type="button"
@@ -393,7 +410,7 @@
               class="interest-action interest-action--advance"
               (click)="host().advanceInterestedToQuoted(detail)"
             >
-              Crear cotizacion
+              Crear cotización
               <i class="pi pi-arrow-right"></i>
             </button>
 
@@ -408,7 +425,7 @@
 
             <p class="interest-info-note">
               <i class="pi pi-info-circle"></i>
-              La oportunidad pasa a Cotizado cuando una cotizacion quede marcada como enviada.
+              La oportunidad pasa a Cotizado cuando una cotización queda marcada como enviada.
             </p>
           </aside>
         </section>
@@ -438,7 +455,7 @@
         >
           @if (host().opportunityDetailTab() === 'resumen') {
             <aside class="opportunity-info-card">
-              <h3>Informacion general</h3>
+              <h3>Información general</h3>
               <dl>
                 <dt>Cliente</dt>
                 <dd>{{ host().opportunityContactName(detail) }}</dd>
@@ -450,7 +467,7 @@
                 </dd>
                 <dt>Valor estimado</dt>
                 <dd>S/ {{ detail.montoEstimado | number: '1.2-2' }}</dd>
-                <dt>Interes</dt>
+                <dt>Interés</dt>
                 <dd>
                   <span
                     [class]="
@@ -504,7 +521,7 @@
                     Cotizaciones de la oportunidad
                   }
                   @case ('negociacion') {
-                    Negociacion
+                    Negociación
                   }
                   @case ('cierre') {
                     Verificacion de cierre
@@ -540,7 +557,7 @@
                 }
                 @if (host().opportunityDetailTab() === 'cotizaciones') {
                   <button type="button" (click)="host().openQuoteDialog(detail)">
-                    <i class="pi pi-file-edit"></i> Nueva cotizacion
+                    <i class="pi pi-file-edit"></i> Nueva cotización
                   </button>
                 }
               </nav>
@@ -549,7 +566,7 @@
             @if (host().opportunityDetailTab() === 'resumen') {
               <section class="opportunity-center-stack">
                 <article class="opportunity-next-card opportunity-next-card--main">
-                  <h3><i class="pi pi-calendar"></i> Actividad proxima</h3>
+                  <h3><i class="pi pi-calendar"></i> Próxima actividad</h3>
                   @if (host().selectedOpportunityNextActivity(); as nextActivity) {
                     <div class="opportunity-next-main">
                       <time>{{
@@ -579,7 +596,7 @@
                       Ver todas las actividades
                     </button>
                   } @else {
-                    <div class="opportunity-empty-detail">No tiene actividad proxima.</div>
+                    <div class="opportunity-empty-detail">No tiene una próxima actividad.</div>
                   }
                 </article>
 
@@ -634,7 +651,7 @@
                               : 'Sin resultado'
                           }}
                           @if (activity.nivelInteres) {
-                            <span>Interes {{ host().humanize(activity.nivelInteres) }}</span>
+                            <span>Interés {{ host().humanize(activity.nivelInteres) }}</span>
                           }
                         </em>
                       }
@@ -666,7 +683,7 @@
                   </article>
                 } @empty {
                   <div class="opportunity-empty-detail">
-                    Aun no hay actividades registradas para esta oportunidad.
+                    Aún no hay actividades registradas para esta oportunidad.
                   </div>
                 }
               </div>
@@ -717,7 +734,7 @@
                   />
                 } @empty {
                   <div class="opportunity-empty-detail">
-                    Esta oportunidad aun no tiene cotizaciones.
+                    Esta oportunidad aún no tiene cotizaciones.
                   </div>
                 }
               </div>
@@ -845,7 +862,7 @@
                       }
                     </div>
                     <div class="opportunity-empty-detail opportunity-empty-detail--notice">
-                      Ganado confirma el acuerdo comercial. Venta cerrada confirma que cotizacion,
+                      Ganado confirma el acuerdo comercial. Venta cerrada confirma que la cotización,
                       pago y documentos fueron revisados.
                     </div>
                     <nav>
@@ -855,7 +872,7 @@
                         (click)="host().setOpportunityDetailTab('cotizaciones')"
                       >
                         <i class="pi pi-file-edit"></i>
-                        Revisar cotizacion
+                        Revisar cotización
                       </button>
                       <button
                         type="button"
@@ -1014,7 +1031,7 @@
                         </nav>
                       </article>
                     } @empty {
-                      <div class="opportunity-empty-detail">Aun no hay pagos registrados.</div>
+                      <div class="opportunity-empty-detail">Aún no hay pagos registrados.</div>
                     }
                   </div>
                 </app-opportunity-financial-summary>
@@ -1077,7 +1094,7 @@
                     </nav>
                   </article>
                 } @empty {
-                  <div class="opportunity-empty-detail">Aun no hay documentos registrados.</div>
+                  <div class="opportunity-empty-detail">Aún no hay documentos registrados.</div>
                 }
               </section>
             } @else if (host().opportunityDetailTab() === 'historial') {
@@ -1093,7 +1110,7 @@
                   </article>
                 } @empty {
                   <div class="opportunity-empty-detail">
-                    Aun no hay historial para esta oportunidad.
+                    Aún no hay historial para esta oportunidad.
                   </div>
                 }
               </div>
@@ -1115,7 +1132,7 @@
 
               <section class="opportunity-quotes-card">
                 <div class="opportunity-card-title">
-                  <h3><i class="pi pi-file-edit"></i> Cotizacion actual</h3>
+                  <h3><i class="pi pi-file-edit"></i> Cotización actual</h3>
                 </div>
                 <div class="opportunity-quote-list">
                   @if (host().selectedOpportunityCurrentQuote(); as quote) {
@@ -1146,13 +1163,13 @@
                       Ver todas las cotizaciones
                     </button>
                   } @else {
-                    <div class="opportunity-empty-detail">No tiene cotizacion actual.</div>
+                    <div class="opportunity-empty-detail">No tiene una cotización actual.</div>
                   }
                 </div>
               </section>
 
               <section class="opportunity-next-card">
-                <h3><i class="pi pi-calendar-clock"></i> Proxima actividad</h3>
+                <h3><i class="pi pi-calendar-clock"></i> Próxima actividad</h3>
                 @if (host().selectedOpportunityNextActivity(); as nextActivity) {
                   <article>
                     <i [class]="host().followUpActivityIcon(nextActivity.tipoActividad)"></i>
@@ -1172,7 +1189,7 @@
                     </div>
                   </article>
                 } @else {
-                  <div class="opportunity-empty-detail">No tiene proxima actividad.</div>
+                  <div class="opportunity-empty-detail">No tiene una próxima actividad.</div>
                 }
               </section>
 
@@ -1220,7 +1237,7 @@
               class="quick-action quick-action--success"
               (click)="host().openQuoteDialog(detail)"
             >
-              <i class="pi pi-file-edit"></i> Nueva cotizacion
+              <i class="pi pi-file-edit"></i> Nueva cotización
             </button>
             <button
               type="button"

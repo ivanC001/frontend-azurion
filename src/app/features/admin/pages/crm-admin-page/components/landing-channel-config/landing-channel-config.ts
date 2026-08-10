@@ -137,7 +137,7 @@ export class LandingChannelConfig implements OnInit {
       next: (saved) => {
         this.upsertConfiguration(saved);
         this.selectConfiguration(saved);
-        this.message.set(current ? 'Configuracion de landing actualizada.' : 'Landing creada. La clave ya esta lista para copiar.');
+        this.message.set(current ? 'Configuración de landing actualizada.' : 'Landing creada. La clave ya está lista para copiar.');
       },
       error: (error: unknown) => this.error.set(this.resolveError(error)),
     });
@@ -204,6 +204,18 @@ export class LandingChannelConfig implements OnInit {
     return this.form.catalogoItemIds.includes(itemId);
   }
 
+  protected formatCatalogPrice(item: CrmCatalogoItem): string {
+    try {
+      return new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: item.moneda || 'PEN',
+        minimumFractionDigits: 2,
+      }).format(Number(item.precioReferencial || 0));
+    } catch {
+      return `${item.moneda || 'PEN'} ${Number(item.precioReferencial || 0).toFixed(2)}`;
+    }
+  }
+
   protected browserEndpoint(): string {
     const sourceKey = this.selected()?.landingKey || 'SOURCE_KEY';
     return new URL(
@@ -225,7 +237,8 @@ export class LandingChannelConfig implements OnInit {
       nombre: 'Juan Perez',
       email: 'juan@perez.com',
       telefono: '999999999',
-      mensaje: 'Deseo recibir informacion',
+      paisCodigo: 'PE',
+      mensaje: 'Deseo recibir información',
       landingUrl: 'https://tu-landing.com/contacto',
       website: '',
       metadataJson: JSON.stringify({
@@ -251,7 +264,7 @@ export class LandingChannelConfig implements OnInit {
   protected serverExample(): string {
     const secret = this.selected()?.relaySecret || 'RELAY_SECRET';
     const sourceKey = this.selected()?.landingKey || 'SOURCE_KEY';
-    return `import crypto from 'node:crypto';\n\nconst payload = ${this.jsonExample()};\nconst body = JSON.stringify(payload);\nconst timestamp = Math.floor(Date.now() / 1000).toString();\nconst idempotencyKey = crypto.randomUUID();\nconst signature = crypto\n  .createHmac('sha256', '${secret}')\n  .update(\`\${timestamp}.\${idempotencyKey}.\${body}\`)\n  .digest('hex');\n\nconst response = await fetch('${this.relayEndpoint()}', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-Azurion-Source-Key': '${sourceKey}',\n    'X-Azurion-Timestamp': timestamp,\n    'X-Azurion-Signature': \`sha256=\${signature}\`,\n    'X-Idempotency-Key': idempotencyKey\n  },\n  body\n});\n\nif (!response.ok) throw new Error('Azurion rechazo el envio');\nconsole.log((await response.json()).data);`;
+    return `import crypto from 'node:crypto';\n\nconst payload = ${this.jsonExample()};\nconst body = JSON.stringify(payload);\nconst timestamp = Math.floor(Date.now() / 1000).toString();\nconst idempotencyKey = crypto.randomUUID();\nconst signature = crypto\n  .createHmac('sha256', '${secret}')\n  .update(\`\${timestamp}.\${idempotencyKey}.\${body}\`)\n  .digest('hex');\n\nconst response = await fetch('${this.relayEndpoint()}', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-Azurion-Source-Key': '${sourceKey}',\n    'X-Azurion-Timestamp': timestamp,\n    'X-Azurion-Signature': \`sha256=\${signature}\`,\n    'X-Idempotency-Key': idempotencyKey\n  },\n  body\n});\n\nif (!response.ok) throw new Error('Azurion rechazó el envío');\nconsole.log((await response.json()).data);`;
   }
 
   protected copy(value: string, label: string): void {
@@ -304,6 +317,6 @@ export class LandingChannelConfig implements OnInit {
 
   private resolveError(error: unknown): string {
     const candidate = error as { error?: { message?: string; error?: string }; message?: string };
-    return candidate?.error?.message || candidate?.error?.error || candidate?.message || 'No se pudo completar la operacion.';
+    return candidate?.error?.message || candidate?.error?.error || candidate?.message || 'No se pudo completar la operación.';
   }
 }

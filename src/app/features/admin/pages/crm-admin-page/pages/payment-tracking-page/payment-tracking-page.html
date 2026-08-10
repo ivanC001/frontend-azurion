@@ -184,9 +184,9 @@
         <footer class="payment-table-footer">
           <span>{{ pageMeta().rangeLabel }}</span>
           <div>
-            <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+            <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Página anterior"><i class="pi pi-chevron-left"></i></button>
             <strong>{{ pageMeta().page + 1 }} / {{ pageMeta().totalPages }}</strong>
-            <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+            <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Página siguiente"><i class="pi pi-chevron-right"></i></button>
           </div>
         </footer>
       </section>

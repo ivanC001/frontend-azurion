@@ -48,6 +48,7 @@ export interface PublicCrmCatalogoItem {
   readonly nombre: string;
   readonly descripcion?: string | null;
   readonly precioReferencial?: number | null;
+  readonly moneda?: string | null;
   readonly metadataJson?: string | null;
 }
 

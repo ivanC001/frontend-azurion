@@ -1013,6 +1013,13 @@ export interface CotizacionDetalle {
   readonly productoId?: number | null;
   readonly productoSku?: string | null;
   readonly productoNombre?: string | null;
+  readonly catalogoItemId?: number | null;
+  readonly catalogoTipoItem?: string | null;
+  readonly catalogoNombre?: string | null;
+  readonly catalogoDescripcion?: string | null;
+  readonly catalogoMetadataJson?: string | null;
+  readonly catalogoMoneda?: string | null;
+  readonly catalogoPrecioReferencial?: number | null;
   readonly promocionId?: number | null;
   readonly promocionNombre?: string | null;
   readonly descripcion?: string | null;
@@ -1097,6 +1104,7 @@ export interface CreateCotizacionRequest {
   readonly crmOportunidadId?: number | null;
   readonly detalles: Array<{
     readonly productoId?: number | null;
+    readonly catalogoItemId?: number | null;
     readonly promocionId?: number | null;
     readonly descripcion?: string | null;
     readonly cantidad: number;
@@ -1280,6 +1288,7 @@ export interface CrmCatalogoItem {
   readonly nombre: string;
   readonly descripcion?: string | null;
   readonly precioReferencial: number;
+  readonly moneda: string;
   readonly estado: string;
   readonly metadataJson?: string | null;
   readonly publicToken?: string | null;
@@ -1297,6 +1306,7 @@ export interface CreateCrmCatalogoItemRequest {
   readonly nombre: string;
   readonly descripcion?: string | null;
   readonly precioReferencial?: number | null;
+  readonly moneda?: string | null;
   readonly estado?: string | null;
   readonly metadataJson?: string | null;
   readonly publicEnabled?: boolean | null;

@@ -37,7 +37,7 @@
         <div class="stage-review__alert stage-review__alert--error">
           <i class="pi pi-lock"></i>
           <div>
-            <strong>No se puede mover todavia</strong>
+            <strong>No se puede mover todavía</strong>
             <span>Completa los requisitos obligatorios o registra el motivo requerido.</span>
           </div>
         </div>
@@ -61,7 +61,7 @@
             </div>
             @if (!check.done && check.action) {
               <button type="button" (click)="host().runStageRequirementAction(check.action, review)">
-                {{ check.action === 'quote' ? 'Crear cotizacion' : check.action === 'activity' ? 'Registrar actividad' : 'Completar' }}
+                {{ check.action === 'quote' ? 'Crear cotización' : check.action === 'activity' ? 'Registrar actividad' : 'Completar' }}
               </button>
             }
           </article>
@@ -70,7 +70,7 @@
 
       @if (review.target.value === 'PERDIDO') {
         <label class="stage-review__loss">
-          Motivo de perdida <span class="required">*</span>
+          Motivo de pérdida <span class="required">*</span>
           <textarea
             pTextarea
             rows="3"

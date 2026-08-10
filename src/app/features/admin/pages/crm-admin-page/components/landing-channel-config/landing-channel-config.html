@@ -62,8 +62,8 @@
           </label>
           <label>Control de duplicados
             <select [(ngModel)]="form.validarDuplicadosPor" name="landingDuplicatePolicy" [disabled]="!canManage()">
-              <option value="TELEFONO_CORREO">Telefono o correo</option>
-              <option value="TELEFONO">Solo telefono</option>
+              <option value="TELEFONO_CORREO">Teléfono o correo</option>
+              <option value="TELEFONO">Solo teléfono</option>
               <option value="CORREO">Solo correo</option>
               <option value="NINGUNO">No unificar contactos</option>
             </select>
@@ -71,7 +71,7 @@
         </div>
 
         <div class="landing-switches">
-          <label><input type="checkbox" [(ngModel)]="form.activa" name="landingActive" [disabled]="!canManage()" /><span><b>Landing activa</b><small>Permite usar esta configuracion.</small></span></label>
+          <label><input type="checkbox" [(ngModel)]="form.activa" name="landingActive" [disabled]="!canManage()" /><span><b>Landing activa</b><small>Permite usar esta configuración.</small></span></label>
           <label><input type="checkbox" [(ngModel)]="form.recibirLeads" name="landingReceive" [disabled]="!canManage()" /><span><b>Recibir leads</b><small>Pausa ingresos sin borrar la clave.</small></span></label>
           <label><input type="checkbox" [(ngModel)]="form.crearActividadInicial" name="landingInitialActivity" [disabled]="!canManage()" /><span><b>Actividad inicial</b><small>Programa el primer contacto.</small></span></label>
         </div>
@@ -84,7 +84,7 @@
                 @for (item of publicCatalogItems(); track item.id) {
                   <label>
                     <input type="checkbox" [checked]="isCatalogItemSelected(item.id)" (change)="toggleCatalogItem(item.id, $any($event.target).checked)" [disabled]="!canManage()" />
-                    <span><b>{{ item.nombre }}</b><small>{{ item.tipoItem }} · {{ item.precioReferencial }}</small></span>
+                    <span><b>{{ item.nombre }}</b><small>{{ item.tipoItem }} · {{ formatCatalogPrice(item) }}</small></span>
                   </label>
                 }
               </div>
@@ -96,7 +96,7 @@
 
         <button type="button" class="landing-button landing-button--primary" (click)="save()" [disabled]="!canManage() || saving()">
           <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-          {{ saving() ? 'Guardando...' : (creating() ? 'Crear y generar landing key' : 'Guardar configuracion') }}
+          {{ saving() ? 'Guardando...' : (creating() ? 'Crear y generar landing key' : 'Guardar configuración') }}
         </button>
       </section>
 
@@ -171,16 +171,16 @@
       <header>
         <div>
           <strong>{{ integrationMode() === 'BROWSER' ? 'Integracion JavaScript' : 'Integracion desde backend' }}</strong>
-          <small>{{ integrationMode() === 'BROWSER' ? 'Copia este codigo en el formulario publicado.' : 'Ejemplo Node.js con firma HMAC y proteccion contra reintentos.' }}</small>
+          <small>{{ integrationMode() === 'BROWSER' ? 'Copia este código en el formulario publicado.' : 'Ejemplo Node.js con firma HMAC y protección contra reintentos.' }}</small>
         </div>
-        <button type="button" (click)="copy(integrationMode() === 'BROWSER' ? fetchExample() : serverExample(), 'Codigo de integracion')"><i class="pi pi-copy"></i> Copiar codigo</button>
+        <button type="button" (click)="copy(integrationMode() === 'BROWSER' ? fetchExample() : serverExample(), 'Código de integración')"><i class="pi pi-copy"></i> Copiar código</button>
       </header>
       <pre>{{ integrationMode() === 'BROWSER' ? fetchExample() : serverExample() }}</pre>
       <details>
         <summary>Ver solamente el JSON del formulario</summary>
         <div><button type="button" (click)="copy(jsonExample(), 'JSON')"><i class="pi pi-copy"></i> Copiar</button><pre>{{ jsonExample() }}</pre></div>
       </details>
-      <footer><i class="pi pi-info-circle"></i> Obligatorios: <b>nombre</b> y al menos <b>telefono o email</b>. No debes enviar RUC ni tenant: la source key selecciona automaticamente la empresa correcta.</footer>
+      <footer><i class="pi pi-info-circle"></i> Obligatorios: <b>nombre</b> y al menos <b>teléfono o correo electrónico</b>. Envía <b>paisCodigo</b> en formato ISO-2 (por ejemplo, <b>PE</b> o <b>MX</b>) cuando incluyas teléfono; el CRM lo normaliza para WhatsApp. No debes enviar RUC ni tenant: la source key selecciona automáticamente la empresa correcta.</footer>
     </section>
   }
 </section>

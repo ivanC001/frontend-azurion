@@ -3,7 +3,7 @@
     <div>
       <span>ANALITICA CRM</span>
       <h1>Reportes comerciales</h1>
-      <p>Consulta prospectos, actividades y oportunidades al detalle sin mezclar informacion del ERP.</p>
+      <p>Consulta prospectos, actividades y oportunidades al detalle sin mezclar información del ERP.</p>
     </div>
     <div class="reports-header__actions">
       <label class="reports-search">
@@ -76,7 +76,7 @@
     <div class="report-table-toolbar">
       <div>
         <strong>Detalle de {{ reportKind().toLowerCase() }}</strong>
-        <small>Consultas paginadas en el servidor, 20 registros por pagina.</small>
+        <small>Consultas paginadas en el servidor, 20 registros por página.</small>
       </div>
       <button type="button" class="report-icon-button" [disabled]="loading()" (click)="load()" title="Actualizar reporte" aria-label="Actualizar reporte">
         <i [class]="loading() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
@@ -115,9 +115,9 @@
     <footer class="report-pagination">
       <span>{{ pageLabel() }}</span>
       <div>
-        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <button type="button" [disabled]="pageData().first || loading()" (click)="previousPage()" aria-label="Página anterior"><i class="pi pi-chevron-left"></i></button>
         <strong>{{ pageData().page + 1 }} / {{ pageData().totalPages || 1 }}</strong>
-        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+        <button type="button" [disabled]="pageData().last || loading()" (click)="nextPage()" aria-label="Página siguiente"><i class="pi pi-chevron-right"></i></button>
       </div>
     </footer>
   </section>

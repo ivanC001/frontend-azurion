@@ -9,10 +9,21 @@
     </div>
 
     <div class="status-facts">
-      <span><i class="pi pi-building"></i> {{ selectedCaja()?.sucursalNombre || 'Sin sucursal' }}</span>
-      <span><i class="pi pi-user"></i> {{ selectedCaja()?.responsableAperturaNombre || 'Usuario actual' }}</span>
-      <span [class.fact-ok]="selectedCaja()"><i class="pi pi-credit-card"></i> Caja: {{ selectedCaja() ? 'Abierta' : 'No disponible' }}</span>
-      <span><i class="pi pi-box"></i> {{ cart()[0]?.producto?.almacenNombre || 'Inventario general' }}</span>
+      <span
+        ><i class="pi pi-building"></i> {{ selectedCaja()?.sucursalNombre || 'Sin sucursal' }}</span
+      >
+      <span
+        ><i class="pi pi-user"></i>
+        {{ selectedCaja()?.responsableAperturaNombre || 'Usuario actual' }}</span
+      >
+      <span [class.fact-ok]="selectedCaja()"
+        ><i class="pi pi-credit-card"></i> Caja:
+        {{ selectedCaja() ? 'Abierta' : 'No disponible' }}</span
+      >
+      <span
+        ><i class="pi pi-box"></i>
+        {{ cart()[0]?.producto?.almacenNombre || 'Inventario general' }}</span
+      >
       <span><i class="pi pi-percentage"></i> {{ sucursalTaxLabel() }}</span>
     </div>
 
@@ -26,7 +37,9 @@
           <span class="panel-kicker">Catalogo</span>
           <h2>Buscar productos</h2>
         </div>
-        <button type="button" class="icon-button" title="Recargar productos" (click)="loadData()"><i class="pi pi-refresh"></i></button>
+        <button type="button" class="icon-button" title="Recargar productos" (click)="loadData()">
+          <i class="pi pi-refresh"></i>
+        </button>
       </div>
 
       <label class="product-search">
@@ -43,15 +56,41 @@
       </label>
 
       <div class="filter-row">
-        <button type="button" [class.active]="productFilter() === 'TODOS'" (click)="selectFilter('TODOS')">Todos</button>
-        <button type="button" [class.active]="productFilter() === 'CON_STOCK'" (click)="selectFilter('CON_STOCK')">Con stock</button>
-        <button type="button" [class.active]="productFilter() === 'STOCK_BAJO'" (click)="selectFilter('STOCK_BAJO')">Stock bajo</button>
-        <button type="button" [class.active]="productFilter() === 'SERVICIOS'" (click)="selectFilter('SERVICIOS')">Servicios</button>
+        <button
+          type="button"
+          [class.active]="productFilter() === 'TODOS'"
+          (click)="selectFilter('TODOS')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          [class.active]="productFilter() === 'CON_STOCK'"
+          (click)="selectFilter('CON_STOCK')"
+        >
+          Con stock
+        </button>
+        <button
+          type="button"
+          [class.active]="productFilter() === 'STOCK_BAJO'"
+          (click)="selectFilter('STOCK_BAJO')"
+        >
+          Stock bajo
+        </button>
+        <button
+          type="button"
+          [class.active]="productFilter() === 'SERVICIOS'"
+          (click)="selectFilter('SERVICIOS')"
+        >
+          Servicios
+        </button>
       </div>
 
       <div class="product-grid">
         @if (loading()) {
-          <div class="panel-empty"><i class="pi pi-spin pi-spinner"></i><strong>Cargando productos...</strong></div>
+          <div class="panel-empty">
+            <i class="pi pi-spin pi-spinner"></i><strong>Cargando productos...</strong>
+          </div>
         } @else {
           @for (producto of filteredProducts(); track producto.id) {
             <button
@@ -63,11 +102,24 @@
               <span class="product-visual">
                 <span
                   class="stock-status"
-                  [class.available]="isService(producto) || stockDisponibleSucursal(producto) > (producto.stockMinimoGlobal || 0)"
-                  [class.low]="!isService(producto) && stockDisponibleSucursal(producto) > 0 && stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)"
+                  [class.available]="
+                    isService(producto) ||
+                    stockDisponibleSucursal(producto) > (producto.stockMinimoGlobal || 0)
+                  "
+                  [class.low]="
+                    !isService(producto) &&
+                    stockDisponibleSucursal(producto) > 0 &&
+                    stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)
+                  "
                   [class.empty]="!isService(producto) && stockDisponibleSucursal(producto) <= 0"
                 >
-                  {{ isService(producto) ? 'Servicio' : stockDisponibleSucursal(producto) > 0 ? 'Disponible' : 'Sin stock' }}
+                  {{
+                    isService(producto)
+                      ? 'Servicio'
+                      : stockDisponibleSucursal(producto) > 0
+                        ? 'Disponible'
+                        : 'Sin stock'
+                  }}
                 </span>
                 <span class="product-image">
                   @if (productImage(producto)) {
@@ -85,19 +137,33 @@
                 @if (isService(producto)) {
                   <span><small>Tipo</small><strong>Servicio</strong></span>
                 } @else {
-                  <span [class.stock-low]="stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)">
+                  <span
+                    [class.stock-low]="
+                      stockDisponibleSucursal(producto) <= (producto.stockMinimoGlobal || 0)
+                    "
+                  >
                     <small>Sucursal</small><strong>{{ stockDisponibleSucursal(producto) }}</strong>
                   </span>
-                  <span><small>Empresa</small><strong>{{ stockEmpresa(producto) }}</strong></span>
+                  <span
+                    ><small>Empresa</small><strong>{{ stockEmpresa(producto) }}</strong></span
+                  >
                 }
               </span>
               <span class="product-footer">
-                <span class="product-price"><small>Precio</small><strong>S/ {{ producto.precio | number: '1.2-2' }}</strong></span>
-                <span class="add-product" title="Agregar al carrito"><i class="pi pi-plus"></i></span>
+                <span class="product-price"
+                  ><small>Precio</small
+                  ><strong>S/ {{ producto.precio | number: '1.2-2' }}</strong></span
+                >
+                <span class="add-product" title="Agregar al carrito"
+                  ><i class="pi pi-plus"></i
+                ></span>
               </span>
             </button>
           } @empty {
-            <div class="panel-empty"><i class="pi pi-search"></i><strong>No encontramos productos</strong><span>Prueba con otro nombre, SKU o codigo.</span></div>
+            <div class="panel-empty">
+              <i class="pi pi-search"></i><strong>No encontramos productos</strong
+              ><span>Prueba con otro nombre, SKU o codigo.</span>
+            </div>
           }
         }
       </div>
@@ -113,7 +179,8 @@
       </div>
 
       <div class="cart-columns">
-        <span>Producto</span><span>Cantidad</span><span>Precio</span><span>Desc.</span><span>Total</span><span></span>
+        <span>Producto</span><span>Cantidad</span><span>Precio</span><span>Desc.</span
+        ><span>Total</span><span></span>
       </div>
 
       <div class="cart-list">
@@ -123,15 +190,40 @@
               <strong>{{ item.producto.nombre }}</strong>
               <small>{{ item.producto.sku }} · {{ item.producto.almacenCodigo }}</small>
             </div>
-            <div class="quantity-control">
-              <button type="button" (click)="changeQuantity(item.producto.id, -1)"><i class="pi pi-minus"></i></button>
-              <input type="number" [ngModel]="item.cantidad" (ngModelChange)="updateQuantity(item.producto.id, $event)" />
-              <button type="button" (click)="changeQuantity(item.producto.id, 1)"><i class="pi pi-plus"></i></button>
+            <div class="quantity-control" data-label="Cantidad">
+              <button type="button" (click)="changeQuantity(item.producto.id, -1)">
+                <i class="pi pi-minus"></i>
+              </button>
+              <input
+                type="number"
+                [ngModel]="item.cantidad"
+                (ngModelChange)="updateQuantity(item.producto.id, $event)"
+              />
+              <button type="button" (click)="changeQuantity(item.producto.id, 1)">
+                <i class="pi pi-plus"></i>
+              </button>
             </div>
-            <strong class="money">S/ {{ item.producto.precio | number: '1.2-2' }}</strong>
-            <label class="discount-input"><span>S/</span><input type="number" [ngModel]="item.descuento" (ngModelChange)="updateDiscount(item.producto.id, $event)" /></label>
-            <strong class="money row-total">S/ {{ itemTotal(item) | number: '1.2-2' }}</strong>
-            <button type="button" class="remove-item" title="Quitar producto" (click)="removeProduct(item.producto.id)"><i class="pi pi-trash"></i></button>
+            <strong class="money unit-price" data-label="Precio"
+              >S/ {{ item.producto.precio | number: '1.2-2' }}</strong
+            >
+            <label class="discount-input" data-label="Descuento"
+              ><span>S/</span
+              ><input
+                type="number"
+                [ngModel]="item.descuento"
+                (ngModelChange)="updateDiscount(item.producto.id, $event)"
+            /></label>
+            <strong class="money row-total" data-label="Total"
+              >S/ {{ itemTotal(item) | number: '1.2-2' }}</strong
+            >
+            <button
+              type="button"
+              class="remove-item"
+              title="Quitar producto"
+              (click)="removeProduct(item.producto.id)"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
           </article>
         } @empty {
           <div class="cart-empty">
@@ -143,19 +235,37 @@
       </div>
 
       <div class="cart-summary">
-        <div><span>Precios finales</span><strong>S/ {{ subtotal() | number: '1.2-2' }}</strong></div>
-        <div><span>Descuento</span><strong class="discount-total">- S/ {{ descuentoTotal() | number: '1.2-2' }}</strong></div>
+        <div>
+          <span>Precios finales</span><strong>S/ {{ subtotal() | number: '1.2-2' }}</strong>
+        </div>
+        <div>
+          <span>Descuento</span
+          ><strong class="discount-total">- S/ {{ descuentoTotal() | number: '1.2-2' }}</strong>
+        </div>
         @if (taxBreakdown().operacionGravada > 0) {
-          <div><span>Op. gravada</span><strong>S/ {{ taxBreakdown().operacionGravada | number: '1.2-2' }}</strong></div>
+          <div>
+            <span>Op. gravada</span
+            ><strong>S/ {{ taxBreakdown().operacionGravada | number: '1.2-2' }}</strong>
+          </div>
         }
         @if (taxBreakdown().operacionExonerada > 0) {
-          <div><span>Op. exonerada</span><strong>S/ {{ taxBreakdown().operacionExonerada | number: '1.2-2' }}</strong></div>
+          <div>
+            <span>Op. exonerada</span
+            ><strong>S/ {{ taxBreakdown().operacionExonerada | number: '1.2-2' }}</strong>
+          </div>
         }
         @if (taxBreakdown().operacionInafecta > 0) {
-          <div><span>Op. inafecta</span><strong>S/ {{ taxBreakdown().operacionInafecta | number: '1.2-2' }}</strong></div>
+          <div>
+            <span>Op. inafecta</span
+            ><strong>S/ {{ taxBreakdown().operacionInafecta | number: '1.2-2' }}</strong>
+          </div>
         }
-        <div class="tax-total"><span>IGV incluido</span><strong>S/ {{ taxBreakdown().igv | number: '1.2-2' }}</strong></div>
-        <div class="grand-total"><span>Total a cobrar</span><strong>S/ {{ total() | number: '1.2-2' }}</strong></div>
+        <div class="tax-total">
+          <span>IGV incluido</span><strong>S/ {{ taxBreakdown().igv | number: '1.2-2' }}</strong>
+        </div>
+        <div class="grand-total">
+          <span>Total a cobrar</span><strong>S/ {{ total() | number: '1.2-2' }}</strong>
+        </div>
       </div>
     </section>
 
@@ -165,14 +275,25 @@
           <span class="panel-kicker">Cobro</span>
           <h2>Venta y pago</h2>
         </div>
-        <button type="button" class="icon-button danger" title="Limpiar venta" (click)="clearSale()"><i class="pi pi-trash"></i></button>
+        <button
+          type="button"
+          class="icon-button danger"
+          title="Limpiar venta"
+          (click)="clearSale()"
+        >
+          <i class="pi pi-trash"></i>
+        </button>
       </div>
 
       <section class="checkout-section">
         <label class="section-label">Comprobante</label>
         <div class="segmented-control">
           @for (option of documentOptions(); track option.value) {
-            <button type="button" [class.active]="tipoComprobante === option.value" (click)="selectDocument(option.value)">
+            <button
+              type="button"
+              [class.active]="tipoComprobante === option.value"
+              (click)="selectDocument(option.value)"
+            >
               <i [class]="'pi ' + option.icon"></i><span>{{ option.label }}</span>
             </button>
           }
@@ -185,7 +306,10 @@
           }
         </p>
         @if (tipoComprobante === 'FACTURA') {
-          <p class="invoice-rule"><i class="pi pi-building"></i><span>Las facturas solo se emiten a clientes registrados con RUC de 11 digitos.</span></p>
+          <p class="invoice-rule">
+            <i class="pi pi-building"></i
+            ><span>Las facturas solo se emiten a clientes registrados con RUC de 11 digitos.</span>
+          </p>
         }
       </section>
 
@@ -211,10 +335,17 @@
             <span class="customer-avatar">{{ cliente.nombre.charAt(0) }}</span>
             <div>
               <strong>{{ cliente.nombre }}</strong>
-              <small>{{ cliente.numeroDocumento }} · {{ cliente.telefono || 'Sin telefono' }}</small>
+              <small
+                >{{ cliente.numeroDocumento }} · {{ cliente.telefono || 'Sin telefono' }}</small
+              >
               <div class="credit-line">
-                <span>Credito disponible <strong>S/ {{ cliente.creditoDisponible | number: '1.2-2' }}</strong></span>
-                <span>Deuda <strong>S/ {{ cliente.saldoDeuda | number: '1.2-2' }}</strong></span>
+                <span
+                  >Credito disponible
+                  <strong>S/ {{ cliente.creditoDisponible | number: '1.2-2' }}</strong></span
+                >
+                <span
+                  >Deuda <strong>S/ {{ cliente.saldoDeuda | number: '1.2-2' }}</strong></span
+                >
               </div>
             </div>
           </article>
@@ -239,27 +370,53 @@
       <section class="checkout-section payment-section">
         <label class="section-label">Condicion de pago</label>
         <div class="pay-mode">
-          <button type="button" [class.active]="formaPago === 'CONTADO'" (click)="formaPago = 'CONTADO'">Contado</button>
-          <button type="button" [class.active]="formaPago === 'CREDITO'" (click)="formaPago = 'CREDITO'">Credito</button>
+          <button
+            type="button"
+            [class.active]="formaPago === 'CONTADO'"
+            (click)="formaPago = 'CONTADO'"
+          >
+            Contado
+          </button>
+          <button
+            type="button"
+            [class.active]="formaPago === 'CREDITO'"
+            (click)="formaPago = 'CREDITO'"
+          >
+            Credito
+          </button>
         </div>
 
         @if (formaPago === 'CONTADO') {
-          <label class="field-label">Metodo
-            <p-select [options]="methodOptions" optionLabel="label" optionValue="value" [(ngModel)]="metodoPago" appendTo="body" />
+          <label class="field-label"
+            >Metodo
+            <p-select
+              [options]="methodOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="metodoPago"
+              appendTo="body"
+            />
           </label>
 
           @if (metodoPago === 'EFECTIVO') {
             <div class="cash-grid">
-              <label class="field-label">Recibido
-                <span class="money-input"><span>S/</span><input type="number" [(ngModel)]="montoRecibido" /></span>
+              <label class="field-label"
+                >Recibido
+                <span class="money-input"
+                  ><span>S/</span><input type="number" [(ngModel)]="montoRecibido"
+                /></span>
               </label>
-              <label class="field-label">Vuelto
+              <label class="field-label"
+                >Vuelto
                 <strong class="change-value">S/ {{ vuelto() | number: '1.2-2' }}</strong>
               </label>
             </div>
           }
         } @else {
-          <div class="credit-warning"><i class="pi pi-info-circle"></i><span>La venta se cargara al credito disponible del cliente.</span></div>
+          <div class="credit-warning">
+            <i class="pi pi-info-circle"></i
+            ><span>La venta se cargara al credito disponible del cliente.</span>
+          </div>
         }
       </section>
 
@@ -272,12 +429,20 @@
           } @else {
             <i class="pi pi-spin pi-spinner"></i>
           }
-          <div><strong>{{ result.officialNumber || result.externalId }}</strong><span>{{ documentStateLabel(result) }}</span></div>
+          <div>
+            <strong>{{ result.officialNumber || result.externalId }}</strong
+            ><span>{{ documentStateLabel(result) }}</span>
+          </div>
           <i class="pi pi-file-pdf"></i>
         </button>
       }
 
-      <button type="button" class="charge-button" [disabled]="saving() || !cart().length || !selectedCajaId()" (click)="submitSale()">
+      <button
+        type="button"
+        class="charge-button"
+        [disabled]="saving() || !cart().length || !selectedCajaId()"
+        (click)="submitSale()"
+      >
         @if (saving()) {
           <i class="pi pi-spin pi-spinner"></i><span>Procesando venta...</span>
         } @else {
@@ -322,41 +487,93 @@
     <article class="document-summary">
       <header>
         <span class="document-icon"><i class="pi pi-file-pdf"></i></span>
-        <div><span>Documento solicitado</span><h3>{{ document.requestedDocument }}</h3></div>
-        <div class="official-number"><span>Numero oficial</span><strong>{{ document.officialNumber || 'Pendiente de numeracion' }}</strong></div>
+        <div>
+          <span>Documento solicitado</span>
+          <h3>{{ document.requestedDocument }}</h3>
+        </div>
+        <div class="official-number">
+          <span>Numero oficial</span
+          ><strong>{{ document.officialNumber || 'Pendiente de numeracion' }}</strong>
+        </div>
       </header>
 
       <div class="document-details">
-        <div><span>Operacion</span><strong>{{ document.externalId }}</strong></div>
-        <div><span>Fecha</span><strong>{{ previewDate(document.fecha) }}</strong></div>
-        <div><span>Cliente</span><strong>{{ document.clienteNombre }}</strong></div>
-        <div><span>Documento</span><strong>{{ document.clienteDocumento }}</strong></div>
-        <div><span>Pago</span><strong>{{ document.formaPago === 'CREDITO' ? 'Credito' : document.metodoPago }}</strong></div>
-        <div class="document-total"><span>Total</span><strong>S/ {{ document.total | number: '1.2-2' }}</strong></div>
+        <div>
+          <span>Operacion</span><strong>{{ document.externalId }}</strong>
+        </div>
+        <div>
+          <span>Fecha</span><strong>{{ previewDate(document.fecha) }}</strong>
+        </div>
+        <div>
+          <span>Cliente</span><strong>{{ document.clienteNombre }}</strong>
+        </div>
+        <div>
+          <span>Documento</span><strong>{{ document.clienteDocumento }}</strong>
+        </div>
+        <div>
+          <span>Pago</span
+          ><strong>{{ document.formaPago === 'CREDITO' ? 'Credito' : document.metodoPago }}</strong>
+        </div>
+        <div class="document-total">
+          <span>Total</span><strong>S/ {{ document.total | number: '1.2-2' }}</strong>
+        </div>
       </div>
     </article>
 
     <p class="document-authority-note">
       <i class="pi pi-shield"></i>
-      <span>La serie, el correlativo y el PDF son emitidos exclusivamente por Azurion Facturador.</span>
+      <span
+        >La serie, el correlativo y el PDF son emitidos exclusivamente por Azurion Facturador.</span
+      >
     </p>
 
     <div class="document-actions">
       @if (isOfficialDocumentReady(document)) {
         <div class="print-format-actions" aria-label="Formatos de impresion">
-          <button type="button" class="official-document-button" [disabled]="downloadingDocument()" (click)="openOfficialDocument('A4')">
-            <i [class]="downloadingDocument() === 'A4' ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'"></i>
-            <span>{{ downloadingDocument() === 'A4' ? 'Preparando A4...' : 'Imprimir en A4' }}</span>
+          <button
+            type="button"
+            class="official-document-button"
+            [disabled]="downloadingDocument()"
+            (click)="openOfficialDocument('A4')"
+          >
+            <i
+              [class]="downloadingDocument() === 'A4' ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'"
+            ></i>
+            <span>{{
+              downloadingDocument() === 'A4' ? 'Preparando A4...' : 'Imprimir en A4'
+            }}</span>
           </button>
-          <button type="button" class="official-document-button is-ticket" [disabled]="downloadingDocument()" (click)="openOfficialDocument('TICKET')">
-            <i [class]="downloadingDocument() === 'TICKET' ? 'pi pi-spin pi-spinner' : 'pi pi-receipt'"></i>
-            <span>{{ downloadingDocument() === 'TICKET' ? 'Preparando ticket...' : 'Imprimir ticket 80 mm' }}</span>
+          <button
+            type="button"
+            class="official-document-button is-ticket"
+            [disabled]="downloadingDocument()"
+            (click)="openOfficialDocument('TICKET')"
+          >
+            <i
+              [class]="
+                downloadingDocument() === 'TICKET' ? 'pi pi-spin pi-spinner' : 'pi pi-receipt'
+              "
+            ></i>
+            <span>{{
+              downloadingDocument() === 'TICKET' ? 'Preparando ticket...' : 'Imprimir ticket 80 mm'
+            }}</span>
           </button>
         </div>
       } @else if (documentHasError(document)) {
-        <button type="button" class="retry-document-button" [disabled]="retryingDocument() || document.facturacionEstado === 'RECHAZADO'" (click)="retryOfficialDocument()">
+        <button
+          type="button"
+          class="retry-document-button"
+          [disabled]="retryingDocument() || document.facturacionEstado === 'RECHAZADO'"
+          (click)="retryOfficialDocument()"
+        >
           <i [class]="retryingDocument() ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'"></i>
-          <span>{{ document.facturacionEstado === 'RECHAZADO' ? 'Corrige los datos antes de reemitir' : retryingDocument() ? 'Programando...' : 'Reintentar generacion' }}</span>
+          <span>{{
+            document.facturacionEstado === 'RECHAZADO'
+              ? 'Corrige los datos antes de reemitir'
+              : retryingDocument()
+                ? 'Programando...'
+                : 'Reintentar generacion'
+          }}</span>
         </button>
       } @else {
         <button type="button" class="waiting-document-button" disabled>

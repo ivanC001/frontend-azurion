@@ -1,0 +1,512 @@
+.requirement-editor-dialog.p-dialog {
+  max-height: calc(100vh - 1.5rem);
+  max-width: calc(100vw - 1.5rem);
+  width: min(82rem, calc(100vw - 1.5rem));
+}
+
+.requirement-editor-dialog .p-dialog-header {
+  border-bottom: 1px solid var(--az-border);
+  padding: 1rem 1.25rem;
+}
+
+.requirement-editor-dialog .p-dialog-title {
+  color: var(--az-text);
+  font-size: 1.12rem;
+  font-weight: 900;
+}
+
+.requirement-editor-dialog .p-dialog-content {
+  background: color-mix(in srgb, var(--az-surface-hover) 45%, var(--az-surface));
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+  padding: 0;
+}
+
+.requirement-editor-form {
+  color: var(--az-text);
+  display: grid;
+  min-width: 0;
+}
+
+.requirement-editor-layout {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(19rem, 0.86fr) minmax(30rem, 1.45fr);
+  padding: 1rem;
+}
+
+.requirement-editor-overview,
+.requirement-editor-fields {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.65rem;
+  min-width: 0;
+}
+
+.requirement-editor-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.requirement-editor-product-head {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border);
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 2.7rem minmax(0, 1fr) auto;
+  padding-bottom: 0.85rem;
+}
+
+.requirement-editor-product-icon,
+.requirement-editor-fields > header > span {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary) 11%, var(--az-surface));
+  border-radius: 0.6rem;
+  color: var(--az-primary);
+  display: inline-flex;
+  height: 2.7rem;
+  justify-content: center;
+  width: 2.7rem;
+}
+
+.requirement-editor-product-head small,
+.requirement-editor-contact small,
+.requirement-editor-totals small,
+.requirement-editor-live-total small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.requirement-editor-product-head h2,
+.requirement-editor-fields h2 {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.requirement-editor-status {
+  align-items: center;
+  background: color-mix(in srgb, #10b981 11%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 28%, var(--az-border));
+  border-radius: 999px;
+  color: #059669;
+  display: inline-flex;
+  font-size: 0.66rem;
+  font-weight: 850;
+  gap: 0.35rem;
+  padding: 0.32rem 0.55rem;
+}
+
+.requirement-editor-status i {
+  font-size: 0.38rem;
+}
+
+.requirement-editor-description {
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.requirement-editor-contact {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary) 5%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-primary) 15%, var(--az-border));
+  border-radius: 0.6rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  padding: 0.7rem;
+}
+
+.requirement-editor-avatar {
+  align-items: center;
+  background: var(--az-primary);
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+}
+
+.requirement-editor-contact strong {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.08rem;
+}
+
+.requirement-editor-contact p {
+  color: var(--az-text-soft);
+  font-size: 0.7rem;
+  margin: 0.12rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.requirement-editor-context-grid {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.requirement-editor-context-grid > div {
+  border-bottom: 1px solid var(--az-border);
+  min-width: 0;
+  padding: 0.58rem 0.45rem;
+}
+
+.requirement-editor-context-grid > div:nth-child(odd) {
+  border-right: 1px solid var(--az-border);
+}
+
+.requirement-editor-context-grid dt,
+.requirement-editor-attributes dt {
+  color: var(--az-text-soft);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.requirement-editor-context-grid dt i {
+  color: var(--az-primary);
+  margin-right: 0.28rem;
+}
+
+.requirement-editor-context-grid dd,
+.requirement-editor-attributes dd {
+  font-size: 0.72rem;
+  font-weight: 850;
+  margin: 0.22rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.requirement-editor-attributes h3 {
+  align-items: center;
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.42rem;
+  margin: 0 0 0.35rem;
+}
+
+.requirement-editor-attributes h3 i {
+  color: var(--az-primary);
+}
+
+.requirement-editor-attributes dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.requirement-editor-attributes dl > div {
+  border-bottom: 1px solid var(--az-border);
+  padding: 0.48rem 0.4rem;
+}
+
+.requirement-editor-totals {
+  background: color-mix(in srgb, #10b981 7%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 22%, var(--az-border));
+  border-radius: 0.6rem;
+  display: grid;
+  grid-template-columns: 0.75fr 1fr 1.2fr;
+  margin-top: auto;
+  overflow: hidden;
+}
+
+.requirement-editor-totals > div {
+  border-right: 1px solid color-mix(in srgb, #10b981 18%, var(--az-border));
+  padding: 0.62rem;
+}
+
+.requirement-editor-totals > div:last-child {
+  border-right: 0;
+}
+
+.requirement-editor-totals strong {
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.18rem;
+}
+
+.requirement-editor-totals .requirement-editor-grand-total strong {
+  color: #059669;
+  font-size: 0.9rem;
+}
+
+.requirement-editor-fields {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.requirement-editor-fields > header {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border);
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 2.7rem minmax(0, 1fr);
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.85rem;
+}
+
+.requirement-editor-fields > header p {
+  color: var(--az-text-soft);
+  font-size: 0.7rem;
+  margin: 0.18rem 0 0;
+}
+
+.requirement-editor-grid {
+  align-items: end;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(9rem, 0.8fr) minmax(11rem, 1fr) minmax(11rem, 0.95fr);
+}
+
+.requirement-editor-field {
+  display: grid;
+  gap: 0.36rem;
+  min-width: 0;
+}
+
+.requirement-editor-field--full {
+  grid-column: 1 / -1;
+}
+
+.requirement-editor-field > span,
+.requirement-editor-live-total > span {
+  align-items: center;
+  color: var(--az-text);
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 0.38rem;
+}
+
+.requirement-editor-field > span i,
+.requirement-editor-live-total > span i {
+  color: var(--az-primary);
+}
+
+.requirement-editor-field > span b {
+  color: #dc2626;
+}
+
+.requirement-editor-field > small {
+  color: var(--az-text-soft);
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
+.requirement-editor-field input,
+.requirement-editor-field textarea,
+.requirement-editor-field .p-select {
+  border-radius: 0.48rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-height: 2.7rem;
+  width: 100%;
+}
+
+.requirement-editor-field textarea {
+  line-height: 1.5;
+  min-height: 7.1rem;
+  resize: vertical;
+}
+
+.requirement-editor-money-input {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.requirement-editor-money-input > strong {
+  align-items: center;
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.48rem 0 0 0.48rem;
+  border-right: 0;
+  color: var(--az-text-soft);
+  display: flex;
+  font-size: 0.75rem;
+  padding: 0 0.65rem;
+}
+
+.requirement-editor-money-input input {
+  border-radius: 0 0.48rem 0.48rem 0;
+}
+
+.requirement-editor-live-total {
+  background: color-mix(in srgb, #10b981 8%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #10b981 24%, var(--az-border));
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.22rem;
+  min-height: 4.45rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.requirement-editor-live-total strong {
+  color: #059669;
+  font-size: 1rem;
+}
+
+.requirement-editor-note {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--az-primary) 6%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-primary) 18%, var(--az-border));
+  border-radius: 0.55rem;
+  color: var(--az-text-soft);
+  display: flex;
+  font-size: 0.68rem;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.65rem 0.75rem;
+}
+
+.requirement-editor-note i {
+  color: var(--az-primary);
+  margin-top: 0.1rem;
+}
+
+.requirement-editor-note p {
+  line-height: 1.45;
+  margin: 0;
+}
+
+.requirement-editor-note strong {
+  color: var(--az-text);
+}
+
+.requirement-editor-actions {
+  align-items: center;
+  background: var(--az-surface);
+  border-top: 1px solid var(--az-border);
+  bottom: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.8rem 1rem;
+  position: sticky;
+  z-index: 3;
+}
+
+.requirement-editor-actions > p {
+  align-items: center;
+  color: var(--az-text-soft);
+  display: flex;
+  font-size: 0.66rem;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.requirement-editor-actions > p i {
+  color: #10b981;
+}
+
+.requirement-editor-actions > div {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.requirement-editor-cancel,
+.requirement-editor-save {
+  align-items: center;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.73rem;
+  font-weight: 850;
+  gap: 0.42rem;
+  justify-content: center;
+  min-height: 2.45rem;
+  padding: 0.55rem 0.9rem;
+}
+
+.requirement-editor-cancel {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  color: var(--az-text);
+}
+
+.requirement-editor-save {
+  background: var(--az-primary, #465fff);
+  border: 1px solid var(--az-primary, #465fff);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--az-primary, #465fff) 24%, transparent);
+  color: #fff;
+  flex: 0 0 auto;
+  min-width: 11rem;
+  white-space: nowrap;
+}
+
+.requirement-editor-save:not(:disabled):hover {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.requirement-editor-save:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+@media (max-width: 980px) {
+  .requirement-editor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .requirement-editor-dialog.p-dialog {
+    max-height: 100vh;
+    max-width: 100vw;
+    width: 100vw;
+  }
+
+  .requirement-editor-dialog .p-dialog-content {
+    max-height: calc(100vh - 4rem);
+  }
+
+  .requirement-editor-layout {
+    padding: 0.65rem;
+  }
+
+  .requirement-editor-product-head,
+  .requirement-editor-grid,
+  .requirement-editor-context-grid,
+  .requirement-editor-attributes dl,
+  .requirement-editor-totals {
+    grid-template-columns: 1fr;
+  }
+
+  .requirement-editor-status {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .requirement-editor-context-grid > div,
+  .requirement-editor-totals > div {
+    border-right: 0;
+  }
+
+  .requirement-editor-actions {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .requirement-editor-actions > p {
+    display: none;
+  }
+
+  .requirement-editor-actions > div,
+  .requirement-editor-actions button {
+    width: 100%;
+  }
+}

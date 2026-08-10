@@ -1912,9 +1912,83 @@ $emit-shared: true !default;
 
   .requirement-fields {
     display: grid;
+    gap: 10px;
   }
 
-  .requirement-fields p {
+  .requirement-product-head {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .requirement-product-head small {
+    color: #2563eb;
+    display: block;
+    font-size: 0.64rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .requirement-product-head h4 {
+    color: #0f172a;
+    font-size: 0.9rem;
+    margin: 2px 0 0;
+  }
+
+  .requirement-product-head > span {
+    background: #e0f2fe;
+    border-radius: 999px;
+    color: #0369a1;
+    font-size: 0.64rem;
+    font-weight: 900;
+    padding: 4px 8px;
+  }
+
+  .requirement-description {
+    color: #475569;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .requirement-commercial-summary,
+  .requirement-attributes {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .requirement-commercial-summary p,
+  .requirement-attributes p {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding: 8px;
+  }
+
+  .requirement-attributes {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .requirement-commercial-summary span,
+  .requirement-attributes span {
+    color: #64748b;
+    font-size: 0.62rem;
+    font-weight: 800;
+  }
+
+  .requirement-commercial-summary b,
+  .requirement-attributes b {
+    color: #0f172a;
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+  }
+
+  .requirement-fields > p {
     display: grid;
     grid-template-columns: minmax(130px, 34%) minmax(0, 1fr);
     gap: 8px;
@@ -1925,26 +1999,46 @@ $emit-shared: true !default;
     font-size: 0.72rem;
   }
 
-  .requirement-fields p:last-child {
+  .requirement-fields > p:last-child {
     border-bottom: 0;
   }
 
-  .requirement-fields span {
+  .requirement-fields > p > span {
     color: #1f2a44;
     font-weight: 800;
   }
 
-  .requirement-fields b {
+  .requirement-fields > p > b {
     color: #0b63e5;
   }
 
-  .requirement-fields .amount {
+  .requirement-fields > p > .amount {
     color: #0891b2;
+  }
+
+  .requirement-fields > .requirement-description {
+    border: 0;
+    color: #475569;
+    display: block;
+    line-height: 1.45;
+    padding: 0;
+  }
+
+  .requirement-commercial-summary b,
+  .requirement-attributes b {
+    color: #0f172a;
   }
 
   .requirement-note em {
     color: #334155;
     font-style: normal;
+  }
+
+  .requirement-fields > .requirement-note {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 8px;
   }
 
   .interest-requirement-row nav {
@@ -2169,7 +2263,8 @@ $emit-shared: true !default;
     .opportunity-interest-board,
     .interest-secondary-grid,
     .interest-requirement-row,
-    .requirement-fields p {
+    .requirement-fields p,
+    .requirement-commercial-summary {
       grid-template-columns: 1fr;
     }
 

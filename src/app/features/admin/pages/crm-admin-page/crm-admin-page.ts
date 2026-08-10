@@ -53,12 +53,21 @@ import {
   CrmPaymentPlan,
   CRM_OPPORTUNITY_FLOW,
   OpportunitySummaryCard,
+  PHONE_COUNTRIES,
   PROSPECT_COUNTRIES,
   ProspectDocumentOption,
   ProspectPersonType,
   catalogRegistrationType,
   prospectCountry,
   prospectDocuments,
+  prospectLocalPhone,
+  normalizeProspectPhoneDialCode,
+  prospectPhoneDialCode,
+  prospectPhoneDialCodeFromValue,
+  prospectPhoneE164,
+  phoneCountryByCode,
+  phoneCountryForDialCode,
+  phoneCountryForNumber,
 } from './models';
 import {
   CRM_ACTIVE_PIPELINE_STAGES,
@@ -178,6 +187,7 @@ import {
   CrmStorageCompanyIdentity,
 } from './services';
 import { EmailSettings } from './settings/email-settings/email-settings';
+import { CrmCurrencyConfigPanel } from './components/crm-currency-config-panel/crm-currency-config-panel';
 import { LandingChannelConfig } from './components/landing-channel-config/landing-channel-config';
 import {
   AdminSaasApiService,
@@ -243,6 +253,7 @@ import {
     ProspectDistributionModal,
     RegisterPaymentModal,
     EmailSettings,
+    CrmCurrencyConfigPanel,
     LandingChannelConfig,
   ],
   templateUrl: './crm-admin-page.html',
@@ -448,6 +459,8 @@ export class CrmAdminPage {
     value: country.code,
   }));
 
+  public readonly prospectPhoneCountryOptions = [...PHONE_COUNTRIES];
+
   // La conversión fiscal actual del módulo de clientes conserva los códigos SUNAT.
   public readonly documentoOptions = [
     { label: 'DNI', value: '1' },
@@ -592,7 +605,7 @@ export class CrmAdminPage {
       label: 'Vehiculo',
       icon: 'pi pi-car',
       description: 'Venta, separacion, financiamiento o prueba de manejo.',
-      primaryLabel: 'Vehiculo de interes',
+      primaryLabel: 'Vehículo de interés',
       secondaryLabel: 'Marca, modelo, anio o version',
       locationLabel: 'Sede o patio',
       dateLabel: 'Fecha de visita o test drive',
@@ -635,8 +648,8 @@ export class CrmAdminPage {
       value: 'SEGURO',
       label: 'Seguro',
       icon: 'pi pi-shield',
-      description: 'Polizas, renovaciones, cotizaciones y evaluacion de riesgo.',
-      primaryLabel: 'Seguro de interes',
+      description: 'Pólizas, renovaciones, cotizaciones y evaluación de riesgo.',
+      primaryLabel: 'Seguro de interés',
       secondaryLabel: 'Cobertura, plan o riesgo',
       locationLabel: 'Ciudad o zona asegurada',
       dateLabel: 'Fecha deseada de inicio',
@@ -647,43 +660,43 @@ export class CrmAdminPage {
       label: 'Software',
       icon: 'pi pi-desktop',
       description: 'SaaS, licencias, implementaciones, soporte o desarrollo.',
-      primaryLabel: 'Solucion o modulo requerido',
+      primaryLabel: 'Solución o módulo requerido',
       secondaryLabel: 'Usuarios, integraciones o alcance',
-      locationLabel: 'Empresa o area usuaria',
-      dateLabel: 'Fecha esperada de implementacion',
+      locationLabel: 'Empresa o área usuaria',
+      dateLabel: 'Fecha esperada de implementación',
       amountHint: 'Licencia, mensualidad o proyecto',
     },
     {
       value: 'MARKETING',
       label: 'Marketing',
       icon: 'pi pi-megaphone',
-      description: 'Campanias, branding, ads, contenidos o gestion digital.',
+      description: 'Campañas, branding, anuncios, contenidos o gestión digital.',
       primaryLabel: 'Servicio de marketing',
       secondaryLabel: 'Objetivo, canal o audiencia',
       locationLabel: 'Mercado o zona objetivo',
-      dateLabel: 'Inicio de campania',
+      dateLabel: 'Inicio de campaña',
       amountHint: 'Fee, pauta o presupuesto mensual',
     },
     {
       value: 'CLINICA',
-      label: 'Clinica',
+      label: 'Clínica',
       icon: 'pi pi-heart',
-      description: 'Citas, tratamientos, paquetes medicos o servicios de salud.',
+      description: 'Citas, tratamientos, paquetes médicos o servicios de salud.',
       primaryLabel: 'Servicio o especialidad',
       secondaryLabel: 'Sintoma, tratamiento o paquete',
-      locationLabel: 'Sede de atencion',
+      locationLabel: 'Sede de atención',
       dateLabel: 'Fecha deseada de cita',
       amountHint: 'Costo estimado de consulta o tratamiento',
     },
     {
       value: 'JURIDICO',
-      label: 'Juridico',
+      label: 'Jurídico',
       icon: 'pi pi-briefcase',
-      description: 'Consultas legales, contratos, procesos y asesorias.',
+      description: 'Consultas legales, contratos, procesos y asesorías.',
       primaryLabel: 'Caso o servicio legal',
       secondaryLabel: 'Materia, urgencia o etapa',
-      locationLabel: 'Jurisdiccion o sede',
-      dateLabel: 'Fecha limite o audiencia',
+      locationLabel: 'Jurisdicción o sede',
+      dateLabel: 'Fecha límite o audiencia',
       amountHint: 'Honorarios o presupuesto del caso',
     },
     {
@@ -712,34 +725,34 @@ export class CrmAdminPage {
       value: 'FINANCIERO',
       label: 'Financiero',
       icon: 'pi pi-wallet',
-      description: 'Creditos, inversiones, factoring o productos financieros.',
+      description: 'Créditos, inversiones, factoring o productos financieros.',
       primaryLabel: 'Producto financiero',
       secondaryLabel: 'Monto, plazo o condiciones',
-      locationLabel: 'Empresa, sede o region',
+      locationLabel: 'Empresa, sede o región',
       dateLabel: 'Fecha objetivo',
-      amountHint: 'Monto solicitado o inversion',
+      amountHint: 'Monto solicitado o inversión',
     },
     {
       value: 'CONSULTORIA',
-      label: 'Consultoria',
+      label: 'Consultoría',
       icon: 'pi pi-compass',
-      description: 'Diagnosticos, asesorias, auditorias o mejora de procesos.',
-      primaryLabel: 'Tema de consultoria',
+      description: 'Diagnósticos, asesorías, auditorías o mejora de procesos.',
+      primaryLabel: 'Tema de consultoría',
       secondaryLabel: 'Problema, alcance o entregable',
-      locationLabel: 'Area o sede del cliente',
+      locationLabel: 'Área o sede del cliente',
       dateLabel: 'Inicio esperado',
-      amountHint: 'Presupuesto de consultoria',
+      amountHint: 'Presupuesto de consultoría',
     },
     {
       value: 'EDUCACION',
-      label: 'Educacion',
+      label: 'Educación',
       icon: 'pi pi-book',
       description: 'Colegios, academias, capacitaciones y admisiones.',
       primaryLabel: 'Programa educativo',
       secondaryLabel: 'Nivel, modalidad o horario',
       locationLabel: 'Sede o campus',
       dateLabel: 'Fecha de inicio',
-      amountHint: 'Matricula, pension o paquete',
+      amountHint: 'Matrícula, pensión o paquete',
     },
     {
       value: 'HOSPITALIDAD',
@@ -756,9 +769,9 @@ export class CrmAdminPage {
       value: 'MANUFACTURA',
       label: 'Manufactura',
       icon: 'pi pi-warehouse',
-      description: 'Pedidos industriales, produccion, insumos o distribucion.',
+      description: 'Pedidos industriales, producción, insumos o distribución.',
       primaryLabel: 'Pedido o producto industrial',
-      secondaryLabel: 'Volumen, material o especificacion',
+      secondaryLabel: 'Volumen, material o especificación',
       locationLabel: 'Planta o destino',
       dateLabel: 'Fecha requerida',
       amountHint: 'Valor del pedido o contrato',
@@ -767,41 +780,41 @@ export class CrmAdminPage {
       value: 'TELECOMUNICACION',
       label: 'Telecom',
       icon: 'pi pi-wifi',
-      description: 'Internet, telefonia, enlaces, equipos o soporte.',
+      description: 'Internet, telefonía, enlaces, equipos o soporte.',
       primaryLabel: 'Servicio telecom',
       secondaryLabel: 'Velocidad, cobertura o equipos',
-      locationLabel: 'Direccion de instalacion',
-      dateLabel: 'Fecha de instalacion',
-      amountHint: 'Plan, instalacion o contrato',
+      locationLabel: 'Dirección de instalación',
+      dateLabel: 'Fecha de instalación',
+      amountHint: 'Plan, instalación o contrato',
     },
     {
       value: 'ENERGIA',
-      label: 'Energia',
+      label: 'Energía',
       icon: 'pi pi-bolt',
-      description: 'Solar, electrico, mantenimiento o eficiencia energetica.',
-      primaryLabel: 'Solucion energetica',
+      description: 'Solar, eléctrico, mantenimiento o eficiencia energética.',
+      primaryLabel: 'Solución energética',
       secondaryLabel: 'Consumo, potencia o alcance',
-      locationLabel: 'Ubicacion del proyecto',
-      dateLabel: 'Fecha de instalacion',
-      amountHint: 'Presupuesto energetico',
+      locationLabel: 'Ubicación del proyecto',
+      dateLabel: 'Fecha de instalación',
+      amountHint: 'Presupuesto energético',
     },
     {
       value: 'AGRICULTURA',
       label: 'Agricultura',
       icon: 'pi pi-sun',
       description: 'Agro, insumos, maquinaria, riego o servicios de campo.',
-      primaryLabel: 'Necesidad agricola',
+      primaryLabel: 'Necesidad agrícola',
       secondaryLabel: 'Cultivo, hectareas o temporada',
       locationLabel: 'Predio o zona',
-      dateLabel: 'Fecha de campania',
-      amountHint: 'Presupuesto agricola',
+      dateLabel: 'Fecha de campaña',
+      amountHint: 'Presupuesto agrícola',
     },
     {
       value: 'OTRO',
       label: 'Otro',
       icon: 'pi pi-objects-column',
-      description: 'Cualquier rubro comercial no clasificado todavia.',
-      primaryLabel: 'Interes principal',
+      description: 'Cualquier rubro comercial no clasificado todavía.',
+      primaryLabel: 'Interés principal',
       secondaryLabel: 'Detalle del requerimiento',
       locationLabel: 'Lugar relacionado',
       dateLabel: 'Fecha objetivo',
@@ -868,10 +881,10 @@ export class CrmAdminPage {
   public readonly activityResultOptions = [
     { label: 'Sin resultado aun', value: '', icon: 'pi pi-users' },
     { label: 'Contactado', value: 'CONTACTADO', icon: 'pi pi-check-circle' },
-    { label: 'Interes medio confirmado', value: 'INTERESADO', icon: 'pi pi-star' },
-    { label: 'Interes alto confirmado', value: 'MUY_INTERESADO', icon: 'pi pi-star-fill' },
+    { label: 'Interés medio confirmado', value: 'INTERESADO', icon: 'pi pi-star' },
+    { label: 'Interés alto confirmado', value: 'MUY_INTERESADO', icon: 'pi pi-star-fill' },
     { label: 'Solicito propuesta', value: 'SOLICITA_PROPUESTA', icon: 'pi pi-file-edit' },
-    { label: 'Solicito cotizacion', value: 'COTIZACION_SOLICITADA', icon: 'pi pi-file' },
+    { label: 'Solicitó cotización', value: 'COTIZACION_SOLICITADA', icon: 'pi pi-file' },
     { label: 'Pidio reprogramar', value: 'REPROGRAMADO', icon: 'pi pi-calendar' },
     { label: 'Queda en espera', value: 'EN_ESPERA', icon: 'pi pi-clock' },
     { label: 'No respondio', value: 'SIN_RESPUESTA', icon: 'pi pi-ban' },
@@ -896,7 +909,7 @@ export class CrmAdminPage {
   protected readonly prospectLossReasonOptions = [
     { label: 'No responde', value: 'NO_RESPONDE' },
     { label: 'Numero incorrecto', value: 'NUMERO_INCORRECTO' },
-    { label: 'Sin interes', value: 'SIN_INTERES' },
+    { label: 'Sin interés', value: 'SIN_INTERES' },
     { label: 'No cumple requisitos', value: 'NO_CUMPLE_REQUISITOS' },
     { label: 'Fuera de mercado', value: 'FUERA_DE_MERCADO' },
     { label: 'Duplicado', value: 'DUPLICADO' },
@@ -1093,7 +1106,7 @@ export class CrmAdminPage {
         label: 'Contactos',
         value: this.formatCompactAmount(contacts),
         detail: `${this.automaticLeads().length} leads automaticos`,
-        trend: `+${this.toRate(this.automaticLeads().length, Math.max(this.prospectos().length, 1))}% captacion`,
+        trend: `+${this.toRate(this.automaticLeads().length, Math.max(this.prospectos().length, 1))}% captación`,
         trendTone: 'up',
         icon: 'pi pi-users',
         tone: 'contacts',
@@ -1272,7 +1285,7 @@ export class CrmAdminPage {
           'Indicadores, proceso comercial, pipeline y actividades para dirigir el equipo.',
       },
       captacion: {
-        eyebrow: 'Captacion comercial',
+        eyebrow: 'Captación comercial',
         title: 'Prospectos y leads',
         description:
           'Revisa entradas nuevas, leads automaticos y contactos que necesitan primera gestion.',
@@ -1296,11 +1309,11 @@ export class CrmAdminPage {
       cotizaciones: {
         eyebrow: 'Propuestas comerciales',
         title: 'Cotizaciones',
-        description: 'Revisa propuestas enviadas y mueve las que respondan hacia negociacion.',
+        description: 'Revisa las propuestas enviadas y mueve las que respondan hacia negociación.',
       },
       negociacion: {
-        eyebrow: 'Negociacion comercial',
-        title: 'Negociacion',
+        eyebrow: 'Negociación comercial',
+        title: 'Negociación',
         description: 'Gestiona precio, condiciones y cierre de oportunidades con alta intencion.',
       },
       clientes: {
@@ -1322,16 +1335,16 @@ export class CrmAdminPage {
       },
       administracion: {
         eyebrow: 'Administracion CRM',
-        title: 'Configuracion general',
+        title: 'Configuración general',
         description: 'Ajusta reglas operativas del CRM, etapas, roles y parametros base.',
       },
       administracionGeneral: {
-        eyebrow: 'Configuracion CRM',
-        title: 'Configuracion general',
+        eyebrow: 'Configuración CRM',
+        title: 'Configuración general',
         description: 'Ajusta reglas operativas del CRM, etapas, roles y parametros base.',
       },
       administracionCanales: {
-        eyebrow: 'Captacion e integraciones',
+        eyebrow: 'Captación e integraciones',
         title: 'Canales de entrada',
         description: 'Configura landing web, WhatsApp, Instagram y Facebook para recibir leads.',
       },
@@ -1349,7 +1362,7 @@ export class CrmAdminPage {
         eyebrow: 'Comercial CRM',
         title: 'Promociones',
         description:
-          'Administra descuentos y campanas que el equipo puede aplicar en cotizaciones.',
+          'Administra descuentos y campañas que el equipo puede aplicar en cotizaciones.',
       },
     };
     return meta[this.activeTab()];
@@ -1388,7 +1401,7 @@ export class CrmAdminPage {
       { label: 'Web / landing', value: String(web), icon: 'pi pi-globe', tone: 'violet' },
       { label: 'WhatsApp', value: String(whatsapp), icon: 'pi pi-whatsapp', tone: 'green' },
       { label: 'Redes sociales', value: String(social), icon: 'pi pi-share-alt', tone: 'amber' },
-      { label: 'Campanias activas', value: String(campaigns), icon: 'pi pi-filter', tone: 'rose' },
+      { label: 'Campañas activas', value: String(campaigns), icon: 'pi pi-filter', tone: 'rose' },
     ];
   });
 
@@ -1398,7 +1411,7 @@ export class CrmAdminPage {
   ]);
 
   protected readonly prospectCampaniaFilterOptions = computed(() => [
-    { label: 'Campania', value: 'TODOS' },
+    { label: 'Campaña', value: 'TODOS' },
     ...this.uniqueProspectValues('campania').map((value) => ({ label: value, value })),
   ]);
 
@@ -1488,7 +1501,7 @@ export class CrmAdminPage {
       )
       .filter((item) => estado === 'TODOS' || item.estado === estado)
       .filter((item) => origen === 'TODOS' || item.origen === origen)
-      .filter((item) => campania === 'TODOS' || (item.campania || 'Sin campania') === campania)
+      .filter((item) => campania === 'TODOS' || (item.campania || 'Sin campaña') === campania)
       .filter((item) => asesor === 'TODOS' || item.responsableId === asesor)
       .filter((item) => this.matchesProspectDateRange(item, dateFrom, dateTo))
       .sort(
@@ -1917,7 +1930,7 @@ export class CrmAdminPage {
           probability: Number(item.probabilidad || 0),
           ownerName: this.responsibleName(item.responsableId),
           ownerInitials: this.ownerInitials(item.responsableId),
-          nextAction: nextActivity?.asunto || 'Sin proxima accion',
+          nextAction: nextActivity?.asunto || 'Sin próxima acción',
           nextActionDue: nextActivity
             ? this.activityRelativeLabel(nextActivity.fechaProgramada)
             : 'Programar ahora',
@@ -2098,7 +2111,7 @@ export class CrmAdminPage {
     { label: 'Estado: Todas', value: null },
     { label: 'Activas', value: 'ABIERTA' },
     { label: 'Ganadas', value: 'GANADA' },
-    { label: 'Perdidas', value: 'PERDIDA' },
+    { label: 'Pérdidas', value: 'PERDIDA' },
   ];
 
   protected readonly clientOutcomeFilterOptions = [
@@ -2189,7 +2202,7 @@ export class CrmAdminPage {
       })),
       ...this.selectedOpportunityQuotes().map((quote) => ({
         id: `quote-${quote.id}`,
-        title: `Cotizacion ${this.quoteStatusLabel(quote)}`,
+        title: `Cotización ${this.quoteStatusLabel(quote)}`,
         detail: `COT-${String(quote.id).padStart(3, '0')} - S/ ${Number(quote.total || 0).toFixed(2)}`,
         date: quote.fechaEmision || new Date().toISOString(),
         icon: 'pi pi-file-edit',
@@ -2197,7 +2210,7 @@ export class CrmAdminPage {
       })),
       ...this.selectedOpportunityNegotiations().map((record) => ({
         id: `negotiation-${record.id}`,
-        title: `Negociacion ${this.humanize(record.resultado)}`,
+        title: `Negociación ${this.humanize(record.resultado)}`,
         detail: `Precio final S/ ${Number(record.precioFinal || 0).toFixed(2)} - ${record.formaPago || 'Sin forma de pago'}`,
         date: record.createdAt,
         icon: 'pi pi-handshake',
@@ -2252,7 +2265,7 @@ export class CrmAdminPage {
         ? [
             {
               tab: 'negociacion' as OpportunityDetailTab,
-              label: 'Negociacion',
+              label: 'Negociación',
               icon: 'pi pi-handshake',
               count: this.selectedOpportunityNegotiations().length,
             },
@@ -2339,7 +2352,7 @@ export class CrmAdminPage {
         count: quoted.length,
         items,
         tableTitle: 'Cotizaciones recientes',
-        tableAction: 'Nueva cotizacion',
+        tableAction: 'Nueva cotización',
         emptyMessage: 'No hay cotizaciones en seguimiento.',
         metrics: [
           {
@@ -2364,7 +2377,7 @@ export class CrmAdminPage {
             label: 'Tasa avance',
             value: `${quotedToNegotiation}%`,
             delta: this.deltaLabel(quotedToNegotiation, 0, true),
-            detail: 'hacia negociacion',
+            detail: 'hacia negociación',
           },
         ],
       };
@@ -2374,18 +2387,18 @@ export class CrmAdminPage {
       return {
         tab,
         index: 5,
-        title: 'Negociacion',
+        title: 'Negociación',
         detail: 'Precio y cierre',
         icon: 'pi pi-handshake',
         tone: 'teal',
         count: negotiation.length,
         items,
         tableTitle: 'Negociaciones activas',
-        tableAction: 'Nueva negociacion',
-        emptyMessage: 'No hay oportunidades en negociacion.',
+        tableAction: 'Nueva negociación',
+        emptyMessage: 'No hay oportunidades en negociación.',
         metrics: [
           {
-            label: 'En negociacion',
+            label: 'En negociación',
             value: String(negotiation.length),
             delta: this.deltaLabel(negotiation.length, 0),
             detail: 'vs mes anterior',
@@ -2397,7 +2410,7 @@ export class CrmAdminPage {
             detail: 'vs mes anterior',
           },
           {
-            label: 'Interes promedio',
+            label: 'Interés promedio',
             value: this.opportunityTemperatureLabel(averageProbability),
             delta: this.deltaLabel(averageProbability, 0, true),
             detail: 'vs mes anterior',
@@ -2489,7 +2502,7 @@ export class CrmAdminPage {
           detail: 'vs mes anterior',
         },
         {
-          label: 'Interes frio',
+          label: 'Interés frío',
           value: String(risk),
           delta: risk ? 'Atencion requerida' : 'Sin riesgo critico',
           detail: 'requiere impulso comercial',
@@ -2780,7 +2793,7 @@ export class CrmAdminPage {
         selected: this.isSelectedFollowUpCard(card),
         avatarTone: this.prospectAvatarTone(card.prospecto.id),
         initials: this.prospectInitials(card.prospecto),
-        contact: card.prospecto.telefono || card.prospecto.correo || 'Sin telefono/correo',
+        contact: card.prospecto.telefono || card.prospecto.correo || 'Sin teléfono ni correo',
         originLabel: this.humanize(origin),
         originTone: origin.toLowerCase(),
         offer:
@@ -3228,7 +3241,7 @@ export class CrmAdminPage {
         this.incomingNewLeads()
           .map((item) => {
             if (field === 'campania') {
-              return item.campania?.trim() || 'Sin campania';
+              return item.campania?.trim() || 'Sin campaña';
             }
             return String(item[field] || '').trim();
           })
@@ -3279,7 +3292,7 @@ export class CrmAdminPage {
   }
 
   protected prospectCampaignLabel(item: CrmProspecto): string {
-    return item.campania?.trim() || 'Sin campania';
+    return item.campania?.trim() || 'Sin campaña';
   }
 
   protected prospectOriginIcon(item: CrmProspecto): string {
@@ -3331,16 +3344,23 @@ export class CrmAdminPage {
   public openEditProspect(item: CrmProspecto): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
+    const countryCode = item.paisCodigo || this.defaultProspectCountryCode();
+    const phoneDialCode = prospectPhoneDialCodeFromValue(item.telefono, countryCode);
+    const phoneCountry =
+      phoneCountryForNumber(item.telefono, countryCode) ||
+      phoneCountryForDialCode(phoneDialCode, countryCode);
     this.prospectForm = {
       id: item.id,
       tipoPersona: this.normalizeProspectPersonType(item.tipoPersona),
-      paisCodigo: item.paisCodigo || this.defaultProspectCountryCode(),
+      paisCodigo: countryCode,
       tipoDocumento: item.tipoDocumento || '',
       numeroDocumento: item.numeroDocumento || '',
       nombre: item.nombre || '',
       razonSocial: item.razonSocial || '',
       nombreComercial: item.nombreComercial || '',
-      telefono: item.telefono || '',
+      telefonoPaisCodigo: phoneCountry?.code || '',
+      telefonoCodigoPais: phoneDialCode,
+      telefono: prospectLocalPhone(item.telefono, countryCode, phoneDialCode),
       correo: item.correo || '',
       direccion: item.direccion || '',
       origen: item.origen || 'WHATSAPP',
@@ -3412,6 +3432,22 @@ export class CrmAdminPage {
       return;
     }
     if (
+      this.prospectForm.telefono.trim() &&
+      !/^[1-9]\d{0,3}$/.test(this.prospectForm.telefonoCodigoPais.trim())
+    ) {
+      this.errorMessage.set('Ingresa un código telefónico internacional válido.');
+      return;
+    }
+    const telefono = prospectPhoneE164(
+      this.prospectForm.telefono,
+      this.prospectForm.paisCodigo,
+      this.prospectForm.telefonoCodigoPais,
+    );
+    if (telefono && (telefono.length < 8 || telefono.length > 15)) {
+      this.errorMessage.set('Ingresa un teléfono válido para el país seleccionado.');
+      return;
+    }
+    if (
       !this.prospectForm.catalogoItemId &&
       this.catalogoItems().some((item) => item.estado === 'ACTIVO')
     ) {
@@ -3429,7 +3465,7 @@ export class CrmAdminPage {
       nombreComercial: this.isCompanyProspect()
         ? this.prospectForm.nombreComercial.trim() || null
         : null,
-      telefono: this.prospectForm.telefono.trim() || null,
+      telefono: telefono ? `+${telefono}` : null,
       correo: this.prospectForm.correo.trim() || null,
       direccion: this.prospectForm.direccion.trim() || null,
       origen: this.prospectForm.origen,
@@ -3545,6 +3581,7 @@ export class CrmAdminPage {
       nombre: item.nombre,
       descripcion: item.descripcion || '',
       precioReferencial: Number(item.precioReferencial || 0),
+      moneda: item.moneda || this.tenantBaseCurrencyCode(),
       estado: item.estado || 'ACTIVO',
       metadataJson: item.metadataJson || '',
       publicEnabled: item.publicEnabled !== false,
@@ -3579,6 +3616,10 @@ export class CrmAdminPage {
     }
     if (Number(this.catalogoForm.precioReferencial || 0) < 0) {
       this.errorMessage.set('El precio referencial no puede ser negativo.');
+      return;
+    }
+    if (!this.catalogoForm.moneda) {
+      this.errorMessage.set('Selecciona la moneda del precio referencial.');
       return;
     }
     const missingField = registration.fields.find(
@@ -3625,6 +3666,7 @@ export class CrmAdminPage {
       nombre: this.catalogoForm.nombre.trim(),
       descripcion: this.catalogoForm.descripcion.trim(),
       precioReferencial: Number(this.catalogoForm.precioReferencial || 0),
+      moneda: this.catalogoForm.moneda,
       estado: this.catalogoForm.estado,
       metadataJson: this.buildCatalogMetadata(),
       publicEnabled: this.catalogoForm.publicEnabled,
@@ -3733,8 +3775,51 @@ export class CrmAdminPage {
     if (value <= 0) {
       return 'Precio por cotizar';
     }
-    const symbol = this.auth.currentSession()?.empresa?.monedaSimbolo || 'S/';
+    const symbol = this.catalogCurrencyPrefix(this.catalogoForm.moneda);
     return `${symbol} ${new Intl.NumberFormat('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`;
+  }
+
+  public catalogCurrencyOptions(): { label: string; value: string }[] {
+    return this.availableCurrencyOptions(this.catalogoForm.moneda);
+  }
+
+  public tenantBaseCurrencyCode(): string {
+    return (this.auth.currentSession()?.empresa?.monedaCodigo || 'PEN').toUpperCase();
+  }
+
+  public tenantBaseCurrencySymbol(): string {
+    return this.auth.currentSession()?.empresa?.monedaSimbolo || this.tenantBaseCurrencyCode();
+  }
+
+  private availableCurrencyOptions(retainedCurrency?: string | null): { label: string; value: string }[] {
+    const baseCode = this.tenantBaseCurrencyCode();
+    const baseSymbol = this.tenantBaseCurrencySymbol();
+    const retainedCode = retainedCurrency?.toUpperCase();
+    const options = [
+      { label: `${baseCode} - Moneda base (${baseSymbol})`, value: baseCode },
+      ...this.crmCurrencyConfigs()
+        .filter(
+          (currency) =>
+            currency.moneda !== baseCode && (currency.activo || currency.moneda === retainedCode),
+        )
+        .map((currency) => ({
+          label: `${currency.moneda} - ${currency.nombre} (${currency.simbolo})`,
+          value: currency.moneda,
+        })),
+    ];
+    return [...new Map(options.map((option) => [option.value, option])).values()];
+  }
+
+  public catalogCurrencyPrefix(moneda: string | null | undefined): string {
+    const currencyCode = (moneda || this.tenantBaseCurrencyCode()).toUpperCase();
+    if (currencyCode === this.tenantBaseCurrencyCode()) {
+      return this.tenantBaseCurrencySymbol();
+    }
+    return (
+      this.crmCurrencyConfigs().find((currency) => currency.moneda === currencyCode)?.simbolo ||
+      ({ PEN: 'S/', USD: 'US$', EUR: '€' } as Record<string, string>)[currencyCode] ||
+      currencyCode
+    );
   }
 
   public catalogPreviewAttributes(): Array<{ label: string; value: string }> {
@@ -3796,11 +3881,76 @@ export class CrmAdminPage {
     const country = prospectCountry(value);
     const previousDocumentType = this.prospectForm.tipoDocumento;
     this.prospectForm.paisCodigo = country.code;
+    this.prospectForm.telefonoPaisCodigo = country.code;
+    this.prospectForm.telefonoCodigoPais = prospectPhoneDialCode(country.code);
     const firstDocument = this.prospectDocumentOptions()[0]?.value || '';
     this.prospectForm.tipoDocumento = firstDocument;
     if (previousDocumentType !== firstDocument) {
       this.prospectForm.numeroDocumento = '';
     }
+  }
+
+  public onProspectPhoneChange(value: string | null): void {
+    const rawValue = String(value || '').trim();
+    if (/^(?:\+|00)/.test(rawValue)) {
+      const detectedCountry = phoneCountryForNumber(
+        rawValue,
+        this.prospectForm.telefonoPaisCodigo || this.prospectForm.paisCodigo,
+      );
+      if (detectedCountry) {
+        this.prospectForm.telefonoPaisCodigo = detectedCountry.code;
+        this.prospectForm.telefonoCodigoPais = detectedCountry.dialCode;
+      }
+    }
+    this.prospectForm.telefono = prospectLocalPhone(
+      rawValue,
+      this.prospectForm.paisCodigo,
+      this.prospectForm.telefonoCodigoPais,
+    );
+  }
+
+  public onProspectPhoneCountryChange(value: string | null): void {
+    const country = phoneCountryByCode(value);
+    if (!country) {
+      return;
+    }
+    this.prospectForm.telefonoPaisCodigo = country.code;
+    this.prospectForm.telefonoCodigoPais = country.dialCode;
+  }
+
+  public onProspectPhoneDialCodeChange(value: string | null): void {
+    const dialCode = String(value || '')
+      .replace(/\D/g, '')
+      .slice(0, 4);
+    this.prospectForm.telefonoCodigoPais = dialCode;
+    this.prospectForm.telefonoPaisCodigo =
+      phoneCountryForDialCode(
+        dialCode,
+        this.prospectForm.telefonoPaisCodigo || this.prospectForm.paisCodigo,
+      )?.code || '';
+  }
+
+  public prospectPhoneCountryName(): string {
+    return (
+      phoneCountryByCode(this.prospectForm.telefonoPaisCodigo)?.name ||
+      'Código internacional personalizado'
+    );
+  }
+
+  public prospectPhoneDialCode(): string {
+    return normalizeProspectPhoneDialCode(
+      this.prospectForm.telefonoCodigoPais,
+      this.prospectForm.paisCodigo,
+    );
+  }
+
+  public prospectPhonePreview(): string | null {
+    const phone = prospectPhoneE164(
+      this.prospectForm.telefono,
+      this.prospectForm.paisCodigo,
+      this.prospectForm.telefonoCodigoPais,
+    );
+    return phone ? `+${phone}` : null;
   }
 
   public prospectDocumentOptions(): { label: string; value: string }[] {
@@ -6170,7 +6320,7 @@ export class CrmAdminPage {
       return;
     }
     this.selectedOpportunity.set(item);
-    this.quoteForm = this.emptyQuoteForm();
+    this.quoteForm = this.emptyQuoteForm(this.opportunityCatalogItem(item)?.moneda);
     this.quoteForm.oportunidadId = item.id;
     this.quoteForm.clienteId = item.clienteId ?? null;
     this.quoteForm.sucursalId = this.defaultQuoteSucursalId();
@@ -6194,7 +6344,7 @@ export class CrmAdminPage {
       return;
     }
     this.selectedOpportunity.set(opportunity);
-    this.quoteForm = this.emptyQuoteForm();
+    this.quoteForm = this.emptyQuoteForm(quote.moneda);
     this.quoteForm.oportunidadId = opportunity.id;
     this.quoteForm.clienteId = quote.clienteId ?? opportunity.clienteId ?? null;
     this.quoteForm.sucursalId = quote.sucursalId ?? this.defaultQuoteSucursalId();
@@ -6270,6 +6420,120 @@ export class CrmAdminPage {
 
   public requirementTotal(item: OpportunityRequirementRecord): number {
     return Math.max(0, Number(item.cantidad || 0) * Number(item.precioUnitario || 0));
+  }
+
+  public requirementCatalogItem(item: OpportunityRequirementRecord): CrmCatalogoItem | null {
+    if (!item.catalogoItemId) {
+      return null;
+    }
+    return this.catalogoItems().find((catalogo) => catalogo.id === item.catalogoItemId) ?? null;
+  }
+
+  public requirementCurrencyPrefix(item: OpportunityRequirementRecord): string {
+    return this.catalogCurrencyPrefix(
+      this.requirementCatalogItem(item)?.moneda || this.tenantBaseCurrencyCode(),
+    );
+  }
+
+  public requirementQuantityLabel(item: OpportunityRequirementRecord): string {
+    return this.requirementCatalogItem(item)?.tipoItem === 'CURSO'
+      ? 'Participantes / Cantidad'
+      : 'Cantidad solicitada';
+  }
+
+  public requirementDescription(item: OpportunityRequirementRecord): string {
+    return (
+      this.requirementCatalogItem(item)?.descripcion ||
+      item.observacion ||
+      'Sin descripcion comercial registrada.'
+    );
+  }
+
+  public requirementObservation(item: OpportunityRequirementRecord): string | null {
+    const observation = item.observacion.trim();
+    return observation && observation !== this.requirementCatalogItem(item)?.descripcion
+      ? observation
+      : null;
+  }
+
+  public catalogCommercialAttributes(
+    item: CrmCatalogoItem | null | undefined,
+  ): Array<{ key: string; label: string; value: string }> {
+    if (!item) {
+      return [];
+    }
+    const attributes = this.extractCatalogAttributes(item.metadataJson);
+    const fields = this.catalogRegistrationDefinition(
+      this.normalizeOpportunityType(item.tipoItem),
+    ).fields;
+    const labelByKey = new Map(fields.map((field) => [field.key, field.label]));
+    return Object.entries(attributes)
+      .filter(([, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => ({
+        key,
+        label: labelByKey.get(key) || this.humanize(key),
+        value: String(value),
+      }));
+  }
+
+  public requirementFormCatalogItem(): CrmCatalogoItem | null {
+    const catalogoItemId = Number(this.requirementForm.catalogoItemId);
+    if (!Number.isFinite(catalogoItemId)) {
+      return null;
+    }
+    return this.catalogoItems().find((item) => item.id === catalogoItemId) ?? null;
+  }
+
+  public requirementFormAttributes(): Array<{ key: string; label: string; value: string }> {
+    return this.catalogCommercialAttributes(this.requirementFormCatalogItem());
+  }
+
+  public requirementFormTypeMeta(fallbackType: string | null | undefined) {
+    return this.opportunityTypeMeta(
+      this.normalizeOpportunityType(this.requirementFormCatalogItem()?.tipoItem || fallbackType),
+    );
+  }
+
+  public requirementFormCurrencyCode(): string {
+    return (this.requirementFormCatalogItem()?.moneda || this.tenantBaseCurrencyCode()).toUpperCase();
+  }
+
+  public requirementFormCurrencyPrefix(): string {
+    return this.catalogCurrencyPrefix(this.requirementFormCurrencyCode());
+  }
+
+  public requirementFormDescription(): string {
+    return (
+      this.requirementFormCatalogItem()?.descripcion ||
+      this.requirementForm.observacion ||
+      'Selecciona una oferta para consultar su descripcion comercial.'
+    );
+  }
+
+  public requirementFormQuantityLabel(): string {
+    return this.requirementFormCatalogItem()?.tipoItem === 'CURSO'
+      ? 'Participantes / Cantidad'
+      : 'Cantidad solicitada';
+  }
+
+  public requirementFormTotal(): number {
+    return Math.max(
+      0,
+      Number(this.requirementForm.cantidad || 0) *
+        Number(this.requirementForm.precioUnitario || 0),
+    );
+  }
+
+  public requirementContactInitials(item: CrmOportunidad): string {
+    return this.contactInitials(this.opportunityContactName(item));
+  }
+
+  public requirementContactPhone(item: CrmOportunidad): string {
+    return this.opportunityContactPhone(item) || 'Sin telefono registrado';
+  }
+
+  public requirementContactEmail(item: CrmOportunidad): string {
+    return this.opportunityContactEmail(item) || 'Sin correo registrado';
   }
 
   public opportunityRequirementChecklist(item: CrmOportunidad) {
@@ -6944,44 +7208,39 @@ export class CrmAdminPage {
   }
 
   public quoteCurrencyOptions(): { label: string; value: string }[] {
-    const foreign = this.crmCurrencyConfigs()
-      .filter((currency) => currency.activo)
-      .map((currency) => ({
-        label: `${currency.moneda} - ${currency.nombre}`,
-        value: currency.moneda,
-      }));
-    return [{ label: 'PEN - Soles', value: 'PEN' }, ...foreign];
+    return this.availableCurrencyOptions(this.quoteForm.moneda);
   }
 
   public quoteCurrencyPrefix(moneda: string = this.quoteForm.moneda): string {
-    if (moneda === 'PEN') {
-      return 'S/';
-    }
-    return (
-      this.crmCurrencyConfigs().find((currency) => currency.moneda === moneda)?.simbolo || moneda
-    );
+    return this.catalogCurrencyPrefix(moneda);
   }
 
   public quoteCurrencyInfo(moneda: string = this.quoteForm.moneda): CrmCurrencyConfig | null {
-    if (moneda === 'PEN') {
+    if (moneda === this.tenantBaseCurrencyCode()) {
       return null;
     }
     return this.crmCurrencyConfigs().find((currency) => currency.moneda === moneda) ?? null;
   }
 
   public onQuoteCurrencyChange(moneda: string): void {
-    const nextCurrency = moneda || 'PEN';
-    const currentCurrency = this.quoteForm.moneda || 'PEN';
+    const nextCurrency = moneda || this.tenantBaseCurrencyCode();
+    const currentCurrency = this.quoteForm.moneda || this.tenantBaseCurrencyCode();
     if (nextCurrency === currentCurrency) {
       return;
     }
     const currentRate = this.quoteExchangeRate(currentCurrency);
     const nextRate = this.quoteExchangeRate(nextCurrency);
+    if (currentRate === null || nextRate === null) {
+      this.errorMessage.set(
+        `Configura y activa el tipo de cambio de ${currentRate === null ? currentCurrency : nextCurrency} antes de convertir la cotización.`,
+      );
+      return;
+    }
     this.quoteForm.detalles.forEach((line) => {
-      const priceInPen = Number(line.precioUnitario || 0) * currentRate;
-      const discountInPen = Number(line.descuento || 0) * currentRate;
-      line.precioUnitario = this.roundMoney(priceInPen / nextRate);
-      line.descuento = this.roundMoney(discountInPen / nextRate);
+      const priceInBaseCurrency = Number(line.precioUnitario || 0) * currentRate;
+      const discountInBaseCurrency = Number(line.descuento || 0) * currentRate;
+      line.precioUnitario = this.roundMoney(priceInBaseCurrency / nextRate);
+      line.descuento = this.roundMoney(discountInBaseCurrency / nextRate);
     });
     this.quoteForm.moneda = nextCurrency;
   }
@@ -7000,9 +7259,24 @@ export class CrmAdminPage {
       return;
     }
     line.descripcion = catalogo.nombre;
+    const sourceRate = this.quoteExchangeRate(catalogo.moneda);
+    const targetRate = this.quoteExchangeRate(this.quoteForm.moneda);
+    if (sourceRate === null || targetRate === null) {
+      this.errorMessage.set(
+        `Configura y activa el tipo de cambio de ${sourceRate === null ? catalogo.moneda : this.quoteForm.moneda} antes de agregar este producto.`,
+      );
+      return;
+    }
     line.precioUnitario = this.roundMoney(
-      Number(catalogo.precioReferencial || 0) / this.quoteExchangeRate(this.quoteForm.moneda),
+      (Number(catalogo.precioReferencial || 0) * sourceRate) / targetRate,
     );
+  }
+
+  public quoteLineCatalogItem(line: QuoteLineForm): CrmCatalogoItem | null {
+    if (!line.catalogoItemId) {
+      return null;
+    }
+    return this.catalogoItems().find((item) => item.id === line.catalogoItemId) ?? null;
   }
 
   public lineTotal(line: QuoteLineForm): number {
@@ -7040,11 +7314,13 @@ export class CrmAdminPage {
     return this.quoteForm.detalles.reduce((sum, line) => sum + this.lineTotal(line), 0);
   }
 
-  private quoteExchangeRate(moneda: string): number {
-    if (!moneda || moneda === 'PEN') {
+  private quoteExchangeRate(moneda: string): number | null {
+    if (!moneda || moneda === this.tenantBaseCurrencyCode()) {
       return 1;
     }
-    return Number(this.quoteCurrencyInfo(moneda)?.tipoCambioVenta || 1) || 1;
+    const currency = this.quoteCurrencyInfo(moneda);
+    const rate = Number(currency?.tipoCambioVenta || 0);
+    return currency?.activo && rate > 0 ? rate : null;
   }
 
   private roundMoney(value: number): number {
@@ -7122,6 +7398,7 @@ export class CrmAdminPage {
       .filter((line) => (line.productoId || line.descripcion.trim()) && Number(line.cantidad) > 0)
       .map((line) => ({
         productoId: line.productoId ? Number(line.productoId) : null,
+        catalogoItemId: line.catalogoItemId ? Number(line.catalogoItemId) : null,
         promocionId: line.promocionId ? Number(line.promocionId) : null,
         descripcion: line.descripcion.trim() || null,
         cantidad: this.normalizeQuoteQuantity(line.cantidad),
@@ -7153,7 +7430,7 @@ export class CrmAdminPage {
               'Usuario',
             sucursalId,
             fechaVencimiento: this.quoteForm.fechaVencimiento || null,
-            moneda: this.quoteForm.moneda || 'PEN',
+            moneda: this.quoteForm.moneda || this.tenantBaseCurrencyCode(),
             observacion: this.quoteForm.observacion.trim() || null,
             crmOportunidadId: oportunidadId,
             detalles,
@@ -7896,13 +8173,13 @@ export class CrmAdminPage {
 
   protected quoteOpportunityTitle(item: Cotizacion): string {
     const opportunity = this.opportunityForQuote(item);
-    return opportunity?.titulo || item.detalles?.[0]?.descripcion || 'Cotizacion comercial';
+    return opportunity?.titulo || item.detalles?.[0]?.descripcion || 'Cotización comercial';
   }
 
   public quoteNextStep(item: Cotizacion): string {
     const status = this.quoteStatusValue(item);
     if (status === 'BORRADOR') {
-      return 'Enviar cotizacion';
+      return 'Enviar cotización';
     }
     if (status === 'ENVIADA') {
       return 'Dar seguimiento';
@@ -7914,7 +8191,7 @@ export class CrmAdminPage {
       return 'Aceptada en primera instancia';
     }
     if (status === 'NEGOCIACION') {
-      return 'Cliente pidio ajuste o mejores condiciones';
+      return 'El cliente pidió un ajuste o mejores condiciones';
     }
     if (status === 'RECHAZADA') {
       return 'Cerrada rechazada';
@@ -8027,7 +8304,7 @@ export class CrmAdminPage {
       return 'Enviado por WhatsApp';
     }
     if (item.whatsappSendStatus === 'UNKNOWN') {
-      return 'Verificar envio';
+      return 'Verificar envío';
     }
     return 'WhatsApp';
   }
@@ -8077,7 +8354,7 @@ export class CrmAdminPage {
       this.clientCompletionQuote.set(null);
     }
     if (!this.quoteContactEmail(item)) {
-      this.errorMessage.set('El contacto no tiene correo para enviar la cotizacion.');
+      this.errorMessage.set('El contacto no tiene correo electrónico para enviar la cotización.');
       return;
     }
     const opportunityId =
@@ -8096,7 +8373,7 @@ export class CrmAdminPage {
           if (saved.crmOportunidadId) {
             this.refreshOpportunityQuotes(Number(saved.crmOportunidadId));
           }
-          this.successMessage.set(`Cotizacion enviada correctamente a ${destinatario}.`);
+          this.successMessage.set(`Cotización enviada correctamente a ${destinatario}.`);
           this.crmOpportunities.list().subscribe({
             next: (oportunidades) => {
               this.oportunidades.set(oportunidades);
@@ -8122,7 +8399,7 @@ export class CrmAdminPage {
         estado: 'ENVIADA',
         canalEnvio,
       },
-      'Cotizacion marcada como enviada.',
+      'Cotización marcada como enviada.',
     );
   }
 
@@ -8137,7 +8414,7 @@ export class CrmAdminPage {
         canalEnvio: item.canalEnvio || 'WHATSAPP',
         proximoSeguimientoEn: next.toISOString(),
       },
-      'Cotizacion en seguimiento.',
+      'Cotización en seguimiento.',
     );
   }
 
@@ -8148,7 +8425,7 @@ export class CrmAdminPage {
         estado: 'NEGOCIACION',
         decisionSiguiente: 'NEGOCIACION',
       },
-      'Cliente no acepto la propuesta tal como esta. Oportunidad enviada a negociacion.',
+      'El cliente no aceptó la propuesta tal como está. La oportunidad pasó a negociación.',
       'NEGOCIACION',
     );
   }
@@ -8160,7 +8437,7 @@ export class CrmAdminPage {
         estado: 'ACEPTADA',
         decisionSiguiente: 'VENTA',
       },
-      'Cliente acepto condiciones. Oportunidad enviada a negociacion para confirmar cierre.',
+      'El cliente aceptó las condiciones. La oportunidad pasó a negociación para confirmar el cierre.',
       'NEGOCIACION',
     );
   }
@@ -8172,7 +8449,7 @@ export class CrmAdminPage {
         estado: 'RECHAZADA',
         motivoRechazo: 'Rechazada desde CRM',
       },
-      'Cotizacion rechazada.',
+      'Cotización rechazada.',
     );
   }
 
@@ -8213,19 +8490,19 @@ export class CrmAdminPage {
       maximumFractionDigits: 2,
     });
     const dueDate = item.fechaVencimiento ? ` Vigencia: ${item.fechaVencimiento}.` : '';
-    const observation = item.observacion ? `\n\nObservacion: ${item.observacion}` : '';
-    return `Hola ${contactName}, te comparto la cotizacion COT-${String(item.id).padStart(3, '0')} por ${opportunityTitle}. Total: S/ ${amount}.${dueDate}${observation}`;
+    const observation = item.observacion ? `\n\nObservación: ${item.observacion}` : '';
+    return `Hola ${contactName}, te comparto la cotización COT-${String(item.id).padStart(3, '0')} por ${opportunityTitle}. Total: S/ ${amount}.${dueDate}${observation}`;
   }
 
   protected savePromotion(): void {
     const codigo = this.promotionForm.codigo.trim();
     const nombre = this.promotionForm.nombre.trim();
     if (!codigo || !nombre) {
-      this.errorMessage.set('Indica codigo y nombre de la promocion.');
+      this.errorMessage.set('Indica el código y el nombre de la promoción.');
       return;
     }
     if (Number(this.promotionForm.valor || 0) < 0) {
-      this.errorMessage.set('El valor de la promocion no puede ser negativo.');
+      this.errorMessage.set('El valor de la promoción no puede ser negativo.');
       return;
     }
     this.saving.set(true);
@@ -8630,8 +8907,8 @@ export class CrmAdminPage {
           ],
           [
             'INTERES_CONFIRMADO',
-            'Interes confirmado',
-            'Debe existir interes real o una actividad que confirme la necesidad.',
+            'Interés confirmado',
+            'Debe existir interés real o una actividad que confirme la necesidad.',
             true,
             hasConfirmedInterest || hasMediumInterest || hasOffer,
             'activity',
@@ -8659,24 +8936,24 @@ export class CrmAdminPage {
         return make([
           [
             'COTIZACION_CREADA',
-            'Crear cotizacion',
-            'Genera una cotizacion desde la oportunidad antes de moverla a cotizado.',
+            'Crear cotización',
+            'Genera una cotización desde la oportunidad antes de moverla a cotizado.',
             true,
             hasQuote,
             'quote',
           ],
           [
             'COTIZACION_ENVIADA',
-            'Cotizacion enviada',
-            'Marca la cotizacion como enviada por WhatsApp o correo para congelar el pase a cotizado.',
+            'Cotización enviada',
+            'Marca la cotización como enviada por WhatsApp o correo para confirmar el pase a Cotizado.',
             true,
             hasSentQuote,
             'quote',
           ],
           [
             'SEGUIMIENTO_COTIZACION',
-            'Programar seguimiento de cotizacion',
-            'Agenda una llamada o mensaje posterior al envio.',
+            'Programar seguimiento de cotización',
+            'Agenda una llamada o mensaje posterior al envío.',
             false,
             hasFutureActivity,
             'activity',
@@ -8686,8 +8963,8 @@ export class CrmAdminPage {
         return make([
           [
             'COTIZACION_PREVIA',
-            'Cotizacion o propuesta previa',
-            'La negociacion debe partir de una propuesta enviada.',
+            'Cotización o propuesta previa',
+            'La negociación debe partir de una propuesta enviada.',
             true,
             hasQuote,
             'quote',
@@ -8695,7 +8972,7 @@ export class CrmAdminPage {
           [
             'OBJECIONES',
             'Registrar objeciones o condiciones',
-            'Anota precio, pago, garantia o alcance que se esta negociando.',
+            'Anota el precio, el pago, la garantía o el alcance que se está negociando.',
             false,
             !!item.descripcion,
             'detail',
@@ -8703,14 +8980,14 @@ export class CrmAdminPage {
           [
             'FECHA_CIERRE',
             'Fecha probable de cierre',
-            'Define cuando se espera cerrar la negociacion.',
+            'Define cuándo se espera cerrar la negociación.',
             true,
             hasCloseDate,
             'detail',
           ],
           [
             'PROXIMA_ACCION',
-            'Proxima accion comercial',
+            'Próxima acción comercial',
             'Mantener una actividad futura evita oportunidades abandonadas.',
             true,
             hasFutureActivity,
@@ -8745,8 +9022,8 @@ export class CrmAdminPage {
           ],
           [
             'CONFIRMACION_CIERRE',
-            'Confirmacion de cierre',
-            'Usa Marcar ganado cuando el cierre ya este confirmado.',
+            'Confirmación de cierre',
+            'Usa «Marcar ganado» cuando el cierre ya esté confirmado.',
             false,
             item.estado === 'GANADA',
             'quote',
@@ -8756,15 +9033,15 @@ export class CrmAdminPage {
         return make([
           [
             'MOTIVO_PERDIDA',
-            'Motivo de perdida',
-            'Registra precio, competencia, sin presupuesto u otra razon.',
+            'Motivo de pérdida',
+            'Registra el precio, la competencia, la falta de presupuesto u otra razón.',
             true,
             hasLossReason,
             'lost',
           ],
           [
             'OBSERVACION_FINAL',
-            'Observacion final',
+            'Observación final',
             'Guarda el aprendizaje comercial del caso.',
             false,
             !!item.motivoPerdida || !!item.descripcion,
@@ -8775,7 +9052,7 @@ export class CrmAdminPage {
         return make([
           [
             'REVISION_INFO',
-            'Revisar informacion del prospecto',
+            'Revisar información del prospecto',
             'Valida contacto, empresa y oferta.',
             true,
             !!this.opportunityContactName(item),
@@ -8792,7 +9069,7 @@ export class CrmAdminPage {
           [
             'PRIMERA_ACTIVIDAD',
             'Programar primera actividad',
-            'Agenda una accion inicial de seguimiento.',
+            'Agenda una acción inicial de seguimiento.',
             false,
             hasFutureActivity || hasActivity,
             'activity',
@@ -9022,14 +9299,20 @@ export class CrmAdminPage {
   private quoteLinesFromExistingQuote(quote: Cotizacion): QuoteLineForm[] {
     const lines = (quote.detalles || []).map((detail) => ({
       catalogoItemId:
+        detail.catalogoItemId ??
         this.catalogoItems().find((item) =>
-          (detail.descripcion || detail.productoNombre || '')
+          (detail.catalogoNombre || detail.descripcion || detail.productoNombre || '')
             .toLowerCase()
             .includes(item.nombre.toLowerCase()),
-        )?.id ?? null,
+        )?.id ??
+        null,
       productoId: detail.productoId ?? null,
       promocionId: detail.promocionId ?? null,
-      descripcion: detail.descripcion || detail.productoNombre || 'Ajuste de cotizacion',
+      descripcion:
+        detail.catalogoNombre ||
+        detail.descripcion ||
+        detail.productoNombre ||
+        'Ajuste de cotizacion',
       cantidad: this.normalizeQuoteQuantity(detail.cantidad),
       precioUnitario: Math.max(0, Number(detail.precioUnitario || 0)),
       descuento: Math.max(0, Number(detail.descuento || 0)),
@@ -9204,7 +9487,7 @@ export class CrmAdminPage {
             .moverCrmOportunidadEtapa(
               Number(linkedSaved.crmOportunidadId),
               Number(target.id),
-              `Movimiento automatico por cotizacion COT-${String(linkedSaved.id).padStart(3, '0')}: ${this.quoteStatusLabel(linkedSaved)}`,
+              `Movimiento automático por cotización COT-${String(linkedSaved.id).padStart(3, '0')}: ${this.quoteStatusLabel(linkedSaved)}`,
             )
             .pipe(map((opportunity) => ({ saved: linkedSaved, opportunity })));
         }),
@@ -9297,6 +9580,7 @@ export class CrmAdminPage {
       nombre: this.catalogoForm.nombre.trim(),
       descripcion: this.catalogoForm.descripcion.trim() || null,
       precioReferencial: Number(this.catalogoForm.precioReferencial || 0),
+      moneda: this.catalogoForm.moneda,
       atributos,
       source: 'crm-catalogo',
     });
@@ -9556,7 +9840,7 @@ export class CrmAdminPage {
     }
     const interes = String(prospecto.interesReal || prospecto.nivelInteres || '').toUpperCase();
     if (!['MEDIO', 'ALTO', 'TIBIO', 'CALIENTE'].includes(interes)) {
-      missing.push('interes medio o alto');
+      missing.push('interés medio o alto');
     }
     return missing;
   }
@@ -9566,7 +9850,7 @@ export class CrmAdminPage {
   }
 
   public qualificationNeedLabel(prospecto: CrmProspecto): string {
-    return prospecto.necesidadIdentificada ? 'Si' : 'Pendiente';
+    return prospecto.necesidadIdentificada ? 'Sí' : 'Pendiente';
   }
 
   public qualificationInterestLabel(prospecto: CrmProspecto): string {
@@ -9729,6 +10013,7 @@ export class CrmAdminPage {
         nombre: item.nombre,
         descripcion: item.descripcion || null,
         precioReferencial: Number(item.precioReferencial || 0),
+        moneda: item.moneda || this.tenantBaseCurrencyCode(),
         ...extra,
       },
       null,
@@ -9741,7 +10026,7 @@ export class CrmAdminPage {
   }
 
   private emptyCatalogoForm(): CatalogoForm {
-    return createCatalogForm();
+    return createCatalogForm(this.tenantBaseCurrencyCode());
   }
 
   private emptyOpportunityForm(): OpportunityForm {
@@ -9830,8 +10115,8 @@ export class CrmAdminPage {
     this.activityForm.siguienteDescripcion = '';
   }
 
-  private emptyQuoteForm(): QuoteForm {
-    return createQuoteForm();
+  private emptyQuoteForm(currency?: string | null): QuoteForm {
+    return createQuoteForm(currency || this.tenantBaseCurrencyCode());
   }
 
   private emptyPromotionForm(): PromotionForm {

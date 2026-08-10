@@ -9,11 +9,11 @@
     </div>
 
     <div class="toolbar-filters">
-      <label class="channel-selector" [class.channel-selector--connected]="connectionStatus()?.conectado" [title]="connectionStatus()?.message || 'Estado de conexion no comprobado'">
+      <label class="channel-selector" [class.channel-selector--connected]="connectionStatus()?.conectado" [title]="connectionStatus()?.message || 'Estado de conexión no comprobado'">
         <span class="channel-dot"><i class="pi pi-whatsapp"></i></span>
         <span>
           <strong>WhatsApp Meta</strong>
-          <small><i></i> {{ connectionStatus()?.conectado ? 'Canal conectado' : (connectionStatus()?.configuracionCompleta ? 'Conexion pendiente' : 'Configuracion incompleta') }}</small>
+          <small><i></i> {{ connectionStatus()?.conectado ? 'Canal conectado' : (connectionStatus()?.configuracionCompleta ? 'Conexión pendiente' : 'Configuración incompleta') }}</small>
         </span>
       </label>
 
@@ -426,7 +426,7 @@
         <section class="detail-card integration-status" [class.integration-status--connected]="connectionStatus()?.conectado">
           <span><i class="pi pi-shield"></i></span>
           <div>
-            <strong>{{ connectionStatus()?.conectado ? 'Conectado con Meta' : 'Conexion con Meta pendiente' }}</strong>
+            <strong>{{ connectionStatus()?.conectado ? 'Conectado con Meta' : 'Conexión con Meta pendiente' }}</strong>
             <small>{{ connectionStatus()?.message || 'No se pudo comprobar el estado real de la integracion.' }}</small>
           </div>
         </section>

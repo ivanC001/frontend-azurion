@@ -295,5 +295,10 @@
         <router-outlet />
       </div>
     </main>
+
+    <app-current-user-profile-dialog
+      [visible]="profileDialogVisible()"
+      (visibleChange)="profileDialogVisible.set($event)"
+    />
   </div>
 </div>

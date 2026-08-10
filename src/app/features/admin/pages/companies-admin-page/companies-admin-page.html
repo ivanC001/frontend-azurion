@@ -3,7 +3,7 @@
     <div>
       <p class="page-header__eyebrow">Panel administrativo</p>
       <h1>Registro de empresas</h1>
-      <p>Control de tenants, usuarios, planes, cupos, suscripciones y modulos contratados.</p>
+      <p>Control de tenants, usuarios, planes, cupos, suscripciones y módulos contratados.</p>
     </div>
 
     <p-button label="Nueva empresa" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateDialog()" />
@@ -53,7 +53,7 @@
     </article>
     <article class="metric metric--amber">
       <i class="pi pi-th-large"></i>
-      <div><span>Modulos contratables</span><strong>{{ moduleCount() }}</strong></div>
+      <div><span>Módulos contratables</span><strong>{{ moduleCount() }}</strong></div>
     </article>
     <article class="metric metric--cyan">
       <i class="pi pi-users"></i>
@@ -69,7 +69,7 @@
     <div class="table-panel__head">
       <div>
         <h2>Empresas registradas</h2>
-        <p>Consulta identidad, plan, usuarios, cupos y modulos; abre el detalle para ver toda la informacion.</p>
+        <p>Consulta identidad, plan, usuarios, cupos y módulos; abre el detalle para ver toda la información.</p>
       </div>
       <div class="company-filters">
         <span class="search-control">
@@ -105,9 +105,9 @@
           <th>Empresa</th>
           <th>Identificador fiscal</th>
           <th>Tenant tecnico</th>
-          <th>Plan y suscripcion</th>
+          <th>Plan y suscripción</th>
           <th>Usuarios y cupos</th>
-          <th>Modulos</th>
+          <th>Módulos</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -122,7 +122,7 @@
           </td>
           <td>
             <strong>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</strong>
-            <small>{{ summary.empresa.paisNombre || summary.empresa.paisCodigo || 'Pais no registrado' }}</small>
+            <small>{{ summary.empresa.paisNombre || summary.empresa.paisCodigo || 'País no registrado' }}</small>
           </td>
           <td>
             <code>{{ summary.empresa.tenantId }}</code>
@@ -148,7 +148,7 @@
                 }
               </small>
             } @else {
-              <span class="muted">Sin suscripcion</span>
+              <span class="muted">Sin suscripción</span>
             }
           </td>
           <td>
@@ -191,7 +191,7 @@
                 <span>+{{ summary.moduloCodigos.length - 3 }}</span>
               }
               @if (!summary.moduloCodigos.length) {
-                <small class="muted">Sin modulos activos</small>
+                <small class="muted">Sin módulos activos</small>
               }
             </div>
           </td>
@@ -259,7 +259,7 @@
           />
           @if (summary.suscripcion) {
             <p-tag
-              [value]="'Suscripcion ' + summary.suscripcion.estado"
+              [value]="'Suscripción ' + summary.suscripcion.estado"
               [severity]="subscriptionSeverity(summary.suscripcion.estado)"
             />
           }
@@ -270,13 +270,13 @@
         <article class="detail-card">
           <h3><i class="pi pi-building"></i> Identidad fiscal</h3>
           <dl>
-            <div><dt>Razon social</dt><dd>{{ summary.empresa.razonSocial }}</dd></div>
+            <div><dt>Razón social</dt><dd>{{ summary.empresa.razonSocial }}</dd></div>
             <div><dt>Nombre comercial</dt><dd>{{ summary.empresa.nombreComercial || 'No registrado' }}</dd></div>
             <div><dt>Documento</dt><dd>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</dd></div>
-            <div><dt>Pais</dt><dd>{{ summary.empresa.paisNombre || 'No registrado' }} ({{ summary.empresa.paisCodigo || '—' }})</dd></div>
-            <div><dt>Direccion</dt><dd>{{ summary.empresa.direccionFiscal || 'No registrada' }}</dd></div>
+            <div><dt>País</dt><dd>{{ summary.empresa.paisNombre || 'No registrado' }} ({{ summary.empresa.paisCodigo || '—' }})</dd></div>
+            <div><dt>Dirección</dt><dd>{{ summary.empresa.direccionFiscal || 'No registrada' }}</dd></div>
             <div>
-              <dt>Ubicacion</dt>
+              <dt>Ubicación</dt>
               <dd>
                 {{ summary.empresa.distrito || '—' }},
                 {{ summary.empresa.provincia || '—' }},
@@ -290,7 +290,7 @@
           <h3><i class="pi pi-address-book"></i> Contacto</h3>
           <dl>
             <div><dt>Correo</dt><dd>{{ summary.empresa.correoPrincipal || 'No registrado' }}</dd></div>
-            <div><dt>Telefono</dt><dd>{{ summary.empresa.telefono || 'No registrado' }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ summary.empresa.telefono || 'No registrado' }}</dd></div>
             <div><dt>Celular</dt><dd>{{ summary.empresa.celular || 'No registrado' }}</dd></div>
             <div><dt>Sitio web</dt><dd>{{ summary.empresa.sitioWeb || 'No registrado' }}</dd></div>
             <div><dt>Facebook</dt><dd>{{ summary.empresa.facebook || 'No registrado' }}</dd></div>
@@ -311,7 +311,7 @@
               </dd>
             </div>
             <div><dt>Correo</dt><dd>{{ summary.empresa.representanteCorreo || 'No registrado' }}</dd></div>
-            <div><dt>Telefono</dt><dd>{{ summary.empresa.representanteTelefono || 'No registrado' }}</dd></div>
+            <div><dt>Teléfono</dt><dd>{{ summary.empresa.representanteTelefono || 'No registrado' }}</dd></div>
           </dl>
         </article>
 
@@ -328,7 +328,7 @@
         </article>
 
         <article class="detail-card detail-card--subscription">
-          <h3><i class="pi pi-wallet"></i> Plan y suscripcion</h3>
+          <h3><i class="pi pi-wallet"></i> Plan y suscripción</h3>
           @if (summary.suscripcion; as subscription) {
             <dl>
               <div><dt>Plan</dt><dd>{{ subscription.planNombre }} ({{ subscription.planCodigo }})</dd></div>
@@ -352,7 +352,7 @@
               <div><dt>Bolsa mensual</dt><dd>{{ summary.limiteMensualBolsa | number:'1.0-0' }}</dd></div>
             </dl>
           } @else {
-            <p class="detail-empty">La empresa no tiene una suscripcion registrada.</p>
+            <p class="detail-empty">La empresa no tiene una suscripción registrada.</p>
           }
         </article>
 
@@ -383,12 +383,12 @@
         </article>
 
         <article class="detail-card detail-card--wide">
-          <h3><i class="pi pi-th-large"></i> Modulos activos ({{ summary.moduloCodigos.length }})</h3>
+          <h3><i class="pi pi-th-large"></i> Módulos activos ({{ summary.moduloCodigos.length }})</h3>
           <div class="module-chips module-chips--large">
             @for (moduleCode of summary.moduloCodigos; track moduleCode) {
               <span>{{ moduleCode }}</span>
             } @empty {
-              <p class="detail-empty">No hay modulos activos asignados.</p>
+              <p class="detail-empty">No hay módulos activos asignados.</p>
             }
           </div>
         </article>
@@ -430,7 +430,7 @@
 >
   <form class="company-form">
     <label>
-      Pais
+      País <span class="required-marker">*</span>
       <select [ngModel]="form.paisCodigo" (ngModelChange)="onCountryChanged($event)" name="paisCodigo">
         @for (country of countryOptions; track country.code) {
           <option [value]="country.code">{{ country.name }}</option>
@@ -439,17 +439,17 @@
     </label>
 
     <label>
-      Tipo de identificador fiscal
+      Tipo de identificador fiscal <span class="required-marker">*</span>
       <input pInputText name="tipoDocumentoFiscal" [(ngModel)]="form.tipoDocumentoFiscal" maxlength="20" />
     </label>
 
     <label>
-      {{ form.tipoDocumentoFiscal || 'Identificador fiscal' }}
+      {{ form.tipoDocumentoFiscal || 'Identificador fiscal' }} <span class="required-marker">*</span>
       <input pInputText name="ruc" maxlength="40" [(ngModel)]="form.ruc" placeholder="Identificador tributario" />
     </label>
 
     <label>
-      Razon social
+      Razón social <span class="required-marker">*</span>
       <input
         pInputText
         name="razonSocial"
@@ -465,18 +465,18 @@
     </label>
 
     <label>
-      Tenant ID
+      Tenant ID <span class="required-marker">*</span>
       <input pInputText name="tenantId" [(ngModel)]="form.tenantId" placeholder="empresa_demo" />
-      <small>Formato backend: <code>^[a-z][a-z0-9_]&#123;2,62&#125;$</code></small>
+      <small>Identificador técnico único. Usa de 3 a 63 caracteres: minúsculas, números y guion bajo.</small>
     </label>
 
     <label>
-      Schema name
+      Nombre del esquema <span class="required-marker">*</span>
       <input pInputText name="schemaName" [(ngModel)]="form.schemaName" placeholder="tenant_empresa_demo" />
     </label>
 
     <label>
-      Plan inicial
+      Plan inicial <span class="required-marker">*</span>
       <p-select
         name="planId"
         [options]="planOptions()"
@@ -485,17 +485,17 @@
         placeholder="Seleccionar plan"
         [showClear]="false"
       />
-      <small>Obligatorio. Sus modulos se cargan automaticamente para el provisioning inicial.</small>
+      <small>Los módulos del plan se asignan automáticamente durante el aprovisionamiento inicial.</small>
     </label>
 
     <label>
-      Fecha de inicio
+      Fecha de inicio <span class="required-marker">*</span>
       <input pInputText type="date" name="fechaInicio" [(ngModel)]="form.fechaInicio" />
     </label>
 
     <div class="modules-field">
       <div class="modules-field__header">
-        <strong>Modulos incluidos en el plan</strong>
+        <strong>Módulos incluidos en el plan</strong>
         <small>Se asignan desde el plan seleccionado y no pueden modificarse durante el registro.</small>
       </div>
 
@@ -517,8 +517,8 @@
     <div class="dialog-info">
       <i class="pi pi-info-circle"></i>
       <span>
-        Si activas ERP, AZURION aprovisionara automaticamente el facturador en modo ticket.
-        Para empresas de Peru, SUNAT se configura despues desde el panel del tenant.
+        Si el plan incluye ERP, AZURION aprovisionará automáticamente el facturador en modo ticket.
+        Para empresas de Perú, SUNAT se configura después desde el panel del tenant.
       </span>
     </div>
   </form>

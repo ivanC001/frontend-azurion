@@ -1,0 +1,129 @@
+<section class="currency-panel">
+  <header class="currency-panel__header">
+    <div>
+      <span>Monedas CRM</span>
+      <h3>Tipos de cambio comerciales</h3>
+      <p>
+        Cada tasa expresa el valor de una unidad extranjera en
+        <b>{{ baseCurrencyCode() }} ({{ baseCurrencySymbol() }})</b>.
+      </p>
+    </div>
+    <div class="currency-panel__base">
+      <i class="pi pi-home"></i>
+      <span><small>Moneda base de la empresa</small><strong>{{ baseCurrencyCode() }} · {{ baseCurrencySymbol() }}</strong></span>
+    </div>
+  </header>
+
+  <div class="currency-panel__grid">
+    @for (currency of currencies(); track currency.moneda) {
+      <article class="currency-card" [class.currency-card--inactive]="!currency.activo">
+        <header class="currency-card__header">
+          <span class="currency-card__symbol">{{ currency.simbolo }}</span>
+          <div class="currency-card__identity">
+            <small>{{ currency.moneda }}</small>
+            <strong>{{ currency.nombre }}</strong>
+            <span><i class="pi pi-database"></i> {{ currency.id ? 'Configuración guardada' : 'Valor predeterminado' }}</span>
+          </div>
+          <label class="currency-switch" [class.currency-switch--active]="currency.activo">
+            <input
+              type="checkbox"
+              [name]="'currencyActive' + currency.moneda"
+              [ngModel]="currency.activo"
+              (ngModelChange)="updateActive(currency.moneda, $event)"
+              [disabled]="!canManage()"
+            />
+            <span aria-hidden="true"></span>
+            <b>{{ currency.activo ? 'Disponible' : 'No disponible' }}</b>
+          </label>
+        </header>
+
+        <div class="currency-card__fields">
+          <label>
+            <span>Nombre visible</span>
+            <input
+              pInputText
+              [name]="'currencyName' + currency.moneda"
+              [ngModel]="currency.nombre"
+              (ngModelChange)="updateField(currency.moneda, 'nombre', $event)"
+              [disabled]="!canManage()"
+            />
+          </label>
+          <label>
+            <span>Símbolo</span>
+            <input
+              pInputText
+              [name]="'currencySymbol' + currency.moneda"
+              [ngModel]="currency.simbolo"
+              (ngModelChange)="updateField(currency.moneda, 'simbolo', $event)"
+              [disabled]="!canManage()"
+            />
+          </label>
+          <label>
+            <span>Tipo de cambio base</span>
+            <input
+              pInputText
+              type="number"
+              min="0.000001"
+              step="0.000001"
+              [name]="'currencyRate' + currency.moneda"
+              [ngModel]="currency.tipoCambioBase"
+              (ngModelChange)="updateField(currency.moneda, 'tipoCambioBase', $event)"
+              [disabled]="!canManage()"
+            />
+            <small>Valor de 1 {{ currency.moneda }} en {{ baseCurrencyCode() }}.</small>
+          </label>
+          <label>
+            <span>Margen comercial</span>
+            <div class="currency-card__percent">
+              <input
+                pInputText
+                type="number"
+                min="0"
+                step="0.01"
+                [name]="'currencyMargin' + currency.moneda"
+                [ngModel]="currency.margenConversionPorcentaje"
+                (ngModelChange)="updateField(currency.moneda, 'margenConversionPorcentaje', $event)"
+                [disabled]="!canManage()"
+              />
+              <b>%</b>
+            </div>
+            <small>Recargo aplicado sobre la tasa base.</small>
+          </label>
+        </div>
+
+        <div class="currency-card__result">
+          <i class="pi pi-arrow-right-arrow-left"></i>
+          <span>
+            <small>Tipo de cambio que usará el CRM</small>
+            <strong>1 {{ currency.moneda }} = {{ baseCurrencySymbol() }} {{ currency.tipoCambioVenta | number: '1.2-6' }}</strong>
+            <em>Base {{ currency.tipoCambioBase | number: '1.2-6' }} + margen {{ currency.margenConversionPorcentaje | number: '1.2-4' }}%</em>
+          </span>
+        </div>
+
+        <footer class="currency-card__footer">
+          <p>
+            <i class="pi" [class.pi-check-circle]="currency.activo" [class.pi-ban]="!currency.activo"></i>
+            {{ currency.activo ? 'Disponible en productos y cotizaciones nuevos.' : 'Oculta para nuevos productos y cotizaciones.' }}
+          </p>
+          <button
+            type="button"
+            [disabled]="!canManage() || savingCurrency() === currency.moneda"
+            (click)="saveCurrency.emit(currency)"
+          >
+            <i [class]="savingCurrency() === currency.moneda ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+            {{ savingCurrency() === currency.moneda ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </footer>
+      </article>
+    }
+  </div>
+
+  <aside class="currency-panel__note">
+    <i class="pi pi-info-circle"></i>
+    <p>
+      <strong>¿Qué función cumple?</strong>
+      Cuando una oferta y una cotización usan monedas diferentes, el CRM convierte sus importes con la tasa comercial configurada aquí.
+      La moneda base de la empresa siempre usa tasa 1. Estas tasas son manuales; no se descargan automáticamente de un banco.
+    </p>
+  </aside>
+</section>

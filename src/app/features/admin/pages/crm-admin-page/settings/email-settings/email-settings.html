@@ -2,7 +2,7 @@
   <header>
     <div>
       <span>Comunicacion interna CRM</span>
-      <h3>Correo electronico SMTP</h3>
+      <h3>Correo electrónico SMTP</h3>
       <p>Configura el remitente propio de esta empresa para cotizaciones, seguimiento, recordatorios y pagos.</p>
     </div>
     <b [class]="'email-status email-status--' + statusTone()">{{ statusLabel() }}</b>
@@ -30,7 +30,7 @@
     </article>
 
     <article>
-      <h4><i class="pi pi-server"></i> Configuracion SMTP</h4>
+      <h4><i class="pi pi-server"></i> Configuración SMTP</h4>
       <div class="smtp-row">
         <label>SMTP Host
           <input pInputText [(ngModel)]="form.smtpHost" name="smtpHost" placeholder="smtp.gmail.com" [disabled]="!canManage()" />

@@ -9,7 +9,7 @@
     @if (channelCode() === 'CORREO') {
       <a class="channel-settings-link" [routerLink]="view().configurationRoute" title="Configurar correo">
         <i class="pi pi-cog"></i>
-        Configuracion
+        Configuración
       </a>
     }
   </header>
@@ -37,7 +37,7 @@
 
       <div class="sent-email-notice">
         <i class="pi pi-info-circle"></i>
-        <span><strong>Recepcion desactivada</strong> Esta bandeja no consulta ni simula correos entrantes porque todavia no se ha habilitado un webhook de correo.</span>
+        <span><strong>Recepción desactivada</strong> Esta bandeja no consulta ni simula correos entrantes porque todavía no se ha habilitado un webhook de correo.</span>
       </div>
 
       @if (emailError()) {
@@ -48,7 +48,7 @@
         <div class="sent-email-empty">
           <span><i class="pi pi-envelope"></i></span>
           <h2>No hay correos enviados</h2>
-          <p>Las cotizaciones confirmadas por SMTP apareceran aqui automaticamente.</p>
+          <p>Las cotizaciones confirmadas por SMTP aparecerán aquí automáticamente.</p>
         </div>
       } @else {
         <div class="sent-email-table-scroll">
@@ -57,7 +57,7 @@
               <tr>
                 <th>Destinatario</th>
                 <th>Asunto</th>
-                <th>Cotizacion</th>
+                <th>Cotización</th>
                 <th>Total</th>
                 <th>Enviado por</th>
                 <th>Fecha de envio</th>
@@ -80,9 +80,9 @@
         <footer class="sent-email-pagination">
           <span>Mostrando {{ emailRangeLabel() }}</span>
           <div>
-            <button type="button" (click)="previousEmailPage()" [disabled]="emailPage() === 0 || emailLoading()" title="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+            <button type="button" (click)="previousEmailPage()" [disabled]="emailPage() === 0 || emailLoading()" title="Página anterior"><i class="pi pi-chevron-left"></i></button>
             <b>{{ emailPage() + 1 }} / {{ emailTotalPages() }}</b>
-            <button type="button" (click)="nextEmailPage()" [disabled]="emailPage() >= emailTotalPages() - 1 || emailLoading()" title="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+            <button type="button" (click)="nextEmailPage()" [disabled]="emailPage() >= emailTotalPages() - 1 || emailLoading()" title="Página siguiente"><i class="pi pi-chevron-right"></i></button>
           </div>
         </footer>
       }
@@ -92,7 +92,7 @@
       @if (loading()) {
         <div class="channel-copy channel-copy--loading">
           <span><i class="pi pi-spin pi-spinner"></i></span>
-          <h2>Comprobando configuracion</h2>
+          <h2>Comprobando configuración</h2>
         </div>
       } @else if (active()) {
         <div class="channel-status">
@@ -103,7 +103,7 @@
           <span><i class="pi pi-comments"></i></span>
           <h2>Webhook preparado</h2>
           <p>{{ view().detail }}</p>
-          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Revisar configuracion</a>
+          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Revisar configuración</a>
         </div>
       } @else {
         <div class="channel-status channel-status--inactive">
@@ -112,9 +112,9 @@
         </div>
         <div class="channel-copy">
           <span><i class="pi pi-cog"></i></span>
-          <h2>Completa la configuracion del webhook</h2>
+          <h2>Completa la configuración del webhook</h2>
           <p>Meta requiere access token, App ID, App secret, verify token y una URL publica HTTPS antes de activar este canal.</p>
-          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Ir a configuracion</a>
+          <a [routerLink]="view().configurationRoute"><i class="pi pi-cog"></i> Ir a configuración</a>
         </div>
       }
     </article>

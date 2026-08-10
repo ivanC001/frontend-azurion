@@ -4,8 +4,8 @@
       <label><span>Estado del contacto</span><p-select [options]="contactOptions()" [ngModel]="filters().contact" (ngModelChange)="updateFilter('contact', $event)" appendTo="body" /></label>
       <label><span>Responsable</span><p-select [options]="responsibleOptions()" [ngModel]="filters().responsible" (ngModelChange)="updateFilter('responsible', $event)" appendTo="body" /></label>
       <label><span>Origen</span><p-select [options]="originOptions()" [ngModel]="filters().origin" (ngModelChange)="updateFilter('origin', $event)" appendTo="body" /></label>
-      <label><span>Nivel de interes</span><p-select [options]="interestOptions()" [ngModel]="filters().interest" (ngModelChange)="updateFilter('interest', $event)" appendTo="body" /></label>
-      <label><span>Fecha proxima accion</span><p-select [options]="dateOptions()" [ngModel]="filters().date" (ngModelChange)="updateFilter('date', $event)" appendTo="body" /></label>
+      <label><span>Nivel de interés</span><p-select [options]="interestOptions()" [ngModel]="filters().interest" (ngModelChange)="updateFilter('interest', $event)" appendTo="body" /></label>
+      <label><span>Fecha de próxima acción</span><p-select [options]="dateOptions()" [ngModel]="filters().date" (ngModelChange)="updateFilter('date', $event)" appendTo="body" /></label>
       <button type="button" class="followup-clear-button" (click)="filtersReset.emit()">Limpiar</button>
       <button type="button" class="followup-apply-button" (click)="filtersApplied.emit()">Aplicar filtros</button>
     </section>
@@ -19,12 +19,12 @@
         }
       </div>
       <div class="followup-view-tools">
-        <span>Ordenar por: <strong>Proxima accion</strong> <i class="pi pi-arrow-down"></i></span>
+        <span>Ordenar por: <strong>Próxima acción</strong> <i class="pi pi-arrow-down"></i></span>
       </div>
     </div>
 
     <p-table [value]="rows()" [loading]="loading()" [paginator]="false" responsiveLayout="scroll" styleClass="crm-table followup-table followup-modern-table">
-      <ng-template pTemplate="header"><tr><th>Prospecto</th><th>Oferta / Interes</th><th>Estado contacto</th><th>Nivel de interes</th><th>Ultima actividad</th><th>Proxima accion</th><th>Actividades</th></tr></ng-template>
+      <ng-template pTemplate="header"><tr><th>Prospecto</th><th>Oferta / interés</th><th>Estado del contacto</th><th>Nivel de interés</th><th>Última actividad</th><th>Próxima acción</th><th>Actividades</th></tr></ng-template>
       <ng-template pTemplate="body" let-row>
         <tr [class.followup-row--selected]="row.selected" [class.followup-row--opportunity]="row.source.hasActiveOpportunity">
           <td><div class="followup-prospect-cell followup-prospect-cell--rich">
@@ -55,7 +55,7 @@
           </div></td>
           <td><div class="next-action-cell"><strong>{{ row.nextAction }}</strong><span>{{ row.nextActionDate }}</span><em [class]="'next-action-pill next-action-pill--' + row.nextActionTone">{{ row.nextActionStatus }}</em></div></td>
           <td><div class="followup-action-cell followup-action-cell--modern">
-            @if (row.phoneUrl; as link) { <a [href]="link" title="Llamar" aria-label="Llamar"><i class="pi pi-phone"></i></a> } @else { <button type="button" disabled title="Sin telefono"><i class="pi pi-phone"></i></button> }
+            @if (row.phoneUrl; as link) { <a [href]="link" title="Llamar" aria-label="Llamar"><i class="pi pi-phone"></i></a> } @else { <button type="button" disabled title="Sin teléfono"><i class="pi pi-phone"></i></button> }
             @if (row.whatsappAvailable) { <button type="button" title="Enviar por WhatsApp integrado" (click)="whatsappRequested.emit(row.source.prospecto)"><i class="pi pi-whatsapp"></i></button> } @else { <button type="button" disabled title="Sin WhatsApp"><i class="pi pi-whatsapp"></i></button> }
             @if (row.emailAvailable) {
               <button type="button" [disabled]="row.emailSending" [title]="row.emailSending ? 'Enviando por correo...' : 'Enviar desde el correo configurado en Azurion'" (click)="emailRequested.emit(row.source.prospecto)">
@@ -74,9 +74,9 @@
     <footer class="followup-table-footer">
       <span>{{ pageMeta().rangeLabel }}</span>
       <div>
-        <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Pagina anterior"><i class="pi pi-chevron-left"></i></button>
+        <button type="button" [disabled]="pageMeta().page <= 0" (click)="previousPageRequested.emit()" aria-label="Página anterior"><i class="pi pi-chevron-left"></i></button>
         <strong>{{ pageMeta().page + 1 }} / {{ pageMeta().totalPages }}</strong>
-        <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Pagina siguiente"><i class="pi pi-chevron-right"></i></button>
+        <button type="button" [disabled]="pageMeta().page >= pageMeta().totalPages - 1" (click)="nextPageRequested.emit()" aria-label="Página siguiente"><i class="pi pi-chevron-right"></i></button>
       </div>
     </footer>
   </section>

@@ -18,6 +18,13 @@ export interface SunatEnvironmentDetails {
   readonly cola?: string | null;
 }
 
+export interface FacturadorBankAccount {
+  readonly banco: string;
+  readonly moneda: string;
+  readonly cuenta: string;
+  readonly cci: string;
+}
+
 export interface FacturadorTenant {
   readonly tenant_id: number;
   readonly ruc: string;
@@ -71,6 +78,7 @@ export interface FacturadorTenantConfig {
   readonly endpoint_facturacion?: string | null;
   readonly endpoint_guias?: string | null;
   readonly cola?: string | null;
+  readonly cuentas_bancarias?: readonly FacturadorBankAccount[];
 }
 
 export interface FacturadorTenantDetail extends FacturadorTenant {
@@ -101,6 +109,7 @@ export interface CreateFacturadorTenantRequest {
   readonly serie_guia?: string;
   readonly igv?: number;
   readonly moneda?: string;
+  readonly cuentas_bancarias_json?: string;
   readonly logo_file?: File | null;
   readonly certificado_file?: File | null;
 }
@@ -127,7 +136,9 @@ export class FacturadorApiService {
 
   getTenant(tenantId: number) {
     return this.api
-      .get<FacturadorResponse<FacturadorTenantDetail>>('saasCore', `/v1/saas/facturador/tenants/${tenantId}`)
+      .get<
+        FacturadorResponse<FacturadorTenantDetail>
+      >('saasCore', `/v1/saas/facturador/tenants/${tenantId}`)
       .pipe(map((response) => response.data));
   }
 
@@ -149,20 +160,17 @@ export class FacturadorApiService {
 
   getCurrentTenant() {
     return this.api
-      .get<FacturadorResponse<FacturadorTenantDetail | null>>(
-        'saasCore',
-        '/v1/saas/facturador/tenants/current',
-      )
+      .get<
+        FacturadorResponse<FacturadorTenantDetail | null>
+      >('saasCore', '/v1/saas/facturador/tenants/current')
       .pipe(map((response) => response.data));
   }
 
   updateCurrentTenant(request: CreateFacturadorTenantRequest) {
     return this.api
-      .put<FacturadorResponse<CurrentFacturadorConfiguration>>(
-        'saasCore',
-        '/v1/saas/facturador/tenants/current',
-        this.toFormData(request),
-      )
+      .put<
+        FacturadorResponse<CurrentFacturadorConfiguration>
+      >('saasCore', '/v1/saas/facturador/tenants/current', this.toFormData(request))
       .pipe(map((response) => response.data));
   }
 
@@ -188,6 +196,7 @@ export class FacturadorApiService {
     this.appendText(formData, 'serie_guia', request.serie_guia);
     this.appendNumber(formData, 'igv', request.igv);
     this.appendText(formData, 'moneda', request.moneda);
+    this.appendText(formData, 'cuentas_bancarias_json', request.cuentas_bancarias_json);
 
     if (request.logo_file) {
       formData.set('logo_file', request.logo_file, request.logo_file.name);

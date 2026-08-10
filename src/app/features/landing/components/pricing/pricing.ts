@@ -45,7 +45,7 @@ export class PricingComponent {
       highlighted: false,
       features: [
         'Multiempresa',
-        'API y captacion multicanal',
+        'API y captación multicanal',
         'Roles avanzados',
         'Acompanamiento dedicado',
       ],

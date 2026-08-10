@@ -1,3 +1,5 @@
+import { PHONE_COUNTRIES, phoneCountryByCode } from './phone-country.model';
+
 export type ProspectPersonType = 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA';
 
 export interface ProspectDocumentOption {
@@ -31,11 +33,7 @@ const alphanumericDocument = (
   validationMessage: `Ingresa un ${label} válido (entre 4 y 30 caracteres).`,
 });
 
-const numericDocument = (
-  value: string,
-  label: string,
-  digits: number,
-): ProspectDocumentOption => ({
+const numericDocument = (value: string, label: string, digits: number): ProspectDocumentOption => ({
   label,
   value,
   placeholder: `${digits} dígitos`,
@@ -51,7 +49,11 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
   {
     code: 'PE',
     name: 'Perú',
-    naturalDocuments: [numericDocument('1', 'DNI', 8), alphanumericDocument('CE', 'Carné de extranjería'), passport()],
+    naturalDocuments: [
+      numericDocument('1', 'DNI', 8),
+      alphanumericDocument('CE', 'Carné de extranjería'),
+      passport(),
+    ],
     companyDocuments: [numericDocument('6', 'RUC', 11)],
   },
   {
@@ -69,7 +71,11 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
   {
     code: 'BR',
     name: 'Brasil',
-    naturalDocuments: [alphanumericDocument('CPF', 'CPF'), alphanumericDocument('RG', 'RG'), passport()],
+    naturalDocuments: [
+      alphanumericDocument('CPF', 'CPF'),
+      alphanumericDocument('RG', 'RG'),
+      passport(),
+    ],
     companyDocuments: [alphanumericDocument('CNPJ', 'CNPJ')],
   },
   {
@@ -87,13 +93,21 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
   {
     code: 'CO',
     name: 'Colombia',
-    naturalDocuments: [alphanumericDocument('CC', 'Cédula de ciudadanía'), alphanumericDocument('CE', 'Cédula de extranjería'), passport()],
+    naturalDocuments: [
+      alphanumericDocument('CC', 'Cédula de ciudadanía'),
+      alphanumericDocument('CE', 'Cédula de extranjería'),
+      passport(),
+    ],
     companyDocuments: [alphanumericDocument('NIT', 'NIT')],
   },
   {
     code: 'CR',
     name: 'Costa Rica',
-    naturalDocuments: [alphanumericDocument('CEDULA', 'Cédula física'), alphanumericDocument('DIMEX', 'DIMEX'), passport()],
+    naturalDocuments: [
+      alphanumericDocument('CEDULA', 'Cédula física'),
+      alphanumericDocument('DIMEX', 'DIMEX'),
+      passport(),
+    ],
     companyDocuments: [alphanumericDocument('CEDULA_JURIDICA', 'Cédula jurídica')],
   },
   {
@@ -105,7 +119,11 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
   {
     code: 'ES',
     name: 'España',
-    naturalDocuments: [alphanumericDocument('DNI', 'DNI'), alphanumericDocument('NIE', 'NIE'), passport()],
+    naturalDocuments: [
+      alphanumericDocument('DNI', 'DNI'),
+      alphanumericDocument('NIE', 'NIE'),
+      passport(),
+    ],
     companyDocuments: [alphanumericDocument('NIF', 'NIF')],
   },
   {
@@ -118,7 +136,11 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
     code: 'FR',
     name: 'Francia',
     naturalDocuments: [alphanumericDocument('CNI', 'Carte nationale d’identité'), passport()],
-    companyDocuments: [alphanumericDocument('SIREN', 'SIREN'), alphanumericDocument('SIRET', 'SIRET'), alphanumericDocument('TVA', 'N.º TVA')],
+    companyDocuments: [
+      alphanumericDocument('SIREN', 'SIREN'),
+      alphanumericDocument('SIRET', 'SIRET'),
+      alphanumericDocument('TVA', 'N.º TVA'),
+    ],
   },
   {
     code: 'GT',
@@ -154,7 +176,10 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
     code: 'GB',
     name: 'Reino Unido',
     naturalDocuments: [passport(), alphanumericDocument('DRIVING_LICENCE', 'Driving licence')],
-    companyDocuments: [alphanumericDocument('CRN', 'Company Registration Number'), alphanumericDocument('VAT', 'VAT number')],
+    companyDocuments: [
+      alphanumericDocument('CRN', 'Company Registration Number'),
+      alphanumericDocument('VAT', 'VAT number'),
+    ],
   },
   {
     code: 'UY',
@@ -171,8 +196,80 @@ export const PROSPECT_COUNTRIES: readonly ProspectCountryOption[] = [
 ] as const;
 
 export function prospectCountry(code: string | null | undefined): ProspectCountryOption {
-  const normalized = String(code || '').trim().toUpperCase();
+  const normalized = String(code || '')
+    .trim()
+    .toUpperCase();
   return PROSPECT_COUNTRIES.find((country) => country.code === normalized) ?? PROSPECT_COUNTRIES[0];
+}
+
+export function prospectPhoneDialCode(countryCode: string | null | undefined): string {
+  return (
+    phoneCountryByCode(countryCode)?.dialCode ||
+    phoneCountryByCode(prospectCountry(countryCode).code)?.dialCode ||
+    '51'
+  );
+}
+
+/** Sanitizes an editable international dialing code without its leading plus sign. */
+export function normalizeProspectPhoneDialCode(
+  value: string | null | undefined,
+  countryCode?: string | null,
+): string {
+  const digits = String(value || '')
+    .replace(/\D/g, '')
+    .replace(/^0+/, '')
+    .slice(0, 4);
+  return digits || prospectPhoneDialCode(countryCode);
+}
+
+/** Detects the persisted international prefix, falling back to the prospect country. */
+export function prospectPhoneDialCodeFromValue(
+  value: string | null | undefined,
+  countryCode: string | null | undefined,
+): string {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  const countryDialCode = prospectPhoneDialCode(countryCode);
+  if (digits.startsWith(countryDialCode) && digits.length > countryDialCode.length + 5) {
+    return countryDialCode;
+  }
+  const knownDialCodes = [...new Set(PHONE_COUNTRIES.map((country) => country.dialCode))].sort(
+    (left, right) => right.length - left.length,
+  );
+  return (
+    knownDialCodes.find(
+      (dialCode) => digits.startsWith(dialCode) && digits.length > dialCode.length + 5,
+    ) ?? countryDialCode
+  );
+}
+
+/** Returns the phone as entered locally, without the international prefix. */
+export function prospectLocalPhone(
+  value: string | null | undefined,
+  countryCode: string | null | undefined,
+  dialCodeOverride?: string | null,
+): string {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  const dialCode = normalizeProspectPhoneDialCode(dialCodeOverride, countryCode);
+  return digits.startsWith(dialCode) && digits.length > dialCode.length + 5
+    ? digits.slice(dialCode.length)
+    : digits;
+}
+
+/** Builds the E.164 digits persisted by the API and sent to WhatsApp. */
+export function prospectPhoneE164(
+  value: string | null | undefined,
+  countryCode: string | null | undefined,
+  dialCodeOverride?: string | null,
+): string | null {
+  const dialCode = normalizeProspectPhoneDialCode(dialCodeOverride, countryCode);
+  const local = prospectLocalPhone(value, countryCode, dialCode);
+  return local ? `${dialCode}${local}` : null;
 }
 
 export function prospectDocuments(

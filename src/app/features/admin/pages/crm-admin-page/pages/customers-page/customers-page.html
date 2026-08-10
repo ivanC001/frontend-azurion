@@ -50,7 +50,7 @@
               <span>{{ row.purchaseLabel }}</span>
               <span>{{ row.companyLabel }}</span>
             </div>
-            <em class="client-status-badge client-status-badge--won">{{ row.documentCount }} doc(s)</em>
+            <em class="client-status-badge client-status-badge--won">{{ row.documentCount }} documento(s)</em>
             <time>{{ row.closureDate | date: 'dd/MM/yyyy' }}</time>
             <b>
               @if (row.debt <= 0) {
@@ -61,7 +61,7 @@
             </b>
           </article>
         } @empty {
-          <div class="quotes-empty">Todavia no hay ventas cerradas con documentacion validada.</div>
+          <div class="quotes-empty">Todavía no hay ventas cerradas con documentación validada.</div>
         }
       </div>
       <footer class="prospect-pagination">

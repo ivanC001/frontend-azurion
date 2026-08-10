@@ -85,7 +85,10 @@ export class CrmLeadPage implements OnInit {
       { icon: 'pi pi-check-circle', label: 'Registro directo al CRM' },
     ];
     if (item?.precioReferencial) {
-      badges.unshift({ icon: 'pi pi-wallet', label: `Desde S/ ${this.formatMoney(item.precioReferencial)}` });
+      badges.unshift({
+        icon: 'pi pi-wallet',
+        label: `Desde ${this.formatCatalogPrice(item.precioReferencial, item.moneda)}`,
+      });
     }
     return badges;
   });
@@ -126,7 +129,7 @@ export class CrmLeadPage implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     if (!this.form.nombre.trim() || (!this.form.correo.trim() && !this.form.telefono.trim())) {
-      this.errorMessage.set('Completa el nombre y al menos un telefono o correo.');
+      this.errorMessage.set('Completa el nombre y al menos un teléfono o correo electrónico.');
       return;
     }
     if (!this.hasValidLandingContext()) {
@@ -222,7 +225,7 @@ export class CrmLeadPage implements OnInit {
           this.form.interesPrincipal = item.nombre;
           this.form.presupuestoEstimado = Number(item.precioReferencial || 0);
           if (!this.route.snapshot.queryParamMap.get('mensaje') && !this.route.snapshot.queryParamMap.get('necesidad')) {
-            this.form.necesidad = `Hola, deseo recibir informacion sobre ${item.nombre}.`;
+            this.form.necesidad = `Hola, deseo recibir información sobre ${item.nombre}.`;
           }
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -266,5 +269,18 @@ export class CrmLeadPage implements OnInit {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  }
+
+  private formatCatalogPrice(value: number, currency?: string | null): string {
+    const moneda = currency || 'PEN';
+    try {
+      return new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: moneda,
+        minimumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${moneda} ${this.formatMoney(value)}`;
+    }
   }
 }

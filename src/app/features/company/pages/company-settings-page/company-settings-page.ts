@@ -21,6 +21,13 @@ import {
   FacturadorTenantDetail,
 } from '@features/facturador/data/facturador-api.service';
 
+interface BankAccountForm {
+  banco: string;
+  moneda: string;
+  cuenta: string;
+  cci: string;
+}
+
 interface CompanyConfigForm {
   ruc: string;
   business_name: string;
@@ -60,6 +67,7 @@ interface CompanyConfigForm {
   panel_logo_file: File | null;
   invoice_logo_file: File | null;
   certificado_file: File | null;
+  bank_accounts: BankAccountForm[];
 }
 
 @Component({
@@ -85,9 +93,7 @@ export class CompanySettingsPage implements OnDestroy {
   protected readonly pageDescription = this.isFacturadorView
     ? 'Configura tickets y, para empresas de Peru, la emision electronica SUNAT.'
     : 'Administra la identidad, contacto, representante legal y configuracion regional de tu empresa.';
-  protected readonly saveLabel = this.isFacturadorView
-    ? 'Guardar facturador'
-    : 'Guardar tenant';
+  protected readonly saveLabel = this.isFacturadorView ? 'Guardar facturador' : 'Guardar tenant';
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -124,30 +130,212 @@ export class CompanySettingsPage implements OnDestroy {
   );
 
   protected readonly countryOptions = [
-    { code: 'PE', name: 'Peru', document: 'RUC', currency: 'PEN', symbol: 'S/', timezone: 'America/Lima', language: 'es-PE' },
-    { code: 'AR', name: 'Argentina', document: 'CUIT', currency: 'ARS', symbol: '$', timezone: 'America/Argentina/Buenos_Aires', language: 'es-AR' },
-    { code: 'BO', name: 'Bolivia', document: 'NIT', currency: 'BOB', symbol: 'Bs', timezone: 'America/La_Paz', language: 'es-BO' },
-    { code: 'BR', name: 'Brasil', document: 'CNPJ', currency: 'BRL', symbol: 'R$', timezone: 'America/Sao_Paulo', language: 'pt-BR' },
-    { code: 'CA', name: 'Canada', document: 'BN', currency: 'CAD', symbol: 'C$', timezone: 'America/Toronto', language: 'en-CA' },
-    { code: 'CL', name: 'Chile', document: 'RUT', currency: 'CLP', symbol: '$', timezone: 'America/Santiago', language: 'es-CL' },
-    { code: 'CO', name: 'Colombia', document: 'NIT', currency: 'COP', symbol: '$', timezone: 'America/Bogota', language: 'es-CO' },
-    { code: 'CR', name: 'Costa Rica', document: 'CEDULA', currency: 'CRC', symbol: 'CRC', timezone: 'America/Costa_Rica', language: 'es-CR' },
-    { code: 'EC', name: 'Ecuador', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Guayaquil', language: 'es-EC' },
-    { code: 'ES', name: 'Espana', document: 'NIF', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Madrid', language: 'es-ES' },
-    { code: 'US', name: 'Estados Unidos', document: 'EIN', currency: 'USD', symbol: '$', timezone: 'America/New_York', language: 'en-US' },
-    { code: 'FR', name: 'Francia', document: 'TVA', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Paris', language: 'fr-FR' },
-    { code: 'GT', name: 'Guatemala', document: 'NIT', currency: 'GTQ', symbol: 'Q', timezone: 'America/Guatemala', language: 'es-GT' },
-    { code: 'MX', name: 'Mexico', document: 'RFC', currency: 'MXN', symbol: '$', timezone: 'America/Mexico_City', language: 'es-MX' },
-    { code: 'PA', name: 'Panama', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Panama', language: 'es-PA' },
-    { code: 'PY', name: 'Paraguay', document: 'RUC', currency: 'PYG', symbol: 'Gs.', timezone: 'America/Asuncion', language: 'es-PY' },
-    { code: 'DO', name: 'Republica Dominicana', document: 'RNC', currency: 'DOP', symbol: 'RD$', timezone: 'America/Santo_Domingo', language: 'es-DO' },
-    { code: 'GB', name: 'Reino Unido', document: 'VAT', currency: 'GBP', symbol: 'GBP', timezone: 'Europe/London', language: 'en-GB' },
-    { code: 'UY', name: 'Uruguay', document: 'RUT', currency: 'UYU', symbol: '$U', timezone: 'America/Montevideo', language: 'es-UY' },
-    { code: 'VE', name: 'Venezuela', document: 'RIF', currency: 'VES', symbol: 'Bs', timezone: 'America/Caracas', language: 'es-VE' },
+    {
+      code: 'PE',
+      name: 'Peru',
+      document: 'RUC',
+      currency: 'PEN',
+      symbol: 'S/',
+      timezone: 'America/Lima',
+      language: 'es-PE',
+    },
+    {
+      code: 'AR',
+      name: 'Argentina',
+      document: 'CUIT',
+      currency: 'ARS',
+      symbol: '$',
+      timezone: 'America/Argentina/Buenos_Aires',
+      language: 'es-AR',
+    },
+    {
+      code: 'BO',
+      name: 'Bolivia',
+      document: 'NIT',
+      currency: 'BOB',
+      symbol: 'Bs',
+      timezone: 'America/La_Paz',
+      language: 'es-BO',
+    },
+    {
+      code: 'BR',
+      name: 'Brasil',
+      document: 'CNPJ',
+      currency: 'BRL',
+      symbol: 'R$',
+      timezone: 'America/Sao_Paulo',
+      language: 'pt-BR',
+    },
+    {
+      code: 'CA',
+      name: 'Canada',
+      document: 'BN',
+      currency: 'CAD',
+      symbol: 'C$',
+      timezone: 'America/Toronto',
+      language: 'en-CA',
+    },
+    {
+      code: 'CL',
+      name: 'Chile',
+      document: 'RUT',
+      currency: 'CLP',
+      symbol: '$',
+      timezone: 'America/Santiago',
+      language: 'es-CL',
+    },
+    {
+      code: 'CO',
+      name: 'Colombia',
+      document: 'NIT',
+      currency: 'COP',
+      symbol: '$',
+      timezone: 'America/Bogota',
+      language: 'es-CO',
+    },
+    {
+      code: 'CR',
+      name: 'Costa Rica',
+      document: 'CEDULA',
+      currency: 'CRC',
+      symbol: 'CRC',
+      timezone: 'America/Costa_Rica',
+      language: 'es-CR',
+    },
+    {
+      code: 'EC',
+      name: 'Ecuador',
+      document: 'RUC',
+      currency: 'USD',
+      symbol: '$',
+      timezone: 'America/Guayaquil',
+      language: 'es-EC',
+    },
+    {
+      code: 'ES',
+      name: 'Espana',
+      document: 'NIF',
+      currency: 'EUR',
+      symbol: 'EUR',
+      timezone: 'Europe/Madrid',
+      language: 'es-ES',
+    },
+    {
+      code: 'US',
+      name: 'Estados Unidos',
+      document: 'EIN',
+      currency: 'USD',
+      symbol: '$',
+      timezone: 'America/New_York',
+      language: 'en-US',
+    },
+    {
+      code: 'FR',
+      name: 'Francia',
+      document: 'TVA',
+      currency: 'EUR',
+      symbol: 'EUR',
+      timezone: 'Europe/Paris',
+      language: 'fr-FR',
+    },
+    {
+      code: 'GT',
+      name: 'Guatemala',
+      document: 'NIT',
+      currency: 'GTQ',
+      symbol: 'Q',
+      timezone: 'America/Guatemala',
+      language: 'es-GT',
+    },
+    {
+      code: 'MX',
+      name: 'Mexico',
+      document: 'RFC',
+      currency: 'MXN',
+      symbol: '$',
+      timezone: 'America/Mexico_City',
+      language: 'es-MX',
+    },
+    {
+      code: 'PA',
+      name: 'Panama',
+      document: 'RUC',
+      currency: 'USD',
+      symbol: '$',
+      timezone: 'America/Panama',
+      language: 'es-PA',
+    },
+    {
+      code: 'PY',
+      name: 'Paraguay',
+      document: 'RUC',
+      currency: 'PYG',
+      symbol: 'Gs.',
+      timezone: 'America/Asuncion',
+      language: 'es-PY',
+    },
+    {
+      code: 'DO',
+      name: 'Republica Dominicana',
+      document: 'RNC',
+      currency: 'DOP',
+      symbol: 'RD$',
+      timezone: 'America/Santo_Domingo',
+      language: 'es-DO',
+    },
+    {
+      code: 'GB',
+      name: 'Reino Unido',
+      document: 'VAT',
+      currency: 'GBP',
+      symbol: 'GBP',
+      timezone: 'Europe/London',
+      language: 'en-GB',
+    },
+    {
+      code: 'UY',
+      name: 'Uruguay',
+      document: 'RUT',
+      currency: 'UYU',
+      symbol: '$U',
+      timezone: 'America/Montevideo',
+      language: 'es-UY',
+    },
+    {
+      code: 'VE',
+      name: 'Venezuela',
+      document: 'RIF',
+      currency: 'VES',
+      symbol: 'Bs',
+      timezone: 'America/Caracas',
+      language: 'es-VE',
+    },
   ] as const;
-  protected readonly fiscalDocumentOptions = ['RUC', 'NIT', 'RFC', 'RUT', 'CUIT', 'CNPJ', 'EIN', 'NIF', 'VAT', 'RNC', 'RIF', 'BN', 'OTRO'];
-  protected readonly representativeDocumentOptions = ['DNI', 'CE', 'PASAPORTE', 'NATIONAL ID', 'OTRO'];
-  protected readonly timezoneOptions = [...new Set(this.countryOptions.map((country) => country.timezone))];
+  protected readonly fiscalDocumentOptions = [
+    'RUC',
+    'NIT',
+    'RFC',
+    'RUT',
+    'CUIT',
+    'CNPJ',
+    'EIN',
+    'NIF',
+    'VAT',
+    'RNC',
+    'RIF',
+    'BN',
+    'OTRO',
+  ];
+  protected readonly representativeDocumentOptions = [
+    'DNI',
+    'CE',
+    'PASAPORTE',
+    'NATIONAL ID',
+    'OTRO',
+  ];
+  protected readonly timezoneOptions = [
+    ...new Set(this.countryOptions.map((country) => country.timezone)),
+  ];
   protected readonly languageOptions = [
     { value: 'es-PE', label: 'Espanol (Peru)' },
     { value: 'es-MX', label: 'Espanol (Mexico)' },
@@ -161,7 +349,14 @@ export class CompanySettingsPage implements OnDestroy {
     { value: 'pt-BR', label: 'Portugues (Brasil)' },
     { value: 'fr-FR', label: 'Francais (France)' },
   ] as const;
-  protected readonly currencyOptions = [...new Map(this.countryOptions.map((country) => [country.currency, { code: country.currency, symbol: country.symbol }])).values()];
+  protected readonly currencyOptions = [
+    ...new Map(
+      this.countryOptions.map((country) => [
+        country.currency,
+        { code: country.currency, symbol: country.symbol },
+      ]),
+    ).values(),
+  ];
 
   protected form: CompanyConfigForm = this.createEmptyForm();
 
@@ -188,9 +383,7 @@ export class CompanySettingsPage implements OnDestroy {
 
     forkJoin({
       empresa: this.companyApi.getCurrentEmpresa().pipe(catchError(() => of(null))),
-      facturador: this.isFacturadorView
-        ? this.facturadorApi.getCurrentTenant()
-        : of(null),
+      facturador: this.isFacturadorView ? this.facturadorApi.getCurrentTenant() : of(null),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
@@ -252,26 +445,32 @@ export class CompanySettingsPage implements OnDestroy {
       return;
     }
     if (!this.isValidInternationalProfile()) {
-      this.errorMessage.set('Completa el identificador fiscal, pais, zona horaria, idioma y moneda con valores validos.');
+      this.errorMessage.set(
+        'Completa el identificador fiscal, pais, zona horaria, idioma y moneda con valores validos.',
+      );
       return;
     }
-    if (
-      this.isFacturadorView &&
-      (this.form.country_code !== 'PE' || !/^\d{11}$/.test(this.form.ruc.trim()))
-    ) {
+    if (this.isFacturadorView && this.isPeruTenant() && !/^\d{11}$/.test(this.form.ruc.trim())) {
       this.errorMessage.set(
-        'La configuracion SUNAT solo esta disponible para empresas de Peru con RUC de 11 digitos.',
+        'Para configurar SUNAT debes registrar un RUC peruano valido de 11 digitos.',
       );
       return;
     }
     if (
       this.isFacturadorView &&
+      this.isPeruTenant() &&
       this.form.sunat_mode === 'production' &&
       !this.form.certificado_file &&
       !this.productionCertificateConfigured()
     ) {
       this.errorMessage.set(
         'Para produccion debes adjuntar o conservar el archivo de firma digital.',
+      );
+      return;
+    }
+    if (this.isFacturadorView && !this.bankAccountsAreValid()) {
+      this.errorMessage.set(
+        'Completa banco, moneda, numero de cuenta y codigo CCI/interbancario en cada cuenta bancaria.',
       );
       return;
     }
@@ -331,12 +530,22 @@ export class CompanySettingsPage implements OnDestroy {
   }
 
   private saveFacturadorSettings(): void {
+    const requestedBankAccounts = this.normalizedBankAccounts();
     this.saving.set(true);
     this.facturadorApi
       .updateCurrentTenant(this.buildFacturadorPayload())
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: ({ tenant, empresa }) => {
+          if (
+            !this.bankAccountsMatch(requestedBankAccounts, tenant.configuracion?.cuentas_bancarias)
+          ) {
+            this.errorMessage.set(
+              'El servidor no confirmo las cuentas bancarias guardadas. Los datos permanecen en el formulario; reinicia el servicio ERP e intenta nuevamente.',
+            );
+            return;
+          }
+
           this.existingConfig.set(tenant);
           this.session.updateEmpresaData({
             facturadorStatus: empresa.facturadorStatus,
@@ -361,6 +570,20 @@ export class CompanySettingsPage implements OnDestroy {
     this.form.sunat_mode = isProduction ? 'production' : 'beta';
   }
 
+  protected addBankAccount(): void {
+    if (this.form.bank_accounts.length >= 3) {
+      return;
+    }
+    this.form.bank_accounts = [
+      ...this.form.bank_accounts,
+      { banco: '', moneda: this.form.currency_code || 'PEN', cuenta: '', cci: '' },
+    ];
+  }
+
+  protected removeBankAccount(index: number): void {
+    this.form.bank_accounts = this.form.bank_accounts.filter((_, current) => current !== index);
+  }
+
   protected isProductionMode(): boolean {
     return this.form.sunat_mode === 'production';
   }
@@ -370,13 +593,16 @@ export class CompanySettingsPage implements OnDestroy {
   }
 
   protected sunatCertificateStatusLabel(): string {
-    if (!this.isProductionMode()) {
+    const currentMode = this.currentSunatModeValue();
+    if (currentMode === 'BETA') {
       return 'Prueba automatica';
     }
 
-    return this.form.certificado_file || this.productionCertificateConfigured()
-      ? 'Configurado'
-      : 'Pendiente';
+    if (currentMode !== 'PRODUCTION') {
+      return 'No requerido';
+    }
+
+    return this.sunatCertificateIsConfigured() ? 'Configurado' : 'Pendiente';
   }
 
   protected sunatBillingEndpoint(): string {
@@ -434,6 +660,180 @@ export class CompanySettingsPage implements OnDestroy {
     return labels[status] ?? status;
   }
 
+  protected facturadorIsReady(): boolean {
+    return this.facturadorProvisionStatus().trim().toUpperCase() === 'PROVISIONADO';
+  }
+
+  protected facturadorConnectionDescription(): string {
+    const status = this.facturadorProvisionStatus().trim().toUpperCase();
+    const descriptions: Record<string, string> = {
+      PROVISIONADO: 'Tenant vinculado y disponible para emitir.',
+      PROVISIONANDO: 'Se esta creando la cuenta en Facturador.',
+      PENDIENTE: 'Pendiente de sincronizacion inicial.',
+      REINTENTO: 'Se reintentara la conexion automaticamente.',
+      ERROR: 'La conexion requiere revision tecnica.',
+      SUSPENDIDO: 'La emision se encuentra suspendida.',
+      NO_REQUERIDO: 'La empresa aun no solicito este servicio.',
+    };
+    return descriptions[status] ?? 'Estado de conexion no identificado.';
+  }
+
+  protected isElectronicEmissionEnabled(): boolean {
+    const existing = this.existingConfig();
+    if (existing?.electronic_documents_enabled !== undefined) {
+      return existing.electronic_documents_enabled;
+    }
+
+    return (
+      this.documentModeValue() === 'ELECTRONIC' &&
+      this.fiscalStatusValue() === 'ACTIVE' &&
+      ['BETA', 'PRODUCTION'].includes(this.currentSunatModeValue())
+    );
+  }
+
+  protected documentCapabilityLabel(): string {
+    const existing = this.existingConfig();
+    if (existing?.ticket_enabled === false && !this.isElectronicEmissionEnabled()) {
+      return 'Emision pendiente';
+    }
+
+    return this.isElectronicEmissionEnabled()
+      ? 'Tickets, boletas y facturas'
+      : 'Solo tickets de venta';
+  }
+
+  protected fiscalCapabilityLabel(): string {
+    const status = this.fiscalStatusValue();
+    const labels: Record<string, string> = {
+      ACTIVE: 'Facturacion electronica activa',
+      SUSPENDED: 'Facturacion electronica suspendida',
+      NOT_CONFIGURED: 'Facturacion electronica pendiente',
+    };
+    return labels[status] ?? 'Facturacion electronica pendiente';
+  }
+
+  protected sunatCertificateIsConfigured(): boolean {
+    if (this.currentSunatModeValue() === 'BETA') {
+      return true;
+    }
+
+    const configuration = this.existingConfig()?.configuracion;
+    return !!(
+      this.form.certificado_file ||
+      configuration?.certificado_produccion_configurado ||
+      this.existingConfig()?.certificado_produccion_configurado
+    );
+  }
+
+  protected credentialStatusDescription(): string {
+    if (this.currentSunatModeValue() === 'BETA') {
+      return 'Azurion usa las credenciales oficiales de prueba.';
+    }
+
+    return this.sunatCertificateIsConfigured()
+      ? 'Certificado de produccion disponible.'
+      : 'Falta certificado de produccion.';
+  }
+
+  protected invoiceBrandIsConfigured(): boolean {
+    const configuration = this.existingConfig()?.configuracion;
+    return !!(
+      this.form.invoice_logo_file ||
+      configuration?.logo_pdf_configurado ||
+      this.existingConfig()?.logo_pdf_configurado
+    );
+  }
+
+  protected invoiceBrandLabel(): string {
+    return this.invoiceBrandIsConfigured() ? 'Logo configurado' : 'Logo pendiente';
+  }
+
+  protected invoiceBrandDescription(): string {
+    return this.invoiceBrandIsConfigured()
+      ? 'Se imprimira en los documentos PDF.'
+      : 'Se usara la marca predeterminada hasta cargar uno.';
+  }
+
+  protected facturadorApiClientLabel(): string {
+    return this.existingConfig()?.api_client_name?.trim() || 'No identificado';
+  }
+
+  protected configuredCurrencyLabel(): string {
+    const configuration = this.existingConfig()?.configuracion;
+    const currency =
+      configuration?.moneda || this.existingConfig()?.moneda || this.form.currency_code;
+    return currency?.trim().toUpperCase() || 'No configurada';
+  }
+
+  protected configuredIgvLabel(): string {
+    const configuration = this.existingConfig()?.configuracion;
+    const igv = configuration?.igv ?? this.existingConfig()?.igv;
+    return typeof igv === 'number' && Number.isFinite(igv) ? `${igv}%` : 'No configurado';
+  }
+
+  protected configuredSerie(type: 'factura' | 'boleta' | 'nc' | 'nd' | 'guia'): string {
+    const configuration = this.existingConfig()?.configuracion;
+    const tenant = this.existingConfig();
+    const values = {
+      factura: configuration?.serie_factura ?? tenant?.serie_factura,
+      boleta: configuration?.serie_boleta ?? tenant?.serie_boleta,
+      nc: configuration?.serie_nc ?? tenant?.serie_nc,
+      nd: configuration?.serie_nd ?? tenant?.serie_nd,
+      guia: configuration?.serie_guia ?? tenant?.serie_guia,
+    };
+    return values[type]?.trim() || 'No configurada';
+  }
+
+  protected currentSunatBillingEndpoint(): string {
+    const environment = this.existingConfig()?.entorno_sunat;
+    if (environment?.endpoint_facturacion) {
+      return environment.endpoint_facturacion;
+    }
+
+    return this.currentSunatModeValue() === 'PRODUCTION'
+      ? 'https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService'
+      : 'https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService';
+  }
+
+  protected currentSunatQueueName(): string {
+    return (
+      this.existingConfig()?.entorno_sunat?.cola ||
+      (this.currentSunatModeValue() === 'PRODUCTION' ? 'sunat-production' : 'sunat-beta')
+    );
+  }
+
+  private documentModeValue(): string {
+    return (
+      this.existingConfig()?.document_mode ||
+      this.empresaContext()?.facturadorDocumentMode ||
+      'TICKET_ONLY'
+    )
+      .trim()
+      .toUpperCase();
+  }
+
+  private fiscalStatusValue(): string {
+    return (
+      this.existingConfig()?.fiscal_status ||
+      this.empresaContext()?.facturadorFiscalStatus ||
+      'NOT_CONFIGURED'
+    )
+      .trim()
+      .toUpperCase();
+  }
+
+  private currentSunatModeValue(): string {
+    return (
+      this.existingConfig()?.sunat_mode ||
+      this.existingConfig()?.modo_sunat ||
+      this.existingConfig()?.configuracion?.modo_sunat ||
+      this.empresaContext()?.facturadorSunatMode ||
+      'DISABLED'
+    )
+      .trim()
+      .toUpperCase();
+  }
+
   protected onPanelLogoFileSelected(event: Event): void {
     this.handleLogoFileSelection(event, 'panel');
   }
@@ -476,9 +876,8 @@ export class CompanySettingsPage implements OnDestroy {
 
   protected handlePanelLogoError(event: Event): void {
     const current = this.panelLogoPreviewUrl();
-    const failedUrl = event.target instanceof HTMLImageElement
-      ? event.target.currentSrc || event.target.src
-      : '';
+    const failedUrl =
+      event.target instanceof HTMLImageElement ? event.target.currentSrc || event.target.src : '';
 
     if (
       !current ||
@@ -538,7 +937,7 @@ export class CompanySettingsPage implements OnDestroy {
       external_tenant_id: empresa?.tenantId || undefined,
       country_code: this.form.country_code.trim().toUpperCase(),
       tax_id: empresaRuc || this.form.ruc.trim(),
-      sunat_mode: this.form.sunat_mode,
+      sunat_mode: this.isPeruTenant() ? this.form.sunat_mode : 'disabled',
       ruc_sol: productionMode ? this.form.ruc_sol.trim() || undefined : undefined,
       usuario_sol: productionMode ? this.form.usuario_sol.trim() || undefined : undefined,
       clave_sol: productionMode ? this.form.clave_sol || undefined : undefined,
@@ -546,11 +945,39 @@ export class CompanySettingsPage implements OnDestroy {
         ? this.form.certificado_password || undefined
         : undefined,
       api_client_name: this.form.api_client_name.trim() || undefined,
+      cuentas_bancarias_json: JSON.stringify(this.normalizedBankAccounts()),
       logo_file: this.form.invoice_logo_file,
       certificado_file: productionMode ? this.form.certificado_file : null,
     } as const;
 
     return payload;
+  }
+
+  private normalizedBankAccounts(): BankAccountForm[] {
+    return this.form.bank_accounts.map((account) => ({
+      banco: account.banco.trim(),
+      moneda: account.moneda.trim().toUpperCase(),
+      cuenta: account.cuenta.trim(),
+      cci: account.cci.trim(),
+    }));
+  }
+
+  private bankAccountsMatch(
+    requested: readonly BankAccountForm[],
+    persisted: readonly BankAccountForm[] | null | undefined,
+  ): boolean {
+    if (!persisted) {
+      return requested.length === 0;
+    }
+
+    const normalizedPersisted = persisted.map((account) => ({
+      banco: (account.banco || '').trim(),
+      moneda: (account.moneda || '').trim().toUpperCase(),
+      cuenta: (account.cuenta || '').trim(),
+      cci: (account.cci || '').trim(),
+    }));
+
+    return JSON.stringify(requested) === JSON.stringify(normalizedPersisted);
   }
 
   private buildProfileRequest() {
@@ -629,7 +1056,8 @@ export class CompanySettingsPage implements OnDestroy {
     this.applyEmpresaIdentity();
     const configuration = tenant.configuracion;
     this.form.sunat_mode =
-      (tenant.sunat_mode || tenant.modo_sunat || configuration?.modo_sunat || '').toLowerCase() === 'production'
+      (tenant.sunat_mode || tenant.modo_sunat || configuration?.modo_sunat || '').toLowerCase() ===
+      'production'
         ? 'production'
         : 'beta';
     const usesTestData = configuration?.usa_datos_prueba || tenant.usa_datos_prueba;
@@ -640,6 +1068,12 @@ export class CompanySettingsPage implements OnDestroy {
       ? ''
       : configuration?.usuario_sol || tenant.sol_usuario || this.form.usuario_sol;
     this.form.api_client_name = tenant.api_client_name || this.form.api_client_name;
+    this.form.bank_accounts = (configuration?.cuentas_bancarias || []).map((account) => ({
+      banco: account.banco || '',
+      moneda: (account.moneda || this.form.currency_code || 'PEN').toUpperCase(),
+      cuenta: account.cuenta || '',
+      cci: account.cci || '',
+    }));
   }
 
   private handleLogoFileSelection(event: Event, type: 'panel' | 'invoice'): void {
@@ -722,17 +1156,33 @@ export class CompanySettingsPage implements OnDestroy {
       panel_logo_file: null,
       invoice_logo_file: null,
       certificado_file: null,
+      bank_accounts: [],
     };
+  }
+
+  private bankAccountsAreValid(): boolean {
+    if (this.form.bank_accounts.length > 3) {
+      return false;
+    }
+
+    return this.form.bank_accounts.every((account) => {
+      const bank = account.banco.trim();
+      const currency = account.moneda.trim().toUpperCase();
+      const number = account.cuenta.trim();
+      const cci = account.cci.trim();
+      return (
+        bank.length > 0 &&
+        bank.length <= 120 &&
+        /^[A-Z]{3}$/.test(currency) &&
+        /^[A-Za-z0-9 .-]{1,50}$/.test(number) &&
+        /^[A-Za-z0-9 .-]{1,34}$/.test(cci)
+      );
+    });
   }
 
   private isValidLogoFile(file: File): boolean {
     const maxBytes = 2 * 1024 * 1024;
-    const allowedMimeTypes = new Set([
-      'image/png',
-      'image/jpeg',
-      'image/jpg',
-      'image/webp',
-    ]);
+    const allowedMimeTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
     const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
     const lowerName = file.name.toLowerCase();
     const hasAllowedExtension = allowedExtensions.some((extension) =>
