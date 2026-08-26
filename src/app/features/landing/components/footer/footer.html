@@ -1,21 +1,35 @@
 <footer class="footer">
   <div class="section-shell footer__grid">
     <div class="footer__brand">
-      <a href="#inicio" aria-label="Inicio AZURION">
+      <a
+        class="footer__logo-link"
+        routerLink="/inicio"
+        fragment="inicio"
+        aria-label="Inicio AZURION"
+      >
         <span class="footer__brand-mark">
-          <img src="assets/logosinfondo.png" alt="AZURION" />
+          <img src="assets/logosinfondo.png" alt="AZURION Logo" />
         </span>
         <span class="footer__brand-copy">
           <strong>AZURION</strong>
-          <small>ERP + CRM + Facturacion Electronica</small>
+          <small>ERP &bull; CRM &bull; SUNAT</small>
         </span>
       </a>
-      <p>Plataforma empresarial para captar, vender, operar, cobrar y facturar con control.</p>
+      <p class="footer__desc">
+        Plataforma integral en la nube para empresas que necesitan captar clientes, gestionar
+        inventario multisede, emitir facturación electrónica SUNAT y tomar decisiones en tiempo
+        real.
+      </p>
+
+      <div class="footer__status-badge">
+        <span class="status-pulse"></span>
+        <span>Servidores y SUNAT 100% operativos</span>
+      </div>
     </div>
 
     @for (group of groups; track group.title) {
-      <nav aria-label="{{ group.title }}">
-        <h3>{{ group.title }}</h3>
+      <nav class="footer__nav" aria-label="{{ group.title }}">
+        <h4 class="footer__nav-title">{{ group.title }}</h4>
         @for (link of group.links; track link.label) {
           @if (link.route) {
             <a [routerLink]="link.route">{{ link.label }}</a>
@@ -28,6 +42,14 @@
   </div>
 
   <div class="section-shell footer__bottom">
-    <span>&copy; AZURION. ERP, CRM y Facturacion Electronica.</span>
+    <div class="footer__bottom-left">
+      <span>&copy; 2026 AZURION. Todos los derechos reservados.</span>
+      <span class="footer__sep">&bull;</span>
+      <span>Facturación Electrónica Homologada SUNAT</span>
+    </div>
+    <div class="footer__security-badges">
+      <span class="sec-badge"><i class="pi pi-lock"></i> SSL 256-bit</span>
+      <span class="sec-badge"><i class="pi pi-shield"></i> Multi-Tenant Seguro</span>
+    </div>
   </div>
 </footer>

@@ -186,8 +186,7 @@ export class SalesRemissionGuidePage {
       return;
     }
 
-    const clientOperationId =
-      this.pendingOperationId ?? createClientOperationId('remission-guide');
+    const clientOperationId = this.pendingOperationId ?? createClientOperationId('remission-guide');
     this.pendingOperationId = clientOperationId;
     const request = {
       clientOperationId,

@@ -129,7 +129,8 @@ export class FeaturesComponent {
     {
       icon: 'pi-users',
       title: 'Equipo comercial',
-      description: 'Prioriza leads, cumple actividades y cierra oportunidades con contexto completo.',
+      description:
+        'Prioriza leads, cumple actividades y cierra oportunidades con contexto completo.',
     },
     {
       icon: 'pi-briefcase',
@@ -139,7 +140,8 @@ export class FeaturesComponent {
     {
       icon: 'pi-chart-line',
       title: 'Gerencia',
-      description: 'Consulta conversion, pipeline, cobranza y resultados sin consolidaciones manuales.',
+      description:
+        'Consulta conversion, pipeline, cobranza y resultados sin consolidaciones manuales.',
     },
   ];
 }

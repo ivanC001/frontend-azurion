@@ -53,7 +53,12 @@ describe('AuthSessionService', () => {
   });
 
   it('fails closed when stored expiration metadata is invalid', () => {
-    const invalid = { ...validSession(), accessToken: 'not-a-jwt', issuedAt: 'invalid', expiresInSeconds: 0 };
+    const invalid = {
+      ...validSession(),
+      accessToken: 'not-a-jwt',
+      issuedAt: 'invalid',
+      expiresInSeconds: 0,
+    };
     window.localStorage.setItem(SESSION_KEY, JSON.stringify(invalid));
 
     const service = TestBed.inject(AuthSessionService);

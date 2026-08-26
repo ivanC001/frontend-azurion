@@ -64,7 +64,11 @@
 }
 
 .profile-dialog-summary {
-  background: linear-gradient(118deg, color-mix(in srgb, var(--az-blue) 9%, var(--az-surface)), var(--az-surface));
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--az-blue) 9%, var(--az-surface)),
+    var(--az-surface)
+  );
   border: 1px solid color-mix(in srgb, var(--az-blue) 24%, var(--az-border));
   border-radius: 0.75rem;
   gap: 0.75rem;
@@ -84,6 +88,17 @@
   justify-content: center;
   letter-spacing: 0.04em;
   width: 2.8rem;
+}
+
+.profile-dialog-avatar img,
+.profile-photo-preview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.profile-dialog-avatar img {
+  border-radius: inherit;
 }
 
 .profile-dialog-summary > div {
@@ -127,7 +142,7 @@
 .profile-dialog-grid {
   display: grid;
   gap: 0.8rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.8fr);
   margin-top: 0.8rem;
 }
 
@@ -180,6 +195,70 @@
   gap: 0.6rem;
 }
 
+.profile-personal-layout {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-photo-editor {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-blue) 5%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, var(--az-blue) 18%, var(--az-border));
+  border-radius: 0.7rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.65rem;
+}
+
+.profile-photo-preview {
+  align-items: center;
+  background: linear-gradient(135deg, var(--az-blue), var(--az-cyan));
+  border: 2px solid var(--az-surface);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--az-blue) 24%, var(--az-border));
+  color: #ffffff;
+  display: inline-flex;
+  flex: 0 0 3.6rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  height: 3.6rem;
+  justify-content: center;
+  overflow: hidden;
+  width: 3.6rem;
+}
+
+.profile-photo-copy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.profile-photo-copy strong {
+  color: var(--az-text);
+  font-size: 0.78rem;
+}
+
+.profile-photo-copy small {
+  color: var(--az-text-soft);
+  font-size: 0.67rem;
+  line-height: 1.35;
+}
+
+.profile-photo-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.profile-photo-actions input[type='file'] {
+  display: none;
+}
+
+.profile-fields--personal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .profile-fields label {
   color: var(--az-text);
   display: grid;
@@ -197,10 +276,43 @@
   width: 100%;
 }
 
+.profile-input-shell {
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.profile-input-shell > i {
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+  left: 0.7rem;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.profile-input-shell input {
+  padding-left: 2rem;
+}
+
+.profile-readonly-field {
+  display: grid;
+  gap: 0.32rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.profile-readonly-field__label {
+  color: var(--az-text);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
 .profile-readonly-field > span {
   align-items: center;
-  display: inline-flex;
+  display: flex;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .profile-readonly-field > span i {
@@ -212,6 +324,10 @@
   background: var(--az-surface-hover);
   color: var(--az-text-soft);
   cursor: not-allowed;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .profile-readonly-field small {
@@ -252,6 +368,40 @@
 .profile-button--primary {
   background: var(--az-blue);
   color: #ffffff;
+}
+
+.profile-button--outline {
+  background: var(--az-surface);
+  border-color: color-mix(in srgb, var(--az-blue) 28%, var(--az-border));
+  color: var(--az-blue);
+}
+
+.profile-button--disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.profile-icon-button {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.52rem;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 2.3rem;
+  height: 2.3rem;
+  justify-content: center;
+  width: 2.3rem;
+}
+
+.profile-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.profile-icon-button--danger {
+  border-color: color-mix(in srgb, #ef4444 28%, var(--az-border));
+  color: #dc2626;
 }
 
 .profile-button--secondary {
@@ -366,7 +516,8 @@
 
 @media (max-width: 42rem) {
   .profile-dialog-grid,
-  .profile-readonly-grid {
+  .profile-readonly-grid,
+  .profile-fields--personal {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -382,5 +533,13 @@
   .profile-dialog-summary {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .profile-photo-editor {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .profile-photo-actions {
+    grid-column: 1 / -1;
   }
 }

@@ -8,14 +8,31 @@
         <p class="kicker">Operacion comercial</p>
         <h1>Panel de Ventas</h1>
         <p class="hero-text">
-          Registra la venta en Azurion y consulta el ticket, boleta o factura oficial generado por el Facturador.
+          Registra la venta en Azurion y consulta el ticket, boleta o factura oficial generado por
+          el Facturador.
         </p>
       </div>
     </div>
 
     <div class="hero-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="loadData()">Actualizar</button>
-      <button pButton type="button" class="p-button-success" icon="pi pi-plus-circle" (click)="openNuevaFactura()">Nueva venta</button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-refresh"
+        (click)="loadData()"
+      >
+        Actualizar
+      </button>
+      <button
+        pButton
+        type="button"
+        class="p-button-success"
+        icon="pi pi-plus-circle"
+        (click)="openNuevaFactura()"
+      >
+        Nueva venta
+      </button>
     </div>
   </header>
 
@@ -54,12 +71,41 @@
   <section class="toolbar-band">
     <label class="search-wrap">
       <i class="pi pi-search"></i>
-      <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearch($event)" placeholder="Buscar por cliente, comprobante, documento o estado..." />
+      <input
+        pInputText
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearch($event)"
+        placeholder="Buscar por cliente, comprobante, documento o estado..."
+      />
     </label>
     <div class="toolbar-actions">
-      <button pButton type="button" class="p-button-secondary p-button-text" icon="pi pi-filter-slash" (click)="onSearch('')">Limpiar</button>
-      <button pButton type="button" class="p-button-secondary p-button-text" icon="pi pi-sync" (click)="refreshVentas()">Recargar ventas</button>
-      <button pButton type="button" class="p-button-help p-button-text" icon="pi pi-file-import" (click)="openLatestTrace()">Ultima traza</button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-text"
+        icon="pi pi-filter-slash"
+        (click)="onSearch('')"
+      >
+        Limpiar
+      </button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-text"
+        icon="pi pi-sync"
+        (click)="refreshVentas()"
+      >
+        Recargar ventas
+      </button>
+      <button
+        pButton
+        type="button"
+        class="p-button-help p-button-text"
+        icon="pi pi-file-import"
+        (click)="openLatestTrace()"
+      >
+        Ultima traza
+      </button>
     </div>
   </section>
 
@@ -141,11 +187,18 @@
               <span>{{ paymentLabel(venta) }}</span>
             </div>
           </td>
-          <td class="amount-cell">{{ currencySymbol(venta) }} {{ venta.total | number: '1.2-2' }}</td>
+          <td class="amount-cell">
+            {{ currencySymbol(venta) }} {{ venta.total | number: '1.2-2' }}
+          </td>
           <td>
             <div class="status-cell">
               <span class="status-pill" [ngClass]="statusClass(venta)">
-                <i class="pi" [class.pi-check-circle]="statusClass(venta) === 'is-success'" [class.pi-clock]="statusClass(venta) === 'is-warning'" [class.pi-times-circle]="statusClass(venta) === 'is-danger'"></i>
+                <i
+                  class="pi"
+                  [class.pi-check-circle]="statusClass(venta) === 'is-success'"
+                  [class.pi-clock]="statusClass(venta) === 'is-warning'"
+                  [class.pi-times-circle]="statusClass(venta) === 'is-danger'"
+                ></i>
                 {{ statusDisplayLabel(venta) }}
               </span>
               <small>{{ statusDetailLabel(venta) }}</small>
@@ -167,32 +220,61 @@
                   <i class="pi pi-ellipsis-v"></i>
                 </summary>
                 <div class="sale-action-popover">
-                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="previewPdf(venta)">
+                  <button
+                    type="button"
+                    [disabled]="!canDownloadAsset(venta, 'pdf')"
+                    (click)="previewPdf(venta)"
+                  >
                     <i class="pi pi-eye"></i><span>Ver PDF</span>
                   </button>
-                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="quickDownloadPdf(venta, 'A4')">
+                  <button
+                    type="button"
+                    [disabled]="!canDownloadAsset(venta, 'pdf')"
+                    (click)="quickDownloadPdf(venta, 'A4')"
+                  >
                     <i class="pi pi-file-pdf"></i><span>Descargar PDF A4</span>
                   </button>
-                  <button type="button" [disabled]="!canDownloadAsset(venta, 'pdf')" (click)="quickDownloadPdf(venta, 'TICKET')">
+                  <button
+                    type="button"
+                    [disabled]="!canDownloadAsset(venta, 'pdf')"
+                    (click)="quickDownloadPdf(venta, 'TICKET')"
+                  >
                     <i class="pi pi-receipt"></i><span>PDF ticket 80 mm</span>
                   </button>
                   @if (!isTicketDocument(venta)) {
-                    <button type="button" [disabled]="!canDownloadAsset(venta, 'xml')" (click)="downloadArtifact(venta, 'xml')">
+                    <button
+                      type="button"
+                      [disabled]="!canDownloadAsset(venta, 'xml')"
+                      (click)="downloadArtifact(venta, 'xml')"
+                    >
                       <i class="pi pi-code"></i><span>Descargar XML</span>
                     </button>
-                    <button type="button" [disabled]="!canDownloadAsset(venta, 'cdr')" (click)="downloadArtifact(venta, 'cdr')">
+                    <button
+                      type="button"
+                      [disabled]="!canDownloadAsset(venta, 'cdr')"
+                      (click)="downloadArtifact(venta, 'cdr')"
+                    >
                       <i class="pi pi-download"></i><span>Descargar CDR</span>
                     </button>
                   }
                   <span class="menu-separator"></span>
-                  <button type="button" [disabled]="!hasTrace(venta)" (click)="openTraceForVenta(venta)">
+                  <button
+                    type="button"
+                    [disabled]="!hasTrace(venta)"
+                    (click)="openTraceForVenta(venta)"
+                  >
                     <i class="pi pi-sitemap"></i><span>Ver traza del Facturador</span>
                   </button>
                   <button type="button" (click)="copyComprobante(venta)">
                     <i class="pi pi-copy"></i><span>Copiar numero</span>
                   </button>
                   @if (canRetryDocument(venta)) {
-                    <button type="button" class="menu-action-danger" [disabled]="retryingVentaId() !== null" (click)="retryVentaDocument(venta)">
+                    <button
+                      type="button"
+                      class="menu-action-danger"
+                      [disabled]="retryingVentaId() !== null"
+                      (click)="retryVentaDocument(venta)"
+                    >
                       <i class="pi pi-refresh"></i><span>Reintentar emision</span>
                     </button>
                   }
@@ -210,335 +292,151 @@
       </ng-template>
     </p-table>
   </section>
-</section>
 
-<p-dialog
-  header="Nueva Venta"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [visible]="facturaDialogVisible()"
-  (visibleChange)="facturaDialogVisible.set($event)"
-  styleClass="venta-dialog"
->
-  <section class="venta-form">
-    <div class="fact-alert" [class.fact-alert--local]="isTicketForm()">
-      @if (isTicketForm()) {
-        <strong>Venta rápida:</strong> Azurion registra la operación y el Facturador genera el ticket oficial sin SUNAT.
-      } @else {
-        <strong>Facturación electrónica:</strong> la venta termina primero y el comprobante se procesa en segundo plano.
-      }
-    </div>
-
-    <div class="rule-box">{{ reglaComprobante() }}</div>
-
-    <div class="caja-live">
-      <div>
-        <span>Caja actual</span>
-        <strong>{{ currentCajaLabel() }}</strong>
-      </div>
-      <div>
-        <span>Fecha</span>
-        <strong>{{ facturaForm.fechaEmision | date: 'd/M/yyyy' }}</strong>
-      </div>
-      <div>
-        <span>Apertura</span>
-        <strong>
-          @if (currentCajaApertura() !== null) {
-            S/ {{ currentCajaApertura() | number: '1.2-2' }}
-          } @else {
-            -
-          }
-        </strong>
-      </div>
-      <div>
-        <span>Hora apertura</span>
-        <strong>
-          @if (cajaAperturadaEn()) {
-            {{ cajaAperturadaEn() | date: 'h:mm a' }}
-          } @else {
-            -
-          }
-        </strong>
-      </div>
-    </div>
-
-    <div class="form-grid top">
-      <label>
-        Tipo comprobante
-        <p-select
-          name="tipoComprobante"
-          [options]="comprobanteOptions()"
-          optionLabel="label"
-          optionValue="value"
-          [(ngModel)]="facturaForm.tipoComprobante"
-          (ngModelChange)="onTipoComprobanteChange()"
-        />
-      </label>
-      <label>
-        Fecha emision
-        <input pInputText type="datetime-local" name="fechaEmision" [(ngModel)]="facturaForm.fechaEmision" />
-      </label>
-      <label>
-        Moneda
-        <p-select name="moneda" [options]="monedaOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.moneda" />
-      </label>
-      <label>
-        Tipo cambio
-        <input pInputText type="number" name="tipoCambio" [(ngModel)]="facturaForm.tipoCambio" />
-      </label>
-      <label>
-        Forma pago
-        <p-select name="formaPago" [options]="formaPagoOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.formaPago" />
-      </label>
-      @if (facturaForm.formaPago === 'CONTADO') {
-        <label>
-          Medio de pago
-          <p-select name="metodoPago" [options]="metodoPagoOptions" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.metodoPago" />
-        </label>
-      }
-      <label>
-        Turno de caja activo
-        <p-select name="cajaId" [options]="cajaOptions()" optionLabel="label" optionValue="value" [(ngModel)]="facturaForm.cajaId" />
-      </label>
-    </div>
-
-    @if (facturaForm.formaPago === 'CREDITO') {
-      <div class="form-grid top">
-        <label>
-          Monto cuota
-          <input pInputText type="number" name="cuotaMonto" [(ngModel)]="facturaForm.cuotaMonto" />
-        </label>
-        <label>
-          Fecha cuota
-          <input pInputText type="date" name="cuotaFechaPago" [(ngModel)]="facturaForm.cuotaFechaPago" />
-        </label>
-      </div>
-    }
-
-    @if (!isTicketForm()) {
-    <h3 class="section-title">Cliente y datos fiscales</h3>
-
-    <div class="form-grid client">
-      <label class="wide">
-        Cliente registrado
-        <p-select
-          name="clienteId"
-          [options]="clienteOptions()"
-          optionLabel="label"
-          optionValue="value"
-          [ngModel]="facturaForm.clienteId"
-          (ngModelChange)="onClienteCatalogChange($event)"
-          placeholder="Selecciona cliente existente (opcional)"
-          [filter]="true"
-          [showClear]="true"
-        />
-      </label>
-      <label>
-        Tipo doc
-        <p-select
-          name="clienteTipoDoc"
-          [options]="clienteTipoDocOptions"
-          optionLabel="label"
-          optionValue="value"
-          [(ngModel)]="facturaForm.clienteTipoDoc"
-          [disabled]="facturaForm.tipoComprobante === 'FACTURA' || facturaForm.tipoComprobante === 'BOLETA_SIN_NOMBRE' || facturaForm.tipoComprobante === 'TICKET_VENTA'"
-          (ngModelChange)="onClienteTipoDocChange($event)"
-        />
-      </label>
-      <label>
-        Numero doc
-        <input
-          pInputText
-          name="clienteNumeroDoc"
-          [ngModel]="facturaForm.clienteNumeroDoc"
-          (ngModelChange)="onClienteNumeroDocChange($event)"
-          [placeholder]="clienteDocPlaceholder()"
-          [readonly]="clienteDocMaxLength() === 0"
-          [attr.maxlength]="clienteDocMaxLength()"
-        />
-      </label>
-      <label class="wide">
-        Nombre / Razon social
-        <input
-          pInputText
-          name="clienteNombre"
-          [(ngModel)]="facturaForm.clienteNombre"
-          placeholder="Cliente o empresa"
-          [readonly]="facturaForm.tipoComprobante === 'BOLETA_SIN_NOMBRE' || facturaForm.tipoComprobante === 'TICKET_VENTA'"
-        />
-      </label>
-      <label>
-        Direccion
-        <input pInputText name="clienteDireccion" [(ngModel)]="facturaForm.clienteDireccion" />
-      </label>
-      <label>
-        Email
-        <input pInputText name="clienteEmail" [(ngModel)]="facturaForm.clienteEmail" />
-      </label>
-      <label>
-        Telefono
-        <input pInputText name="clienteTelefono" [(ngModel)]="facturaForm.clienteTelefono" />
-      </label>
-    </div>
-    }
-
-    <h3 class="section-title section-title-row">
-      <span>Items</span>
-      <button type="button" pButton class="p-button-success p-button-rounded" icon="pi pi-plus" (click)="addItem()"></button>
-    </h3>
-
-    @for (item of facturaForm.items; track $index) {
-      <div class="item-row">
-        <label>
-          Producto
-          <p-select
-            [name]="'producto-' + $index"
-            [options]="productoOptions()"
-            optionLabel="label"
-            optionValue="value"
-            [(ngModel)]="item.productoId"
-            (ngModelChange)="onProductoChange($index)"
-            placeholder="Selecciona producto"
-            [filter]="true"
-          />
-        </label>
-        <label>
-          Cantidad
-          <input pInputText type="number" [name]="'cantidad-' + $index" [(ngModel)]="item.cantidad" />
-        </label>
-        <label>
-          Descuento
-          <input pInputText type="number" [name]="'descuento-' + $index" [(ngModel)]="item.descuento" />
-        </label>
-        <label>
-          Precio
-          <input pInputText type="number" [name]="'precio-' + $index" [(ngModel)]="item.precioUnitario" />
-        </label>
-        <label>
-          Descripcion
-          <input pInputText [name]="'descripcion-' + $index" [(ngModel)]="item.descripcion" />
-        </label>
-        <label>
-          Stock
-          <p-tag [value]="stockDisponible(item) + ' und'" [severity]="stockSeverity(item)" />
-        </label>
-        <div class="item-total">
-          <span>Subtotal</span>
-          <strong>{{ item.moneda }} {{ subtotalItem(item) | number: '1.2-2' }}</strong>
-        </div>
-        <button
-          type="button"
-          pButton
-          class="p-button-rounded p-button-danger p-button-text remove-btn"
-          icon="pi pi-trash"
-          (click)="removeItem($index)"
-          [disabled]="facturaForm.items.length <= 1"
-        ></button>
-      </div>
-    }
-
-    <div class="total-row">
-      <span>Total venta</span>
-      <strong>{{ facturaForm.moneda }} {{ totalFactura() | number: '1.2-2' }}</strong>
-    </div>
-  </section>
-
-  <ng-template pTemplate="footer">
-    <button type="button" pButton class="p-button-secondary p-button-outlined" (click)="facturaDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="p-button-success" [loading]="saving()" (click)="submitFactura()" [disabled]="!hasCajasAbiertas()">
-      {{ submitButtonLabel() }}
-    </button>
-  </ng-template>
-</p-dialog>
-
-<p-dialog
-  header="Detalle de venta"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [visible]="detalleDialogVisible()"
-  (visibleChange)="detalleDialogVisible.set($event)"
-  [style]="{ width: '720px', maxWidth: 'calc(100vw - 2rem)' }"
->
-  @if (selectedVenta()) {
-    <div class="detalle-grid">
-      <div><span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong></div>
-      <div><span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong></div>
-      <div><span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong></div>
-      <div><span>Fecha</span><strong>{{ selectedVenta()!.fechaVenta | date: 'd/M/yyyy h:mm:ss a' }}</strong></div>
-      <div><span>Moneda</span><strong>{{ selectedVenta()!.moneda }}</strong></div>
-      <div><span>Total</span><strong>{{ selectedVenta()!.total | number: '1.2-2' }}</strong></div>
-      <div><span>Tipo</span><strong>{{ documentTypeLabel(selectedVenta()!) }}</strong></div>
-      <div><span>Facturacion</span><strong>{{ rowEstadoLabel(selectedVenta()!) }}</strong></div>
-      <div><span>Proceso</span><strong>{{ rowFacturadorLabel(selectedVenta()!) }}</strong></div>
-    </div>
-    @if (!isLegacyInternalTicket(selectedVenta()!)) {
-      <div class="detalle-download">
+  <p-dialog
+    header="Detalle de Venta"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="detalleDialogVisible()"
+    (visibleChange)="detalleDialogVisible.set($event)"
+    [style]="{ width: 'min(92vw, 680px)' }"
+  >
+    @if (selectedVenta()) {
+      <div class="detalle-grid">
         <div>
-          <strong>Documento oficial</strong>
-          <span>El mismo comprobante puede imprimirse en hoja A4 o ticket térmico de 80 mm.</span>
+          <span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong>
         </div>
-        <div class="detalle-print-actions">
-          <button
-            pButton
-            type="button"
-            class="p-button-danger p-button-outlined"
-            icon="pi pi-file-pdf"
-            label="A4"
-            [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
-            [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'A4'"
-            (click)="quickDownloadPdf(selectedVenta()!, 'A4')"
-          ></button>
-          <button
-            pButton
-            type="button"
-            class="p-button-info p-button-outlined"
-            icon="pi pi-receipt"
-            label="Ticket 80 mm"
-            [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
-            [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'TICKET'"
-            (click)="quickDownloadPdf(selectedVenta()!, 'TICKET')"
-          ></button>
+        <div>
+          <span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong>
+        </div>
+        <div>
+          <span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong>
+        </div>
+        <div>
+          <span>Fecha</span
+          ><strong>{{ selectedVenta()!.fechaVenta | date: 'd/M/yyyy h:mm:ss a' }}</strong>
+        </div>
+        <div>
+          <span>Moneda</span><strong>{{ selectedVenta()!.moneda }}</strong>
+        </div>
+        <div>
+          <span>Total</span><strong>{{ selectedVenta()!.total | number: '1.2-2' }}</strong>
+        </div>
+        <div>
+          <span>Tipo</span><strong>{{ documentTypeLabel(selectedVenta()!) }}</strong>
+        </div>
+        <div>
+          <span>Facturacion</span><strong>{{ rowEstadoLabel(selectedVenta()!) }}</strong>
+        </div>
+        <div>
+          <span>Proceso</span><strong>{{ rowFacturadorLabel(selectedVenta()!) }}</strong>
         </div>
       </div>
+      @if (!isLegacyInternalTicket(selectedVenta()!)) {
+        <div class="detalle-download">
+          <div>
+            <strong>Documento oficial</strong>
+            <span>El mismo comprobante puede imprimirse en hoja A4 o ticket térmico de 80 mm.</span>
+          </div>
+          <div class="detalle-print-actions">
+            <button
+              pButton
+              type="button"
+              class="p-button-danger p-button-outlined"
+              icon="pi pi-file-pdf"
+              label="A4"
+              [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
+              [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'A4'"
+              (click)="quickDownloadPdf(selectedVenta()!, 'A4')"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-info p-button-outlined"
+              icon="pi pi-receipt"
+              label="Ticket 80 mm"
+              [disabled]="!canDownloadAsset(selectedVenta()!, 'pdf')"
+              [loading]="quickPdfVentaId() === selectedVenta()!.id && quickPdfFormat() === 'TICKET'"
+              (click)="quickDownloadPdf(selectedVenta()!, 'TICKET')"
+            ></button>
+          </div>
+        </div>
+      }
     }
-  }
-</p-dialog>
+  </p-dialog>
 
-<p-dialog
-  header="Traza Facturador"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [visible]="traceDialogVisible()"
-  (visibleChange)="traceDialogVisible.set($event)"
-  [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
->
-  @if (activeTrace()) {
-    <div class="trace-grid">
-      <div><span>Comprobante</span><strong>{{ activeTrace()!.externalId }}</strong></div>
-      <div><span>Tipo</span><strong>{{ activeTrace()!.tipoComprobante }}</strong></div>
-      <div><span>Estado SUNAT</span><strong>{{ activeTrace()!.sunatEstado || 'Sin estado' }}</strong></div>
-      <div><span>Documento ID</span><strong>{{ activeTrace()!.documentoId || '-' }}</strong></div>
-      <div><span>Status HTTP</span><strong>{{ activeTrace()!.statusCode }}</strong></div>
-      <div><span>Endpoint</span><strong>{{ activeTrace()!.endpoint }}</strong></div>
-      <div><span>Mensaje</span><strong>{{ activeTrace()!.message }}</strong></div>
-      <div><span>Ticket</span><strong>{{ activeTrace()!.ticketSunat || '-' }}</strong></div>
-    </div>
+  <p-dialog
+    header="Traza Facturador"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="traceDialogVisible()"
+    (visibleChange)="traceDialogVisible.set($event)"
+    [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
+  >
+    @if (activeTrace()) {
+      <div class="trace-grid">
+        <div>
+          <span>Comprobante</span><strong>{{ activeTrace()!.externalId }}</strong>
+        </div>
+        <div>
+          <span>Tipo</span><strong>{{ activeTrace()!.tipoComprobante }}</strong>
+        </div>
+        <div>
+          <span>Estado SUNAT</span><strong>{{ activeTrace()!.sunatEstado || 'Sin estado' }}</strong>
+        </div>
+        <div>
+          <span>Documento ID</span><strong>{{ activeTrace()!.documentoId || '-' }}</strong>
+        </div>
+        <div>
+          <span>Status HTTP</span><strong>{{ activeTrace()!.statusCode }}</strong>
+        </div>
+        <div>
+          <span>Endpoint</span><strong>{{ activeTrace()!.endpoint }}</strong>
+        </div>
+        <div>
+          <span>Mensaje</span><strong>{{ activeTrace()!.message }}</strong>
+        </div>
+        <div>
+          <span>Ticket</span><strong>{{ activeTrace()!.ticketSunat || '-' }}</strong>
+        </div>
+      </div>
 
-    <div class="trace-actions">
-      <button pButton type="button" class="p-button-danger p-button-outlined" icon="pi pi-file-pdf" [disabled]="!activeTrace()!.pdfUrl" (click)="openActiveTraceAsset('pdf')">
-        PDF
-      </button>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-file" [disabled]="!activeTrace()!.xmlUrl" (click)="openActiveTraceAsset('xml')">
-        XML
-      </button>
-      <button pButton type="button" class="p-button-contrast p-button-outlined" icon="pi pi-download" [disabled]="!activeTrace()!.cdrUrl" (click)="openActiveTraceAsset('cdr')">
-        CDR
-      </button>
-    </div>
+      <div class="trace-actions">
+        <button
+          pButton
+          type="button"
+          class="p-button-danger p-button-outlined"
+          icon="pi pi-file-pdf"
+          [disabled]="!activeTrace()!.pdfUrl"
+          (click)="openActiveTraceAsset('pdf')"
+        >
+          PDF
+        </button>
+        <button
+          pButton
+          type="button"
+          class="p-button-secondary p-button-outlined"
+          icon="pi pi-file"
+          [disabled]="!activeTrace()!.xmlUrl"
+          (click)="openActiveTraceAsset('xml')"
+        >
+          XML
+        </button>
+        <button
+          pButton
+          type="button"
+          class="p-button-contrast p-button-outlined"
+          icon="pi pi-download"
+          [disabled]="!activeTrace()!.cdrUrl"
+          (click)="openActiveTraceAsset('cdr')"
+        >
+          CDR
+        </button>
+      </div>
 
-    <pre class="trace-json">{{ tracePrettyJson() }}</pre>
-  }
-</p-dialog>
+      <pre class="trace-json">{{ tracePrettyJson() }}</pre>
+    }
+  </p-dialog>
+</section>

@@ -13,21 +13,23 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   IsActiveMatchOptions,
+  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
-import { finalize, timer } from 'rxjs';
+import { filter, finalize, timer } from 'rxjs';
 
 import { AuthApiService } from '@core/auth/auth-api.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { ApiUrlService } from '@core/api/api-url.service';
 import { SessionModuleSyncService } from '@core/auth/session-module-sync.service';
 import { UiToastService } from '@core/services/ui-toast.service';
-import { LowStockAlertService } from '@core/services/low-stock-alert.service';
-import { CrmWhatsappNotificationService } from '@core/services/crm-whatsapp-notification.service';
-import { InternalMessageNotificationService } from '@core/services/internal-message-notification.service';
-import { CrmInboxChannelStateService } from '@features/admin/pages/crm-admin-page/services/crm-inbox-channel-state.service';
+import { LowStockAlertService } from '@features/admin/services/low-stock-alert.service';
+import { CrmWhatsappNotificationService } from '@features/crm/services/crm-whatsapp-notification.service';
+import { InternalMessageNotificationService } from '@features/platform/services/internal-message-notification.service';
+import { CrmInboxChannelStateService } from '@features/crm/services/crm-inbox-channel-state.service';
 import { CurrentUserProfileDialog } from '@features/auth/components/current-user-profile-dialog/current-user-profile-dialog';
 
 interface NavLinkItem {
@@ -40,6 +42,8 @@ interface NavLinkItem {
   module?: string | readonly string[];
   anyModule?: readonly string[];
   children?: NavLinkItem[];
+  badge?: string | number | null;
+  badgeTone?: 'info' | 'success' | 'warn' | 'danger';
 }
 
 interface NavSection {
@@ -73,10 +77,12 @@ interface AccountMenuItem {
   action: 'profile' | 'settings' | 'logout';
 }
 
+import { ConfirmDialog } from 'primeng/confirmdialog';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-layout',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, CurrentUserProfileDialog],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, CurrentUserProfileDialog, ConfirmDialog],
   templateUrl: './app-layout.html',
   styleUrl: './app-layout.css',
 })
@@ -84,6 +90,7 @@ export class AppLayout {
   private readonly sidebarNav = viewChild<ElementRef<HTMLElement>>('sidebarNav');
   private readonly authSession = inject(AuthSessionService);
   private readonly authApi = inject(AuthApiService);
+  private readonly apiUrl = inject(ApiUrlService);
   private readonly sessionModuleSync = inject(SessionModuleSyncService);
   private readonly router = inject(Router);
   private readonly toast = inject(UiToastService);
@@ -115,10 +122,8 @@ export class AppLayout {
   };
 
   private readonly expandedGroups = signal<Record<string, boolean>>({
+    'crm-configuracion': true,
     'crm-bandeja': true,
-    'crm-captacion': true,
-    'crm-comercial': true,
-    'crm-dashboard': true,
     ventas: true,
   });
 
@@ -173,13 +178,18 @@ export class AppLayout {
           ],
         },
         {
-          label: 'Administracion',
+          label: 'Administración',
           items: [
             { label: 'Usuarios Tenant', route: '/admin/usuarios', icon: 'pi-users' },
             {
               label: 'Mensajes',
               route: '/admin/mensajes',
               icon: 'pi-inbox',
+              badge:
+                this.internalMessages.unreadCount() > 0
+                  ? this.internalMessages.unreadCount()
+                  : null,
+              badgeTone: 'info',
             },
             {
               label: 'Correo y avisos',
@@ -194,7 +204,7 @@ export class AppLayout {
           ],
         },
         {
-          label: 'Facturacion',
+          label: 'Facturación',
           items: [
             { label: 'Facturador', route: '/admin/facturador', icon: 'pi-send' },
             {
@@ -211,13 +221,21 @@ export class AppLayout {
       this.selectedWorkspace() === 'crm' ? this.crmMenuSections() : this.erpMenuSections();
     return [
       {
-        label: 'Comunicacion',
-        items: [{ label: 'Mis mensajes', route: '/admin/mensajes', icon: 'pi-inbox' }],
+        label: 'Comunicación',
+        items: [
+          {
+            label: 'Mis mensajes',
+            route: '/admin/mensajes',
+            icon: 'pi-inbox',
+            badge:
+              this.internalMessages.unreadCount() > 0 ? this.internalMessages.unreadCount() : null,
+            badgeTone: 'info',
+          },
+        ],
       },
       ...this.filterNavSections(sections),
     ];
   });
-
   protected readonly searchableRoutes = computed<SearchableRoute[]>(() =>
     this.navSections().flatMap((section) =>
       section.items.flatMap((item) => {
@@ -255,7 +273,12 @@ export class AppLayout {
     const sucursales = session?.sucursales ?? [];
     const primaryBranch = sucursales[0] ?? null;
 
-    const initials = username
+    const displayName =
+      [session?.nombres, session?.apellidos]
+        .map((value) => value?.trim())
+        .filter(Boolean)
+        .join(' ') || username;
+    const initials = displayName
       .split(/[.\s_-]+/)
       .filter((part) => part.length > 0)
       .slice(0, 2)
@@ -264,10 +287,11 @@ export class AppLayout {
 
     return {
       username,
-      displayName: session?.nombres?.trim() || username,
+      displayName,
       email: session?.email || null,
       role,
       initials: initials || 'US',
+      photoUrl: this.apiUrl.publicFileUrl(session?.fotoPerfilUrl),
       empresaNombre: session?.empresa?.razonSocial || null,
       empresaRuc: session?.empresa?.ruc || null,
       logoPanelUrl: session?.empresa?.logoPanelUrl || null,
@@ -320,7 +344,8 @@ export class AppLayout {
         tone: 'success',
       });
     }
-    const internal = this.internalMessages.inboxPreview()
+    const internal = this.internalMessages
+      .inboxPreview()
       .filter((message) => !message.leido)
       .slice(0, 3)
       .map<HeaderActionItem>((message) => ({
@@ -339,10 +364,11 @@ export class AppLayout {
     items.unshift(...internal);
     return items;
   });
-  protected readonly notificationBadgeCount = computed(() =>
-    this.lowStockAlerts.alerts().length +
-    this.whatsappNotifications.unreadCount() +
-    this.internalMessages.unreadCount(),
+  protected readonly notificationBadgeCount = computed(
+    () =>
+      this.lowStockAlerts.alerts().length +
+      this.whatsappNotifications.unreadCount() +
+      this.internalMessages.unreadCount(),
   );
   protected readonly hasWhatsappNotifications = this.whatsappNotifications.hasUnread;
   protected readonly hasInternalMessages = this.internalMessages.hasUnread;
@@ -372,8 +398,21 @@ export class AppLayout {
   ]);
 
   constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        const url = event.urlAfterRedirects || event.url;
+        const targetWorkspace: WorkspaceMode = url.startsWith('/admin/crm') ? 'crm' : 'erp';
+        if (this.activeWorkspace() !== targetWorkspace) {
+          this.activeWorkspace.set(targetWorkspace);
+        }
+      });
     afterNextRender(() => this.restoreSidebarScroll());
     this.sessionModuleSync.syncCurrentTenantModules();
+    this.refreshCurrentUserProfile();
     this.applyThemeMode(this.themeMode());
     this.internalMessages.refresh();
     timer(30_000, 30_000)
@@ -427,6 +466,27 @@ export class AppLayout {
 
   protected toggleThemeMode(): void {
     this.setThemeMode(this.isDarkTheme() ? 'light' : 'dark');
+  }
+
+  private refreshCurrentUserProfile(): void {
+    if (!this.session()) {
+      return;
+    }
+    this.authApi
+      .getCurrentProfile()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => {
+          this.authSession.updateCurrentProfile({
+            nombres: profile.nombres,
+            apellidos: profile.apellidos,
+            telefono: profile.telefono,
+            cargo: profile.cargo,
+            fotoPerfilUrl: profile.fotoPerfilUrl,
+          });
+        },
+        error: () => undefined,
+      });
   }
 
   protected handleBrandLogoError(): void {
@@ -691,8 +751,64 @@ export class AppLayout {
   private erpMenuSections(): NavSection[] {
     return [
       ...this.erpCoreMenuSections(),
-      ...this.tenantConfigurationSections(),
-      ...this.billingConfigurationSections(),
+      {
+        label: 'Configuración',
+        items: [
+          {
+            label: 'Empresa y Usuarios',
+            icon: 'pi-building',
+            groupId: 'erp-tenant-config',
+            children: [
+              {
+                label: 'Empresa',
+                route: '/admin/configuracion-empresa',
+                icon: 'pi-cog',
+                permission: 'CONFIGURACION_WRITE',
+              },
+              {
+                label: 'Sucursales',
+                route: '/admin/sucursales',
+                icon: 'pi-building',
+                permission: 'SUCURSALES_WRITE',
+              },
+              {
+                label: 'Usuarios',
+                route: '/admin/usuarios',
+                icon: 'pi-users',
+                permission: 'USUARIOS_READ',
+              },
+              {
+                label: 'Seguridad Empresa',
+                route: '/admin/seguridad-empresa',
+                icon: 'pi-shield',
+                permission: 'ROLES_READ',
+              },
+            ],
+          },
+          {
+            label: 'Facturación SUNAT',
+            icon: 'pi-sliders-h',
+            groupId: 'erp-billing-config',
+            module: ['ERP', 'FACTURACION'],
+            children: [
+              {
+                label: 'Configuración facturador',
+                route: '/admin/configuracion-facturador',
+                icon: 'pi-sliders-h',
+                permission: 'CONFIGURACION_WRITE',
+                module: ['ERP', 'FACTURACION'],
+              },
+              {
+                label: 'Configuración tributaria',
+                route: '/admin/configuracion-tributaria',
+                icon: 'pi-percentage',
+                permission: 'TRIBUTACION_READ',
+                module: ['ERP', 'FACTURACION'],
+              },
+            ],
+          },
+        ],
+      },
     ];
   }
 
@@ -700,8 +816,6 @@ export class AppLayout {
     return [
       {
         label: 'General',
-        groupTitle: 'ERP',
-        groupIcon: 'pi-box',
         items: [
           {
             label: 'Dashboard',
@@ -716,25 +830,13 @@ export class AppLayout {
             permission: 'REPORTES_READ',
             module: ['ERP', 'REPORTES'],
           },
-          {
-            label: 'Cotizaciones',
-            route: '/admin/ventas/cotizaciones',
-            icon: 'pi-file-edit',
-            module: 'COTIZACIONES',
-          },
-          {
-            label: 'Clientes',
-            route: '/admin/clientes',
-            icon: 'pi-id-card',
-            module: 'CLIENTES',
-          },
         ],
       },
       {
-        label: 'Ventas',
+        label: 'Ventas y Caja',
         items: [
           {
-            label: 'Punto de venta',
+            label: 'Punto de venta (POS)',
             route: '/admin/ventas/nueva',
             icon: 'pi-shopping-cart',
             permission: 'VENTAS_CREATE',
@@ -748,45 +850,58 @@ export class AppLayout {
             module: ['ERP', 'VENTAS'],
           },
           {
-            label: 'Caja',
+            label: 'Caja chica',
             route: '/admin/caja',
             icon: 'pi-credit-card',
             permission: 'CAJA_READ',
             module: ['ERP', 'CAJA'],
           },
           {
-            label: 'Nota de credito',
-            route: '/admin/ventas/nota-credito',
-            icon: 'pi-minus-circle',
-            permission: 'NOTA_CREDITO_CREATE',
-            module: ['ERP', 'FACTURACION'],
+            label: 'Cotizaciones',
+            route: '/admin/ventas/cotizaciones',
+            icon: 'pi-file-edit',
+            module: 'COTIZACIONES',
           },
           {
-            label: 'Nota de debito',
-            route: '/admin/ventas/nota-debito',
-            icon: 'pi-plus-circle',
-            permission: 'NOTA_DEBITO_CREATE',
-            module: ['ERP', 'FACTURACION'],
+            label: 'Clientes',
+            route: '/admin/clientes',
+            icon: 'pi-id-card',
+            module: 'CLIENTES',
           },
           {
-            label: 'Guia de remision',
-            route: '/admin/ventas/guia-remision',
-            icon: 'pi-truck',
-            permission: 'GUIA_REMISION_CREATE',
+            label: 'Comprobantes y Guías',
+            icon: 'pi-file-check',
+            groupId: 'erp-comprobantes-guias',
             module: ['ERP', 'FACTURACION'],
+            children: [
+              {
+                label: 'Nota de crédito',
+                route: '/admin/ventas/nota-credito',
+                icon: 'pi-minus-circle',
+                permission: 'NOTA_CREDITO_CREATE',
+                module: ['ERP', 'FACTURACION'],
+              },
+              {
+                label: 'Nota de débito',
+                route: '/admin/ventas/nota-debito',
+                icon: 'pi-plus-circle',
+                permission: 'NOTA_DEBITO_CREATE',
+                module: ['ERP', 'FACTURACION'],
+              },
+              {
+                label: 'Guía de remisión',
+                route: '/admin/ventas/guia-remision',
+                icon: 'pi-truck',
+                permission: 'GUIA_REMISION_CREATE',
+                module: ['ERP', 'FACTURACION'],
+              },
+            ],
           },
         ],
       },
       {
         label: 'Inventario',
         items: [
-          {
-            label: 'Almacenes',
-            route: '/admin/almacenes',
-            icon: 'pi-shop',
-            permission: 'INVENTORY_READ',
-            module: ['ERP', 'INVENTARIO'],
-          },
           {
             label: 'Productos',
             route: '/admin/productos',
@@ -795,7 +910,14 @@ export class AppLayout {
             module: ['ERP', 'INVENTARIO'],
           },
           {
-            label: 'Inventarios',
+            label: 'Almacenes',
+            route: '/admin/almacenes',
+            icon: 'pi-shop',
+            permission: 'INVENTORY_READ',
+            module: ['ERP', 'INVENTARIO'],
+          },
+          {
+            label: 'Inventarios y Stock',
             route: '/admin/inventarios',
             icon: 'pi-database',
             permission: 'INVENTORY_READ',
@@ -807,11 +929,10 @@ export class AppLayout {
   }
 
   private crmMenuSections(): NavSection[] {
+    const unreadWhatsapp = this.whatsappNotifications.unreadCount();
     return [
       {
-        label: 'General',
-        groupTitle: 'CRM',
-        groupIcon: 'pi-chart-line',
+        label: 'Principal',
         items: [
           {
             label: 'Dashboard',
@@ -830,7 +951,7 @@ export class AppLayout {
         ],
       },
       {
-        label: 'Captacion',
+        label: 'Prospección y Contacto',
         items: [
           {
             label: 'Bandeja',
@@ -838,6 +959,8 @@ export class AppLayout {
             groupId: 'crm-bandeja',
             anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
             module: 'CRM',
+            badge: unreadWhatsapp > 0 ? unreadWhatsapp : null,
+            badgeTone: 'success',
             children: this.crmInboxMenuItems(),
           },
           {
@@ -857,7 +980,7 @@ export class AppLayout {
         ],
       },
       {
-        label: 'Comercial',
+        label: 'Gestión Comercial',
         items: [
           {
             label: 'Pipeline',
@@ -874,24 +997,12 @@ export class AppLayout {
             module: 'CRM',
           },
           {
-            label: 'Ganadas y perdidas',
-            route: '/admin/crm/resultados',
-            icon: 'pi-flag',
-            anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
-            module: 'CRM',
-          },
-          {
             label: 'Cotizaciones CRM',
             route: '/admin/crm/cotizaciones',
             icon: 'pi-file-edit',
             anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_QUOTES_CREATE'],
             module: 'CRM',
           },
-        ],
-      },
-      {
-        label: 'Postventa',
-        items: [
           {
             label: 'Clientes',
             route: '/admin/crm/clientes',
@@ -906,14 +1017,20 @@ export class AppLayout {
             anyPermission: ['CRM_OPPORTUNITIES_READ'],
             module: 'CRM',
           },
+          {
+            label: 'Ganadas y perdidas',
+            route: '/admin/crm/resultados',
+            icon: 'pi-flag',
+            anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'],
+            module: 'CRM',
+          },
         ],
       },
       {
-        label: 'Configuracion',
+        label: 'Configuración',
         items: [
           {
-            label: 'Configuracion CRM',
-            route: '/admin/crm/administracion/general',
+            label: 'Ajustes CRM',
             icon: 'pi-cog',
             groupId: 'crm-configuracion',
             permission: 'CRM_CONFIG_MANAGE',
@@ -963,14 +1080,45 @@ export class AppLayout {
               },
             ],
           },
+          {
+            label: 'Empresa y Usuarios',
+            icon: 'pi-building',
+            groupId: 'crm-tenant-config',
+            children: [
+              {
+                label: 'Empresa',
+                route: '/admin/configuracion-empresa',
+                icon: 'pi-cog',
+                permission: 'CONFIGURACION_WRITE',
+              },
+              {
+                label: 'Sucursales',
+                route: '/admin/sucursales',
+                icon: 'pi-building',
+                permission: 'SUCURSALES_WRITE',
+              },
+              {
+                label: 'Usuarios',
+                route: '/admin/usuarios',
+                icon: 'pi-users',
+                permission: 'USUARIOS_READ',
+              },
+              {
+                label: 'Seguridad Empresa',
+                route: '/admin/seguridad-empresa',
+                icon: 'pi-shield',
+                permission: 'ROLES_READ',
+              },
+            ],
+          },
         ],
       },
-      ...this.tenantConfigurationSections(),
     ];
   }
 
   private crmInboxMenuItems(): NavLinkItem[] {
     const activeChannels = this.crmInboxChannels.activeChannelCodes();
+    const unreadWhatsapp = this.whatsappNotifications.unreadCount();
     const items: Array<NavLinkItem & { channel: string }> = [
       {
         channel: 'WHATSAPP',
@@ -979,6 +1127,8 @@ export class AppLayout {
         icon: 'pi-whatsapp',
         anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'],
         module: 'CRM',
+        badge: unreadWhatsapp > 0 ? unreadWhatsapp : null,
+        badgeTone: 'success',
       },
       {
         channel: 'FACEBOOK',
@@ -1010,68 +1160,6 @@ export class AppLayout {
       .map(({ channel: _channel, ...item }) => item);
   }
 
-  private tenantConfigurationSections(): NavSection[] {
-    return [
-      {
-        label: 'Administracion',
-        groupTitle: 'Configuracion del tenant',
-        groupIcon: 'pi-building',
-        items: [
-          {
-            label: 'Empresa',
-            route: '/admin/configuracion-empresa',
-            icon: 'pi-cog',
-            permission: 'CONFIGURACION_WRITE',
-          },
-          {
-            label: 'Sucursales',
-            route: '/admin/sucursales',
-            icon: 'pi-building',
-            permission: 'SUCURSALES_WRITE',
-          },
-          {
-            label: 'Usuarios',
-            route: '/admin/usuarios',
-            icon: 'pi-users',
-            permission: 'USUARIOS_READ',
-          },
-          {
-            label: 'Seguridad Empresa',
-            route: '/admin/seguridad-empresa',
-            icon: 'pi-shield',
-            permission: 'ROLES_READ',
-          },
-        ],
-      },
-    ];
-  }
-
-  private billingConfigurationSections(): NavSection[] {
-    return [
-      {
-        label: 'Configuracion',
-        groupTitle: 'Facturador',
-        groupIcon: 'pi-file-check',
-        items: [
-          {
-            label: 'Configuracion tributaria',
-            route: '/admin/configuracion-tributaria',
-            icon: 'pi-percentage',
-            permission: 'TRIBUTACION_READ',
-            module: ['ERP', 'FACTURACION'],
-          },
-          {
-            label: 'Configuracion facturador',
-            route: '/admin/configuracion-facturador',
-            icon: 'pi-sliders-h',
-            permission: 'CONFIGURACION_WRITE',
-            module: ['ERP', 'FACTURACION'],
-          },
-        ],
-      },
-    ];
-  }
-
   private resolveInitialWorkspace(): WorkspaceMode {
     return this.router.url.startsWith('/admin/crm') ? 'crm' : 'erp';
   }
@@ -1083,9 +1171,7 @@ export class AppLayout {
         items: section.items
           .map((item) => ({
             ...item,
-            children: item.children?.filter(
-              (child) => this.canAccessMenuItem(child),
-            ),
+            children: item.children?.filter((child) => this.canAccessMenuItem(child)),
           }))
           .filter((item) => {
             if (item.children) {
@@ -1100,7 +1186,8 @@ export class AppLayout {
   private canAccessMenuItem(item: NavLinkItem): boolean {
     const hasPermission = !item.permission || this.authSession.hasPermission(item.permission);
     const hasAnyPermission =
-      !item.anyPermission || item.anyPermission.some((code) => this.authSession.hasPermission(code));
+      !item.anyPermission ||
+      item.anyPermission.some((code) => this.authSession.hasPermission(code));
     const hasModule = !item.module || this.authSession.hasModule(item.module);
     const hasAnyModule = !item.anyModule || this.hasAnyModule(item.anyModule);
     return hasPermission && hasAnyPermission && hasModule && hasAnyModule;

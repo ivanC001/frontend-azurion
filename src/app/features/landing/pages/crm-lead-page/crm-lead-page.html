@@ -19,7 +19,8 @@
         <p class="eyebrow">Captación comercial</p>
         <h1>{{ catalogoItem()?.nombre || 'Oferta conectada al CRM' }}</h1>
         <p class="hero-copy">
-          Registra tu interés y el equipo comercial recibirá el prospecto en AZURION con la oferta, la campaña y el contexto listos para el seguimiento.
+          Registra tu interés y el equipo comercial recibirá el prospecto en AZURION con la oferta,
+          la campaña y el contexto listos para el seguimiento.
         </p>
 
         @if (catalogoItem()) {
@@ -42,8 +43,13 @@
             </div>
             <div>
               <span>{{ loadingCatalog() ? 'Validando enlace' : 'Enlace pendiente' }}</span>
-              <strong>{{ loadingCatalog() ? 'Cargando oferta CRM...' : 'Falta tenant, catalogoItemId o token' }}</strong>
-              <p>Genera el enlace desde Productos CRM para que esta landing envíe leads de forma segura al tenant correcto.</p>
+              <strong>{{
+                loadingCatalog() ? 'Cargando oferta CRM...' : 'Falta tenant, catalogoItemId o token'
+              }}</strong>
+              <p>
+                Genera el enlace desde Productos CRM para que esta landing envíe leads de forma
+                segura al tenant correcto.
+              </p>
             </div>
           </div>
         }
@@ -83,7 +89,13 @@
         <div class="form-grid">
           <label>
             Tipo de cliente
-            <p-select name="tipoPersona" [options]="personTypeOptions" [ngModel]="form.tipoPersona" (ngModelChange)="onPersonTypeChange($event)" appendTo="body" />
+            <p-select
+              name="tipoPersona"
+              [options]="personTypeOptions"
+              [ngModel]="form.tipoPersona"
+              (ngModelChange)="onPersonTypeChange($event)"
+              appendTo="body"
+            />
           </label>
           <label>
             Origen
@@ -91,11 +103,24 @@
           </label>
           <label>
             Tipo de documento
-            <p-select name="tipoDocumento" [options]="documentTypeOptions" [(ngModel)]="form.tipoDocumento" [disabled]="form.tipoPersona === 'SIN_DEFINIR'" appendTo="body" placeholder="Primero clasifica el lead" />
+            <p-select
+              name="tipoDocumento"
+              [options]="documentTypeOptions"
+              [(ngModel)]="form.tipoDocumento"
+              [disabled]="form.tipoPersona === 'SIN_DEFINIR'"
+              appendTo="body"
+              placeholder="Primero clasifica el lead"
+            />
           </label>
           <label>
             Documento
-            <input pInputText name="numeroDocumento" [(ngModel)]="form.numeroDocumento" [disabled]="form.tipoPersona === 'SIN_DEFINIR'" placeholder="DNI, RUC o CE" />
+            <input
+              pInputText
+              name="numeroDocumento"
+              [(ngModel)]="form.numeroDocumento"
+              [disabled]="form.tipoPersona === 'SIN_DEFINIR'"
+              placeholder="DNI, RUC o CE"
+            />
           </label>
           <label class="span-2">
             Nombre / contacto
@@ -103,7 +128,13 @@
           </label>
           <label>
             Empresa
-            <input pInputText name="empresa" [(ngModel)]="form.empresa" autocomplete="organization" placeholder="Opcional" />
+            <input
+              pInputText
+              name="empresa"
+              [(ngModel)]="form.empresa"
+              autocomplete="organization"
+              placeholder="Opcional"
+            />
           </label>
           <label>
             Fecha de interés
@@ -115,19 +146,42 @@
           </label>
           <label>
             Correo
-            <input pInputText type="email" name="correo" [(ngModel)]="form.correo" autocomplete="email" />
+            <input
+              pInputText
+              type="email"
+              name="correo"
+              [(ngModel)]="form.correo"
+              autocomplete="email"
+            />
           </label>
           <label class="span-2">
             Dirección
-            <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Opcional" />
+            <input
+              pInputText
+              name="direccion"
+              [(ngModel)]="form.direccion"
+              placeholder="Opcional"
+            />
           </label>
           <label class="bot-field" aria-hidden="true">
             Website
-            <input pInputText name="website" [(ngModel)]="form.website" tabindex="-1" autocomplete="off" />
+            <input
+              pInputText
+              name="website"
+              [(ngModel)]="form.website"
+              tabindex="-1"
+              autocomplete="off"
+            />
           </label>
           <label class="span-2">
             Mensaje
-            <textarea pTextarea name="necesidad" rows="4" [(ngModel)]="form.necesidad" placeholder="Mensaje, dudas, horario o necesidad principal"></textarea>
+            <textarea
+              pTextarea
+              name="necesidad"
+              rows="4"
+              [(ngModel)]="form.necesidad"
+              placeholder="Mensaje, dudas, horario o necesidad principal"
+            ></textarea>
           </label>
         </div>
 

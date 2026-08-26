@@ -111,30 +111,22 @@ export class CompaniesAdminPage {
   );
 
   protected readonly activeSubscriptions = computed(
-    () =>
-      this.companySummaries().filter(
-        (summary) => summary.suscripcionVigente,
-      ).length,
+    () => this.companySummaries().filter((summary) => summary.suscripcionVigente).length,
   );
 
-  protected readonly activeUsers = computed(
-    () =>
-      this.companySummaries().reduce(
-        (total, summary) => total + (summary.usuariosActivos ?? 0),
-        0,
-      ),
+  protected readonly activeUsers = computed(() =>
+    this.companySummaries().reduce((total, summary) => total + (summary.usuariosActivos ?? 0), 0),
   );
 
-  protected readonly contractedSeats = computed(
-    () =>
-      this.companySummaries().reduce(
-        (total, summary) =>
-          total +
-          (summary.suscripcionVigente && summary.suscripcion
-            ? summary.suscripcion.limiteUsuarios
-            : 0),
-        0,
-      ),
+  protected readonly contractedSeats = computed(() =>
+    this.companySummaries().reduce(
+      (total, summary) =>
+        total +
+        (summary.suscripcionVigente && summary.suscripcion
+          ? summary.suscripcion.limiteUsuarios
+          : 0),
+      0,
+    ),
   );
 
   protected readonly planOptions = computed(() =>
@@ -157,18 +149,114 @@ export class CompaniesAdminPage {
     { label: 'Inactivas', value: 'INACTIVAS' },
   ];
   protected readonly countryOptions = [
-    { code: 'PE', name: 'Peru', document: 'RUC', currency: 'PEN', symbol: 'S/', timezone: 'America/Lima', language: 'es-PE' },
-    { code: 'AR', name: 'Argentina', document: 'CUIT', currency: 'ARS', symbol: '$', timezone: 'America/Argentina/Buenos_Aires', language: 'es-AR' },
-    { code: 'BO', name: 'Bolivia', document: 'NIT', currency: 'BOB', symbol: 'Bs', timezone: 'America/La_Paz', language: 'es-BO' },
-    { code: 'BR', name: 'Brasil', document: 'CNPJ', currency: 'BRL', symbol: 'R$', timezone: 'America/Sao_Paulo', language: 'pt-BR' },
-    { code: 'CL', name: 'Chile', document: 'RUT', currency: 'CLP', symbol: '$', timezone: 'America/Santiago', language: 'es-CL' },
-    { code: 'CO', name: 'Colombia', document: 'NIT', currency: 'COP', symbol: '$', timezone: 'America/Bogota', language: 'es-CO' },
-    { code: 'EC', name: 'Ecuador', document: 'RUC', currency: 'USD', symbol: '$', timezone: 'America/Guayaquil', language: 'es-EC' },
-    { code: 'ES', name: 'Espana', document: 'NIF', currency: 'EUR', symbol: 'EUR', timezone: 'Europe/Madrid', language: 'es-ES' },
-    { code: 'US', name: 'Estados Unidos', document: 'EIN', currency: 'USD', symbol: '$', timezone: 'America/New_York', language: 'en-US' },
-    { code: 'MX', name: 'Mexico', document: 'RFC', currency: 'MXN', symbol: '$', timezone: 'America/Mexico_City', language: 'es-MX' },
-    { code: 'GB', name: 'Reino Unido', document: 'VAT', currency: 'GBP', symbol: 'GBP', timezone: 'Europe/London', language: 'en-GB' },
-    { code: 'UY', name: 'Uruguay', document: 'RUT', currency: 'UYU', symbol: '$U', timezone: 'America/Montevideo', language: 'es-UY' },
+    {
+      code: 'PE',
+      name: 'Peru',
+      document: 'RUC',
+      currency: 'PEN',
+      symbol: 'S/',
+      timezone: 'America/Lima',
+      language: 'es-PE',
+    },
+    {
+      code: 'AR',
+      name: 'Argentina',
+      document: 'CUIT',
+      currency: 'ARS',
+      symbol: '$',
+      timezone: 'America/Argentina/Buenos_Aires',
+      language: 'es-AR',
+    },
+    {
+      code: 'BO',
+      name: 'Bolivia',
+      document: 'NIT',
+      currency: 'BOB',
+      symbol: 'Bs',
+      timezone: 'America/La_Paz',
+      language: 'es-BO',
+    },
+    {
+      code: 'BR',
+      name: 'Brasil',
+      document: 'CNPJ',
+      currency: 'BRL',
+      symbol: 'R$',
+      timezone: 'America/Sao_Paulo',
+      language: 'pt-BR',
+    },
+    {
+      code: 'CL',
+      name: 'Chile',
+      document: 'RUT',
+      currency: 'CLP',
+      symbol: '$',
+      timezone: 'America/Santiago',
+      language: 'es-CL',
+    },
+    {
+      code: 'CO',
+      name: 'Colombia',
+      document: 'NIT',
+      currency: 'COP',
+      symbol: '$',
+      timezone: 'America/Bogota',
+      language: 'es-CO',
+    },
+    {
+      code: 'EC',
+      name: 'Ecuador',
+      document: 'RUC',
+      currency: 'USD',
+      symbol: '$',
+      timezone: 'America/Guayaquil',
+      language: 'es-EC',
+    },
+    {
+      code: 'ES',
+      name: 'Espana',
+      document: 'NIF',
+      currency: 'EUR',
+      symbol: 'EUR',
+      timezone: 'Europe/Madrid',
+      language: 'es-ES',
+    },
+    {
+      code: 'US',
+      name: 'Estados Unidos',
+      document: 'EIN',
+      currency: 'USD',
+      symbol: '$',
+      timezone: 'America/New_York',
+      language: 'en-US',
+    },
+    {
+      code: 'MX',
+      name: 'Mexico',
+      document: 'RFC',
+      currency: 'MXN',
+      symbol: '$',
+      timezone: 'America/Mexico_City',
+      language: 'es-MX',
+    },
+    {
+      code: 'GB',
+      name: 'Reino Unido',
+      document: 'VAT',
+      currency: 'GBP',
+      symbol: 'GBP',
+      timezone: 'Europe/London',
+      language: 'en-GB',
+    },
+    {
+      code: 'UY',
+      name: 'Uruguay',
+      document: 'RUT',
+      currency: 'UYU',
+      symbol: '$U',
+      timezone: 'America/Montevideo',
+      language: 'es-UY',
+    },
   ] as const;
   protected readonly filteredCompanySummaries = computed(() => {
     const query = this.searchTerm().trim().toLocaleLowerCase();
@@ -485,5 +573,4 @@ export class CompaniesAdminPage {
 
     return '';
   }
-
 }

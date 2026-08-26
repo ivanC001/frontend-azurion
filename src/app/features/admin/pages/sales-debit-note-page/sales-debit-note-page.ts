@@ -117,8 +117,7 @@ export class SalesDebitNotePage {
     }
 
     this.saving.set(true);
-    const clientOperationId =
-      this.pendingOperationId ?? createClientOperationId('debit-note');
+    const clientOperationId = this.pendingOperationId ?? createClientOperationId('debit-note');
     this.pendingOperationId = clientOperationId;
     this.api
       .registrarNotaDebito({

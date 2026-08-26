@@ -209,9 +209,7 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    const normalized = input.value
-      .replace(/[^A-Za-z0-9._/-]/g, '')
-      .slice(0, 40);
+    const normalized = input.value.replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 40);
     input.value = normalized;
     this.tenantCredentials.tenantId = normalized;
   }
@@ -314,9 +312,7 @@ export class LoginPage implements OnInit {
     };
   }
 
-  private completeLogin(
-    response: import('@core/auth/auth-session.service').LoginResponse,
-  ): void {
+  private completeLogin(response: import('@core/auth/auth-session.service').LoginResponse): void {
     if (!response?.accessToken) {
       this.errorMessage.set(
         'La respuesta del servidor no incluyo token. Verifica las credenciales y la empresa.',

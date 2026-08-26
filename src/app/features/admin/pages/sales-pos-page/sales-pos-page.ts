@@ -9,14 +9,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { forkJoin, Subscription, finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
-import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { LowStockAlertService } from '@features/admin/services/low-stock-alert.service';
 import { UiToastService } from '@core/services/ui-toast.service';
 import { createClientOperationId } from '@core/utils/client-operation-id';
 import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
@@ -102,10 +101,10 @@ export class SalesPosPage implements OnDestroy {
   private destroyed = false;
 
   protected readonly selectedCajaId = signal<number | null>(null);
-  protected tipoComprobante: TipoComprobanteVenta = 'TICKET_VENTA';
-  protected formaPago: FormaPago = 'CONTADO';
-  protected metodoPago: MetodoPago = 'EFECTIVO';
-  protected montoRecibido = 0;
+  protected readonly tipoComprobante = signal<TipoComprobanteVenta>('TICKET_VENTA');
+  protected readonly formaPago = signal<FormaPago>('CONTADO');
+  protected readonly metodoPago = signal<MetodoPago>('EFECTIVO');
+  protected readonly montoRecibido = signal(0);
 
   protected readonly documentOptions = computed(() => {
     const options: Array<{
@@ -201,6 +200,16 @@ export class SalesPosPage implements OnDestroy {
 
   protected readonly total = computed(() => Math.max(this.subtotal() - this.descuentoTotal(), 0));
 
+  protected readonly totalUnits = computed(() =>
+    this.cart().reduce((acc, item) => acc + item.cantidad, 0),
+  );
+
+  protected readonly vuelto = computed(() => {
+    const received = Number(this.montoRecibido() || 0);
+    const tot = this.total();
+    return Math.max(received - tot, 0);
+  });
+
   protected readonly taxBreakdown = computed(() => {
     let operacionGravada = 0;
     let operacionExonerada = 0;
@@ -229,16 +238,6 @@ export class SalesPosPage implements OnDestroy {
       igv: this.roundMoney(igv),
     };
   });
-
-  protected readonly vuelto = computed(() =>
-    this.formaPago === 'CONTADO' && this.metodoPago === 'EFECTIVO'
-      ? Math.max(Number(this.montoRecibido || 0) - this.total(), 0)
-      : 0,
-  );
-
-  protected readonly totalUnits = computed(() =>
-    this.cart().reduce((total, item) => total + Number(item.cantidad), 0),
-  );
 
   constructor() {
     this.startVentasStatusStream();
@@ -310,7 +309,8 @@ export class SalesPosPage implements OnDestroy {
         this.addProduct(product);
         this.searchTerm.set('');
       },
-      error: () => this.toast.error('No se pudo consultar el código escaneado. Intenta nuevamente.'),
+      error: () =>
+        this.toast.error('No se pudo consultar el código escaneado. Intenta nuevamente.'),
     });
   }
 
@@ -332,9 +332,8 @@ export class SalesPosPage implements OnDestroy {
       this.changeQuantity(producto.id, 1);
       return;
     }
-
     this.cart.set([...current, { producto, cantidad: 1, descuento: 0 }]);
-    this.montoRecibido = this.total();
+    this.montoRecibido.set(this.total());
   }
 
   protected changeQuantity(productId: number, delta: number): void {
@@ -350,7 +349,7 @@ export class SalesPosPage implements OnDestroy {
         return { ...item, cantidad };
       }),
     );
-    this.montoRecibido = this.total();
+    this.montoRecibido.set(this.total());
   }
 
   protected updateQuantity(productId: number, quantity: number): void {
@@ -365,7 +364,7 @@ export class SalesPosPage implements OnDestroy {
         row.producto.id === productId ? { ...row, cantidad: safeQuantity } : row,
       ),
     );
-    this.montoRecibido = this.total();
+    this.montoRecibido.set(this.total());
   }
 
   protected updateDiscount(productId: number, discount: number): void {
@@ -378,21 +377,21 @@ export class SalesPosPage implements OnDestroy {
         return { ...item, descuento: Math.min(Math.max(Number(discount || 0), 0), maximum) };
       }),
     );
-    this.montoRecibido = this.total();
+    this.montoRecibido.set(this.total());
   }
 
   protected removeProduct(productId: number): void {
     this.cart.update((items) => items.filter((item) => item.producto.id !== productId));
-    this.montoRecibido = this.total();
+    this.montoRecibido.set(this.total());
   }
 
   protected clearSale(): void {
     this.cart.set([]);
     this.selectedClienteId.set(null);
-    this.tipoComprobante = 'TICKET_VENTA';
-    this.formaPago = 'CONTADO';
-    this.metodoPago = 'EFECTIVO';
-    this.montoRecibido = 0;
+    this.tipoComprobante.set('TICKET_VENTA');
+    this.formaPago.set('CONTADO');
+    this.metodoPago.set('EFECTIVO');
+    this.montoRecibido.set(0);
     this.saleDocument.set(null);
     this.documentDialogVisible.set(false);
     this.stopDocumentPolling();
@@ -403,14 +402,14 @@ export class SalesPosPage implements OnDestroy {
       type !== 'TICKET_VENTA' &&
       !canIssueElectronicDocuments(this.session.currentSession()?.empresa)
     ) {
-      this.tipoComprobante = 'TICKET_VENTA';
+      this.tipoComprobante.set('TICKET_VENTA');
       this.toast.info(
         'Completa la configuracion fiscal de una empresa peruana para emitir boletas o facturas.',
         'Solo ticket disponible',
       );
       return;
     }
-    this.tipoComprobante = type;
+    this.tipoComprobante.set(type);
     if (type === 'TICKET_VENTA') {
       this.selectedClienteId.set(null);
       return;
@@ -427,7 +426,7 @@ export class SalesPosPage implements OnDestroy {
   protected clienteOptions(): { label: string; value: number }[] {
     return this.clientes()
       .filter((cliente) => cliente.activo)
-      .filter((cliente) => this.tipoComprobante !== 'FACTURA' || this.isClienteRucValido(cliente))
+      .filter((cliente) => this.tipoComprobante() !== 'FACTURA' || this.isClienteRucValido(cliente))
       .map((cliente) => ({
         label: `${cliente.tipoDocumento === '6' ? 'RUC' : 'DNI'} ${cliente.numeroDocumento} - ${cliente.nombre}`,
         value: cliente.id,
@@ -435,14 +434,14 @@ export class SalesPosPage implements OnDestroy {
   }
 
   protected clientePlaceholder(): string {
-    return this.tipoComprobante === 'FACTURA'
+    return this.tipoComprobante() === 'FACTURA'
       ? 'Buscar empresa por RUC o razon social'
       : 'Buscar DNI, RUC o nombre';
   }
 
   protected itemTotal(item: PosCartItem): number {
     return Math.max(
-      Number(item.producto.precio) * Number(item.cantidad) - Number(item.descuento || 0),
+      Number(item.producto.precio || 0) * Number(item.cantidad || 0) - Number(item.descuento || 0),
       0,
     );
   }
@@ -461,7 +460,7 @@ export class SalesPosPage implements OnDestroy {
     }
     this.selectedCajaId.set(cajaId);
     this.cart.set([]);
-    this.montoRecibido = 0;
+    this.montoRecibido.set(0);
     this.loadStockSucursal();
   }
 
@@ -503,14 +502,13 @@ export class SalesPosPage implements OnDestroy {
 
     const cajaId = this.selectedCajaId() as number;
     const cliente = this.selectedCliente();
-    const clientOperationId =
-      this.pendingSaleOperationId ?? createClientOperationId('sale-pos');
+    const clientOperationId = this.pendingSaleOperationId ?? createClientOperationId('sale-pos');
     this.pendingSaleOperationId = clientOperationId;
     this.saving.set(true);
 
     this.api
       .registrarVentaCaja(cajaId, {
-        tipoComprobante: this.tipoComprobante,
+        tipoComprobante: this.tipoComprobante(),
         total: Number(this.total().toFixed(2)),
         clienteId: cliente?.id || null,
         clienteTipoDocumento: cliente?.tipoDocumento || null,
@@ -518,9 +516,9 @@ export class SalesPosPage implements OnDestroy {
         clienteNombre: cliente?.nombre || null,
         moneda: 'PEN',
         tipoCambio: 1,
-        formaPago: this.formaPago,
-        metodoPago: this.formaPago === 'CREDITO' ? 'CREDITO' : this.metodoPago,
-        descripcion: `Venta POS - ${this.metodoPago}`,
+        formaPago: this.formaPago(),
+        metodoPago: this.formaPago() === 'CREDITO' ? 'CREDITO' : this.metodoPago(),
+        descripcion: `Venta POS - ${this.metodoPago()}`,
         clientOperationId,
         items: this.cart().flatMap((item) => this.buildSaleRequestItems(item)),
       })
@@ -534,7 +532,7 @@ export class SalesPosPage implements OnDestroy {
           this.toast.success(response.facturacion.message, 'Venta registrada');
           this.lowStockAlerts.refresh(true);
           this.cart.set([]);
-          this.montoRecibido = 0;
+          this.montoRecibido.set(0);
           this.loadData();
         },
         error: (error: unknown) => this.toast.error(this.resolveError(error)),
@@ -562,8 +560,8 @@ export class SalesPosPage implements OnDestroy {
     }
     return Number(
       producto.usaConfiguracionEmpresa === false
-        ? producto.porcentajeImpuesto ?? 18
-        : this.sucursalTax()?.porcentajeIgv ?? 18,
+        ? (producto.porcentajeImpuesto ?? 18)
+        : (this.sucursalTax()?.porcentajeIgv ?? 18),
     );
   }
 
@@ -609,7 +607,10 @@ export class SalesPosPage implements OnDestroy {
         next: (record) => {
           this.applyVentaRecord(record);
           this.startDocumentPolling();
-          this.toast.success('El documento volvio a la cola de generacion.', 'Reintento programado');
+          this.toast.success(
+            'El documento volvio a la cola de generacion.',
+            'Reintento programado',
+          );
         },
         error: (error: unknown) => this.toast.error(this.resolveError(error)),
       });
@@ -658,17 +659,17 @@ export class SalesPosPage implements OnDestroy {
       return 'Agrega al menos un producto al carrito.';
     }
     const cliente = this.selectedCliente();
-    if (this.tipoComprobante === 'FACTURA' && !this.isClienteRucValido(cliente)) {
+    if (this.tipoComprobante() === 'FACTURA' && !this.isClienteRucValido(cliente)) {
       return 'La factura requiere un cliente registrado con RUC de 11 digitos.';
     }
     if (
-      this.tipoComprobante === 'BOLETA' &&
+      this.tipoComprobante() === 'BOLETA' &&
       this.total() > 500 &&
       !isIdentifiedCustomer(cliente?.tipoDocumento, cliente?.numeroDocumento, cliente?.nombre)
     ) {
       return 'La boleta mayor a S/ 500 requiere un cliente identificado con DNI o RUC.';
     }
-    if (this.formaPago === 'CREDITO') {
+    if (this.formaPago() === 'CREDITO') {
       if (!cliente) {
         return 'Selecciona un cliente para realizar una venta al credito.';
       }
@@ -677,9 +678,9 @@ export class SalesPosPage implements OnDestroy {
       }
     }
     if (
-      this.formaPago === 'CONTADO' &&
-      this.metodoPago === 'EFECTIVO' &&
-      Number(this.montoRecibido) < this.total()
+      this.formaPago() === 'CONTADO' &&
+      this.metodoPago() === 'EFECTIVO' &&
+      Number(this.montoRecibido()) < this.total()
     ) {
       return 'El monto recibido es menor al total de la venta.';
     }
@@ -770,11 +771,11 @@ export class SalesPosPage implements OnDestroy {
       ventaId: response.venta.id,
       externalId: response.venta.externalId,
       fecha: response.venta.fechaVenta,
-      requestedDocument: this.documentTypeLabel(this.tipoComprobante),
+      requestedDocument: this.documentTypeLabel(this.tipoComprobante()),
       clienteNombre: response.venta.clienteNombre || 'Cliente general',
       clienteDocumento: response.venta.clienteDocumento || '-',
-      formaPago: response.venta.formaPago || this.formaPago,
-      metodoPago: response.venta.metodoPago || this.metodoPago,
+      formaPago: response.venta.formaPago || this.formaPago(),
+      metodoPago: response.venta.metodoPago || this.metodoPago(),
       total: Number(response.venta.total || 0),
       facturacionEstado: this.normalizeDocumentState(response.venta.facturacionEstado),
       facturacionMessage: response.venta.facturadorMensaje || response.facturacion.message,
@@ -820,10 +821,7 @@ export class SalesPosPage implements OnDestroy {
     this.updateSaleDocument(current, updated);
   }
 
-  private updateSaleDocument(
-    previous: SaleDocumentStatus,
-    updated: SaleDocumentStatus,
-  ): void {
+  private updateSaleDocument(previous: SaleDocumentStatus, updated: SaleDocumentStatus): void {
     this.saleDocument.set(updated);
     if (this.isOfficialDocumentReady(updated) || this.documentHasError(updated)) {
       this.stopDocumentPolling();

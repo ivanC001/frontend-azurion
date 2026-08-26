@@ -1,0 +1,79 @@
+<section id="whatsapp-quick-replies" class="quick-replies">
+  <header>
+    <span>
+      <i class="pi pi-bolt"></i>
+      <span><strong>Respuestas rapidas</strong><small>Privadas para tu usuario</small></span>
+    </span>
+    <b>{{ replies().length }}/3</b>
+  </header>
+
+  @if (loading()) {
+    <div class="quick-replies-state"><i class="pi pi-spin pi-spinner"></i> Cargando...</div>
+  } @else {
+    <div class="quick-reply-list">
+      @for (reply of replies(); track reply.id) {
+        <article>
+          <span class="quick-reply-slot">{{ reply.slot }}</span>
+          <button class="quick-reply-copy" type="button" (click)="useReply.emit(reply.mensaje)">
+            <strong>{{ reply.titulo }}</strong>
+            <small>{{ reply.mensaje }}</small>
+          </button>
+          <div class="quick-reply-actions">
+            <button type="button" title="Editar" (click)="edit(reply)">
+              <i class="pi pi-pencil"></i>
+            </button>
+            <button
+              type="button"
+              title="Enviar ahora"
+              [disabled]="!canSend()"
+              (click)="sendReply.emit(reply.mensaje)"
+            >
+              <i class="pi pi-send"></i>
+            </button>
+            <button
+              type="button"
+              title="Eliminar"
+              [disabled]="deletingId() !== null"
+              (click)="remove(reply)"
+            >
+              <i [class]="deletingId() === reply.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (editorOpen()) {
+      <div class="quick-reply-editor">
+        <input
+          maxlength="80"
+          placeholder="Titulo breve"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+        />
+        <textarea
+          rows="3"
+          maxlength="4096"
+          placeholder="Mensaje listo para enviar"
+          [ngModel]="message()"
+          (ngModelChange)="message.set($event)"
+        ></textarea>
+        <footer>
+          <button type="button" (click)="cancelEdit()">Cancelar</button>
+          <button type="button" class="primary" [disabled]="saving()" (click)="save()">
+            <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </footer>
+      </div>
+    } @else if (replies().length < 3) {
+      <button type="button" class="quick-reply-add" (click)="startNew()">
+        <i class="pi pi-plus"></i> Nueva respuesta
+      </button>
+    }
+  }
+
+  @if (error()) {
+    <p class="quick-reply-error"><i class="pi pi-exclamation-circle"></i> {{ error() }}</p>
+  }
+</section>

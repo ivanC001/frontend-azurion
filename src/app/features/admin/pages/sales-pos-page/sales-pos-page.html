@@ -291,7 +291,7 @@
           @for (option of documentOptions(); track option.value) {
             <button
               type="button"
-              [class.active]="tipoComprobante === option.value"
+              [class.active]="tipoComprobante() === option.value"
               (click)="selectDocument(option.value)"
             >
               <i [class]="'pi ' + option.icon"></i><span>{{ option.label }}</span>
@@ -299,13 +299,13 @@
           }
         </div>
         <p class="context-note">
-          @if (tipoComprobante === 'TICKET_VENTA') {
+          @if (tipoComprobante() === 'TICKET_VENTA') {
             Ticket comercial emitido por Azurion Facturador, sin envio a SUNAT.
           } @else {
             El comprobante se enviara al Facturador en segundo plano.
           }
         </p>
-        @if (tipoComprobante === 'FACTURA') {
+        @if (tipoComprobante() === 'FACTURA') {
           <p class="invoice-rule">
             <i class="pi pi-building"></i
             ><span>Las facturas solo se emiten a clientes registrados con RUC de 11 digitos.</span>
@@ -372,38 +372,43 @@
         <div class="pay-mode">
           <button
             type="button"
-            [class.active]="formaPago === 'CONTADO'"
-            (click)="formaPago = 'CONTADO'"
+            [class.active]="formaPago() === 'CONTADO'"
+            (click)="formaPago.set('CONTADO')"
           >
             Contado
           </button>
           <button
             type="button"
-            [class.active]="formaPago === 'CREDITO'"
-            (click)="formaPago = 'CREDITO'"
+            [class.active]="formaPago() === 'CREDITO'"
+            (click)="formaPago.set('CREDITO')"
           >
             Credito
           </button>
         </div>
 
-        @if (formaPago === 'CONTADO') {
+        @if (formaPago() === 'CONTADO') {
           <label class="field-label"
             >Metodo
             <p-select
               [options]="methodOptions"
               optionLabel="label"
               optionValue="value"
-              [(ngModel)]="metodoPago"
+              [ngModel]="metodoPago()"
+              (ngModelChange)="metodoPago.set($event)"
               appendTo="body"
             />
           </label>
 
-          @if (metodoPago === 'EFECTIVO') {
+          @if (metodoPago() === 'EFECTIVO') {
             <div class="cash-grid">
               <label class="field-label"
                 >Recibido
                 <span class="money-input"
-                  ><span>S/</span><input type="number" [(ngModel)]="montoRecibido"
+                  ><span>S/</span
+                  ><input
+                    type="number"
+                    [ngModel]="montoRecibido()"
+                    (ngModelChange)="montoRecibido.set(+$event || 0)"
                 /></span>
               </label>
               <label class="field-label"

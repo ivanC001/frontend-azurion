@@ -273,9 +273,9 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { anyPermission: ['CRM_LEADS_READ', 'CRM_ACTIVITIES_READ'], module: 'CRM' },
         loadComponent: () =>
-          import(
-            '@features/admin/pages/crm-admin-page/pages/whatsapp-inbox-page/whatsapp-inbox-page'
-          ).then((component) => component.WhatsappInboxPage),
+          import('@features/crm/pages/whatsapp-inbox-page/whatsapp-inbox-page').then(
+            (component) => component.WhatsappInboxPage,
+          ),
       },
       {
         path: 'crm/bandeja/facebook',
@@ -286,9 +286,9 @@ export const routes: Routes = [
           inboxChannel: 'FACEBOOK',
         },
         loadComponent: () =>
-          import(
-            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
-          ).then((component) => component.ChannelInboxPage),
+          import('@features/crm/pages/channel-inbox-page/channel-inbox-page').then(
+            (component) => component.ChannelInboxPage,
+          ),
       },
       {
         path: 'crm/bandeja/instagram',
@@ -299,9 +299,9 @@ export const routes: Routes = [
           inboxChannel: 'INSTAGRAM',
         },
         loadComponent: () =>
-          import(
-            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
-          ).then((component) => component.ChannelInboxPage),
+          import('@features/crm/pages/channel-inbox-page/channel-inbox-page').then(
+            (component) => component.ChannelInboxPage,
+          ),
       },
       {
         path: 'crm/bandeja/correo',
@@ -312,27 +312,23 @@ export const routes: Routes = [
           inboxChannel: 'CORREO',
         },
         loadComponent: () =>
-          import(
-            '@features/admin/pages/crm-admin-page/pages/channel-inbox-page/channel-inbox-page'
-          ).then((component) => component.ChannelInboxPage),
+          import('@features/crm/pages/channel-inbox-page/channel-inbox-page').then(
+            (component) => component.ChannelInboxPage,
+          ),
       },
       {
         path: 'crm/prospectos',
         canActivate: [permissionGuard],
         data: { anyPermission: ['CRM_LEADS_READ'], module: 'CRM', initialTab: 'captacion' },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/seguimiento',
         canActivate: [permissionGuard],
         data: { anyPermission: ['CRM_ACTIVITIES_READ'], module: 'CRM', initialTab: 'seguimiento' },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/pipeline',
@@ -343,18 +339,18 @@ export const routes: Routes = [
           initialTab: 'embudo',
         },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/oportunidades',
         canActivate: [permissionGuard],
-        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'oportunidades' },
+        data: {
+          anyPermission: ['CRM_OPPORTUNITIES_READ'],
+          module: 'CRM',
+          initialTab: 'oportunidades',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/cotizaciones',
@@ -365,36 +361,36 @@ export const routes: Routes = [
           initialTab: 'oportunidades',
         },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/negociacion',
         canActivate: [permissionGuard],
-        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'oportunidades' },
+        data: {
+          anyPermission: ['CRM_OPPORTUNITIES_READ'],
+          module: 'CRM',
+          initialTab: 'oportunidades',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/clientes',
         canActivate: [permissionGuard],
         data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'clientes' },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/seguimiento-pagos',
         canActivate: [permissionGuard],
-        data: { anyPermission: ['CRM_OPPORTUNITIES_READ'], module: 'CRM', initialTab: 'seguimientoPagos' },
+        data: {
+          anyPermission: ['CRM_OPPORTUNITIES_READ'],
+          module: 'CRM',
+          initialTab: 'seguimientoPagos',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/resultados',
@@ -404,7 +400,7 @@ export const routes: Routes = [
           module: 'CRM',
         },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/pages/crm-outcomes-page/crm-outcomes-page').then(
+          import('@features/crm/pages/crm-outcomes-page/crm-outcomes-page').then(
             (component) => component.CrmOutcomesPage,
           ),
       },
@@ -413,7 +409,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { anyPermission: ['CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'], module: 'CRM' },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/pages/crm-reports-page/crm-reports-page').then(
+          import('@features/crm/pages/crm-reports-page/crm-reports-page').then(
             (component) => component.CrmReportsPage,
           ),
       },
@@ -422,9 +418,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permission: 'CRM_CATALOG_MANAGE', module: 'CRM', initialTab: 'catalogo' },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/administracion',
@@ -434,47 +428,57 @@ export const routes: Routes = [
       {
         path: 'crm/administracion/general',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_CONFIG_MANAGE', module: 'CRM', initialTab: 'administracionGeneral' },
+        data: {
+          permission: 'CRM_CONFIG_MANAGE',
+          module: 'CRM',
+          initialTab: 'administracionGeneral',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/administracion/canales',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_CONFIG_MANAGE', module: 'CRM', initialTab: 'administracionCanales' },
+        data: {
+          permission: 'CRM_CONFIG_MANAGE',
+          module: 'CRM',
+          initialTab: 'administracionCanales',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/administracion/correo',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_CONFIG_MANAGE', module: 'CRM', initialTab: 'administracionCorreo' },
+        data: {
+          permission: 'CRM_CONFIG_MANAGE',
+          module: 'CRM',
+          initialTab: 'administracionCorreo',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/administracion/monedas',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_CONFIG_MANAGE', module: 'CRM', initialTab: 'administracionMonedas' },
+        data: {
+          permission: 'CRM_CONFIG_MANAGE',
+          module: 'CRM',
+          initialTab: 'administracionMonedas',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm/administracion/promociones',
         canActivate: [permissionGuard],
-        data: { permission: 'CRM_CONFIG_MANAGE', module: 'CRM', initialTab: 'administracionPromociones' },
+        data: {
+          permission: 'CRM_CONFIG_MANAGE',
+          module: 'CRM',
+          initialTab: 'administracionPromociones',
+        },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'crm',
@@ -485,9 +489,7 @@ export const routes: Routes = [
           initialTab: 'dashboard',
         },
         loadComponent: () =>
-          import('@features/admin/pages/crm-admin-page/crm-admin-page').then(
-            (component) => component.CrmAdminPage,
-          ),
+          import('@features/crm/crm-page').then((component) => component.CrmPage),
       },
       {
         path: 'ventas/nueva',

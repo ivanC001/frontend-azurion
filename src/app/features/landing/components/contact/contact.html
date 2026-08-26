@@ -1,51 +1,148 @@
-<section class="contact" id="contacto">
-  <div class="section-shell contact__grid">
-    <div>
-      <p class="section-kicker">Contacto</p>
-      <h2 class="section-title">Conversemos sobre tu operación</h2>
-      <p class="section-copy">
-        Agenda una demo y revisemos cómo AZURION puede conectar captación, ventas,
-        inventario, cobranza y facturacion electronica.
-      </p>
+<section class="contact-section" id="contacto">
+  <div class="section-shell">
+    <div class="contact-card">
+      <!-- Left Column: Contact Channels & Trust -->
+      <div class="contact-info-col">
+        <div class="contact-kicker"><i class="pi pi-phone"></i> Contacto Directo</div>
+        <h2 class="contact-title">Impulsa la productividad de tu empresa hoy</h2>
+        <p class="contact-desc">
+          Agenda una demostración guiada y descubre cómo Azurion puede conectar tus ventas,
+          inventario multisede y facturación electrónica SUNAT en tiempo real.
+        </p>
 
-      <div class="contact__channels">
-        @for (channel of channels; track channel.label) {
-          <article>
-            <i class="pi {{ channel.icon }}"></i>
-            <span>{{ channel.label }}</span>
-          </article>
-        }
+        <div class="contact-channels-list">
+          @for (channel of contactChannels; track channel.title) {
+            <div class="channel-card">
+              <div class="channel-card__icon">
+                <i class="pi {{ channel.icon }}"></i>
+              </div>
+              <div class="channel-card__content">
+                <small>{{ channel.title }}</small>
+                <strong>{{ channel.value }}</strong>
+                @if (channel.action) {
+                  <a
+                    [href]="channel.action"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="channel-link"
+                  >
+                    <span>{{ channel.actionLabel }}</span>
+                    <i class="pi pi-arrow-up-right"></i>
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="contact-trust-badge">
+          <i class="pi pi-lock"></i>
+          <span>Tus datos están protegidos bajo estricta confidencialidad comercial.</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Demo Request Form -->
+      <div class="contact-form-col">
+        <form class="lead-form" (ngSubmit)="submit()">
+          <h3 class="form-title">Solicitar Demostración</h3>
+          <p class="form-subtitle">
+            Completa el formulario y te responderemos en menos de 2 horas hábiles.
+          </p>
+
+          @if (successMessage()) {
+            <div class="form-alert form-alert--success">
+              <i class="pi pi-check-circle"></i>
+              <span>{{ successMessage() }}</span>
+            </div>
+          }
+
+          @if (errorMessage()) {
+            <div class="form-alert form-alert--error">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="lead-name">Nombre y Apellido *</label>
+              <input
+                pInputText
+                id="lead-name"
+                type="text"
+                name="name"
+                placeholder="Ej. Juan Pérez"
+                autocomplete="name"
+                [(ngModel)]="form.name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lead-company">Empresa / Razón Social</label>
+              <input
+                pInputText
+                id="lead-company"
+                type="text"
+                name="company"
+                placeholder="Ej. Importaciones del Perú SAC"
+                autocomplete="organization"
+                [(ngModel)]="form.company"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lead-email">Correo Electrónico *</label>
+              <input
+                pInputText
+                id="lead-email"
+                type="email"
+                name="email"
+                placeholder="juan.perez@empresa.com"
+                autocomplete="email"
+                [(ngModel)]="form.email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="lead-phone">Teléfono / WhatsApp *</label>
+              <input
+                pInputText
+                id="lead-phone"
+                type="tel"
+                name="phone"
+                placeholder="Ej. +51 987 654 321"
+                autocomplete="tel"
+                [(ngModel)]="form.phone"
+                required
+              />
+            </div>
+
+            <div class="form-group form-group--wide">
+              <label for="lead-message">¿Qué proceso o área de tu empresa deseas mejorar?</label>
+              <textarea
+                pTextarea
+                id="lead-message"
+                name="message"
+                rows="4"
+                placeholder="Cuéntanos brevemente si necesitas Facturación SUNAT, CRM Comercial, Inventario Multialmacén, POS, o el sistema completo..."
+                [(ngModel)]="form.message"
+              ></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="saving()">
+            @if (saving()) {
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>Enviando solicitud...</span>
+            } @else {
+              <i class="pi pi-send"></i>
+              <span>Enviar Solicitud de Demo</span>
+            }
+          </button>
+        </form>
       </div>
     </div>
-
-    <form class="contact-form" (ngSubmit)="submit()">
-      @if (successMessage()) {
-        <div class="lead-alert lead-alert--success">{{ successMessage() }}</div>
-      }
-      @if (errorMessage()) {
-        <div class="lead-alert lead-alert--error">{{ errorMessage() }}</div>
-      }
-      <label>
-        Nombre
-        <input pInputText type="text" name="name" autocomplete="name" [(ngModel)]="form.name" />
-      </label>
-      <label>
-        Empresa
-        <input pInputText type="text" name="company" autocomplete="organization" [(ngModel)]="form.company" />
-      </label>
-      <label>
-        Correo
-        <input pInputText type="email" name="email" autocomplete="email" [(ngModel)]="form.email" />
-      </label>
-      <label>
-        Teléfono
-        <input pInputText type="tel" name="phone" autocomplete="tel" [(ngModel)]="form.phone" />
-      </label>
-      <label class="contact-form__wide">
-        Que proceso quieres mejorar
-        <textarea pTextarea name="message" rows="5" [(ngModel)]="form.message"></textarea>
-      </label>
-      <p-button type="submit" label="Solicitar Demo" icon="pi pi-send" styleClass="az-primary contact-button" [loading]="saving()" />
-    </form>
   </div>
 </section>

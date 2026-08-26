@@ -1,0 +1,219 @@
+<p-dialog
+  header="Editar requerimiento"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="host().opportunityRequirementDialogOpen()"
+  (visibleChange)="!$event && host().opportunityRequirementDialogOpen.set(false)"
+  appendTo="body"
+  [baseZIndex]="7800"
+  styleClass="crm-dialog requirement-editor-dialog"
+>
+  @if (host().selectedOpportunity(); as detail) {
+    <form class="requirement-editor-form" (ngSubmit)="host().saveOpportunityRequirement()">
+      <div class="requirement-editor-layout">
+        <aside class="requirement-editor-overview">
+          <header class="requirement-editor-product-head">
+            <span class="requirement-editor-product-icon">
+              <i [class]="host().requirementFormTypeMeta(detail.tipoOportunidad).icon"></i>
+            </span>
+            <div>
+              <small>{{
+                host().opportunityTypeLabel(
+                  host().requirementFormCatalogItem()?.tipoItem || detail.tipoOportunidad
+                )
+              }}</small>
+              <h2>{{ host().requirementForm.nombre || detail.titulo }}</h2>
+            </div>
+            <span class="requirement-editor-status"
+              ><i class="pi pi-circle-fill"></i> {{ host().stageName(detail.etapa) }}</span
+            >
+          </header>
+
+          <p class="requirement-editor-description">
+            {{ host().requirementFormDescription() }}
+          </p>
+
+          <section class="requirement-editor-contact">
+            <span class="requirement-editor-avatar">{{
+              host().requirementContactInitials(detail)
+            }}</span>
+            <div>
+              <small>Cliente / prospecto</small>
+              <strong>{{ host().opportunityContactName(detail) }}</strong>
+              <p>{{ host().opportunityCompanyLabel(detail) }}</p>
+            </div>
+          </section>
+
+          <dl class="requirement-editor-context-grid">
+            <div>
+              <dt><i class="pi pi-phone"></i> Telefono</dt>
+              <dd>{{ host().requirementContactPhone(detail) }}</dd>
+            </div>
+            <div>
+              <dt><i class="pi pi-envelope"></i> Correo</dt>
+              <dd>{{ host().requirementContactEmail(detail) }}</dd>
+            </div>
+            <div>
+              <dt><i class="pi pi-user"></i> Responsable</dt>
+              <dd>{{ host().responsibleName(detail.responsableId) }}</dd>
+            </div>
+            <div>
+              <dt><i class="pi pi-tag"></i> Moneda</dt>
+              <dd>{{ host().requirementFormCurrencyCode() }}</dd>
+            </div>
+          </dl>
+
+          @if (host().requirementFormAttributes().length) {
+            <section class="requirement-editor-attributes">
+              <h3><i class="pi pi-list-check"></i> Datos de la oferta</h3>
+              <dl>
+                @for (attribute of host().requirementFormAttributes(); track attribute.key) {
+                  <div>
+                    <dt>{{ attribute.label }}</dt>
+                    <dd>{{ attribute.value }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
+
+          <section class="requirement-editor-totals" aria-label="Resumen comercial">
+            <div>
+              <small>{{ host().requirementFormQuantityLabel() }}</small>
+              <strong>{{ host().requirementForm.cantidad || 0 }}</strong>
+            </div>
+            <div>
+              <small>Precio unitario</small>
+              <strong
+                >{{ host().requirementFormCurrencyPrefix() }}
+                {{ host().requirementForm.precioUnitario | number: '1.2-2' }}</strong
+              >
+            </div>
+            <div class="requirement-editor-grand-total">
+              <small>Total estimado</small>
+              <strong
+                >{{ host().requirementFormCurrencyPrefix() }}
+                {{ host().requirementFormTotal() | number: '1.2-2' }}</strong
+              >
+            </div>
+          </section>
+        </aside>
+
+        <section class="requirement-editor-fields">
+          <header>
+            <span><i class="pi pi-pencil"></i></span>
+            <div>
+              <h2>Datos del requerimiento</h2>
+              <p>Define la oferta, la cantidad y la necesidad especifica del cliente.</p>
+            </div>
+          </header>
+
+          <div class="requirement-editor-grid">
+            <label class="requirement-editor-field requirement-editor-field--full">
+              <span><i class="pi pi-book"></i> Oferta del catalogo CRM <b>*</b></span>
+              <p-select
+                name="reqCatalogoItemId"
+                [options]="host().catalogoOptions()"
+                [ngModel]="host().requirementForm.catalogoItemId"
+                (ngModelChange)="host().onRequirementCatalogChange($event)"
+                [showClear]="true"
+                appendTo="body"
+                placeholder="Selecciona una oferta del catalogo"
+              />
+              <small>Al cambiar la oferta se actualizan nombre, precio y ficha comercial.</small>
+            </label>
+
+            <label class="requirement-editor-field requirement-editor-field--full">
+              <span><i class="pi pi-box"></i> Curso, producto o servicio <b>*</b></span>
+              <input
+                pInputText
+                name="reqNombre"
+                [(ngModel)]="host().requirementForm.nombre"
+                placeholder="Ej. Python intermedio"
+              />
+            </label>
+
+            <label class="requirement-editor-field">
+              <span
+                ><i class="pi pi-hashtag"></i> {{ host().requirementFormQuantityLabel() }}
+                <b>*</b></span
+              >
+              <input
+                pInputText
+                type="number"
+                min="1"
+                name="reqCantidad"
+                [(ngModel)]="host().requirementForm.cantidad"
+              />
+            </label>
+
+            <label class="requirement-editor-field">
+              <span><i class="pi pi-wallet"></i> Precio unitario <b>*</b></span>
+              <div class="requirement-editor-money-input">
+                <strong>{{ host().requirementFormCurrencyPrefix() }}</strong>
+                <input
+                  pInputText
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="reqPrecio"
+                  [(ngModel)]="host().requirementForm.precioUnitario"
+                />
+              </div>
+            </label>
+
+            <article class="requirement-editor-live-total">
+              <span><i class="pi pi-calculator"></i> Total calculado</span>
+              <strong
+                >{{ host().requirementFormCurrencyPrefix() }}
+                {{ host().requirementFormTotal() | number: '1.2-2' }}</strong
+              >
+              <small>Se actualiza con la cantidad y el precio.</small>
+            </article>
+
+            <label class="requirement-editor-field requirement-editor-field--full">
+              <span><i class="pi pi-comment"></i> Necesidad u observacion del cliente</span>
+              <textarea
+                pInputTextarea
+                rows="5"
+                name="reqObservacion"
+                [(ngModel)]="host().requirementForm.observacion"
+                placeholder="Registra alcance, consultas, condiciones, fechas o detalles solicitados por el cliente"
+              ></textarea>
+              <small
+                >Esta informacion acompanara el requerimiento y servira como base para la
+                cotizacion.</small
+              >
+            </label>
+          </div>
+
+          <div class="requirement-editor-note">
+            <i class="pi pi-info-circle"></i>
+            <p>
+              <strong>Ficha comercial vinculada.</strong> La cotizacion conservara el contenido del
+              producto seleccionado para mantener el detalle historico de la propuesta.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <footer class="requirement-editor-actions">
+        <p><i class="pi pi-shield"></i> Los cambios se aplican solo a esta oportunidad.</p>
+        <div>
+          <button
+            type="button"
+            class="requirement-editor-cancel"
+            (click)="host().opportunityRequirementDialogOpen.set(false)"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="requirement-editor-save" [disabled]="host().saving()">
+            <i [class]="host().saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+            {{ host().saving() ? 'Guardando...' : 'Guardar requerimiento' }}
+          </button>
+        </div>
+      </footer>
+    </form>
+  }
+</p-dialog>

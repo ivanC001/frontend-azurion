@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -77,11 +78,15 @@ export class CompanyRolesPermissionsPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly session = inject(AuthSessionService);
   private readonly route = inject(ActivatedRoute);
+  private readonly confirmationService = inject(ConfirmationService);
 
   protected readonly loading = signal(false);
   protected readonly loadingEmpresas = signal(false);
   protected readonly saving = signal(false);
   protected readonly roleDialogVisible = signal(false);
+  protected readonly activeTab = signal<'roles' | 'permisos'>('roles');
+  protected readonly permisoDialogVisible = signal(false);
+  protected readonly permissionsEditorVisible = signal(false);
   protected readonly roles = signal<Rol[]>([]);
   protected readonly permisos = signal<Permiso[]>([]);
   protected readonly empresas = signal<Empresa[]>([]);
@@ -442,7 +447,6 @@ export class CompanyRolesPermissionsPage {
     if (!template) {
       return;
     }
-
     this.rolForm = {
       codigo: template.codigo,
       nombre: template.nombre,
@@ -544,6 +548,7 @@ export class CompanyRolesPermissionsPage {
         next: (permiso) => {
           this.successMessage.set(`Permiso ${permiso.codigo} creado y disponible para roles.`);
           this.permisoForm = { codigo: '', nombre: '', modulo: '', descripcion: '' };
+          this.permisoDialogVisible.set(false);
           this.load();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
@@ -572,22 +577,29 @@ export class CompanyRolesPermissionsPage {
       return;
     }
 
-    if (!globalThis.confirm(`Se eliminara el rol ${role.codigo}. Deseas continuar?`)) {
-      return;
-    }
-
-    this.saving.set(true);
-    this.api
-      .deleteRol(rolId, { tenantId })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(`Rol ${role.codigo} eliminado.`);
-          this.deleteRolId.set(null);
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
+    this.confirmationService.confirm({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar el rol "${role.codigo}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => {
+        this.saving.set(true);
+        this.api
+          .deleteRol(rolId, { tenantId })
+          .pipe(finalize(() => this.saving.set(false)))
+          .subscribe({
+            next: () => {
+              this.successMessage.set(`Rol ${role.codigo} eliminado.`);
+              this.deleteRolId.set(null);
+              this.load();
+            },
+            error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+          });
+      },
+    });
   }
 
   protected deletePermiso(): void {
@@ -612,22 +624,29 @@ export class CompanyRolesPermissionsPage {
       return;
     }
 
-    if (!globalThis.confirm(`Se eliminara el permiso ${permiso.codigo}. Deseas continuar?`)) {
-      return;
-    }
-
-    this.saving.set(true);
-    this.api
-      .deletePermiso(permisoId, { tenantId })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(`Permiso ${permiso.codigo} eliminado.`);
-          this.deletePermisoId.set(null);
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
+    this.confirmationService.confirm({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar el permiso "${permiso.codigo}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => {
+        this.saving.set(true);
+        this.api
+          .deletePermiso(permisoId, { tenantId })
+          .pipe(finalize(() => this.saving.set(false)))
+          .subscribe({
+            next: () => {
+              this.successMessage.set(`Permiso ${permiso.codigo} eliminado.`);
+              this.deletePermisoId.set(null);
+              this.load();
+            },
+            error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+          });
+      },
+    });
   }
 
   protected saveSelectedRolePermissions(): void {
@@ -660,10 +679,36 @@ export class CompanyRolesPermissionsPage {
         next: (savedRole) => {
           this.successMessage.set(`Permisos actualizados para ${savedRole.codigo}.`);
           this.selectedRolId.set(savedRole.id);
+          this.permissionsEditorVisible.set(false);
           this.load();
         },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
+  }
+
+  protected openPermissionsEditor(rol: Rol): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.selectedRolId.set(rol.id);
+    this.refreshSelectedRolePermissions();
+    this.permissionsEditorVisible.set(true);
+  }
+
+  protected openPermisoDialog(): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.permisoForm = { codigo: '', nombre: '', modulo: '', descripcion: '' };
+    this.permisoDialogVisible.set(true);
+  }
+
+  protected deleteRolDirectly(rolId: number): void {
+    this.deleteRolId.set(rolId);
+    this.deleteRol();
+  }
+
+  protected deletePermisoDirectly(permisoId: number): void {
+    this.deletePermisoId.set(permisoId);
+    this.deletePermiso();
   }
 
   protected toggleCreatePermission(permisoId: number): void {
@@ -674,7 +719,6 @@ export class CompanyRolesPermissionsPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.resetRoleForm();
-    this.createRolePermissionIds.set([]);
     this.roleDialogVisible.set(true);
   }
 
@@ -856,7 +900,14 @@ export class CompanyRolesPermissionsPage {
     }
     const module = (moduleValue || 'GENERAL').toUpperCase();
     if (scope === 'TENANT') {
-      return ['GENERAL', 'SEGURIDAD', 'CONFIGURACION', 'SUCURSALES', 'SAAS_CORE', 'AUDITORIA'].includes(module);
+      return [
+        'GENERAL',
+        'SEGURIDAD',
+        'CONFIGURACION',
+        'SUCURSALES',
+        'SAAS_CORE',
+        'AUDITORIA',
+      ].includes(module);
     }
     if (scope === 'CRM') {
       return ['CRM', 'CLIENTES', 'COTIZACIONES'].includes(module);

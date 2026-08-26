@@ -54,11 +54,9 @@ export class PlatformEmailPage {
     if (!value) {
       return 0;
     }
-    return [
-      value.avisosHabilitados,
-      value.reportesHabilitados,
-      value.dobleFactorHabilitado,
-    ].filter(Boolean).length;
+    return [value.avisosHabilitados, value.reportesHabilitados, value.dobleFactorHabilitado].filter(
+      Boolean,
+    ).length;
   });
 
   protected readonly providerOptions: { label: string; value: SmtpProvider }[] = [

@@ -1,0 +1,615 @@
+.crm-capture-grid {
+  margin-bottom: 0.1rem;
+}
+.capture-board {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+}
+.crm-subfilters {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0.95rem;
+}
+.crm-subfilter {
+  background: var(--az-surface-hover);
+  border: 1px solid var(--az-border);
+  border-radius: 0.75rem;
+  color: var(--az-text);
+  cursor: pointer;
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.8rem 0.85rem;
+  text-align: left;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+.crm-subfilter:hover,
+.crm-subfilter.active {
+  border-color: color-mix(in srgb, var(--az-primary) 40%, var(--az-border));
+}
+.crm-subfilter strong {
+  font-size: 0.92rem;
+}
+.crm-subfilter span {
+  color: var(--az-text-soft);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-transform: none;
+}
+.crm-subfilter b {
+  color: var(--az-primary);
+  font-size: 1rem;
+  margin-top: 0.18rem;
+}
+
+.prospect-dashboard-card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ecfdf5 42%, var(--az-surface)),
+    var(--az-surface)
+  );
+  border: 1px solid color-mix(in srgb, #10b981 22%, var(--az-border));
+  border-radius: 1.05rem;
+  box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  max-width: none;
+  padding: 0.9rem;
+  width: 100%;
+}
+
+.prospect-hero {
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #ecfdf5 78%, var(--az-surface)),
+    var(--az-surface)
+  );
+  border: 1px solid color-mix(in srgb, #10b981 24%, var(--az-border));
+  border-radius: 0.95rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 3.15rem 1fr auto;
+  padding: 0.8rem;
+}
+
+.prospect-hero__icon {
+  align-items: center;
+  background: #dcfce7;
+  border-radius: 0.75rem;
+  color: #16a34a;
+  display: inline-flex;
+  font-size: 1.45rem;
+  height: 3.15rem;
+  justify-content: center;
+  width: 3.15rem;
+}
+
+.prospect-hero div:nth-child(2) {
+  align-items: center;
+  column-gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-width: 0;
+}
+
+.prospect-hero span {
+  color: var(--az-text);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.prospect-hero h2 {
+  font-size: 1.08rem;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.prospect-hero p {
+  align-items: center;
+  color: var(--az-text-soft);
+  display: inline-flex;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+  grid-column: 2;
+  margin: 0;
+}
+
+.prospect-hero p i {
+  color: #10b981;
+  font-size: 0.42rem;
+}
+
+.prospect-hero > strong {
+  align-items: center;
+  background: #d1fae5;
+  border-radius: 999px;
+  color: #059669;
+  display: inline-flex;
+  font-size: 1.12rem;
+  height: 2.7rem;
+  justify-content: center;
+  min-width: 2.7rem;
+  padding: 0 0.7rem;
+}
+
+.prospect-metrics {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.prospect-metrics article {
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #d1fae5);
+  border-radius: 0.75rem;
+  box-shadow: 0 0.45rem 1.1rem rgba(15, 23, 42, 0.035);
+  display: grid;
+  gap: 0.28rem;
+  min-height: 6.3rem;
+  padding: 0.8rem;
+}
+
+.prospect-metrics span {
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.prospect-metrics strong {
+  color: var(--az-text);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.prospect-metrics p {
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.prospect-metrics b {
+  color: #10b981;
+  font-weight: 950;
+}
+
+.prospect-workspace {
+  display: grid;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.prospect-titlebar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.prospect-titlebar h2,
+.prospect-titlebar p {
+  margin: 0;
+}
+
+.prospect-titlebar h2 {
+  color: var(--az-text);
+  font-size: 1.08rem;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.prospect-titlebar p {
+  color: var(--az-text-soft);
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+}
+
+.prospect-primary-button {
+  align-items: center;
+  background: #2563eb;
+  border: 0;
+  border-radius: 0.45rem;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  gap: 0.45rem;
+  min-height: 2.05rem;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+.prospect-summary-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.prospect-summary-card {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #dbeafe);
+  border-radius: 0.55rem;
+  box-shadow: 0 0.7rem 1.8rem rgba(15, 23, 42, 0.045);
+  display: flex;
+  justify-content: space-between;
+  min-height: 4.25rem;
+  padding: 0.62rem 0.75rem;
+}
+
+.prospect-summary-card span,
+.prospect-summary-card strong {
+  display: block;
+}
+
+.prospect-summary-card span {
+  color: var(--az-text-soft);
+  font-size: 0.64rem;
+  font-weight: 850;
+}
+
+.prospect-summary-card strong {
+  color: var(--az-text);
+  font-size: 1.22rem;
+  line-height: 1;
+  margin-top: 0.28rem;
+}
+
+.prospect-summary-card > i {
+  align-items: center;
+  background: var(--summary-soft);
+  border-radius: 999px;
+  color: var(--summary-accent);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+}
+
+.prospect-summary-card--blue {
+  --summary-accent: #2563eb;
+  --summary-soft: #dbeafe;
+}
+.prospect-summary-card--violet {
+  --summary-accent: #8b5cf6;
+  --summary-soft: #f3e8ff;
+}
+.prospect-summary-card--amber {
+  --summary-accent: #f59e0b;
+  --summary-soft: #fef3c7;
+}
+.prospect-summary-card--green {
+  --summary-accent: #16a34a;
+  --summary-soft: #dcfce7;
+}
+.prospect-summary-card--rose {
+  --summary-accent: #ef4444;
+  --summary-soft: #fee2e2;
+}
+
+.prospect-table-panel {
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #dbeafe);
+  border-radius: 0.6rem;
+  box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.045);
+  overflow: hidden;
+}
+
+.prospect-filter-bar {
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--az-border) 86%, #e2e8f0);
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: minmax(16rem, 1fr) auto;
+  padding: 0.42rem 0.55rem;
+}
+
+.prospect-search,
+.prospect-filter-button {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #cbd5e1);
+  border-radius: 0.45rem;
+  color: var(--az-text);
+  display: flex;
+  gap: 0.45rem;
+  min-height: 2.05rem;
+}
+
+.prospect-search {
+  padding: 0 0.75rem;
+}
+
+.prospect-search input {
+  background: transparent;
+  border: 0;
+  color: var(--az-text);
+  font-family: inherit;
+  font-size: 0.68rem;
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.prospect-search i,
+.prospect-filter-button i {
+  color: #64748b;
+}
+
+.prospect-filter-button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 850;
+  justify-content: center;
+  padding: 0 0.85rem;
+  white-space: nowrap;
+}
+
+.prospect-filter-button.active {
+  border-color: color-mix(in srgb, var(--az-primary) 35%, var(--az-border));
+  color: var(--az-primary);
+}
+
+.prospect-filter-panel {
+  margin-top: -0.2rem;
+}
+
+.prospect-date-filter input {
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.5rem;
+  color: var(--az-text);
+  font: inherit;
+  min-height: 2.25rem;
+  padding: 0 0.55rem;
+}
+
+.prospect-table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.prospect-pagination {
+  align-items: center;
+  border-top: 1px solid var(--az-border);
+  color: var(--az-text-soft);
+  display: flex;
+  font-size: 0.64rem;
+  justify-content: space-between;
+  padding: 0.38rem 0.55rem;
+}
+
+.prospect-pagination div {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.prospect-pagination button {
+  align-items: center;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.38rem;
+  color: var(--az-text);
+  cursor: pointer;
+  display: inline-flex;
+  height: 1.55rem;
+  justify-content: center;
+  width: 1.55rem;
+}
+
+.prospect-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.prospect-modern-table {
+  border-collapse: collapse;
+  min-width: 62rem;
+  width: 100%;
+}
+
+.prospect-modern-table th,
+.prospect-modern-table td {
+  border-bottom: 1px solid color-mix(in srgb, var(--az-border) 84%, #e2e8f0);
+  padding: 0.42rem 0.55rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.prospect-modern-table th {
+  background: color-mix(in srgb, #f8fafc 86%, var(--az-surface));
+  color: var(--az-text-soft);
+  font-size: 0.62rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.prospect-modern-table td {
+  color: var(--az-text);
+  font-size: 0.68rem;
+}
+
+.prospect-modern-table th:first-child,
+.prospect-modern-table td:first-child {
+  text-align: center;
+  width: 2.75rem;
+}
+
+.prospect-modern-table input[type='checkbox'] {
+  accent-color: #2563eb;
+  height: 0.85rem;
+  width: 0.85rem;
+}
+
+.prospect-name-cell {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: auto minmax(8rem, 1fr);
+  min-width: 10.8rem;
+}
+
+.prospect-contact-cell,
+.prospect-product-cell,
+.prospect-origin-cell,
+.prospect-campaign-cell,
+.prospect-advisor-cell {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.prospect-contact-cell strong,
+.prospect-product-cell strong,
+.prospect-campaign-cell strong,
+.prospect-advisor-cell span {
+  color: var(--az-text);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.prospect-contact-cell span,
+.prospect-product-cell span,
+.prospect-campaign-cell span,
+.prospect-modern-table small {
+  color: var(--az-text-soft);
+  display: block;
+  font-size: 0.62rem;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prospect-origin-cell span {
+  align-items: center;
+  color: var(--az-text);
+  display: inline-flex;
+  font-size: 0.66rem;
+  font-weight: 850;
+  gap: 0.35rem;
+  text-transform: uppercase;
+}
+
+.prospect-origin-cell span i {
+  color: #2563eb;
+}
+
+.prospect-origin-cell em {
+  background: #f1f5f9;
+  border-radius: 0.3rem;
+  color: #475569;
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 850;
+  justify-self: start;
+  padding: 0.15rem 0.35rem;
+  text-transform: uppercase;
+}
+
+.prospect-modern-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 0.18rem 0.42rem;
+  white-space: nowrap;
+}
+
+.prospect-modern-status--new {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.prospect-modern-status--follow {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.prospect-modern-status--qualified {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.prospect-modern-status--discarded {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.prospect-modern-table time,
+.prospect-modern-table small {
+  display: block;
+  white-space: nowrap;
+}
+
+.prospect-modern-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.28rem;
+  justify-content: flex-end;
+  min-width: 4.05rem;
+}
+
+.prospect-modern-actions--template {
+  justify-content: flex-start;
+}
+
+.prospect-modern-actions button {
+  align-items: center;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.88rem;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.prospect-modern-table .prospect-avatar {
+  font-size: 0.64rem;
+  height: 1.95rem;
+  width: 1.95rem;
+}
+
+.prospect-modern-table .prospect-identity strong {
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+.prospect-modern-table .prospect-identity span {
+  font-size: 0.62rem;
+}
+
+.prospect-edit-action {
+  background: transparent;
+  color: #10b981;
+}
+
+.prospect-follow-action {
+  background: #eef2ff;
+  border-radius: 999px;
+  color: #2563eb;
+}
+
+.prospect-follow-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.prospect-table-empty {
+  color: var(--az-text-soft);
+  font-size: 0.86rem;
+  padding: 2rem;
+  text-align: center;
+}

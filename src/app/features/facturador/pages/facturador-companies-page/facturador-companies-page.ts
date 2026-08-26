@@ -11,6 +11,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { isValidCertificateFile, isValidLogoFile } from '@core/utils/file-validators';
 import {
   CreateFacturadorTenantRequest,
   FacturadorApiService,
@@ -111,9 +112,7 @@ export class FacturadorCompaniesPage {
     }
 
     if (!this.hasLogoConfigured()) {
-      this.errorMessage.set(
-        'Debes cargar el logo de la empresa para crear el tenant.',
-      );
+      this.errorMessage.set('Debes cargar el logo de la empresa para crear el tenant.');
       return;
     }
 
@@ -226,7 +225,7 @@ export class FacturadorCompaniesPage {
       return;
     }
 
-    if (!this.isValidLogoFile(file)) {
+    if (!isValidLogoFile(file)) {
       this.form.logo_file = null;
       input.value = '';
       this.errorMessage.set('Logo invalido. Usa PNG, JPG, JPEG, WEBP o SVG (maximo 2 MB).');
@@ -245,7 +244,7 @@ export class FacturadorCompaniesPage {
       return;
     }
 
-    if (!this.isValidCertificateFile(file)) {
+    if (!isValidCertificateFile(file)) {
       this.form.certificado_file = null;
       input.value = '';
       this.errorMessage.set('Certificado invalido. Usa .pem, .pfx o .p12 (maximo 5 MB).');
@@ -319,44 +318,6 @@ export class FacturadorCompaniesPage {
     }
 
     return 'No se pudo completar la operacion en el facturador.';
-  }
-
-  private isValidLogoFile(file: File): boolean {
-    const maxBytes = 2 * 1024 * 1024;
-    const allowedMimeTypes = new Set([
-      'image/png',
-      'image/jpeg',
-      'image/jpg',
-      'image/webp',
-    ]);
-    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((extension) =>
-      lowerName.endsWith(extension),
-    );
-    const hasAllowedMime = allowedMimeTypes.has(file.type.toLowerCase());
-
-    return file.size <= maxBytes && (hasAllowedMime || hasAllowedExtension);
-  }
-
-  private isValidCertificateFile(file: File): boolean {
-    const maxBytes = 5 * 1024 * 1024;
-    const allowedMimeTypes = new Set([
-      'application/x-pkcs12',
-      'application/pkcs12',
-      'application/octet-stream',
-      'application/x-pem-file',
-      'text/plain',
-    ]);
-    const allowedExtensions = ['.pem', '.pfx', '.p12'];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((extension) =>
-      lowerName.endsWith(extension),
-    );
-    const mime = file.type?.toLowerCase?.() ?? '';
-    const hasAllowedMime = mime === '' || allowedMimeTypes.has(mime);
-
-    return file.size <= maxBytes && hasAllowedExtension && hasAllowedMime;
   }
 
   private loadTenantDetailAndOpenModal(

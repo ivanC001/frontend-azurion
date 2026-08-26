@@ -10,15 +10,18 @@ export const permissionGuard: CanActivateFn = (route) => {
 
   if (!session?.accessToken || sessionService.isTokenExpired(session)) {
     sessionService.clearSession();
-    return router.createUrlTree(['/auth/login']);
+    return router.createUrlTree(['/auth']);
   }
 
   const permission = String(route.data?.['permission'] ?? '');
   const moduleCode = route.data?.['module'] as string | readonly string[] | undefined;
-  const workspace = String(route.data?.['workspace'] ?? '').trim().toUpperCase();
+  const workspace = String(route.data?.['workspace'] ?? '')
+    .trim()
+    .toUpperCase();
   const anyModules = (route.data?.['anyModules'] ?? []) as readonly string[];
   const anyPermissions = (route.data?.['anyPermission'] ??
-    route.data?.['anyPermissions'] ?? []) as readonly string[];
+    route.data?.['anyPermissions'] ??
+    []) as readonly string[];
   const allPermissions = (route.data?.['allPermissions'] ?? []) as readonly string[];
   const fallback = resolveFallbackRoute(sessionService);
 
@@ -37,7 +40,10 @@ export const permissionGuard: CanActivateFn = (route) => {
   if (anyPermissions.length && !anyPermissions.some((code) => sessionService.hasPermission(code))) {
     return router.createUrlTree([fallback]);
   }
-  if (allPermissions.length && !allPermissions.every((code) => sessionService.hasPermission(code))) {
+  if (
+    allPermissions.length &&
+    !allPermissions.every((code) => sessionService.hasPermission(code))
+  ) {
     return router.createUrlTree([fallback]);
   }
 
@@ -47,25 +53,32 @@ export const permissionGuard: CanActivateFn = (route) => {
 };
 
 function resolveFallbackRoute(session: AuthSessionService): string {
-  if (session.hasPermission('CRM_REPORTS_READ') || session.hasPermission('CRM_REPORTS_TEAM')) {
-    return '/admin/crm';
+  const hasCrmAccess = session.hasWorkspaceAccess('CRM') && session.hasModule('CRM');
+  const hasErpAccess = session.hasWorkspaceAccess('ERP');
+
+  if (hasCrmAccess) {
+    if (session.hasPermission('CRM_REPORTS_READ') || session.hasPermission('CRM_REPORTS_TEAM')) {
+      return '/admin/crm';
+    }
+    if (session.hasPermission('CRM_LEADS_READ')) {
+      return '/admin/crm/prospectos';
+    }
+    if (session.hasPermission('CRM_ACTIVITIES_READ')) {
+      return '/admin/crm/seguimiento';
+    }
+    if (
+      session.hasPermission('CRM_PIPELINE_READ') ||
+      session.hasPermission('CRM_PIPELINE_VIEW') ||
+      session.hasPermission('CRM_OPPORTUNITIES_READ')
+    ) {
+      return '/admin/crm/pipeline';
+    }
   }
-  if (session.hasPermission('CRM_LEADS_READ')) {
-    return '/admin/crm/prospectos';
-  }
-  if (session.hasPermission('CRM_ACTIVITIES_READ')) {
-    return '/admin/crm/seguimiento';
-  }
-  if (
-    session.hasPermission('CRM_PIPELINE_READ') ||
-    session.hasPermission('CRM_PIPELINE_VIEW') ||
-    session.hasPermission('CRM_OPPORTUNITIES_READ')
-  ) {
-    return '/admin/crm/pipeline';
-  }
-  if (session.hasWorkspaceAccess('ERP')) {
+
+  if (hasErpAccess) {
     return '/admin/dashboard';
   }
+
   if (session.hasPermission('CONFIGURACION_WRITE')) {
     return '/admin/configuracion-empresa';
   }
@@ -75,5 +88,6 @@ function resolveFallbackRoute(session: AuthSessionService): string {
   if (session.hasPermission('ROLES_READ')) {
     return '/admin/seguridad-empresa';
   }
+
   return '/auth';
 }

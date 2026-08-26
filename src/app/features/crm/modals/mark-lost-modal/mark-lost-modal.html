@@ -1,0 +1,76 @@
+@if (host().lossDialog(); as loss) {
+  <p-dialog
+    [header]="
+      loss.type === 'OPORTUNIDAD' ? 'Marcar oportunidad perdida' : 'Marcar prospecto perdido'
+    "
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="true"
+    (visibleChange)="!$event && host().closeLossDialog()"
+    appendTo="body"
+    [baseZIndex]="7700"
+    [style]="{ width: 'min(42rem, calc(100vw - 2rem))' }"
+    styleClass="crm-dialog crm-dialog--loss"
+  >
+    <section class="loss-dialog">
+      <header class="loss-dialog__head">
+        <span class="loss-dialog__icon"><i class="pi pi-times-circle"></i></span>
+        <div>
+          <strong>{{
+            loss.type === 'OPORTUNIDAD' ? loss.oportunidad?.titulo : loss.prospecto?.nombre
+          }}</strong>
+          <p>
+            {{
+              loss.type === 'OPORTUNIDAD'
+                ? 'Se cerrará el negocio y se cancelarán sus actividades pendientes.'
+                : 'Se cerrará el prospecto sin crear oportunidad y se cancelarán sus actividades pendientes.'
+            }}
+          </p>
+        </div>
+      </header>
+      <div class="loss-dialog__fields">
+        <label class="loss-field">
+          <span class="loss-field__label">Motivo de pérdida <b>*</b></span>
+          <p-select
+            [options]="host().lossReasonOptions()"
+            [ngModel]="host().lossReason()"
+            (ngModelChange)="host().lossReason.set($event)"
+            appendTo="body"
+            placeholder="Selecciona el motivo"
+          />
+          <small>Este dato se utilizará en los reportes de conversión comercial.</small>
+        </label>
+        <label class="loss-field">
+          <span class="loss-field__label">Observación <em>Opcional</em></span>
+          <textarea
+            pTextarea
+            rows="4"
+            [ngModel]="host().lossObservation()"
+            (ngModelChange)="host().lossObservation.set($event)"
+            placeholder="Agrega contexto: qué pasó, objeción, competencia, presupuesto o aprendizaje comercial."
+          ></textarea>
+        </label>
+      </div>
+      <footer class="dialog-actions loss-dialog__actions">
+        <button
+          type="button"
+          class="secondary-button loss-dialog__cancel"
+          (click)="host().closeLossDialog()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="danger-button"
+          [disabled]="host().saving() || !host().lossReason()"
+          (click)="host().saveLoss()"
+        >
+          <i [class]="host().saving() ? 'pi pi-spin pi-spinner' : 'pi pi-times-circle'"></i>
+          {{ host().saving() ? 'Guardando...' : 'Confirmar pérdida' }}
+        </button>
+      </footer>
+    </section>
+  </p-dialog>
+}

@@ -154,19 +154,17 @@ export class WarehousesAdminPage {
       ? this.api.updateAlmacen(this.form.id, { ...request, activo: this.form.activo })
       : this.api.createAlmacen({ ...request, codigo: this.form.codigo.trim().toUpperCase() });
 
-    operation
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(
-            this.form.id ? 'Almacen actualizado correctamente.' : 'Almacen creado correctamente.',
-          );
-          this.form = this.emptyForm(this.form.sucursalId);
-          this.dialogVisible.set(false);
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
+    operation.pipe(finalize(() => this.saving.set(false))).subscribe({
+      next: () => {
+        this.successMessage.set(
+          this.form.id ? 'Almacen actualizado correctamente.' : 'Almacen creado correctamente.',
+        );
+        this.form = this.emptyForm(this.form.sucursalId);
+        this.dialogVisible.set(false);
+        this.load();
+      },
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected statusSeverity(active: boolean): 'success' | 'danger' {

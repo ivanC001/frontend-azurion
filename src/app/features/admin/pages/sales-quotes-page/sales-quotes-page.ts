@@ -121,10 +121,7 @@ export class SalesQuotesPage {
       { label: 'Ticket', value: 'TICKET_VENTA' },
     ];
     if (canIssueElectronicDocuments(this.session.currentSession()?.empresa)) {
-      options.push(
-        { label: 'Boleta', value: 'BOLETA' },
-        { label: 'Factura', value: 'FACTURA' },
-      );
+      options.push({ label: 'Boleta', value: 'BOLETA' }, { label: 'Factura', value: 'FACTURA' });
     }
     return options;
   });

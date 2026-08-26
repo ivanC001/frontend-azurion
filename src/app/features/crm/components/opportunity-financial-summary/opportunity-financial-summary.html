@@ -1,0 +1,39 @@
+<section class="financial-card" [class.financial-card--wide]="wide()">
+  @if (heading()) {
+    <h3><i class="pi pi-wallet"></i> {{ heading() }}</h3>
+  }
+
+  <div class="financial-lines">
+    <p>
+      <span>Valor total</span><b>{{ currencySymbol() }} {{ summary().total | number: '1.2-2' }}</b>
+    </p>
+    <p>
+      <span>Monto pagado</span
+      ><b class="is-paid">{{ currencySymbol() }} {{ summary().paid | number: '1.2-2' }}</b>
+    </p>
+    <p>
+      <span>Saldo pendiente</span
+      ><b class="is-pending">{{ currencySymbol() }} {{ summary().pending | number: '1.2-2' }}</b>
+    </p>
+    <p>
+      <span>{{ heading() ? 'Estado de pago' : 'Estado' }}</span
+      ><b [class]="'financial-status financial-status--' + statusTone()">{{ statusLabel() }}</b>
+    </p>
+  </div>
+
+  <div class="financial-progress" role="progressbar" [attr.aria-valuenow]="summary().percent">
+    <span [style.width.%]="summary().percent"></span>
+  </div>
+
+  @if (showPercentLabel()) {
+    <small>{{ summary().percent }}% pagado</small>
+  }
+
+  @if (actionLabel()) {
+    <button type="button" class="link-action" (click)="actionRequested.emit()">
+      {{ actionLabel() }}
+    </button>
+  }
+
+  <ng-content />
+</section>

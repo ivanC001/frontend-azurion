@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -57,6 +58,7 @@ interface ClienteForm {
 export class CustomersAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly session = inject(AuthSessionService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   protected readonly clientes = signal<Cliente[]>([]);
   protected readonly empresas = signal<Empresa[]>([]);
@@ -339,26 +341,30 @@ export class CustomersAdminPage {
       return;
     }
 
-    const confirmed = globalThis.confirm(
-      `Se eliminara el cliente ${cliente.nombre}. Deseas continuar?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    this.saving.set(true);
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-    this.api
-      .deleteCliente(cliente.id, { tenantId })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(`Cliente ${cliente.nombre} eliminado.`);
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
+    this.confirmationService.confirm({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas eliminar al cliente "${cliente.nombre}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => {
+        this.saving.set(true);
+        this.errorMessage.set(null);
+        this.successMessage.set(null);
+        this.api
+          .deleteCliente(cliente.id, { tenantId })
+          .pipe(finalize(() => this.saving.set(false)))
+          .subscribe({
+            next: () => {
+              this.successMessage.set(`Cliente ${cliente.nombre} eliminado.`);
+              this.load();
+            },
+            error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+          });
+      },
+    });
   }
 
   protected openAbonoDialog(cliente: Cliente): void {

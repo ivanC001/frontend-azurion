@@ -1,0 +1,214 @@
+<p-dialog
+  [showHeader]="false"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="visible()"
+  (visibleChange)="closeFromVisibility($event)"
+  [style]="{ width: 'min(70rem, calc(100vw - 1rem))' }"
+  [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+  appendTo="body"
+>
+  <section class="goals-modal">
+    <header class="goals-modal__head">
+      <span class="goals-modal__icon"><i class="pi pi-bullseye"></i></span>
+      <div>
+        <h2>Metas comerciales</h2>
+        <p>Define objetivos mensuales y compara el avance real del equipo y sus asesores.</p>
+      </div>
+      <button type="button" class="icon-button" aria-label="Cerrar" (click)="closed.emit()">
+        <i class="pi pi-times"></i>
+      </button>
+    </header>
+
+    <div class="goals-period">
+      <label>
+        <span>Mes</span>
+        <select [ngModel]="month()" (ngModelChange)="selectPeriod(year(), $event)">
+          @for (name of months; track name; let index = $index) {
+            <option [ngValue]="index + 1">{{ name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Año</span>
+        <select [ngModel]="year()" (ngModelChange)="selectPeriod($event, month())">
+          @for (item of years; track item) {
+            <option [ngValue]="item">{{ item }}</option>
+          }
+        </select>
+      </label>
+      <div class="goals-period__currency">
+        <i class="pi pi-wallet"></i>
+        <span
+          ><small>Moneda de comparación</small><strong>{{ currency() }}</strong></span
+        >
+      </div>
+    </div>
+
+    <div class="goals-modal__grid">
+      <section class="goal-editor">
+        <div class="section-head">
+          <div>
+            <h3>{{ draft.id ? 'Editar meta' : 'Nueva meta' }}</h3>
+            <p>Los importes se comparan en la moneda base del tenant.</p>
+          </div>
+          @if (draft.id) {
+            <button type="button" class="text-button" (click)="resetDraft()">
+              <i class="pi pi-plus"></i> Nueva
+            </button>
+          }
+        </div>
+
+        <div class="goal-scope" role="group" aria-label="Alcance de la meta">
+          <button
+            type="button"
+            [class.is-active]="draft.alcance === 'EQUIPO'"
+            (click)="draft.alcance = 'EQUIPO'; draft.responsableId = null"
+          >
+            <i class="pi pi-users"></i
+            ><span><strong>Equipo</strong><small>Objetivo general</small></span>
+          </button>
+          <button
+            type="button"
+            [class.is-active]="draft.alcance === 'ASESOR'"
+            (click)="draft.alcance = 'ASESOR'"
+          >
+            <i class="pi pi-user"></i
+            ><span><strong>Asesor</strong><small>Objetivo individual</small></span>
+          </button>
+        </div>
+
+        @if (draft.alcance === 'ASESOR') {
+          <label class="field field--wide">
+            <span>Asesor <b>*</b></span>
+            <select [(ngModel)]="draft.responsableId">
+              <option [ngValue]="null">Selecciona un asesor</option>
+              @for (advisor of advisors(); track advisor.id) {
+                <option [ngValue]="advisor.id">{{ advisor.nombre }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        <div class="goal-fields">
+          <label class="field field--money">
+            <span>Meta de ingresos</span>
+            <div>
+              <b>{{ currencySymbol() }}</b
+              ><input type="number" min="0" step="100" [(ngModel)]="draft.metaIngresos" />
+            </div>
+          </label>
+          <label class="field">
+            <span>Oportunidades ganadas</span>
+            <input type="number" min="0" step="1" [(ngModel)]="draft.metaOportunidadesGanadas" />
+          </label>
+          <label class="field">
+            <span>Prospectos nuevos</span>
+            <input type="number" min="0" step="1" [(ngModel)]="draft.metaProspectosNuevos" />
+          </label>
+          <label class="field">
+            <span>Actividades realizadas</span>
+            <input type="number" min="0" step="1" [(ngModel)]="draft.metaActividadesRealizadas" />
+          </label>
+          <label class="field field--wide">
+            <span>Conversión esperada</span>
+            <div class="percent-input">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                [(ngModel)]="draft.metaConversion"
+              /><b>%</b>
+            </div>
+          </label>
+        </div>
+
+        <button
+          type="button"
+          class="primary-action"
+          [disabled]="saving() || !isValid()"
+          (click)="save()"
+        >
+          <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+          <span>{{ saving() ? 'Guardando...' : 'Guardar meta' }}</span>
+        </button>
+      </section>
+
+      <section class="goal-list">
+        <div class="section-head">
+          <div>
+            <h3>Metas del periodo</h3>
+            <p>{{ goals().length }} objetivo(s) configurado(s)</p>
+          </div>
+        </div>
+
+        <div class="goal-list__items">
+          @for (goal of goals(); track goal.id) {
+            <article class="goal-row" [class.is-selected]="draft.id === goal.id">
+              <div class="goal-row__head">
+                <span class="goal-row__avatar"
+                  ><i [class]="goal.alcance === 'EQUIPO' ? 'pi pi-users' : 'pi pi-user'"></i
+                ></span>
+                <span
+                  ><strong>{{ goalLabel(goal) }}</strong
+                  ><small>{{
+                    goal.alcance === 'EQUIPO' ? 'Meta general' : 'Meta individual'
+                  }}</small></span
+                >
+                <button type="button" class="icon-button" title="Editar meta" (click)="edit(goal)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button
+                  type="button"
+                  class="icon-button icon-button--danger"
+                  title="Eliminar meta"
+                  [disabled]="saving()"
+                  (click)="deleteRequested.emit(goal.id)"
+                >
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+              <div class="goal-row__amount">
+                <span
+                  ><small>Ingresos</small
+                  ><strong
+                    >{{ currencySymbol() }} {{ goal.actualIngresos.toLocaleString() }}</strong
+                  ></span
+                >
+                <b>de {{ currencySymbol() }} {{ goal.metaIngresos.toLocaleString() }}</b>
+              </div>
+              <div class="goal-progress"><i [style.width.%]="progress(goal)"></i></div>
+              <div class="goal-row__metrics">
+                <span
+                  ><b>{{ goal.actualOportunidadesGanadas }}/{{ goal.metaOportunidadesGanadas }}</b>
+                  ganadas</span
+                >
+                <span
+                  ><b>{{ goal.actualProspectosNuevos }}/{{ goal.metaProspectosNuevos }}</b>
+                  prospectos</span
+                >
+                <span
+                  ><b
+                    >{{ goal.actualActividadesRealizadas }}/{{ goal.metaActividadesRealizadas }}</b
+                  >
+                  actividades</span
+                >
+                <span
+                  ><b>{{ goal.actualConversion }}%</b> conversión</span
+                >
+              </div>
+            </article>
+          } @empty {
+            <div class="goal-empty">
+              <i class="pi pi-bullseye"></i>
+              <strong>Sin metas configuradas</strong>
+              <p>Crea la primera meta para comenzar a medir el avance del periodo.</p>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </section>
+</p-dialog>

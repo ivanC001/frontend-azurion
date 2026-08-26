@@ -1,7 +1,9 @@
 <section class="company-page">
   <header class="page-header">
     <div>
-      <p class="page-eyebrow">{{ platformMode ? 'Administracion general' : 'Administracion empresa' }}</p>
+      <p class="page-eyebrow">
+        {{ platformMode ? 'Administracion general' : 'Administracion empresa' }}
+      </p>
       <h1>{{ pageTitle }}</h1>
       <p>{{ pageDescription }}</p>
     </div>
@@ -11,7 +13,12 @@
       @if (canWriteRoles()) {
         <p-button label="Nuevo rol" icon="pi pi-plus" (onClick)="openRoleDialog()" />
       }
-      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+      <p-button
+        label="Actualizar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="load()"
+      />
     </div>
   </header>
 
@@ -19,10 +26,14 @@
     @if (platformMode) {
       <a routerLink="/admin/control-empresas"><i class="pi pi-building"></i> Control de empresas</a>
       <a routerLink="/admin/usuarios"><i class="pi pi-users"></i> Usuarios tenant</a>
-      <a class="scope-navigation__active" routerLink="/admin/seguridad-plataforma"><i class="pi pi-shield"></i> Seguridad plataforma</a>
+      <a class="scope-navigation__active" routerLink="/admin/seguridad-plataforma"
+        ><i class="pi pi-shield"></i> Seguridad plataforma</a
+      >
     } @else {
       <a routerLink="/admin/usuarios"><i class="pi pi-users"></i> Usuarios de empresa</a>
-      <a class="scope-navigation__active" routerLink="/admin/seguridad-empresa"><i class="pi pi-shield"></i> Roles y permisos</a>
+      <a class="scope-navigation__active" routerLink="/admin/seguridad-empresa"
+        ><i class="pi pi-shield"></i> Roles y permisos</a
+      >
     }
   </nav>
 
@@ -30,28 +41,44 @@
     @if (platformMode) {
       <article class="access-boundary access-boundary--platform">
         <i class="pi pi-globe"></i>
-        <div><strong>Plataforma Azurion</strong><span>ADMIN_GENERAL administra empresas, planes y seguridad global.</span></div>
+        <div>
+          <strong>Plataforma Azurion</strong
+          ><span>ADMIN_GENERAL administra empresas, planes y seguridad global.</span>
+        </div>
       </article>
       <article class="access-boundary access-boundary--tenant">
         <i class="pi pi-building"></i>
-        <div><strong>Gobierno del tenant</strong><span>ADMIN_EMPRESA administra usuarios, roles, sucursales y configuracion.</span></div>
+        <div>
+          <strong>Gobierno del tenant</strong
+          ><span>ADMIN_EMPRESA administra usuarios, roles, sucursales y configuracion.</span>
+        </div>
       </article>
       <article class="access-boundary access-boundary--modules">
         <i class="pi pi-th-large"></i>
-        <div><strong>Acceso por contrato</strong><span>ERP y CRM solo operan cuando el modulo correspondiente esta activo.</span></div>
+        <div>
+          <strong>Acceso por contrato</strong
+          ><span>ERP y CRM solo operan cuando el modulo correspondiente esta activo.</span>
+        </div>
       </article>
     } @else {
       <article class="access-boundary access-boundary--tenant">
         <i class="pi pi-shield"></i>
-        <div><strong>Administracion de empresa</strong><span>Gestiona al equipo sin heredar permisos operativos automaticamente.</span></div>
+        <div>
+          <strong>Administracion de empresa</strong
+          ><span>Gestiona al equipo sin heredar permisos operativos automaticamente.</span>
+        </div>
       </article>
       <article class="access-boundary access-boundary--erp">
         <i class="pi pi-box"></i>
-        <div><strong>Roles ERP</strong><span>Ventas, caja, almacen, inventario y contabilidad.</span></div>
+        <div>
+          <strong>Roles ERP</strong><span>Ventas, caja, almacen, inventario y contabilidad.</span>
+        </div>
       </article>
       <article class="access-boundary access-boundary--crm">
         <i class="pi pi-chart-line"></i>
-        <div><strong>Roles CRM</strong><span>Prospectos, seguimiento, oportunidades y postventa.</span></div>
+        <div>
+          <strong>Roles CRM</strong><span>Prospectos, seguimiento, oportunidades y postventa.</span>
+        </div>
       </article>
     }
   </section>
@@ -119,391 +146,195 @@
     </article>
   </section>
 
-  <div class="content-grid" [class.content-grid--readonly]="!canWriteRoles()">
-    @if (canWriteRoles()) {
-    <section class="stack-column">
-      <form class="panel form-panel role-inline-form">
-        <div class="panel-head">
+  <!-- Pestañas de Navegación del Panel de Seguridad -->
+  <nav class="settings-tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'roles'"
+      (click)="activeTab.set('roles')"
+    >
+      <i class="pi pi-shield"></i>
+      <span>Roles de Acceso</span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'permisos'"
+      (click)="activeTab.set('permisos')"
+    >
+      <i class="pi pi-key"></i>
+      <span>Catálogo de Permisos</span>
+    </button>
+  </nav>
+
+  <div class="content-grid content-grid--single">
+    @if (activeTab() === 'roles') {
+      <section class="panel table-panel">
+        <header class="table-panel-header">
           <div>
-            <h2>Nuevo rol</h2>
-            <p>Crea un perfil y deja los accesos listos desde el inicio.</p>
+            <h2>Catálogo de Roles de Acceso</h2>
+            <p>Lista general de perfiles base y personalizados configurados en tu empresa.</p>
           </div>
-          <p-tag value="Personalizado" severity="info" />
-        </div>
+          @if (canWriteRoles()) {
+            <p-button
+              label="Nuevo rol"
+              icon="pi pi-plus"
+              styleClass="az-primary"
+              (onClick)="openRoleDialog()"
+            />
+          }
+        </header>
 
-        <label>
-          Plantilla sugerida
-          <p-select
-            [options]="templateOptions()"
-            optionLabel="label"
-            optionValue="value"
-            [ngModel]="rolForm.templateCode"
-            (ngModelChange)="applyTemplate($event)"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Selecciona una plantilla"
-            [showClear]="true"
-          />
-        </label>
-
-        <label>
-          Ambito del rol
-          <p-select
-            [options]="scopeOptions"
-            optionLabel="label"
-            optionValue="value"
-            [ngModel]="createRoleScope()"
-            (ngModelChange)="onRoleScopeChange($event)"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Selecciona ERP, CRM o tenant"
-          />
-        </label>
-
-        <label>
-          Codigo
-          <input
-            pInputText
-            name="rol_codigo"
-            [(ngModel)]="rolForm.codigo"
-            placeholder="Se genera automaticamente"
-            (input)="sanitizeRoleCode($event)"
-          />
-        </label>
-        <label>
-          Nombre
-          <input
-            pInputText
-            name="rol_nombre"
-            [(ngModel)]="rolForm.nombre"
-            placeholder="Supervisor operativo"
-            (blur)="suggestRoleCodeFromName()"
-          />
-        </label>
-        <label>
-          Descripcion
-          <input pInputText name="rol_descripcion" [(ngModel)]="rolForm.descripcion" placeholder="Describe el alcance del rol" />
-        </label>
-
-        <div class="permission-editor">
-          <div class="editor-head">
-            <strong>Permisos iniciales</strong>
-            <small>{{ createRolePermissionIds().length }} seleccionados</small>
-          </div>
-
-          <div class="permission-groups">
-            @for (group of createPermissionGroups(); track group.modulo) {
-              <section class="permission-group">
-                <h3>{{ group.modulo }}</h3>
-                <div class="permission-list">
-                  @for (permiso of group.permisos; track permiso.id) {
-                    <label class="permission-option">
-                      <input
-                        type="checkbox"
-                        [checked]="hasCreatePermission(permiso.id)"
-                        (change)="toggleCreatePermission(permiso.id)"
-                      />
-                      <div>
-                        <span>{{ permiso.nombre }}</span>
-                        <small>{{ permiso.codigo }}</small>
-                      </div>
-                    </label>
+        <p-table
+          [value]="sortedRoles()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="10"
+          responsiveLayout="scroll"
+          styleClass="az-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Código / Nombre</th>
+              <th>Descripción</th>
+              <th>Ámbito</th>
+              <th>Tipo</th>
+              <th>Permisos</th>
+              <th class="actions-col">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-rol>
+            <tr>
+              <td>
+                <div class="table-main">
+                  <strong>{{ rol.codigo }}</strong>
+                  <small>{{ rol.nombre }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="role-desc-text">{{
+                  rol.descripcion || 'Sin descripción registrada.'
+                }}</span>
+              </td>
+              <td>
+                <p-tag [value]="roleScopeLabel(rol)" severity="secondary" />
+              </td>
+              <td>
+                <p-tag
+                  [value]="rol.sistema ? 'Sistema' : 'Personalizado'"
+                  [severity]="roleSeverity(rol)"
+                />
+              </td>
+              <td>
+                <span class="permission-count-badge">{{ rol.permisos.length }}</span>
+              </td>
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <p-button
+                    [label]="rol.gestionaPermisos ? 'Editar permisos' : 'Ver permisos'"
+                    [icon]="rol.gestionaPermisos ? 'pi pi-lock-open' : 'pi pi-eye'"
+                    [styleClass]="rol.gestionaPermisos ? 'az-primary az-sm' : 'az-secondary az-sm'"
+                    (onClick)="openPermissionsEditor(rol)"
+                  />
+                  @if (rol.eliminable && canWriteRoles()) {
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      styleClass="az-sm"
+                      [outlined]="true"
+                      [loading]="saving()"
+                      (onClick)="deleteRolDirectly(rol.id)"
+                      title="Eliminar rol"
+                    />
                   }
                 </div>
-              </section>
-            }
-          </div>
-        </div>
-
-        <p-button label="Crear rol" icon="pi pi-shield" styleClass="az-primary" [loading]="saving()" (onClick)="createRol()" />
-      </form>
-
-      @if (platformMode) {
-      <form class="panel form-panel">
-        <div class="panel-head">
-          <div>
-            <h2>Nuevo permiso</h2>
-            <p>Solo para procesos que no cubran los permisos base.</p>
-          </div>
-          <p-tag value="Extensible" severity="success" />
-        </div>
-
-        <label>
-          Codigo
-          <input pInputText name="permiso_codigo" [(ngModel)]="permisoForm.codigo" placeholder="REPORTES_EXPORTAR" (input)="sanitizePermissionCode($event)" />
-        </label>
-        <label>
-          Nombre
-          <input pInputText name="permiso_nombre" [(ngModel)]="permisoForm.nombre" placeholder="Exportar reportes" />
-        </label>
-        <label>
-          Modulo
-          <input pInputText name="permiso_modulo" [(ngModel)]="permisoForm.modulo" placeholder="REPORTES" (input)="sanitizePermissionModule($event)" />
-        </label>
-        <label>
-          Descripcion
-          <input pInputText name="permiso_descripcion" [(ngModel)]="permisoForm.descripcion" placeholder="Describe donde aplica el permiso" />
-        </label>
-
-        <p-button label="Crear permiso" icon="pi pi-key" styleClass="az-secondary" [loading]="saving()" (onClick)="createPermiso()" />
-      </form>
-      }
-
-      <section class="panel form-panel">
-        <div class="panel-head">
-          <div>
-            <h2>Limpieza controlada</h2>
-            <p>Solo aparecen elementos personalizados que realmente pueden salir.</p>
-          </div>
-        </div>
-
-        <label>
-          Eliminar rol
-          <p-select
-            [options]="deleteRoleOptions()"
-            optionLabel="label"
-            optionValue="value"
-            [ngModel]="deleteRolId()"
-            (ngModelChange)="deleteRolId.set($event)"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Selecciona rol"
-            [showClear]="true"
-          />
-        </label>
-        <p-button label="Eliminar rol" icon="pi pi-trash" severity="danger" [loading]="saving()" (onClick)="deleteRol()" />
-
-        @if (platformMode) {
-          <label>
-            Eliminar permiso
-            <p-select
-              [options]="deletePermissionOptions()"
-              optionLabel="label"
-              optionValue="value"
-              [ngModel]="deletePermisoId()"
-              (ngModelChange)="deletePermisoId.set($event)"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="Selecciona permiso"
-              [showClear]="true"
-            />
-          </label>
-          <p-button label="Eliminar permiso" icon="pi pi-trash" severity="danger" [loading]="saving()" (onClick)="deletePermiso()" />
-        } @else {
-          <div class="inline-note">
-            Los permisos disponibles son definidos por la plataforma. Aqui puedes combinarlos en roles para tu equipo.
-          </div>
-        }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </section>
-    </section>
     }
 
-    <section class="stack-column stack-column--wide">
-      <section class="panel">
-        <div class="panel-head">
+    @if (activeTab() === 'permisos') {
+      <section class="panel table-panel">
+        <header class="table-panel-header">
           <div>
-            <h2>Permisos por rol</h2>
-            <p>Selecciona un rol y ajusta sus accesos sin tocar la base administrativa.</p>
+            <h2>Catálogo de Permisos del Sistema</h2>
+            <p>Lista de permisos disponibles para asociar a los roles y perfiles.</p>
           </div>
-          @if (selectedRol(); as rol) {
-            <p-tag [value]="rol.sistema ? 'Rol base' : 'Rol editable'" [severity]="roleSeverity(rol)" />
-          }
-        </div>
-
-        <div class="editor-toolbar">
-          <label class="toolbar-field">
-            <span>Rol</span>
-            <p-select
-              [options]="roleOptions()"
-              optionLabel="label"
-              optionValue="value"
-              [ngModel]="selectedRolId()"
-              (ngModelChange)="onRolSelectionChange($event)"
-              [ngModelOptions]="{ standalone: true }"
-              placeholder="Selecciona rol"
+          @if (platformMode && canWriteRoles()) {
+            <p-button
+              label="Nuevo permiso"
+              icon="pi pi-plus"
+              styleClass="az-secondary"
+              (onClick)="openPermisoDialog()"
             />
-          </label>
-
-          <p-button
-            label="Guardar permisos"
-            icon="pi pi-check"
-            [loading]="saving()"
-            [disabled]="!canWriteRoles() || !selectedRol() || !selectedRol()?.gestionaPermisos"
-            (onClick)="saveSelectedRolePermissions()"
-          />
-        </div>
-
-        @if (selectedRol(); as rol) {
-          <div class="role-summary">
-            <div>
-              <strong>{{ rol.codigo }} · {{ rol.nombre }}</strong>
-              <span>{{ rol.descripcion || 'Sin descripcion registrada.' }}</span>
-            </div>
-            <div class="summary-tags">
-              <p-tag [value]="roleScopeLabel(rol)" severity="info" />
-              @if (rol.deprecated) {
-                <p-tag value="Legado: no asignar" severity="warn" />
-              }
-              <p-tag [value]="rol.activo ? 'Activo' : 'Inactivo'" [severity]="rol.activo ? 'success' : 'danger'" />
-              <p-tag [value]="rol.gestionaPermisos ? 'Editable' : 'Automatico'" [severity]="rol.gestionaPermisos ? 'info' : 'contrast'" />
-            </div>
-          </div>
-
-          @if (!rol.gestionaPermisos) {
-            <div class="inline-note">
-              {{ rol.codigo }} mantiene permisos automaticos porque es un rol administrativo base.
-            </div>
           }
+        </header>
 
-          <div class="permission-filter">
-            <label>
-              Buscar permiso
-              <input
-                pInputText
-                [ngModel]="permissionSearch()"
-                (ngModelChange)="permissionSearch.set($event)"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Ventas, caja, inventario..."
-              />
-            </label>
-            @if (canWriteRoles() && rol.gestionaPermisos) {
-              <div class="permission-filter__actions">
-                <p-button label="Seleccionar todos" icon="pi pi-check-square" severity="secondary" (onClick)="setAllSelectedRolePermissions(true)" />
-                <p-button label="Limpiar" icon="pi pi-times" severity="secondary" (onClick)="setAllSelectedRolePermissions(false)" />
-              </div>
-            }
-          </div>
-
-          <div class="permission-matrix-shell">
-            <table class="permission-matrix">
-              <thead>
-                <tr>
-                  <th class="permission-matrix__module">Modulo</th>
-                  <th>Ver</th>
-                  <th>Crear / emitir</th>
-                  <th>Operar / actualizar</th>
-                  <th>Eliminar / anular</th>
-                  <th>Especiales</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of permissionMatrix(); track row.modulo; let index = $index) {
-                  <tr>
-                    <td class="permission-matrix__module">
-                      <span class="module-index">{{ index + 1 }}</span>
-                      <div>
-                        <strong>{{ row.label }}</strong>
-                        <small>{{ row.modulo }}</small>
-                      </div>
-                    </td>
-                    @for (action of matrixActions; track action) {
-                      <td>
-                        @if (permissionCellState(row, action) !== 'empty') {
-                          <button
-                            type="button"
-                            class="permission-switch"
-                            [class.permission-switch--checked]="permissionCellState(row, action) === 'checked'"
-                            [class.permission-switch--partial]="permissionCellState(row, action) === 'partial'"
-                            [disabled]="!canWriteRoles() || !rol.gestionaPermisos"
-                            [title]="permissionCellTitle(row, action)"
-                            (click)="togglePermissionCell(row, action)"
-                          >
-                            <span></span>
-                          </button>
-                          <small class="permission-count">{{ permissionCellCount(row, action) }}</small>
-                        } @else {
-                          <span class="permission-empty">-</span>
-                        }
-                      </td>
-                    }
-                  </tr>
-                }
-                @empty {
-                  <tr>
-                    <td colspan="6"><div class="empty-state">No hay permisos que coincidan con la busqueda.</div></td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <div class="matrix-legend">
-            <span><i class="legend-dot legend-dot--on"></i> Todos asignados</span>
-            <span><i class="legend-dot legend-dot--partial"></i> Asignacion parcial</span>
-            <span><i class="legend-dot"></i> Sin asignar</span>
-            <small>Pasa el cursor sobre un interruptor para ver los permisos incluidos.</small>
-          </div>
-        } @else {
-          <div class="empty-state">No hay roles disponibles en este tenant.</div>
-        }
+        <p-table
+          [value]="sortedPermisos()"
+          [loading]="loading()"
+          [paginator]="true"
+          [rows]="15"
+          responsiveLayout="scroll"
+          styleClass="az-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Código / Nombre</th>
+              <th>Módulo</th>
+              <th>Descripción</th>
+              <th>Tipo</th>
+              @if (platformMode && canWriteRoles()) {
+                <th class="actions-col">Acciones</th>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-permiso>
+            <tr>
+              <td>
+                <div class="table-main">
+                  <strong>{{ permiso.codigo }}</strong>
+                  <small>{{ permiso.nombre }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="module-badge">{{ permiso.modulo || 'GENERAL' }}</span>
+              </td>
+              <td>
+                <span class="perm-desc-text">{{ permiso.descripcion || 'Sin descripción' }}</span>
+              </td>
+              <td>
+                <p-tag
+                  [value]="permiso.sistema ? 'Sistema' : 'Personalizado'"
+                  [severity]="permissionSeverity(permiso)"
+                />
+              </td>
+              @if (platformMode && canWriteRoles()) {
+                <td class="actions-col">
+                  @if (permiso.eliminable) {
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      styleClass="az-sm"
+                      [outlined]="true"
+                      [loading]="saving()"
+                      (onClick)="deletePermisoDirectly(permiso.id)"
+                      title="Eliminar permiso"
+                    />
+                  }
+                </td>
+              }
+            </tr>
+          </ng-template>
+        </p-table>
       </section>
-
-      <section class="tables-grid">
-        <section class="panel table-panel">
-          <div class="panel-head">
-            <div>
-              <h2>Catalogo de roles</h2>
-              <p>Visibilidad rapida de base y personalizaciones.</p>
-            </div>
-          </div>
-
-          <p-table [value]="sortedRoles()" [loading]="loading()" responsiveLayout="scroll">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Rol</th>
-                <th>Tipo</th>
-                <th>Permisos</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-rol>
-              <tr>
-                <td>
-                  <div class="table-main">
-                    <strong>{{ rol.codigo }}</strong>
-                    <small>{{ rol.nombre }}</small>
-                  </div>
-                </td>
-                <td>
-                  <p-tag [value]="rol.sistema ? 'Sistema' : 'Personalizado'" [severity]="roleSeverity(rol)" />
-                </td>
-                <td>{{ rol.permisos.length }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </section>
-
-        <section class="panel table-panel">
-          <div class="panel-head">
-            <div>
-              <h2>Catalogo de permisos</h2>
-              <p>Ordenados por modulo y con distincion entre base y extensiones.</p>
-            </div>
-          </div>
-
-          <p-table [value]="sortedPermisos()" [loading]="loading()" responsiveLayout="scroll">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Permiso</th>
-                <th>Modulo</th>
-                <th>Tipo</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-permiso>
-              <tr>
-                <td>
-                  <div class="table-main">
-                    <strong>{{ permiso.codigo }}</strong>
-                    <small>{{ permiso.nombre }}</small>
-                  </div>
-                </td>
-                <td>{{ permiso.modulo || 'GENERAL' }}</td>
-                <td>
-                  <p-tag [value]="permiso.sistema ? 'Sistema' : 'Personalizado'" [severity]="permissionSeverity(permiso)" />
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </section>
-      </section>
-    </section>
+    }
   </div>
 
+  <!-- Dialog para Crear Rol -->
   <p-dialog
     header="Nuevo rol"
     [modal]="true"
@@ -552,17 +383,34 @@
       <div class="dialog-fields">
         <label>
           Nombre
-          <input pInputText name="dialog_rol_nombre" [(ngModel)]="rolForm.nombre" placeholder="Supervisor de tienda" (blur)="suggestRoleCodeFromName()" />
+          <input
+            pInputText
+            name="dialog_rol_nombre"
+            [(ngModel)]="rolForm.nombre"
+            placeholder="Supervisor de tienda"
+            (blur)="suggestRoleCodeFromName()"
+          />
         </label>
         <label>
           Codigo
-          <input pInputText name="dialog_rol_codigo" [(ngModel)]="rolForm.codigo" placeholder="SUPERVISOR_TIENDA" (input)="sanitizeRoleCode($event)" />
+          <input
+            pInputText
+            name="dialog_rol_codigo"
+            [(ngModel)]="rolForm.codigo"
+            placeholder="SUPERVISOR_TIENDA"
+            (input)="sanitizeRoleCode($event)"
+          />
         </label>
       </div>
 
       <label>
         Descripcion
-        <input pInputText name="dialog_rol_descripcion" [(ngModel)]="rolForm.descripcion" placeholder="Describe las responsabilidades del rol" />
+        <input
+          pInputText
+          name="dialog_rol_descripcion"
+          [(ngModel)]="rolForm.descripcion"
+          placeholder="Describe las responsabilidades del rol"
+        />
       </label>
 
       <div class="permission-editor permission-editor--dialog">
@@ -577,7 +425,11 @@
               <div class="permission-list">
                 @for (permiso of group.permisos; track permiso.id) {
                   <label class="permission-option">
-                    <input type="checkbox" [checked]="hasCreatePermission(permiso.id)" (change)="toggleCreatePermission(permiso.id)" />
+                    <input
+                      type="checkbox"
+                      [checked]="hasCreatePermission(permiso.id)"
+                      (change)="toggleCreatePermission(permiso.id)"
+                    />
                     <div>
                       <span>{{ permiso.nombre }}</span>
                       <small>{{ permiso.codigo }}</small>
@@ -592,8 +444,250 @@
     </form>
 
     <ng-template pTemplate="footer">
-      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="roleDialogVisible.set(false)" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="roleDialogVisible.set(false)"
+      />
       <p-button label="Crear rol" icon="pi pi-save" [loading]="saving()" (onClick)="createRol()" />
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog para Crear Permiso (Platform Mode Only) -->
+  <p-dialog
+    header="Nuevo permiso"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="permisoDialogVisible()"
+    (visibleChange)="permisoDialogVisible.set($event)"
+    styleClass="permiso-create-dialog"
+  >
+    <form class="dialog-permiso-form">
+      <div class="dialog-intro">
+        <i class="pi pi-key"></i>
+        <div>
+          <strong>Crear nuevo permiso extensible</strong>
+          <span>Solo para procesos que no cubran los permisos base.</span>
+        </div>
+      </div>
+
+      <div class="dialog-fields">
+        <label>
+          Módulo
+          <input
+            pInputText
+            name="dialog_permiso_modulo"
+            [(ngModel)]="permisoForm.modulo"
+            placeholder="REPORTES"
+            (input)="sanitizePermissionModule($event)"
+          />
+        </label>
+        <label>
+          Código
+          <input
+            pInputText
+            name="dialog_permiso_codigo"
+            [(ngModel)]="permisoForm.codigo"
+            placeholder="REPORTES_EXPORTAR"
+            (input)="sanitizePermissionCode($event)"
+          />
+        </label>
+      </div>
+
+      <label>
+        Nombre
+        <input
+          pInputText
+          name="dialog_permiso_nombre"
+          [(ngModel)]="permisoForm.nombre"
+          placeholder="Exportar reportes"
+        />
+      </label>
+
+      <label>
+        Descripción
+        <input
+          pInputText
+          name="dialog_permiso_descripcion"
+          [(ngModel)]="permisoForm.descripcion"
+          placeholder="Describe dónde aplica el permiso"
+        />
+      </label>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="permisoDialogVisible.set(false)"
+      />
+      <p-button
+        label="Crear permiso"
+        icon="pi pi-save"
+        [loading]="saving()"
+        (onClick)="createPermiso()"
+      />
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog Matriz de Permisos por Rol (El Editor) -->
+  <p-dialog
+    [header]="
+      (selectedRol()?.gestionaPermisos ? 'Editar permisos' : 'Ver permisos') +
+      ' - ' +
+      (selectedRol()?.nombre || '')
+    "
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [visible]="permissionsEditorVisible()"
+    (visibleChange)="permissionsEditorVisible.set($event)"
+    styleClass="permissions-editor-dialog"
+  >
+    @if (selectedRol(); as rol) {
+      <div class="dialog-intro">
+        <i class="pi pi-shield"></i>
+        <div>
+          <strong>Matriz de accesos para el rol: {{ rol.codigo }}</strong>
+          <span>{{ rol.descripcion || 'Sin descripción registrada.' }}</span>
+        </div>
+      </div>
+
+      <div class="dialog-status-tags">
+        <p-tag [value]="roleScopeLabel(rol)" severity="info" />
+        @if (rol.deprecated) {
+          <p-tag value="Legado: no asignar" severity="warn" />
+        }
+        <p-tag
+          [value]="rol.activo ? 'Activo' : 'Inactivo'"
+          [severity]="rol.activo ? 'success' : 'danger'"
+        />
+        <p-tag
+          [value]="rol.gestionaPermisos ? 'Editable' : 'Automático / Lectura sola'"
+          [severity]="rol.gestionaPermisos ? 'info' : 'contrast'"
+        />
+      </div>
+
+      @if (!rol.gestionaPermisos) {
+        <div class="inline-note">
+          <i class="pi pi-info-circle"></i>
+          Este rol mantiene permisos automáticos porque es un rol base del sistema.
+        </div>
+      }
+
+      <div class="permission-filter">
+        <label>
+          Buscar permiso
+          <input
+            pInputText
+            [ngModel]="permissionSearch()"
+            (ngModelChange)="permissionSearch.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Buscar por módulo, código o nombre..."
+          />
+        </label>
+        @if (canWriteRoles() && rol.gestionaPermisos) {
+          <div class="permission-filter__actions">
+            <p-button
+              label="Seleccionar todos"
+              icon="pi pi-check-square"
+              severity="secondary"
+              (onClick)="setAllSelectedRolePermissions(true)"
+            />
+            <p-button
+              label="Limpiar"
+              icon="pi pi-times"
+              severity="secondary"
+              (onClick)="setAllSelectedRolePermissions(false)"
+            />
+          </div>
+        }
+      </div>
+
+      <div class="permission-matrix-shell">
+        <table class="permission-matrix">
+          <thead>
+            <tr>
+              <th class="permission-matrix__module">Módulo</th>
+              <th>Ver</th>
+              <th>Crear / Emitir</th>
+              <th>Operar / Actualizar</th>
+              <th>Eliminar / Anular</th>
+              <th>Especiales</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of permissionMatrix(); track row.modulo; let index = $index) {
+              <tr>
+                <td class="permission-matrix__module">
+                  <span class="module-index">{{ index + 1 }}</span>
+                  <div>
+                    <strong>{{ row.label }}</strong>
+                    <small>{{ row.modulo }}</small>
+                  </div>
+                </td>
+                @for (action of matrixActions; track action) {
+                  <td>
+                    @if (permissionCellState(row, action) !== 'empty') {
+                      <button
+                        type="button"
+                        class="permission-switch"
+                        [class.permission-switch--checked]="
+                          permissionCellState(row, action) === 'checked'
+                        "
+                        [class.permission-switch--partial]="
+                          permissionCellState(row, action) === 'partial'
+                        "
+                        [disabled]="!canWriteRoles() || !rol.gestionaPermisos"
+                        [title]="permissionCellTitle(row, action)"
+                        (click)="togglePermissionCell(row, action)"
+                      >
+                        <span></span>
+                      </button>
+                      <small class="permission-count">{{ permissionCellCount(row, action) }}</small>
+                    } @else {
+                      <span class="permission-empty">-</span>
+                    }
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">No hay permisos que coincidan con la búsqueda.</div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="matrix-legend">
+        <span><i class="legend-dot legend-dot--on"></i> Todos asignados</span>
+        <span><i class="legend-dot legend-dot--partial"></i> Asignación parcial</span>
+        <span><i class="legend-dot"></i> Sin asignar</span>
+        <small>Pasa el cursor sobre un interruptor para ver los permisos incluidos.</small>
+      </div>
+    }
+
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="permissionsEditorVisible.set(false)"
+      />
+      @if (selectedRol()?.gestionaPermisos && canWriteRoles()) {
+        <p-button
+          label="Guardar permisos"
+          icon="pi pi-check"
+          [loading]="saving()"
+          (onClick)="saveSelectedRolePermissions()"
+        />
+      }
     </ng-template>
   </p-dialog>
 </section>

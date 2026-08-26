@@ -1,35 +1,89 @@
-<section class="pricing" id="planes">
+<section class="pricing-section" id="planes">
   <div class="section-shell">
-    <div class="section-head">
-      <p class="section-kicker">Planes</p>
-      <h2 class="section-title">Elige una base lista para escalar</h2>
-      <p class="section-copy">
-        Planes flexibles para empresas que necesitan control operativo, facturacion electronica
-        y crecimiento ordenado.
+    <div class="section-header">
+      <div class="section-kicker"><i class="pi pi-tags"></i> Planes Transparentes</div>
+      <h2 class="section-title">Invierte en el crecimiento ordenado de tu negocio</h2>
+      <p class="section-lead">
+        Sin costos ocultos ni letras pequeñas. Elige el plan ideal para tu volumen comercial y
+        escala cuando lo necesites.
       </p>
+
+      <!-- Billing Toggle -->
+      <div class="billing-toggle-wrapper">
+        <div class="billing-toggle">
+          <button
+            type="button"
+            class="toggle-btn"
+            [class.toggle-btn--active]="!isAnnual()"
+            (click)="toggleBilling(false)"
+          >
+            Pago Mensual
+          </button>
+          <button
+            type="button"
+            class="toggle-btn"
+            [class.toggle-btn--active]="isAnnual()"
+            (click)="toggleBilling(true)"
+          >
+            Pago Anual
+            <span class="discount-pill">Ahorra 20%</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="pricing__grid">
+    <!-- Pricing Grid -->
+    <div class="pricing-grid">
       @for (plan of plans; track plan.name) {
-        <p-card [styleClass]="plan.highlighted ? 'plan-card plan-card--featured' : 'plan-card'">
-          @if (plan.highlighted) {
-            <span class="plan-card__badge">Recomendado</span>
+        <div class="plan-card" [class.plan-card--featured]="plan.highlighted">
+          @if (plan.badge) {
+            <span class="plan-badge">{{ plan.badge }}</span>
           }
-          <h3>{{ plan.name }}</h3>
-          <strong>{{ plan.price }}</strong>
-          <p>{{ plan.description }}</p>
-          <ul>
+
+          <div class="plan-card__header">
+            <h3 class="plan-name">{{ plan.name }}</h3>
+            <p class="plan-desc">{{ plan.description }}</p>
+          </div>
+
+          <div class="plan-price-box">
+            <span class="price-amount">{{
+              isAnnual() ? plan.annualPrice : plan.monthlyPrice
+            }}</span>
+            <span class="price-period">{{ plan.period }}</span>
+          </div>
+
+          <ul class="plan-features">
             @for (feature of plan.features; track feature) {
-              <li><i class="pi pi-check"></i>{{ feature }}</li>
+              <li>
+                <i class="pi pi-check"></i>
+                <span>{{ feature }}</span>
+              </li>
             }
           </ul>
-          @if (plan.highlighted) {
-            <a pButton class="az-primary plan-button" href="#contacto">Solicitar Demo</a>
-          } @else {
-            <a pButton class="az-secondary plan-button" href="#contacto">Solicitar Demo</a>
-          }
-        </p-card>
+
+          <div class="plan-card__footer">
+            <a
+              class="plan-btn"
+              [class.plan-btn--primary]="plan.highlighted"
+              [class.plan-btn--secondary]="!plan.highlighted"
+              routerLink="/inicio"
+              fragment="contacto"
+            >
+              <span>{{ plan.ctaLabel }}</span>
+              <i class="pi pi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
       }
+    </div>
+
+    <!-- Guarantee Notice -->
+    <div class="pricing-guarantee">
+      <i class="pi pi-verified"></i>
+      <span
+        >Todos los planes incluyen actualizaciones tributarias de SUNAT y soporte técnico
+        especializado.</span
+      >
     </div>
   </div>
 </section>

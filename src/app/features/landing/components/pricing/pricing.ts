@@ -1,54 +1,88 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
-type Plan = {
+export type Plan = {
   name: string;
-  price: string;
+  badge?: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  period: string;
   description: string;
   highlighted: boolean;
   features: readonly string[];
+  ctaLabel: string;
 };
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-pricing',
-  imports: [ButtonModule, CardModule],
+  imports: [RouterLink],
   templateUrl: './pricing.html',
   styleUrl: './pricing.scss',
 })
 export class PricingComponent {
+  protected readonly isAnnual = signal(true);
+
   protected readonly plans: readonly Plan[] = [
     {
-      name: 'Starter',
-      price: 'Desde S/ 149',
-      description: 'Para negocios que empiezan a ordenar ventas, clientes y comprobantes.',
+      name: 'Emprendedor',
+      monthlyPrice: 'S/ 149',
+      annualPrice: 'S/ 119',
+      period: '/ mes',
+      description:
+        'Ideal para pequeños negocios y comercios que buscan emitir comprobantes y ordenar su inventario.',
       highlighted: false,
-      features: ['1 empresa', 'CRM esencial', 'Inventario base', 'Facturacion electronica'],
+      features: [
+        '1 Empresa (RUC) & 1 Sucursal',
+        'Facturación SUNAT ilimitada',
+        'Punto de Venta POS & Arqueo de caja',
+        'Control de Stock e Inventario',
+        'Consulta RUC y DNI en vivo',
+        'Soporte estándar por correo y chat',
+      ],
+      ctaLabel: 'Elegir Emprendedor',
     },
     {
-      name: 'Business',
-      price: 'Desde S/ 349',
-      description: 'Para equipos que necesitan CRM, ERP y cobranza trabajando juntos.',
+      name: 'Pyme Comercial',
+      badge: 'Más Elegido',
+      monthlyPrice: 'S/ 329',
+      annualPrice: 'S/ 259',
+      period: '/ mes',
+      description:
+        'Para empresas en crecimiento que requieren CRM activo, cotizaciones avanzadas y multialmacén.',
       highlighted: true,
       features: [
-        'Pipeline y seguimiento',
-        'Multi almacen y caja',
-        'Cobranza y reportes CRM',
-        'Soporte prioritario',
+        'Hasta 3 Sucursales & Almacenes',
+        'CRM Comercial & Embudo de Ventas',
+        'Cotizaciones profesionales en PDF',
+        'Seguimiento de Pagos & Cobranza',
+        'Traslados entre almacenes y Kardex',
+        'Exportación a Excel & Reportes BI',
+        'Soporte prioritario por WhatsApp',
       ],
+      ctaLabel: 'Comenzar con Pyme Comercial',
     },
     {
-      name: 'Enterprise',
-      price: 'A medida',
-      description: 'Para empresas con alto volumen, integraciones y gobierno por roles.',
+      name: 'Corporativo Enterprise',
+      monthlyPrice: 'A Medida',
+      annualPrice: 'A Medida',
+      period: '',
+      description:
+        'Para grupos empresariales con múltiples empresas, alto volumen de ventas y requerimientos a medida.',
       highlighted: false,
       features: [
-        'Multiempresa',
-        'API y captación multicanal',
-        'Roles avanzados',
-        'Acompanamiento dedicado',
+        'Multiempresa & Sedes ilimitadas',
+        'Roles y permisos avanzados por usuario',
+        'Integración API REST & Webhooks',
+        'Capacitación para tu equipo comercial',
+        'Migración de datos asistida',
+        'Gerente de cuenta dedicado 24/7',
       ],
+      ctaLabel: 'Contactar a Ventas',
     },
   ];
+
+  protected toggleBilling(annual: boolean): void {
+    this.isAnnual.set(annual);
+  }
 }

@@ -1,7 +1,9 @@
 <section class="ops-board">
   <header class="board-top">
     <div class="board-title">
-      <p class="board-eyebrow">{{ isGeneralAdmin() ? 'VISION EJECUTIVA' : 'OPERACION COMERCIAL' }}</p>
+      <p class="board-eyebrow">
+        {{ isGeneralAdmin() ? 'VISION EJECUTIVA' : 'OPERACION COMERCIAL' }}
+      </p>
       <h1>{{ dashboardTitle() }}</h1>
       <p>
         @if (isGeneralAdmin()) {
@@ -15,9 +17,21 @@
     <div class="board-actions">
       <label class="board-search">
         <i class="pi pi-search"></i>
-        <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearch($event)" placeholder="Buscar datos del dashboard..." />
+        <input
+          pInputText
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearch($event)"
+          placeholder="Buscar datos del dashboard..."
+        />
       </label>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="load()" [loading]="loading()">
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-refresh"
+        (click)="load()"
+        [loading]="loading()"
+      >
         Actualizar
       </button>
     </div>
@@ -32,7 +46,11 @@
 
   <section class="kpi-grid">
     @for (card of kpis(); track card.label) {
-      <article class="kpi-card" [class.tone-success]="card.tone === 'success'" [class.tone-warn]="card.tone === 'warn'">
+      <article
+        class="kpi-card"
+        [class.tone-success]="card.tone === 'success'"
+        [class.tone-warn]="card.tone === 'warn'"
+      >
         <span class="kpi-icon">
           <i [class]="card.icon"></i>
         </span>
@@ -66,7 +84,13 @@
         <div class="chart-stage">
           <svg viewBox="0 0 620 220" aria-hidden="true">
             @for (guide of chartGuides; track guide) {
-              <line class="grid-line" x1="0" [attr.y1]="220 - ((guide / 100) * 220)" x2="620" [attr.y2]="220 - ((guide / 100) * 220)"></line>
+              <line
+                class="grid-line"
+                x1="0"
+                [attr.y1]="220 - (guide / 100) * 220"
+                x2="620"
+                [attr.y2]="220 - (guide / 100) * 220"
+              ></line>
             }
             <polyline class="line-secondary" [attr.points]="chartSvg().secondaryPoints"></polyline>
             <polyline class="line-primary" [attr.points]="chartSvg().primaryPoints"></polyline>
@@ -127,7 +151,12 @@
                   <td>{{ row.tenantId }}</td>
                   <td>{{ row.plan }}</td>
                   <td><p-tag [value]="row.estado" [severity]="statusSeverity(row.estado)" /></td>
-                  <td><p-tag [value]="row.activa ? 'Activa' : 'Inactiva'" [severity]="empresaBadgeTone(row.activa)" /></td>
+                  <td>
+                    <p-tag
+                      [value]="row.activa ? 'Activa' : 'Inactiva'"
+                      [severity]="empresaBadgeTone(row.activa)"
+                    />
+                  </td>
                 </tr>
               }
             </tbody>
@@ -152,7 +181,12 @@
                   <td>{{ row.clienteDocumento }}</td>
                   <td>{{ row.fechaVenta | date: 'd/M/yyyy, h:mm a' }}</td>
                   <td>{{ row.moneda }} {{ row.total | number: '1.2-2' }}</td>
-                  <td><p-tag [value]="row.facturacionEstado || 'PENDIENTE'" [severity]="statusSeverity(row.facturacionEstado)" /></td>
+                  <td>
+                    <p-tag
+                      [value]="row.facturacionEstado || 'PENDIENTE'"
+                      [severity]="statusSeverity(row.facturacionEstado)"
+                    />
+                  </td>
                 </tr>
               }
             </tbody>
@@ -178,4 +212,3 @@
     </article>
   </section>
 </section>
-

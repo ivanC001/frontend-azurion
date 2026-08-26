@@ -6,9 +6,33 @@
       <p>Filtra rapido y exporta ventas, compras, inventario, caja, notas, guias y CRM.</p>
     </div>
     <div class="header-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" label="Recargar" [loading]="loading()" (click)="loadReports()"></button>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-file" label="CSV" [disabled]="!reportRows().length" (click)="exportCsv()"></button>
-      <button pButton type="button" class="az-primary" icon="pi pi-file-excel" label="XLS" [disabled]="!canExportXls()" (click)="exportExcel()"></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-refresh"
+        label="Recargar"
+        [loading]="loading()"
+        (click)="loadReports()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-file"
+        label="CSV"
+        [disabled]="!reportRows().length"
+        (click)="exportCsv()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        class="az-primary"
+        icon="pi pi-file-excel"
+        label="XLS"
+        [disabled]="!canExportXls()"
+        (click)="exportExcel()"
+      ></button>
     </div>
   </header>
 
@@ -22,10 +46,34 @@
   <section class="quick-range-panel">
     <span>Rango rapido</span>
     <div class="quick-range-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined" label="Hoy" (click)="setQuickRange('today')"></button>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" label="7 dias" (click)="setQuickRange('last7')"></button>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" label="30 dias" (click)="setQuickRange('last30')"></button>
-      <button pButton type="button" class="p-button-secondary p-button-outlined" label="Este mes" (click)="setQuickRange('month')"></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        label="Hoy"
+        (click)="setQuickRange('today')"
+      ></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        label="7 dias"
+        (click)="setQuickRange('last7')"
+      ></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        label="30 dias"
+        (click)="setQuickRange('last30')"
+      ></button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        label="Este mes"
+        (click)="setQuickRange('month')"
+      ></button>
     </div>
   </section>
 
@@ -41,11 +89,21 @@
     </label>
     <label>
       Desde
-      <input pInputText type="date" [ngModel]="startDateFilter()" (ngModelChange)="onStartDateChange($event)" />
+      <input
+        pInputText
+        type="date"
+        [ngModel]="startDateFilter()"
+        (ngModelChange)="onStartDateChange($event)"
+      />
     </label>
     <label>
       Hasta
-      <input pInputText type="date" [ngModel]="endDateFilter()" (ngModelChange)="onEndDateChange($event)" />
+      <input
+        pInputText
+        type="date"
+        [ngModel]="endDateFilter()"
+        (ngModelChange)="onEndDateChange($event)"
+      />
     </label>
     <label>
       Estado / tipo
@@ -100,14 +158,24 @@
         placeholder="Cliente, documento, producto, motivo, referencia..."
       />
     </label>
-    <button pButton type="button" class="p-button-secondary p-button-text clear-button" icon="pi pi-filter-slash" label="Limpiar" (click)="clearFilters()"></button>
+    <button
+      pButton
+      type="button"
+      class="p-button-secondary p-button-text clear-button"
+      icon="pi pi-filter-slash"
+      label="Limpiar"
+      (click)="clearFilters()"
+    ></button>
   </section>
 
   <section class="summary-strip">
     {{ activeFiltersSummary() }}
   </section>
 
-  @if ((moduleFilter() === 'ventas' || moduleFilter() === 'compras') && fiscalSummary(); as fiscal) {
+  @if (
+    (moduleFilter() === 'ventas' || moduleFilter() === 'compras') && fiscalSummary();
+    as fiscal
+  ) {
     <section class="fiscal-panel" aria-label="Resumen tributario y margen real">
       <div class="fiscal-panel__head">
         <div>
@@ -117,15 +185,36 @@
         <em>{{ fiscal.desde }} al {{ fiscal.hasta }}</em>
       </div>
       <div class="fiscal-grid">
-        <article><span>Ventas brutas</span><strong>S/ {{ fiscal.ventasBrutas.toFixed(2) }}</strong></article>
-        <article><span>Ventas netas</span><strong>S/ {{ fiscal.ventasNetas.toFixed(2) }}</strong></article>
-        <article class="fiscal-card--tax"><span>Debito fiscal</span><strong>S/ {{ fiscal.debitoFiscal.toFixed(2) }}</strong></article>
-        <article><span>Compras netas</span><strong>S/ {{ fiscal.comprasNetas.toFixed(2) }}</strong></article>
-        <article><span>IGV de compras</span><strong>S/ {{ fiscal.igvCompras.toFixed(2) }}</strong></article>
-        <article class="fiscal-card--credit"><span>Credito fiscal</span><strong>S/ {{ fiscal.creditoFiscal.toFixed(2) }}</strong></article>
-        <article class="fiscal-card--payable"><span>IGV por pagar estimado</span><strong>S/ {{ fiscal.igvPorPagarEstimado.toFixed(2) }}</strong></article>
-        <article class="fiscal-card--credit"><span>Saldo a favor estimado</span><strong>S/ {{ fiscal.saldoCreditoFiscalEstimado.toFixed(2) }}</strong></article>
-        <article><span>Costo de ventas conocido</span><strong>S/ {{ fiscal.costoVentasConocido.toFixed(2) }}</strong></article>
+        <article>
+          <span>Ventas brutas</span><strong>S/ {{ fiscal.ventasBrutas.toFixed(2) }}</strong>
+        </article>
+        <article>
+          <span>Ventas netas</span><strong>S/ {{ fiscal.ventasNetas.toFixed(2) }}</strong>
+        </article>
+        <article class="fiscal-card--tax">
+          <span>Debito fiscal</span><strong>S/ {{ fiscal.debitoFiscal.toFixed(2) }}</strong>
+        </article>
+        <article>
+          <span>Compras netas</span><strong>S/ {{ fiscal.comprasNetas.toFixed(2) }}</strong>
+        </article>
+        <article>
+          <span>IGV de compras</span><strong>S/ {{ fiscal.igvCompras.toFixed(2) }}</strong>
+        </article>
+        <article class="fiscal-card--credit">
+          <span>Credito fiscal</span><strong>S/ {{ fiscal.creditoFiscal.toFixed(2) }}</strong>
+        </article>
+        <article class="fiscal-card--payable">
+          <span>IGV por pagar estimado</span
+          ><strong>S/ {{ fiscal.igvPorPagarEstimado.toFixed(2) }}</strong>
+        </article>
+        <article class="fiscal-card--credit">
+          <span>Saldo a favor estimado</span
+          ><strong>S/ {{ fiscal.saldoCreditoFiscalEstimado.toFixed(2) }}</strong>
+        </article>
+        <article>
+          <span>Costo de ventas conocido</span
+          ><strong>S/ {{ fiscal.costoVentasConocido.toFixed(2) }}</strong>
+        </article>
         <article [class.fiscal-card--warning]="!fiscal.margenCompleto">
           <span>Margen real</span>
           @if (fiscal.margenCompleto && fiscal.margenReal !== null) {
@@ -211,7 +300,10 @@
           @for (column of columns(); track column.key) {
             <td [class]="cellClass(column)">
               @if (isStatusColumn(column) && row[column.key]) {
-                <p-tag [value]="row[column.key]" [severity]="statusSeverity(row[column.key])"></p-tag>
+                <p-tag
+                  [value]="row[column.key]"
+                  [severity]="statusSeverity(row[column.key])"
+                ></p-tag>
               } @else {
                 {{ displayCell(row, column) }}
               }

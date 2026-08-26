@@ -59,7 +59,7 @@ export class FooterComponent {
     {
       title: 'Contacto',
       links: [
-        { label: 'ventas@azurios.com', href: 'mailto:ventas@azurios.com' },
+        { label: 'ventas@azurion.pe', href: 'mailto:ventas@azurion.pe' },
         { label: '+51 900 000 000', href: 'tel:+51900000000' },
         { label: 'Facebook', href: 'https://www.facebook.com' },
         { label: 'LinkedIn', href: 'https://www.linkedin.com' },

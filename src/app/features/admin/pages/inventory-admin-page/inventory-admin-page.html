@@ -3,13 +3,37 @@
     <div>
       <p class="page-eyebrow">Stock y kardex</p>
       <h1>Inventario operativo</h1>
-      <p>Registra entradas, salidas, traslados, lotes y precios con una vista rapida del stock actual.</p>
+      <p>
+        Registra entradas, salidas, traslados, lotes y precios con una vista rapida del stock
+        actual.
+      </p>
     </div>
     <div class="header-actions">
-      <p-button label="Excel inventario" icon="pi pi-file-excel" styleClass="p-button-success" [disabled]="!stock().length && !kardex().length" (onClick)="exportInventarioExcel()" />
-      <p-button label="Registrar compra" icon="pi pi-shopping-bag" styleClass="az-primary" (onClick)="openCompraDialog()" />
-      <p-button label="Ajuste / traslado" icon="pi pi-arrow-right-arrow-left" styleClass="az-secondary" (onClick)="openMovimientoDialog()" />
-      <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadData()" />
+      <p-button
+        label="Excel inventario"
+        icon="pi pi-file-excel"
+        styleClass="p-button-success"
+        [disabled]="!stock().length && !kardex().length"
+        (onClick)="exportInventarioExcel()"
+      />
+      <p-button
+        label="Registrar compra"
+        icon="pi pi-shopping-bag"
+        styleClass="az-primary"
+        (onClick)="openCompraDialog()"
+      />
+      <p-button
+        label="Ajuste / traslado"
+        icon="pi pi-arrow-right-arrow-left"
+        styleClass="az-secondary"
+        (onClick)="openMovimientoDialog()"
+      />
+      <p-button
+        label="Recargar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="loadData()"
+      />
     </div>
   </header>
 
@@ -94,29 +118,49 @@
       <ng-template pTemplate="body" let-item>
         <tr>
           <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
-          <td><strong>{{ item.tipoComprobante }} {{ item.numeroComprobante }}</strong></td>
+          <td>
+            <strong>{{ item.tipoComprobante }} {{ item.numeroComprobante }}</strong>
+          </td>
           <td>{{ item.proveedorDocumento || '' }} {{ item.proveedorNombre || 'Sin proveedor' }}</td>
           <td>{{ item.almacenCodigo }}</td>
           @if (item.tratamientoIgv === 'DESGLOSADO') {
             <td>S/ {{ item.subtotalNeto | number: '1.2-2' }}</td>
             <td>S/ {{ item.montoIgv | number: '1.2-2' }}</td>
           } @else {
-            <td class="historical-metric" title="El registro anterior no conserva el desglose tributario">No disponible</td>
-            <td class="historical-metric" title="El registro anterior no conserva el desglose tributario">No disponible</td>
+            <td
+              class="historical-metric"
+              title="El registro anterior no conserva el desglose tributario"
+            >
+              No disponible
+            </td>
+            <td
+              class="historical-metric"
+              title="El registro anterior no conserva el desglose tributario"
+            >
+              No disponible
+            </td>
           }
           <td>S/ {{ item.total | number: '1.2-2' }}</td>
           <td>S/ {{ item.totalCostoInventariable | number: '1.2-2' }}</td>
           @if (item.tratamientoIgv === 'DESGLOSADO') {
             <td>S/ {{ item.ventaProyectada | number: '1.2-2' }}</td>
-            <td><strong [class.profit-negative]="item.gananciaProyectada < 0">S/ {{ item.gananciaProyectada | number: '1.2-2' }}</strong></td>
+            <td>
+              <strong [class.profit-negative]="item.gananciaProyectada < 0"
+                >S/ {{ item.gananciaProyectada | number: '1.2-2' }}</strong
+              >
+            </td>
             <td>{{ item.margenPorcentaje | number: '1.2-2' }}%</td>
           } @else {
-            <td colspan="3" class="historical-metric">Histórico sin desglose: margen no disponible</td>
+            <td colspan="3" class="historical-metric">
+              Histórico sin desglose: margen no disponible
+            </td>
           }
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="11">Todavia no hay compras registradas por comprobante.</td></tr>
+        <tr>
+          <td colspan="11">Todavia no hay compras registradas por comprobante.</td>
+        </tr>
       </ng-template>
     </p-table>
   </section>
@@ -154,7 +198,9 @@
           <td>{{ item.codigoLote }}</td>
           <td>{{ item.almacenCodigo }} - {{ item.almacenNombre }}</td>
           <td>{{ item.stockActual }}</td>
-          <td>{{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : 'No aplica' }}</td>
+          <td>
+            {{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : 'No aplica' }}
+          </td>
           <td>
             <p-tag [value]="expiryDetail(item)" [severity]="expirySeverity(item)" />
           </td>
@@ -189,8 +235,18 @@
           [showClear]="true"
         />
         <p-button label="Aplicar" styleClass="az-secondary" (onClick)="applyFilters()" />
-        <p-button label="Limpiar" styleClass="az-secondary p-button-outlined" (onClick)="clearFilters()" />
-        <p-button label="Stock Excel" icon="pi pi-file-excel" styleClass="p-button-success p-button-outlined" [disabled]="!stock().length" (onClick)="exportStockExcel()" />
+        <p-button
+          label="Limpiar"
+          styleClass="az-secondary p-button-outlined"
+          (onClick)="clearFilters()"
+        />
+        <p-button
+          label="Stock Excel"
+          icon="pi pi-file-excel"
+          styleClass="p-button-success p-button-outlined"
+          [disabled]="!stock().length"
+          (onClick)="exportStockExcel()"
+        />
       </div>
     </div>
     <p-table
@@ -208,11 +264,11 @@
           <th>Producto</th>
           <th>SKU</th>
           <th>Almacen</th>
-           <th>Cantidad</th>
-           <th>Minimo</th>
-           <th>Maximo</th>
-           <th>Ubicacion</th>
-           <th>Estado</th>
+          <th>Cantidad</th>
+          <th>Minimo</th>
+          <th>Maximo</th>
+          <th>Ubicacion</th>
+          <th>Estado</th>
           <th>Accion</th>
         </tr>
       </ng-template>
@@ -221,10 +277,10 @@
           <td>{{ item.productoNombre }}</td>
           <td>{{ item.productoSku }}</td>
           <td>{{ item.almacenCodigo }} - {{ item.almacenNombre }}</td>
-           <td>{{ item.cantidad }}</td>
-           <td>{{ item.stockMinimo }}</td>
-           <td>{{ item.stockMaximo ?? 'Sin limite' }}</td>
-           <td>{{ item.ubicacionFisica || 'Sin asignar' }}</td>
+          <td>{{ item.cantidad }}</td>
+          <td>{{ item.stockMinimo }}</td>
+          <td>{{ item.stockMaximo ?? 'Sin limite' }}</td>
+          <td>{{ item.ubicacionFisica || 'Sin asignar' }}</td>
           <td>
             <p-tag [value]="stockStatus(item)" [severity]="stockStatusSeverity(item)" />
           </td>
@@ -237,16 +293,16 @@
               pTooltip="Registrar movimiento"
               tooltipPosition="top"
               (click)="openMovimientoDialog(item.productoId, item.almacenId)"
-             ></button>
-             <button
-               type="button"
-               pButton
-               class="p-button-text p-button-secondary p-button-rounded"
-               icon="pi pi-cog"
-               pTooltip="Configurar minimo, maximo y ubicacion"
-               tooltipPosition="top"
-               (click)="openStockSettings(item)"
-             ></button>
+            ></button>
+            <button
+              type="button"
+              pButton
+              class="p-button-text p-button-secondary p-button-rounded"
+              icon="pi pi-cog"
+              pTooltip="Configurar minimo, maximo y ubicacion"
+              tooltipPosition="top"
+              (click)="openStockSettings(item)"
+            ></button>
           </td>
         </tr>
       </ng-template>
@@ -256,7 +312,13 @@
   <section class="table-panel">
     <div class="table-head">
       <h2>Kardex reciente</h2>
-      <p-button label="Kardex Excel" icon="pi pi-file-excel" styleClass="p-button-success p-button-outlined" [disabled]="!kardex().length" (onClick)="exportKardexExcel()" />
+      <p-button
+        label="Kardex Excel"
+        icon="pi pi-file-excel"
+        styleClass="p-button-success p-button-outlined"
+        [disabled]="!kardex().length"
+        (onClick)="exportKardexExcel()"
+      />
     </div>
     <p-table
       [value]="kardex()"
@@ -323,23 +385,48 @@
         </label>
         <label>
           Numero comprobante <span class="required">*</span>
-          <input pInputText name="numeroComprobanteCompra" [(ngModel)]="compraForm.numeroComprobante" placeholder="F001-000123" />
+          <input
+            pInputText
+            name="numeroComprobanteCompra"
+            [(ngModel)]="compraForm.numeroComprobante"
+            placeholder="F001-000123"
+          />
         </label>
         <label>
           Fecha emision <span class="required">*</span>
-          <input pInputText type="date" name="fechaEmisionCompra" [(ngModel)]="compraForm.fechaEmision" />
+          <input
+            pInputText
+            type="date"
+            name="fechaEmisionCompra"
+            [(ngModel)]="compraForm.fechaEmision"
+          />
         </label>
         <label>
           Almacen destino <span class="required">*</span>
-          <p-select name="almacenCompra" [options]="almacenOptions()" [(ngModel)]="compraForm.almacenId" placeholder="Selecciona almacen" />
+          <p-select
+            name="almacenCompra"
+            [options]="almacenOptions()"
+            [(ngModel)]="compraForm.almacenId"
+            placeholder="Selecciona almacen"
+          />
         </label>
         <label>
           Documento proveedor
-          <input pInputText name="proveedorDocumentoCompra" [(ngModel)]="compraForm.proveedorDocumento" placeholder="RUC o DNI" />
+          <input
+            pInputText
+            name="proveedorDocumentoCompra"
+            [(ngModel)]="compraForm.proveedorDocumento"
+            placeholder="RUC o DNI"
+          />
         </label>
         <label>
           Proveedor <span class="field-hint">documento o nombre requerido</span>
-          <input pInputText name="proveedorNombreCompra" [(ngModel)]="compraForm.proveedorNombre" placeholder="Razon social o nombre" />
+          <input
+            pInputText
+            name="proveedorNombreCompra"
+            [(ngModel)]="compraForm.proveedorNombre"
+            placeholder="Razon social o nombre"
+          />
         </label>
       </div>
       <label class="tax-credit-card">
@@ -350,7 +437,10 @@
         />
         <span>
           <strong>Esta compra da derecho a credito fiscal</strong>
-          <small>Si esta activo, el IGV recuperable no aumenta el costo del inventario. Verifica que el comprobante y proveedor cumplan los requisitos tributarios.</small>
+          <small
+            >Si esta activo, el IGV recuperable no aumenta el costo del inventario. Verifica que el
+            comprobante y proveedor cumplan los requisitos tributarios.</small
+          >
         </span>
       </label>
     </section>
@@ -359,9 +449,19 @@
       <div class="purchase-section__head">
         <div>
           <strong>Productos comprados</strong>
-          <span>Registra el costo sin IGV. El precio de venta siempre es el importe final que pagara el cliente.</span>
+          <span
+            >Registra el costo sin IGV. El precio de venta siempre es el importe final que pagara el
+            cliente.</span
+          >
         </div>
-        <button type="button" pButton class="az-secondary p-button-outlined" icon="pi pi-plus" label="Agregar producto" (click)="addCompraDetalle()"></button>
+        <button
+          type="button"
+          pButton
+          class="az-secondary p-button-outlined"
+          icon="pi pi-plus"
+          label="Agregar producto"
+          (click)="addCompraDetalle()"
+        ></button>
       </div>
 
       <div class="purchase-lines">
@@ -382,45 +482,125 @@
               </label>
               <label>
                 Cantidad <span class="required">*</span>
-                <input pInputText type="number" min="0.01" [name]="'compraCantidad-' + $index" [(ngModel)]="detalle.cantidad" />
+                <input
+                  pInputText
+                  type="number"
+                  min="0.01"
+                  [name]="'compraCantidad-' + $index"
+                  [(ngModel)]="detalle.cantidad"
+                />
               </label>
               <label>
                 Costo neto unit. <span class="required">*</span>
-                <input pInputText type="number" min="0.01" [name]="'compraCostoNeto-' + $index" [(ngModel)]="detalle.costoNetoUnitario" />
+                <input
+                  pInputText
+                  type="number"
+                  min="0.01"
+                  [name]="'compraCostoNeto-' + $index"
+                  [(ngModel)]="detalle.costoNetoUnitario"
+                />
               </label>
               <label>
                 IGV compra (%)
-                <input pInputText type="number" min="0" max="100" [name]="'compraIgv-' + $index" [(ngModel)]="detalle.porcentajeIgv" />
+                <input
+                  pInputText
+                  type="number"
+                  min="0"
+                  max="100"
+                  [name]="'compraIgv-' + $index"
+                  [(ngModel)]="detalle.porcentajeIgv"
+                />
               </label>
               <label>
                 Precio final venta <span class="required">*</span>
-                <input pInputText type="number" min="0.01" [name]="'compraVenta-' + $index" [(ngModel)]="detalle.precioVenta" />
+                <input
+                  pInputText
+                  type="number"
+                  min="0.01"
+                  [name]="'compraVenta-' + $index"
+                  [(ngModel)]="detalle.precioVenta"
+                />
               </label>
-              <button type="button" class="purchase-remove" title="Quitar producto" (click)="removeCompraDetalle($index)">
+              <button
+                type="button"
+                class="purchase-remove"
+                title="Quitar producto"
+                (click)="removeCompraDetalle($index)"
+              >
                 <i class="pi pi-trash"></i>
               </button>
             </div>
             <div class="purchase-line__result">
-              <span>Compra neta <strong>S/ {{ compraDetalleSubtotalNeto(detalle) | number: '1.2-2' }}</strong></span>
-              <span>IGV <strong>S/ {{ compraDetalleIgvTotal(detalle) | number: '1.2-2' }}</strong></span>
-              <span>Total compra <strong>S/ {{ (compraDetalleSubtotalNeto(detalle) + compraDetalleIgvTotal(detalle)) | number: '1.2-2' }}</strong></span>
-              <span>Costo inventariable <strong>S/ {{ compraDetalleCostoInventariableTotal(detalle) | number: '1.2-2' }}</strong></span>
-              <span>Venta neta <strong>S/ {{ compraDetalleVentaNetaTotal(detalle) | number: '1.2-2' }}</strong></span>
-              <span>Margen real <strong>S/ {{ (compraDetalleVentaNetaTotal(detalle) - compraDetalleCostoInventariableTotal(detalle)) | number: '1.2-2' }}</strong></span>
+              <span
+                >Compra neta
+                <strong>S/ {{ compraDetalleSubtotalNeto(detalle) | number: '1.2-2' }}</strong></span
+              >
+              <span
+                >IGV
+                <strong>S/ {{ compraDetalleIgvTotal(detalle) | number: '1.2-2' }}</strong></span
+              >
+              <span
+                >Total compra
+                <strong
+                  >S/
+                  {{
+                    compraDetalleSubtotalNeto(detalle) + compraDetalleIgvTotal(detalle)
+                      | number: '1.2-2'
+                  }}</strong
+                ></span
+              >
+              <span
+                >Costo inventariable
+                <strong
+                  >S/ {{ compraDetalleCostoInventariableTotal(detalle) | number: '1.2-2' }}</strong
+                ></span
+              >
+              <span
+                >Venta neta
+                <strong
+                  >S/ {{ compraDetalleVentaNetaTotal(detalle) | number: '1.2-2' }}</strong
+                ></span
+              >
+              <span
+                >Margen real
+                <strong
+                  >S/
+                  {{
+                    compraDetalleVentaNetaTotal(detalle) -
+                      compraDetalleCostoInventariableTotal(detalle) | number: '1.2-2'
+                  }}</strong
+                ></span
+              >
             </div>
             @if (compraDetalleControlsLot(detalle)) {
               <div class="purchase-lot-grid">
                 <label>
                   Codigo lote <span class="required">*</span>
-                  <input pInputText [name]="'compraLote-' + $index" [(ngModel)]="detalle.codigoLote" />
+                  <input
+                    pInputText
+                    [name]="'compraLote-' + $index"
+                    [(ngModel)]="detalle.codigoLote"
+                  />
                 </label>
-                <label>Fabricacion <input pInputText type="date" [name]="'compraFabricacion-' + $index" [(ngModel)]="detalle.fechaFabricacion" /></label>
+                <label
+                  >Fabricacion
+                  <input
+                    pInputText
+                    type="date"
+                    [name]="'compraFabricacion-' + $index"
+                    [(ngModel)]="detalle.fechaFabricacion"
+                /></label>
                 <label>
                   Vencimiento
                   @if (compraDetalleControlsExpiry(detalle)) {
                     <span class="required">*</span>
                   }
-                  <input pInputText type="date" [name]="'compraVencimiento-' + $index" [(ngModel)]="detalle.fechaVencimiento" />
+                  <input
+                    pInputText
+                    type="date"
+                    [name]="'compraVencimiento-' + $index"
+                    [(ngModel)]="detalle.fechaVencimiento"
+                  />
                 </label>
               </div>
             }
@@ -430,20 +610,54 @@
     </section>
 
     <section class="purchase-totals">
-      <span>Compra neta <strong>S/ {{ compraTotals().subtotalNeto | number: '1.2-2' }}</strong></span>
-      <span>IGV compra <strong>S/ {{ compraTotals().montoIgv | number: '1.2-2' }}</strong></span>
-      <span>Total comprobante <strong>S/ {{ compraTotals().total | number: '1.2-2' }}</strong></span>
-      <span>Credito fiscal <strong>S/ {{ compraTotals().creditoFiscal | number: '1.2-2' }}</strong></span>
-      <span>Costo inventariable <strong>S/ {{ compraTotals().costoInventariable | number: '1.2-2' }}</strong></span>
-      <span>Venta neta <strong>S/ {{ compraTotals().ventaNeta | number: '1.2-2' }}</strong></span>
-      <span>Margen real <strong>S/ {{ compraTotals().ganancia | number: '1.2-2' }}</strong></span>
-      <span>Margen <strong>{{ compraTotals().margen | number: '1.2-2' }}%</strong></span>
+      <span
+        >Compra neta <strong>S/ {{ compraTotals().subtotalNeto | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >IGV compra <strong>S/ {{ compraTotals().montoIgv | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Total comprobante <strong>S/ {{ compraTotals().total | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Credito fiscal
+        <strong>S/ {{ compraTotals().creditoFiscal | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Costo inventariable
+        <strong>S/ {{ compraTotals().costoInventariable | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Venta neta <strong>S/ {{ compraTotals().ventaNeta | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Margen real <strong>S/ {{ compraTotals().ganancia | number: '1.2-2' }}</strong></span
+      >
+      <span
+        >Margen <strong>{{ compraTotals().margen | number: '1.2-2' }}%</strong></span
+      >
     </section>
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="compraDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveCompra()">Registrar compra</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="compraDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="saveCompra()"
+    >
+      Registrar compra
+    </button>
   </ng-template>
 </p-dialog>
 
@@ -476,10 +690,10 @@
       Almacen origen
       <p-select
         name="almacenId"
-         [options]="almacenOptions()"
-         [(ngModel)]="movimientoForm.almacenId"
-         (ngModelChange)="onMovementWarehouseChange($event)"
-         placeholder="Selecciona almacen"
+        [options]="almacenOptions()"
+        [(ngModel)]="movimientoForm.almacenId"
+        (ngModelChange)="onMovementWarehouseChange($event)"
+        placeholder="Selecciona almacen"
       />
     </label>
     <label>
@@ -521,27 +735,61 @@
       @if (movimientoForm.tipoMovimiento === 'AJUSTE') {
         <div class="expiry-entry-note">
           <i class="pi pi-info-circle"></i>
-          El saldo indicado reemplazara el saldo actual del lote; el total del almacen se ajustara por la diferencia.
+          El saldo indicado reemplazara el saldo actual del lote; el total del almacen se ajustara
+          por la diferencia.
         </div>
       }
     }
     <label>
       {{ movementQuantityLabel() }}
-      <input pInputText type="number" min="0" name="cantidad" [(ngModel)]="movimientoForm.cantidad" placeholder="0.00" />
+      <input
+        pInputText
+        type="number"
+        min="0"
+        name="cantidad"
+        [(ngModel)]="movimientoForm.cantidad"
+        placeholder="0.00"
+      />
     </label>
     <label>
       Motivo
-      <input pInputText name="motivo" [(ngModel)]="movimientoForm.motivo" placeholder="VENTA, COMPRA, TRASLADO_INTERNO..." />
+      <input
+        pInputText
+        name="motivo"
+        [(ngModel)]="movimientoForm.motivo"
+        placeholder="VENTA, COMPRA, TRASLADO_INTERNO..."
+      />
     </label>
     <label>
       Referencia
-      <input pInputText name="referencia" [(ngModel)]="movimientoForm.referencia" placeholder="Nro comprobante, guia, etc." />
+      <input
+        pInputText
+        name="referencia"
+        [(ngModel)]="movimientoForm.referencia"
+        placeholder="Nro comprobante, guia, etc."
+      />
     </label>
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="movimientoDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveMovimiento()">{{ movementDialogTitle() }}</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="movimientoDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="saveMovimiento()"
+    >
+      {{ movementDialogTitle() }}
+    </button>
   </ng-template>
 </p-dialog>
 
@@ -561,19 +809,54 @@
     </div>
     <label>
       Stock minimo <span class="required">*</span>
-      <input pInputText type="number" min="0" name="stockMinimo" [(ngModel)]="stockSettingsForm.stockMinimo" />
+      <input
+        pInputText
+        type="number"
+        min="0"
+        name="stockMinimo"
+        [(ngModel)]="stockSettingsForm.stockMinimo"
+      />
     </label>
     <label>
       Stock maximo
-      <input pInputText type="number" min="0" name="stockMaximo" [(ngModel)]="stockSettingsForm.stockMaximo" placeholder="Sin limite" />
+      <input
+        pInputText
+        type="number"
+        min="0"
+        name="stockMaximo"
+        [(ngModel)]="stockSettingsForm.stockMaximo"
+        placeholder="Sin limite"
+      />
     </label>
     <label class="wide-field">
       Ubicacion fisica
-      <input pInputText name="ubicacionFisica" maxlength="120" [(ngModel)]="stockSettingsForm.ubicacionFisica" placeholder="Pasillo, estante o zona" />
+      <input
+        pInputText
+        name="ubicacionFisica"
+        maxlength="120"
+        [(ngModel)]="stockSettingsForm.ubicacionFisica"
+        placeholder="Pasillo, estante o zona"
+      />
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="stockSettingsDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveStockSettings()">Guardar configuracion</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="stockSettingsDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="saveStockSettings()"
+    >
+      Guardar configuracion
+    </button>
   </ng-template>
 </p-dialog>

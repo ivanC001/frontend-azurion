@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -29,28 +36,40 @@ export class CrmLeadPage implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly catalogoItem = signal<PublicCrmCatalogoItem | null>(null);
   protected readonly today = new Date().toISOString().slice(0, 10);
-  protected readonly campaignLabel = this.route.snapshot.queryParamMap.get('campania') || DEFAULT_LANDING_CAMPAIGN;
+  protected readonly campaignLabel =
+    this.route.snapshot.queryParamMap.get('campania') || DEFAULT_LANDING_CAMPAIGN;
   protected readonly form = {
-    tenantId: this.route.snapshot.queryParamMap.get('tenant')
-      || this.route.snapshot.queryParamMap.get('Ruc_tenant')
-      || this.route.snapshot.queryParamMap.get('rucTenant')
-      || '',
+    tenantId:
+      this.route.snapshot.queryParamMap.get('tenant') ||
+      this.route.snapshot.queryParamMap.get('Ruc_tenant') ||
+      this.route.snapshot.queryParamMap.get('rucTenant') ||
+      '',
     catalogoItemId: this.parseNumberParam('catalogoItemId'),
-    catalogoToken: this.route.snapshot.queryParamMap.get('token') || this.route.snapshot.queryParamMap.get('catalogoToken') || '',
+    catalogoToken:
+      this.route.snapshot.queryParamMap.get('token') ||
+      this.route.snapshot.queryParamMap.get('catalogoToken') ||
+      '',
     landingKey: this.route.snapshot.queryParamMap.get('landingKey') || '',
     tipoInteres: this.route.snapshot.queryParamMap.get('tipoInteres') || 'PRODUCTO',
     interesPrincipal: this.route.snapshot.queryParamMap.get('interes') || '',
-    presupuestoEstimado: this.parseNumberParam('precio') || this.parseNumberParam('presupuesto') || 0,
+    presupuestoEstimado:
+      this.parseNumberParam('precio') || this.parseNumberParam('presupuesto') || 0,
     fechaInteres: this.route.snapshot.queryParamMap.get('fechaInteres') || this.today,
     tipoPersona: this.route.snapshot.queryParamMap.get('tipoPersona') || 'SIN_DEFINIR',
     tipoDocumento: this.route.snapshot.queryParamMap.get('tipoDocumento') || '',
-    numeroDocumento: this.route.snapshot.queryParamMap.get('numeroDocumento') || this.route.snapshot.queryParamMap.get('documento') || '',
+    numeroDocumento:
+      this.route.snapshot.queryParamMap.get('numeroDocumento') ||
+      this.route.snapshot.queryParamMap.get('documento') ||
+      '',
     nombre: this.route.snapshot.queryParamMap.get('nombre') || '',
     empresa: this.route.snapshot.queryParamMap.get('empresa') || '',
     correo: this.route.snapshot.queryParamMap.get('correo') || '',
     telefono: this.route.snapshot.queryParamMap.get('telefono') || '',
     direccion: this.route.snapshot.queryParamMap.get('direccion') || '',
-    necesidad: this.route.snapshot.queryParamMap.get('mensaje') || this.route.snapshot.queryParamMap.get('necesidad') || '',
+    necesidad:
+      this.route.snapshot.queryParamMap.get('mensaje') ||
+      this.route.snapshot.queryParamMap.get('necesidad') ||
+      '',
     website: '',
   };
 
@@ -67,14 +86,13 @@ export class CrmLeadPage implements OnInit {
     { label: 'Pasaporte', value: 'PASAPORTE' },
   ];
 
-  protected readonly hasValidLandingContext = computed(() =>
-    Boolean(this.form.landingKey.trim())
-    || (
-      Boolean(this.form.tenantId.trim())
-      && Boolean(this.form.catalogoItemId)
-      && Boolean(this.form.catalogoToken.trim())
-      && Boolean(this.catalogoItem())
-    ),
+  protected readonly hasValidLandingContext = computed(
+    () =>
+      Boolean(this.form.landingKey.trim()) ||
+      (Boolean(this.form.tenantId.trim()) &&
+        Boolean(this.form.catalogoItemId) &&
+        Boolean(this.form.catalogoToken.trim()) &&
+        Boolean(this.catalogoItem())),
   );
 
   protected readonly offerBadges = computed(() => {
@@ -133,46 +151,53 @@ export class CrmLeadPage implements OnInit {
       return;
     }
     if (!this.hasValidLandingContext()) {
-      this.errorMessage.set('Esta landing no tiene una oferta CRM valida. Solicita un enlace actualizado.');
+      this.errorMessage.set(
+        'Esta landing no tiene una oferta CRM valida. Solicita un enlace actualizado.',
+      );
       return;
     }
 
     this.pendingSubmissionKey ??= this.crmApi.createSubmissionKey();
     this.saving.set(true);
     this.crmApi
-      .captureLead({
-        tenantId: this.form.tenantId.trim() || null,
-        Ruc_tenant: this.form.tenantId.trim() || null,
-        landingKey: this.form.landingKey.trim() || null,
-        tipoPersona: this.form.tipoPersona,
-        tipoDocumento: this.form.tipoDocumento || null,
-        numeroDocumento: this.form.numeroDocumento.trim() || null,
-        nombre: this.form.nombre.trim(),
-        empresa: this.form.empresa.trim() || null,
-        correo: this.form.correo.trim() || null,
-        telefono: this.form.telefono.trim() || null,
-        direccion: this.form.direccion.trim() || null,
-        origen: 'WEB',
-        canalIngreso: 'LANDING',
-        campania: this.campaignLabel,
-        landingUrl: typeof location !== 'undefined' ? location.href : null,
-        mensaje: this.form.necesidad.trim() || null,
-        tipoInteres: null,
-        interesPrincipal: null,
-        interesDetalle: this.form.necesidad.trim() || null,
-        presupuestoEstimado: null,
-        fechaInteres: this.form.fechaInteres || null,
-        catalogoItemId: this.form.catalogoItemId,
-        catalogoToken: this.form.catalogoToken.trim(),
-        website: this.form.website.trim() || null,
-        metadataJson: JSON.stringify({
-          source: 'azurion-crm-lead-page',
+      .captureLead(
+        {
+          tenantId: this.form.tenantId.trim() || null,
+          Ruc_tenant: this.form.tenantId.trim() || null,
+          landingKey: this.form.landingKey.trim() || null,
+          tipoPersona: this.form.tipoPersona,
+          tipoDocumento: this.form.tipoDocumento || null,
+          numeroDocumento: this.form.numeroDocumento.trim() || null,
+          nombre: this.form.nombre.trim(),
+          empresa: this.form.empresa.trim() || null,
+          correo: this.form.correo.trim() || null,
+          telefono: this.form.telefono.trim() || null,
+          direccion: this.form.direccion.trim() || null,
+          origen: 'WEB',
+          canalIngreso: 'LANDING',
+          campania: this.campaignLabel,
+          landingUrl: typeof location !== 'undefined' ? location.href : null,
+          mensaje: this.form.necesidad.trim() || null,
+          tipoInteres: this.form.tipoInteres || null,
+          interesPrincipal: this.form.interesPrincipal.trim() || null,
+          interesDetalle: this.form.necesidad.trim() || null,
+          presupuestoEstimado: this.form.presupuestoEstimado
+            ? Number(this.form.presupuestoEstimado)
+            : null,
+          fechaInteres: this.form.fechaInteres || null,
           catalogoItemId: this.form.catalogoItemId,
-          oferta: this.catalogoItem(),
-          ofertaSnapshot: this.querySnapshot(),
-          query: typeof location !== 'undefined' ? location.search : '',
-        }),
-      }, this.pendingSubmissionKey)
+          catalogoToken: this.form.catalogoToken.trim(),
+          website: this.form.website.trim() || null,
+          metadataJson: JSON.stringify({
+            source: 'azurion-crm-lead-page',
+            catalogoItemId: this.form.catalogoItemId,
+            oferta: this.catalogoItem(),
+            ofertaSnapshot: this.querySnapshot(),
+            query: typeof location !== 'undefined' ? location.search : '',
+          }),
+        },
+        this.pendingSubmissionKey,
+      )
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
@@ -208,15 +233,27 @@ export class CrmLeadPage implements OnInit {
   }
 
   private loadCatalogoContext(): void {
-    if (this.form.landingKey.trim() && (!this.form.catalogoItemId || !this.form.catalogoToken.trim())) {
+    if (
+      this.form.landingKey.trim() &&
+      (!this.form.catalogoItemId || !this.form.catalogoToken.trim())
+    ) {
       return;
     }
-    if (!this.form.tenantId.trim() || !this.form.catalogoItemId || !this.form.catalogoToken.trim()) {
+    if (
+      !this.form.tenantId.trim() ||
+      !this.form.catalogoItemId ||
+      !this.form.catalogoToken.trim()
+    ) {
       this.errorMessage.set('Landing no configurada: falta tenant, catalogoItemId o token.');
       return;
     }
     this.loadingCatalog.set(true);
-    this.crmApi.getCatalogoItem(this.form.tenantId.trim(), this.form.catalogoItemId, this.form.catalogoToken.trim())
+    this.crmApi
+      .getCatalogoItem(
+        this.form.tenantId.trim(),
+        this.form.catalogoItemId,
+        this.form.catalogoToken.trim(),
+      )
       .pipe(finalize(() => this.loadingCatalog.set(false)))
       .subscribe({
         next: (item) => {
@@ -224,7 +261,10 @@ export class CrmLeadPage implements OnInit {
           this.form.tipoInteres = item.tipoItem;
           this.form.interesPrincipal = item.nombre;
           this.form.presupuestoEstimado = Number(item.precioReferencial || 0);
-          if (!this.route.snapshot.queryParamMap.get('mensaje') && !this.route.snapshot.queryParamMap.get('necesidad')) {
+          if (
+            !this.route.snapshot.queryParamMap.get('mensaje') &&
+            !this.route.snapshot.queryParamMap.get('necesidad')
+          ) {
             this.form.necesidad = `Hola, deseo recibir información sobre ${item.nombre}.`;
           }
         },
@@ -233,7 +273,10 @@ export class CrmLeadPage implements OnInit {
   }
 
   protected humanize(value: string): string {
-    return value.toLowerCase().replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+    return value
+      .toLowerCase()
+      .replaceAll('_', ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
   private parseNumberParam(name: string): number {

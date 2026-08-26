@@ -62,41 +62,33 @@ export class PlatformEmailService {
 
   saveConfig(request: PlatformEmailConfigRequest) {
     return this.http
-      .put<ApiResponse<PlatformEmailConfig>>(
-        this.apiUrl.url('saasCore', this.endpoint),
-        request,
-        { headers: this.session.apiHeaders() },
-      )
+      .put<
+        ApiResponse<PlatformEmailConfig>
+      >(this.apiUrl.url('saasCore', this.endpoint), request, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   sendTest(correoDestino: string) {
     return this.http
-      .post<ApiResponse<PlatformEmailConfig>>(
-        this.apiUrl.url('saasCore', `${this.endpoint}/test`),
-        { correoDestino },
-        { headers: this.session.apiHeaders() },
-      )
+      .post<
+        ApiResponse<PlatformEmailConfig>
+      >(this.apiUrl.url('saasCore', `${this.endpoint}/test`), { correoDestino }, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   activate() {
     return this.http
-      .post<ApiResponse<PlatformEmailConfig>>(
-        this.apiUrl.url('saasCore', `${this.endpoint}/activate`),
-        null,
-        { headers: this.session.apiHeaders() },
-      )
+      .post<
+        ApiResponse<PlatformEmailConfig>
+      >(this.apiUrl.url('saasCore', `${this.endpoint}/activate`), null, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   deactivate() {
     return this.http
-      .post<ApiResponse<PlatformEmailConfig>>(
-        this.apiUrl.url('saasCore', `${this.endpoint}/deactivate`),
-        null,
-        { headers: this.session.apiHeaders() },
-      )
+      .post<
+        ApiResponse<PlatformEmailConfig>
+      >(this.apiUrl.url('saasCore', `${this.endpoint}/deactivate`), null, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 }

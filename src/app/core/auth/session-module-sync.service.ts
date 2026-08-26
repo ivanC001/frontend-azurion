@@ -20,7 +20,12 @@ export class SessionModuleSyncService {
 
   syncCurrentTenantModules(): void {
     const current = this.session.currentSession();
-    if (!current?.accessToken || current.adminGeneral || !current.tenantId || current.tenantId === 'public') {
+    if (
+      !current?.accessToken ||
+      current.adminGeneral ||
+      !current.tenantId ||
+      current.tenantId === 'public'
+    ) {
       return;
     }
 

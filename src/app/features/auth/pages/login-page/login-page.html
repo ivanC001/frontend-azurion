@@ -1,307 +1,344 @@
-<main class="login-page login-page--single" [class.login-page--tenant]="loginMode === 'tenant'">
+<main
+  class="login-page"
+  [class.login-page--admin]="loginMode === 'general'"
+  [class.login-page--tenant]="loginMode === 'tenant'"
+>
   @if (loginMode === 'general') {
-    <section class="access-panel access-panel--admin" aria-label="Acceso administrador AZURION">
-      <a class="back-link" routerLink="/inicio">
-        <i class="pi pi-arrow-left"></i>
-        <span>Volver al sitio oficial</span>
-      </a>
+    <!-- =========================================================================
+         MODO ADMINISTRADOR GENERAL (/auth/login)
+         ========================================================================= -->
+    <section class="admin-login-layout" aria-label="Acceso administrador AZURION">
+      <div class="admin-ambient" aria-hidden="true">
+        <div class="admin-glow admin-glow--1"></div>
+        <div class="admin-glow admin-glow--2"></div>
+        <div class="admin-grid-pattern"></div>
+      </div>
 
-      <div class="access-hero">
-        <a class="brand-lockup brand-lockup--dark" routerLink="/inicio" aria-label="AZURION inicio">
-          <img src="assets/logosinfondo.png" alt="AZURION" />
-          <strong>AZURION</strong>
+      <header class="admin-topbar">
+        <a class="back-link" routerLink="/inicio">
+          <i class="pi pi-arrow-left"></i>
+          <span>Volver al sitio oficial</span>
         </a>
+      </header>
 
-        <span class="hero-icon hero-icon--shield">
-          <i class="pi pi-shield"></i>
-        </span>
+      <div class="admin-login-card">
+        <div class="admin-card-head">
+          <a class="admin-brand" routerLink="/inicio" aria-label="AZURION inicio">
+            <img src="assets/logosinfondo.png" alt="AZURION Logo" />
+            <span>AZURION</span>
+          </a>
 
-        <div class="access-copy">
-          <h1>Acceso Administrador</h1>
-          <p>
-            Inicia sesion para administrar tenants, modulos, usuarios y seguridad de la plataforma.
+          <div class="admin-badge">
+            <i class="pi pi-shield"></i>
+            <span>Consola de Administración</span>
+          </div>
+
+          <h1 class="admin-title">Acceso Administrador</h1>
+          <p class="admin-subtitle">
+            Inicia sesión para gestionar empresas, módulos, usuarios y seguridad de la plataforma.
           </p>
         </div>
-      </div>
 
-      <form class="login-box login-box--admin" (ngSubmit)="login('general')">
-        @if (errorMessage() && loginMode === 'general') {
-          <div class="login-error login-error--dark">
-            <i class="pi pi-exclamation-triangle"></i>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-
-        <label class="field-shell field-shell--dark">
-          <i class="pi pi-user"></i>
-          <span class="sr-only">Correo electronico</span>
-          <input
-            pInputText
-            type="text"
-            name="adminUsername"
-            autocomplete="username"
-            placeholder="Correo electronico"
-            [(ngModel)]="adminCredentials.username"
-          />
-        </label>
-
-        <label class="field-shell field-shell--dark">
-          <i class="pi pi-lock"></i>
-          <span class="sr-only">Contraseña</span>
-          <p-password
-            name="adminPassword"
-            autocomplete="current-password"
-            placeholder="Contraseña"
-            [feedback]="false"
-            [toggleMask]="true"
-            [(ngModel)]="adminCredentials.password"
-          />
-        </label>
-
-        <div class="login-options">
-          <label class="remember remember--dark">
-            <p-checkbox name="rememberAdmin" [binary]="true" [(ngModel)]="rememberAdmin" />
-            Recordarme
-          </label>
-          <a [routerLink]="['/inicio']" fragment="contacto">Olvidaste tu contraseña?</a>
-        </div>
-
-        <button class="login-submit login-submit--admin" type="submit" [disabled]="loading()">
-          @if (loading() && loginMode === 'general') {
-            <i class="pi pi-spin pi-spinner"></i>
-            <span>Validando...</span>
-          } @else {
-            <span>Iniciar sesion</span>
-            <i class="pi pi-arrow-right"></i>
+        <form class="auth-form auth-form--admin" (ngSubmit)="login('general')">
+          @if (errorMessage() && loginMode === 'general') {
+            <div class="auth-alert auth-alert--error" role="alert">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
           }
-        </button>
 
-        <div class="login-divider login-divider--dark">
-          <span></span>
-          <small>o continua con</small>
-          <span></span>
+          <div class="form-field">
+            <label for="admin-user-input">Correo Electrónico / Usuario *</label>
+            <div class="input-container">
+              <i class="pi pi-envelope input-icon"></i>
+              <input
+                id="admin-user-input"
+                pInputText
+                type="text"
+                name="adminUsername"
+                autocomplete="username"
+                placeholder="admin@azurion.pe"
+                [(ngModel)]="adminCredentials.username"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="admin-password-input">Contraseña *</label>
+            <div class="input-container input-container--password">
+              <i class="pi pi-lock input-icon"></i>
+              <p-password
+                inputId="admin-password-input"
+                name="adminPassword"
+                autocomplete="current-password"
+                placeholder="Ingresa tu contraseña"
+                [feedback]="false"
+                [toggleMask]="true"
+                [(ngModel)]="adminCredentials.password"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-checkbox remember-checkbox--dark">
+              <p-checkbox name="rememberAdmin" [binary]="true" [(ngModel)]="rememberAdmin" />
+              <span>Recordar administrador</span>
+            </label>
+            <a class="forgot-link forgot-link--dark" routerLink="/inicio" fragment="contacto"
+              >¿Olvidaste tu contraseña?</a
+            >
+          </div>
+
+          <button
+            class="auth-submit-btn auth-submit-btn--admin"
+            type="submit"
+            [disabled]="loading()"
+          >
+            @if (loading() && loginMode === 'general') {
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>Validando credenciales...</span>
+            } @else {
+              <span>Ingresar a la Consola</span>
+              <i class="pi pi-arrow-right"></i>
+            }
+          </button>
+
+          <div class="auth-divider">
+            <span></span>
+            <small>o ingresa con tu empresa</small>
+            <span></span>
+          </div>
+
+          <button class="sso-tenant-btn" type="button" (click)="focusTenantAccess()">
+            <i class="pi pi-building"></i>
+            <span>Iniciar sesión con empresa (Tenant)</span>
+          </button>
+        </form>
+
+        <div class="admin-features-grid" aria-label="Funciones de la consola">
+          <div class="admin-feat">
+            <i class="pi pi-chart-bar"></i> <span>Reportes en tiempo real</span>
+          </div>
+          <div class="admin-feat">
+            <i class="pi pi-cog"></i> <span>Gestión de tenants y roles</span>
+          </div>
+          <div class="admin-feat">
+            <i class="pi pi-shield"></i> <span>Auditoría y seguridad</span>
+          </div>
+          <div class="admin-feat">
+            <i class="pi pi-database"></i> <span>Respaldos automáticos</span>
+          </div>
         </div>
-
-        <button class="sso-button" type="button" (click)="focusTenantAccess()">
-          <i class="pi pi-building"></i>
-          <span>Iniciar sesion con empresa (SSO)</span>
-        </button>
-      </form>
-
-      <div class="admin-features" aria-label="Funciones administrativas">
-        <article>
-          <i class="pi pi-chart-bar"></i>
-          <span>Paneles y reportes en tiempo real</span>
-        </article>
-        <article>
-          <i class="pi pi-cog"></i>
-          <span>Gestion de usuarios y permisos</span>
-        </article>
-        <article>
-          <i class="pi pi-shield"></i>
-          <span>Seguridad y control empresarial</span>
-        </article>
-        <article>
-          <i class="pi pi-database"></i>
-          <span>Respaldo y auditoria completa</span>
-        </article>
       </div>
 
-      <footer class="access-footer access-footer--dark">
-        <span>&copy; 2026 Azurion. Todos los derechos reservados.</span>
+      <footer class="admin-footer">
+        <span>&copy; 2026 AZURION. Todos los derechos reservados.</span>
       </footer>
     </section>
   } @else {
-    <section class="access-panel access-panel--tenant" aria-label="Acceso usuarios AZURION">
-      <section class="tenant-product-story" aria-label="Plataforma empresarial AZURION">
-        <a class="tenant-brand" routerLink="/inicio" aria-label="AZURION inicio">
-          <img src="assets/logosinfondo.png" alt="" />
-          <strong>AZURION</strong>
-        </a>
+    <!-- =========================================================================
+         MODO USUARIO EMPRESA / TENANT (/auth o /auth/empresa/login)
+         ========================================================================= -->
+    <section class="tenant-login-layout" aria-label="Acceso usuarios AZURION">
+      <!-- Left Column: Story & Highlights -->
+      <aside class="tenant-story-panel">
+        <div class="tenant-story-ambient" aria-hidden="true">
+          <div class="story-glow story-glow--1"></div>
+          <div class="story-glow story-glow--2"></div>
+        </div>
 
-        <div class="tenant-story-layout">
-          <div class="tenant-story-copy">
-            <p class="tenant-eyebrow">CRM + ERP EN UNA SOLA PLATAFORMA</p>
-            <h1>Gestiona, vende<br />y crece con <span>Azurion</span></h1>
-            <p class="tenant-story-intro">
-              Conecta la captacion comercial con ventas, inventario, cobranza y facturacion sin
-              duplicar informacion.
+        <div class="tenant-story-inner">
+          <header class="tenant-story-top">
+            <a class="tenant-brand-link" routerLink="/inicio" aria-label="AZURION inicio">
+              <img src="assets/logosinfondo.png" alt="AZURION Logo" />
+              <span>AZURION</span>
+            </a>
+            <div class="tenant-live-badge">
+              <span class="live-pulse"></span>
+              <span>Operación en Vivo</span>
+            </div>
+          </header>
+
+          <div class="tenant-story-content">
+            <p class="story-kicker">ERP + CRM + FACTURACIÓN EN UNA SOLA PLATAFORMA</p>
+            <h1 class="story-headline">Gestiona, vende y crece con <span>Azurion</span></h1>
+            <p class="story-subtitle">
+              Conecta la captación comercial con ventas, inventario multisede, cobranza y
+              facturación electrónica sin duplicar tareas.
             </p>
 
-            <div class="tenant-capabilities">
-              <article>
-                <span class="tenant-capability-icon tenant-capability-icon--crm"
-                  ><i class="pi pi-users"></i
-                ></span>
+            <div class="tenant-cards-list">
+              <div class="story-feature-card">
+                <div class="feature-icon feature-icon--crm"><i class="pi pi-users"></i></div>
                 <div>
-                  <strong>CRM comercial</strong>
-                  <p>
-                    Recibe leads, organiza seguimientos, cotiza y controla oportunidades hasta el
-                    cierre.
-                  </p>
+                  <strong>CRM Comercial &amp; Embudo</strong>
+                  <p>Recibe leads de WhatsApp, agenda seguimientos y cotiza con trazabilidad.</p>
                 </div>
-              </article>
-              <article>
-                <span class="tenant-capability-icon tenant-capability-icon--erp"
-                  ><i class="pi pi-shopping-cart"></i
-                ></span>
+              </div>
+
+              <div class="story-feature-card">
+                <div class="feature-icon feature-icon--erp"><i class="pi pi-box"></i></div>
                 <div>
-                  <strong>Ventas e inventario</strong>
-                  <p>
-                    Gestiona productos, almacenes, stock, compras, ventas y sucursales desde un
-                    mismo flujo.
-                  </p>
+                  <strong>Ventas e Inventario Multisede</strong>
+                  <p>Controla productos, almacenes, stock valorizado, compras y traslados.</p>
                 </div>
-              </article>
-              <article>
-                <span class="tenant-capability-icon tenant-capability-icon--payments"
-                  ><i class="pi pi-credit-card"></i
-                ></span>
+              </div>
+
+              <div class="story-feature-card">
+                <div class="feature-icon feature-icon--sunat"><i class="pi pi-file-check"></i></div>
                 <div>
-                  <strong>Cobranza y facturacion</strong>
-                  <p>
-                    Registra pagos, programa cuotas y emite comprobantes con trazabilidad por
-                    cliente.
-                  </p>
+                  <strong>Facturación Homologada SUNAT</strong>
+                  <p>Emite comprobantes electrónicos con CDR inmediato, QR y envío automático.</p>
                 </div>
-              </article>
-              <article>
-                <span class="tenant-capability-icon tenant-capability-icon--reports"
-                  ><i class="pi pi-chart-bar"></i
-                ></span>
+              </div>
+
+              <div class="story-feature-card">
+                <div class="feature-icon feature-icon--reports">
+                  <i class="pi pi-chart-bar"></i>
+                </div>
                 <div>
-                  <strong>Reportes para decidir</strong>
-                  <p>
-                    Consulta pipeline, conversion, ventas, saldos e indicadores operativos al
-                    detalle.
-                  </p>
+                  <strong>Cobranza &amp; Reportes Gerenciales</strong>
+                  <p>Monitorea cuotas, flujo de caja por turnos y rentabilidad en tiempo real.</p>
                 </div>
-              </article>
+              </div>
             </div>
 
-            <div class="tenant-security-note">
+            <div class="story-security-badge">
               <i class="pi pi-shield"></i>
               <div>
-                <strong>Acceso seguro por empresa</strong>
-                <p>Tus modulos, usuarios y permisos permanecen aislados dentro de tu tenant.</p>
+                <strong>Aislamiento y Seguridad por Empresa</strong>
+                <p>Tus módulos, datos comerciales y permisos operan estrictamente aislados.</p>
               </div>
             </div>
           </div>
 
-          <figure
-            class="tenant-product-preview"
-            aria-label="Vista general de las operaciones en AZURION"
-          >
-            <img
-              src="assets/landing/azurion-system-overview.jpg"
-              alt="Panel de CRM, ventas, inventario y reportes"
-            />
-            <figcaption>
-              <span><i class="pi pi-circle-fill"></i> Operacion conectada</span>
-              <strong>Informacion lista para actuar</strong>
-            </figcaption>
-          </figure>
+          <footer class="tenant-story-footer">
+            <span>&copy; 2026 AZURION. Todos los derechos reservados.</span>
+          </footer>
         </div>
-      </section>
+      </aside>
 
-      <section class="tenant-auth-area">
-        <div class="tenant-auth-card">
-          <header class="tenant-auth-header">
-            <a routerLink="/inicio" aria-label="AZURION inicio">
+      <!-- Right Column: Tenant Authentication Form -->
+      <section class="tenant-form-panel">
+        <header class="tenant-form-top">
+          <a class="back-link back-link--light" routerLink="/inicio">
+            <i class="pi pi-arrow-left"></i>
+            <span>Volver al sitio web</span>
+          </a>
+        </header>
+
+        <div class="tenant-form-box">
+          <header class="tenant-form-header">
+            <div class="tenant-logo-badge">
               <img src="assets/logosinfondo.png" alt="AZURION" />
-            </a>
-            <strong>AZURION</strong>
-            <h2>Bienvenido nuevamente</h2>
-            <p>Ingresa a tu empresa para continuar.</p>
+            </div>
+            <h2>Bienvenido a tu Empresa</h2>
+            <p>Ingresa tus datos de acceso para comenzar a operar.</p>
           </header>
 
-          <form class="login-box login-box--tenant" (ngSubmit)="login('tenant')">
+          <form class="auth-form auth-form--tenant" (ngSubmit)="login('tenant')">
             @if (errorMessage() && loginMode === 'tenant') {
-              <div class="login-error">
+              <div class="auth-alert auth-alert--error" role="alert">
                 <i class="pi pi-exclamation-triangle"></i>
                 <span>{{ errorMessage() }}</span>
               </div>
             }
 
-            <label class="tenant-field-label" for="tenant-ruc">Identificador fiscal o tenant</label>
-            <label class="field-shell field-shell--tenant">
-              <i class="pi pi-building"></i>
-              <input
-                id="tenant-ruc"
-                pInputText
-                type="text"
-                name="tenantRuc"
-                autocomplete="organization"
-                inputmode="text"
-                pattern="[A-Za-z0-9._/-]*"
-                minlength="3"
-                maxlength="40"
-                title="RUC, NIT, RFC, EIN u otro identificador fiscal"
-                placeholder="RUC, NIT, RFC, EIN o tenant"
-                (input)="sanitizeTenantRuc($event)"
-                [(ngModel)]="tenantCredentials.tenantId"
-              />
-            </label>
-
-            <label class="tenant-field-label" for="tenant-username">Usuario o correo electronico</label>
-            <label class="field-shell field-shell--tenant">
-              <i class="pi pi-envelope"></i>
-              <input
-                id="tenant-username"
-                pInputText
-                type="text"
-                name="tenantUsername"
-                autocomplete="username"
-                placeholder="admin o tuusuario@empresa.com"
-                [(ngModel)]="tenantCredentials.username"
-              />
-            </label>
-
-            <label class="tenant-field-label" for="tenant-password">Contraseña</label>
-            <label class="field-shell field-shell--tenant">
-              <i class="pi pi-lock"></i>
-              <p-password
-                inputId="tenant-password"
-                name="tenantPassword"
-                autocomplete="current-password"
-                placeholder="Ingresa tu contraseña"
-                [feedback]="false"
-                [toggleMask]="true"
-                [(ngModel)]="tenantCredentials.password"
-              />
-            </label>
-
-            <div class="login-options login-options--light">
-              <label class="remember">
-                <p-checkbox name="rememberTenant" [binary]="true" [(ngModel)]="rememberTenant" />
-                Recordarme
-              </label>
-              <a [routerLink]="['/inicio']" fragment="contacto">Olvidaste tu contraseña?</a>
+            <div class="form-field">
+              <div class="field-label-row">
+                <label for="tenant-id-input">Identificador Fiscal o Tenant *</label>
+                <span class="field-hint">RUC, NIT o Tenant ID</span>
+              </div>
+              <div class="input-container">
+                <i class="pi pi-building input-icon"></i>
+                <input
+                  id="tenant-id-input"
+                  pInputText
+                  type="text"
+                  name="tenantRuc"
+                  autocomplete="organization"
+                  inputmode="text"
+                  pattern="[A-Za-z0-9._/-]*"
+                  minlength="3"
+                  maxlength="40"
+                  placeholder="Ej. 20601234567 o mi-empresa"
+                  (input)="sanitizeTenantRuc($event)"
+                  [(ngModel)]="tenantCredentials.tenantId"
+                  required
+                />
+              </div>
             </div>
 
-            <button class="login-submit login-submit--tenant" type="submit" [disabled]="loading()">
+            <div class="form-field">
+              <label for="tenant-user-input">Usuario o Correo Electrónico *</label>
+              <div class="input-container">
+                <i class="pi pi-user input-icon"></i>
+                <input
+                  id="tenant-user-input"
+                  pInputText
+                  type="text"
+                  name="tenantUsername"
+                  autocomplete="username"
+                  placeholder="admin o tuusuario@empresa.com"
+                  [(ngModel)]="tenantCredentials.username"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="tenant-password-input">Contraseña *</label>
+              <div class="input-container input-container--password">
+                <i class="pi pi-lock input-icon"></i>
+                <p-password
+                  inputId="tenant-password-input"
+                  name="tenantPassword"
+                  autocomplete="current-password"
+                  placeholder="Ingresa tu contraseña"
+                  [feedback]="false"
+                  [toggleMask]="true"
+                  [(ngModel)]="tenantCredentials.password"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-options">
+              <label class="remember-checkbox">
+                <p-checkbox name="rememberTenant" [binary]="true" [(ngModel)]="rememberTenant" />
+                <span>Recordarme</span>
+              </label>
+              <a class="forgot-link" routerLink="/inicio" fragment="contacto"
+                >¿Olvidaste tu contraseña?</a
+              >
+            </div>
+
+            <button
+              class="auth-submit-btn auth-submit-btn--tenant"
+              type="submit"
+              [disabled]="loading()"
+            >
               @if (loading() && loginMode === 'tenant') {
                 <i class="pi pi-spin pi-spinner"></i>
-                <span>Validando...</span>
+                <span>Validando credenciales...</span>
               } @else {
-                <span>Iniciar sesion</span>
+                <span>Ingresar a la Plataforma</span>
                 <i class="pi pi-arrow-right"></i>
               }
             </button>
           </form>
 
-          <div class="tenant-support">
-            <span>Necesitas ayuda?</span>
-            <a routerLink="/inicio" fragment="contacto">
-              <i class="pi pi-headphones"></i>
-              Contactar soporte
-              <i class="pi pi-angle-right"></i>
-            </a>
+          <div class="tenant-support-strip">
+            <i class="pi pi-headphones"></i>
+            <span>¿Necesitas ayuda o acceso?</span>
+            <a routerLink="/inicio" fragment="contacto">Contactar soporte</a>
           </div>
         </div>
 
-        <footer class="tenant-auth-footer">
-          <span>&copy; 2026 Azurion. Todos los derechos reservados.</span>
+        <footer class="tenant-form-footer">
+          <span>&copy; 2026 AZURION. Todos los derechos reservados.</span>
           <a routerLink="/politica-de-privacidad">Privacidad</a>
         </footer>
       </section>
@@ -309,6 +346,7 @@
   }
 </main>
 
+<!-- Session Conflict Dialog -->
 <p-dialog
   header="Sesión activa en otro dispositivo"
   [visible]="!!sessionConflict()"
@@ -321,33 +359,47 @@
   (visibleChange)="$event ? null : cancelSessionReplacement()"
 >
   @if (sessionConflict(); as conflict) {
-    <div class="session-conflict">
-      <span class="session-conflict__icon"><i class="pi pi-desktop"></i></span>
-      <div>
-        <p>
-          Esta cuenta ya está siendo utilizada en otro dispositivo. Para continuar aquí debes
-          cerrar la sesión anterior.
+    <div class="session-conflict-body">
+      <div class="session-conflict-icon">
+        <i class="pi pi-desktop"></i>
+      </div>
+      <div class="session-conflict-info">
+        <p class="session-conflict-msg">
+          Esta cuenta ya está siendo utilizada en otro navegador o dispositivo. Para acceder aquí,
+          debes finalizar la sesión previa.
         </p>
-        <dl>
-          <div><dt>Dispositivo</dt><dd>{{ conflict.deviceName }}</dd></div>
-          <div><dt>Última actividad</dt><dd>{{ formatLastActivity(conflict.lastActivityAt) }}</dd></div>
-        </dl>
-        <small>Si continúas, la sesión anterior se cerrará de inmediato.</small>
+        <div class="session-conflict-details">
+          <div class="detail-row">
+            <dt>Dispositivo activo:</dt>
+            <dd>{{ conflict.deviceName }}</dd>
+          </div>
+          <div class="detail-row">
+            <dt>Última actividad:</dt>
+            <dd>{{ formatLastActivity(conflict.lastActivityAt) }}</dd>
+          </div>
+        </div>
+        <small class="session-conflict-warn">
+          <i class="pi pi-info-circle"></i> Al continuar, la sesión anterior se desconectará de
+          inmediato.
+        </small>
       </div>
     </div>
   }
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [disabled]="replacingSession()"
-      (onClick)="cancelSessionReplacement()"
-    />
-    <p-button
-      label="Cerrar sesión anterior y continuar"
-      icon="pi pi-sign-out"
-      [loading]="replacingSession()"
-      (onClick)="replaceActiveSession()"
-    />
+    <div class="dialog-actions">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [disabled]="replacingSession()"
+        (onClick)="cancelSessionReplacement()"
+      />
+      <p-button
+        label="Desconectar y Continuar"
+        icon="pi pi-sign-out"
+        severity="danger"
+        [loading]="replacingSession()"
+        (onClick)="replaceActiveSession()"
+      />
+    </div>
   </ng-template>
 </p-dialog>

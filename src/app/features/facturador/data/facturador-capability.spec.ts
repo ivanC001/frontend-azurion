@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  canIssueElectronicDocuments,
-  facturadorCapabilityMessage,
-} from './facturador-capability';
+import { canIssueElectronicDocuments, facturadorCapabilityMessage } from './facturador-capability';
 
 describe('facturador capability policy', () => {
   it('allows electronic documents only for an active provisioned Peruvian tenant', () => {

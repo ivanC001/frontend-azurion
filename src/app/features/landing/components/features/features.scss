@@ -195,7 +195,10 @@
   grid-template-columns: 2.55rem minmax(0, 1fr) auto;
   min-height: 8.2rem;
   padding: 1.1rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .module-card:hover {

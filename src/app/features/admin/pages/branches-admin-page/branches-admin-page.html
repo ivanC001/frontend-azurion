@@ -6,8 +6,18 @@
       <p>Registra sedes con ubigeo real e IGV para caja, ventas, comprobantes y reportes.</p>
     </div>
     <div class="header-actions">
-      <p-button label="Nueva sucursal" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreate()" />
-      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+      <p-button
+        label="Nueva sucursal"
+        icon="pi pi-plus"
+        styleClass="az-primary"
+        (onClick)="openCreate()"
+      />
+      <p-button
+        label="Actualizar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="load()"
+      />
     </div>
   </header>
 
@@ -19,9 +29,24 @@
   }
 
   <section class="stats-grid branch-stats">
-    <article class="branch-stat"><i class="pi pi-building"></i><div><span>Sucursales</span><strong>{{ branchStats().total }}</strong></div></article>
-    <article class="branch-stat branch-stat--green"><i class="pi pi-check-circle"></i><div><span>Activas</span><strong>{{ branchStats().active }}</strong></div></article>
-    <article class="branch-stat branch-stat--red"><i class="pi pi-pause-circle"></i><div><span>Inactivas</span><strong>{{ branchStats().inactive }}</strong></div></article>
+    <article class="branch-stat">
+      <i class="pi pi-building"></i>
+      <div>
+        <span>Sucursales</span><strong>{{ branchStats().total }}</strong>
+      </div>
+    </article>
+    <article class="branch-stat branch-stat--green">
+      <i class="pi pi-check-circle"></i>
+      <div>
+        <span>Activas</span><strong>{{ branchStats().active }}</strong>
+      </div>
+    </article>
+    <article class="branch-stat branch-stat--red">
+      <i class="pi pi-pause-circle"></i>
+      <div>
+        <span>Inactivas</span><strong>{{ branchStats().inactive }}</strong>
+      </div>
+    </article>
   </section>
 
   <div class="content-grid branch-content-grid">
@@ -53,13 +78,18 @@
         </ng-template>
         <ng-template pTemplate="body" let-item>
           <tr>
-            <td><strong>{{ item.codigo }}</strong></td>
+            <td>
+              <strong>{{ item.codigo }}</strong>
+            </td>
             <td>{{ item.nombre }}</td>
             <td>{{ item.direccion || 'Sin direccion' }}</td>
             <td>{{ item.ubigeoCodigo }} - {{ item.distrito }}, {{ item.provincia }}</td>
             <td>{{ item.igvPorcentaje }}%</td>
             <td>
-              <p-tag [value]="item.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(item.activo)" />
+              <p-tag
+                [value]="item.activo ? 'Activo' : 'Inactivo'"
+                [severity]="statusSeverity(item.activo)"
+              />
             </td>
             <td>
               <div class="branch-actions">
@@ -107,7 +137,9 @@
       <span class="smart-form-intro__icon"><i class="pi pi-sparkles"></i></span>
       <div>
         <strong>Nueva sede en pocos pasos</strong>
-        <p>El codigo se genera solo y puedes dejar listo su almacen principal en el mismo registro.</p>
+        <p>
+          El codigo se genera solo y puedes dejar listo su almacen principal en el mismo registro.
+        </p>
       </div>
       <span class="auto-pill"><i class="pi pi-bolt"></i> Asistido</span>
     </div>
@@ -115,23 +147,42 @@
     <section class="form-section">
       <header class="form-section__head">
         <span><i class="pi pi-building"></i></span>
-        <div><strong>Identidad de la sucursal</strong><small>Datos visibles en ventas, caja y reportes.</small></div>
+        <div>
+          <strong>Identidad de la sucursal</strong
+          ><small>Datos visibles en ventas, caja y reportes.</small>
+        </div>
       </header>
       <div class="dialog-grid">
         <label class="field-control">
           <span class="field-label"><i class="pi pi-hashtag"></i> Codigo</span>
           <span class="auto-input">
-            <input pInputText name="codigo" [(ngModel)]="form.codigo" readonly placeholder="Automatico" />
+            <input
+              pInputText
+              name="codigo"
+              [(ngModel)]="form.codigo"
+              readonly
+              placeholder="Automatico"
+            />
             <small><i class="pi pi-lock"></i> Generado</small>
           </span>
         </label>
         <label class="field-control">
           <span class="field-label"><i class="pi pi-pencil"></i> Nombre <b>*</b></span>
-          <input pInputText name="nombre" [(ngModel)]="form.nombre" placeholder="Ej. Sucursal Centro" />
+          <input
+            pInputText
+            name="nombre"
+            [(ngModel)]="form.nombre"
+            placeholder="Ej. Sucursal Centro"
+          />
         </label>
         <label class="wide-field field-control">
           <span class="field-label"><i class="pi pi-map-marker"></i> Direccion</span>
-          <input pInputText name="direccion" [(ngModel)]="form.direccion" placeholder="Av., calle, numero y referencia" />
+          <input
+            pInputText
+            name="direccion"
+            [(ngModel)]="form.direccion"
+            placeholder="Av., calle, numero y referencia"
+          />
         </label>
       </div>
     </section>
@@ -139,22 +190,42 @@
     <section class="form-section">
       <header class="form-section__head">
         <span><i class="pi pi-map"></i></span>
-        <div><strong>Ubicacion y tributacion</strong><small>Selecciona el ubigeo SUNAT y confirma el IGV.</small></div>
+        <div>
+          <strong>Ubicacion y tributacion</strong
+          ><small>Selecciona el ubigeo SUNAT y confirma el IGV.</small>
+        </div>
       </header>
       <div class="dialog-grid">
         <div class="wide-field ubigeo-field">
-          <app-ubigeo-picker name="sucursalUbigeo" [(value)]="form.ubigeoCodigo" [required]="true" />
+          <app-ubigeo-picker
+            name="sucursalUbigeo"
+            [(value)]="form.ubigeoCodigo"
+            [required]="true"
+          />
         </div>
         @if (selectedUbigeo(); as ubigeo) {
           <div class="location-summary">
             <span><i class="pi pi-map-marker"></i></span>
-            <div><strong>{{ ubigeo.distrito }}</strong><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small></div>
+            <div>
+              <strong>{{ ubigeo.distrito }}</strong
+              ><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small>
+            </div>
           </div>
         }
         <label class="field-control tax-field">
-          <span class="field-label"><i class="pi pi-percentage"></i> IGV de la sucursal <b>*</b></span>
+          <span class="field-label"
+            ><i class="pi pi-percentage"></i> IGV de la sucursal <b>*</b></span
+          >
           <span class="percentage-input">
-            <input pInputText type="number" min="0" max="100" step="0.01" name="igvPorcentaje" [(ngModel)]="form.igvPorcentaje" />
+            <input
+              pInputText
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              name="igvPorcentaje"
+              [(ngModel)]="form.igvPorcentaje"
+            />
             <b>%</b>
           </span>
         </label>
@@ -162,7 +233,11 @@
     </section>
 
     <label class="principal-option">
-      <input type="checkbox" name="crearAlmacenPrincipal" [(ngModel)]="form.crearAlmacenPrincipal" />
+      <input
+        type="checkbox"
+        name="crearAlmacenPrincipal"
+        [(ngModel)]="form.crearAlmacenPrincipal"
+      />
       <span class="principal-option__icon"><i class="pi pi-box"></i></span>
       <div>
         <strong>Crear tambien el almacen principal</strong>
@@ -176,15 +251,28 @@
       <div>
         <small>Vista previa</small>
         <strong>{{ form.nombre || 'Nueva sucursal' }}</strong>
-        <p>{{ form.codigo || 'Codigo automatico' }} · {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}</p>
+        <p>
+          {{ form.codigo || 'Codigo automatico' }} ·
+          {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}
+        </p>
       </div>
       @if (form.crearAlmacenPrincipal) {
         <b><i class="pi pi-check-circle"></i> + Almacen</b>
       }
     </div>
     <div class="dialog-actions">
-      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="createDialogVisible.set(false)" />
-      <p-button label="Guardar sucursal" icon="pi pi-save" [loading]="saving()" (onClick)="save()" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="createDialogVisible.set(false)"
+      />
+      <p-button
+        label="Guardar sucursal"
+        icon="pi pi-save"
+        [loading]="saving()"
+        (onClick)="save()"
+      />
     </div>
   </form>
 </p-dialog>
@@ -206,18 +294,40 @@
       </label>
       <label>
         Nombre <span class="required">*</span>
-        <input pInputText name="editNombre" [(ngModel)]="editForm.nombre" placeholder="Sucursal centro" />
+        <input
+          pInputText
+          name="editNombre"
+          [(ngModel)]="editForm.nombre"
+          placeholder="Sucursal centro"
+        />
       </label>
       <label class="wide-field">
         Direccion
-        <input pInputText name="editDireccion" [(ngModel)]="editForm.direccion" placeholder="Direccion referencial" />
+        <input
+          pInputText
+          name="editDireccion"
+          [(ngModel)]="editForm.direccion"
+          placeholder="Direccion referencial"
+        />
       </label>
       <div class="wide-field">
-        <app-ubigeo-picker name="editSucursalUbigeo" [(value)]="editForm.ubigeoCodigo" [required]="true" />
+        <app-ubigeo-picker
+          name="editSucursalUbigeo"
+          [(value)]="editForm.ubigeoCodigo"
+          [required]="true"
+        />
       </div>
       <label>
         IGV de la sucursal (%) <span class="required">*</span>
-        <input pInputText type="number" min="0" max="100" step="0.01" name="editIgvPorcentaje" [(ngModel)]="editForm.igvPorcentaje" />
+        <input
+          pInputText
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          name="editIgvPorcentaje"
+          [(ngModel)]="editForm.igvPorcentaje"
+        />
       </label>
       <section class="branch-tax-config wide-field">
         <div class="branch-tax-config__head">
@@ -226,7 +336,11 @@
             <span>Opcional. Si no se configura, la sucursal hereda las reglas de empresa.</span>
           </div>
           <label class="branch-tax-toggle">
-            <input type="checkbox" name="usarConfiguracionEmpresa" [(ngModel)]="editForm.usarConfiguracionEmpresa" />
+            <input
+              type="checkbox"
+              name="usarConfiguracionEmpresa"
+              [(ngModel)]="editForm.usarConfiguracionEmpresa"
+            />
             <span>Heredar de empresa</span>
           </label>
         </div>
@@ -234,27 +348,59 @@
           <div class="branch-tax-grid">
             <label>
               Tipo operacion
-              <input pInputText name="tipoOperacionDefaultId" [(ngModel)]="editForm.tipoOperacionDefaultId" placeholder="0101" />
+              <input
+                pInputText
+                name="tipoOperacionDefaultId"
+                [(ngModel)]="editForm.tipoOperacionDefaultId"
+                placeholder="0101"
+              />
             </label>
             <label>
               Afectacion
-              <p-select name="tipoAfectacionDefaultId" [options]="afectacionOptions" [(ngModel)]="editForm.tipoAfectacionDefaultId" appendTo="body" />
+              <p-select
+                name="tipoAfectacionDefaultId"
+                [options]="afectacionOptions"
+                [(ngModel)]="editForm.tipoAfectacionDefaultId"
+                appendTo="body"
+              />
             </label>
             <label>
               Tributo
-              <p-select name="tributoDefaultId" [options]="tributoOptions" [(ngModel)]="editForm.tributoDefaultId" appendTo="body" />
+              <p-select
+                name="tributoDefaultId"
+                [options]="tributoOptions"
+                [(ngModel)]="editForm.tributoDefaultId"
+                appendTo="body"
+              />
             </label>
             <label>
               Porcentaje
-              <input pInputText type="number" min="0" max="100" name="porcentajeIgvDefault" [(ngModel)]="editForm.porcentajeIgvDefault" />
+              <input
+                pInputText
+                type="number"
+                min="0"
+                max="100"
+                name="porcentajeIgvDefault"
+                [(ngModel)]="editForm.porcentajeIgvDefault"
+              />
             </label>
           </div>
         }
       </section>
     </div>
     <div class="dialog-actions">
-      <p-button label="Cancelar" severity="secondary" [outlined]="true" (onClick)="editDialogVisible.set(false)" />
-      <p-button label="Guardar cambios" icon="pi pi-save" [loading]="saving()" (onClick)="saveEdit()" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="editDialogVisible.set(false)"
+      />
+      <p-button
+        label="Guardar cambios"
+        icon="pi pi-save"
+        [loading]="saving()"
+        (onClick)="saveEdit()"
+      />
     </div>
   </form>
 </p-dialog>

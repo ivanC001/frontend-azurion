@@ -6,7 +6,12 @@
       <p>Control de tenants, usuarios, planes, cupos, suscripciones y módulos contratados.</p>
     </div>
 
-    <p-button label="Nueva empresa" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateDialog()" />
+    <p-button
+      label="Nueva empresa"
+      icon="pi pi-plus"
+      styleClass="az-primary"
+      (onClick)="openCreateDialog()"
+    />
   </header>
 
   @if (errorMessage()) {
@@ -29,47 +34,52 @@
       <div>
         <strong>Administrador inicial creado</strong>
         <p>
-          Tenant <code>{{ credentials.tenantId }}</code>
-          · Usuario <code>{{ credentials.username }}</code>
-          · Contraseña temporal <code>{{ credentials.password }}</code>
+          Tenant <code>{{ credentials.tenantId }}</code> · Usuario
+          <code>{{ credentials.username }}</code> · Contraseña temporal
+          <code>{{ credentials.password }}</code>
         </p>
         <small>Cambia esta contraseña desde Usuarios antes de entregar el acceso.</small>
       </div>
     </section>
   }
-
-  <div class="metrics">
-    <article class="metric metric--blue">
-      <i class="pi pi-building"></i>
-      <div><span>Empresas activas</span><strong>{{ activeCompanies() }}</strong></div>
-    </article>
-    <article class="metric metric--violet">
-      <i class="pi pi-wallet"></i>
-      <div><span>Planes disponibles</span><strong>{{ planes().length }}</strong></div>
-    </article>
-    <article class="metric metric--green">
-      <i class="pi pi-check-circle"></i>
-      <div><span>Suscripciones activas</span><strong>{{ activeSubscriptions() }}</strong></div>
-    </article>
-    <article class="metric metric--amber">
-      <i class="pi pi-th-large"></i>
-      <div><span>Módulos contratables</span><strong>{{ moduleCount() }}</strong></div>
-    </article>
-    <article class="metric metric--cyan">
-      <i class="pi pi-users"></i>
-      <div><span>Usuarios activos</span><strong>{{ activeUsers() }}</strong></div>
-    </article>
-    <article class="metric metric--rose">
-      <i class="pi pi-id-card"></i>
-      <div><span>Cupos contratados</span><strong>{{ contractedSeats() }}</strong></div>
-    </article>
-  </div>
+  <section class="stats-summary-bar" aria-label="Resumen rápido de métricas">
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--blue"><i class="pi pi-building"></i></span>
+      <span class="stat-pill__label">Empresas:</span>
+      <strong class="stat-pill__val">{{ activeCompanies() }}</strong>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--violet"><i class="pi pi-wallet"></i></span>
+      <span class="stat-pill__label">Planes:</span>
+      <strong class="stat-pill__val">{{ planes().length }}</strong>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--green"><i class="pi pi-check-circle"></i></span>
+      <span class="stat-pill__label">Suscripciones:</span>
+      <strong class="stat-pill__val">{{ activeSubscriptions() }}</strong>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--amber"><i class="pi pi-th-large"></i></span>
+      <span class="stat-pill__label">Módulos:</span>
+      <strong class="stat-pill__val">{{ moduleCount() }}</strong>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--cyan"><i class="pi pi-users"></i></span>
+      <span class="stat-pill__label">Usuarios activos:</span>
+      <strong class="stat-pill__val">{{ activeUsers() }}</strong>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill__icon stat-pill__icon--rose"><i class="pi pi-id-card"></i></span>
+      <span class="stat-pill__label">Cupos contratados:</span>
+      <strong class="stat-pill__val">{{ contractedSeats() }}</strong>
+    </div>
+  </section>
 
   <section class="table-panel">
     <div class="table-panel__head">
       <div>
-        <h2>Empresas registradas</h2>
-        <p>Consulta identidad, plan, usuarios, cupos y módulos; abre el detalle para ver toda la información.</p>
+        <h2>Empresas Registradas</h2>
+        <p>Listado general de tenants, planes vigentes y estado operativo.</p>
       </div>
       <div class="company-filters">
         <span class="search-control">
@@ -79,7 +89,7 @@
             type="search"
             [value]="searchTerm()"
             (input)="setSearch($event)"
-            placeholder="Empresa, plan, modulo o tenant"
+            placeholder="Buscar por RUC, nombre o tenant..."
           />
         </span>
         <p-select
@@ -98,102 +108,79 @@
       [paginator]="filteredCompanySummaries().length > 10"
       [rows]="10"
       responsiveLayout="scroll"
-      styleClass="companies-table"
+      styleClass="companies-table az-dense-table"
     >
       <ng-template pTemplate="header">
         <tr>
-          <th>Empresa</th>
-          <th>Identificador fiscal</th>
-          <th>Tenant tecnico</th>
-          <th>Plan y suscripción</th>
-          <th>Usuarios y cupos</th>
-          <th>Módulos</th>
-          <th>Estado</th>
-          <th>Acciones</th>
+          <th style="width: 28%">Empresa &amp; Identificador</th>
+          <th style="width: 15%">Tenant</th>
+          <th style="width: 18%">Plan &amp; Suscripción</th>
+          <th style="width: 16%">Usuarios &amp; Cupo</th>
+          <th style="width: 10%">Módulos</th>
+          <th style="width: 8%">Estado</th>
+          <th style="width: 5%; text-align: center">Acciones</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-summary>
         <tr>
           <td>
-            <strong>{{ summary.empresa.razonSocial }}</strong>
-            <small>{{ summary.empresa.nombreComercial || 'Sin nombre comercial' }}</small>
-            <small>ID {{ summary.empresa.id }} · {{ summary.empresa.correoPrincipal || 'Sin correo' }}</small>
+            <div class="company-cell-primary">
+              <strong class="company-name">{{ summary.empresa.razonSocial }}</strong>
+              <div class="company-tax-info">
+                <span class="tax-tag">RUC {{ summary.empresa.ruc }}</span>
+                @if (summary.empresa.nombreComercial) {
+                  <span class="commercial-name">&bull; {{ summary.empresa.nombreComercial }}</span>
+                }
+              </div>
+            </div>
           </td>
           <td>
-            <strong>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</strong>
-            <small>{{ summary.empresa.paisNombre || summary.empresa.paisCodigo || 'País no registrado' }}</small>
-          </td>
-          <td>
-            <code>{{ summary.empresa.tenantId }}</code>
-            <small><code>{{ summary.empresa.schemaName }}</code></small>
+            <code class="tenant-code">{{ summary.empresa.tenantId }}</code>
           </td>
           <td>
             @if (summary.suscripcion; as subscription) {
               <div class="plan-cell">
                 <strong>{{ subscription.planNombre }}</strong>
-                <p-tag [value]="subscription.estado" [severity]="subscriptionSeverity(subscription.estado)" />
-                @if (!summary.suscripcionVigente) {
-                  <span class="subscription-not-current">No vigente</span>
-                }
+                <p-tag
+                  [value]="subscription.estado"
+                  [severity]="subscriptionSeverity(subscription.estado)"
+                />
               </div>
-              <small>
-                {{ summary.precioMensual | currency:(summary.empresa.monedaCodigo || 'PEN'):'symbol-narrow':'1.2-2' }}
-                / mes
-              </small>
-              <small>
-                Desde {{ subscription.fechaInicio | date:'dd/MM/yyyy' }}
-                @if (subscription.fechaFin) {
-                  · hasta {{ subscription.fechaFin | date:'dd/MM/yyyy' }}
-                }
-              </small>
             } @else {
-              <span class="muted">Sin suscripción</span>
+              <span class="muted-text">Sin suscripción</span>
             }
           </td>
           <td>
             @if (summary.conteoUsuariosDisponible) {
-              <div class="user-quota">
-                <strong>
-                  {{ summary.usuariosActivos }} / {{ summary.suscripcion?.limiteUsuarios ?? '—' }} activos
+              <div class="user-quota-cell">
+                <strong class="quota-counter">
+                  {{ summary.usuariosActivos }} / {{ summary.suscripcion?.limiteUsuarios ?? '—' }}
                 </strong>
-                <small>
-                  {{ summary.usuariosTotal }} registrados · {{ summary.usuariosInactivos }} inhabilitados
+                <span class="seat-meter" [class.seat-meter--danger]="summary.cupoExcedido">
+                  <span [style.width.%]="userUsagePercentage(summary)"></span>
+                </span>
+                <small class="quota-note" [class.quota-danger]="summary.cupoExcedido">
+                  {{ summary.cupoExcedido ? 'Excedido' : summary.cuposDisponibles + ' libres' }}
                 </small>
-                @if (summary.suscripcion) {
-                  <span class="seat-meter" [class.seat-meter--danger]="summary.cupoExcedido">
-                    <span [style.width.%]="userUsagePercentage(summary)"></span>
-                  </span>
-                  <small [class.quota-danger]="summary.cupoExcedido">
-                    @if (summary.cupoExcedido) {
-                      Cupo excedido
-                    } @else {
-                      {{ summary.cuposDisponibles }} cupos disponibles
-                    }
-                  </small>
-                } @else {
-                  <small class="quota-danger">Sin cupo contratado</small>
-                }
               </div>
             } @else {
               <span class="count-unavailable">
                 <i class="pi pi-exclamation-circle"></i>
-                No disponible
+                <small>No disponible</small>
               </span>
             }
           </td>
           <td>
-            <div class="module-chips">
-              @for (moduleCode of summary.moduloCodigos.slice(0, 3); track moduleCode) {
-                <span>{{ moduleCode }}</span>
-              }
-              @if (summary.moduloCodigos.length > 3) {
-                <span>+{{ summary.moduloCodigos.length - 3 }}</span>
-              }
-              @if (!summary.moduloCodigos.length) {
-                <small class="muted">Sin módulos activos</small>
-              }
-            </div>
+            <button
+              type="button"
+              class="modules-badge-btn"
+              (click)="openCompanyDetails(summary)"
+              title="Ver módulos contratados en el detalle"
+            >
+              <i class="pi pi-th-large"></i>
+              <span>{{ summary.modulosActivos }} módulos</span>
+            </button>
           </td>
           <td>
             <p-tag
@@ -206,8 +193,8 @@
               <button
                 type="button"
                 class="company-action company-action--details"
-                title="Ver todos los detalles"
-                aria-label="Ver todos los detalles"
+                title="Ver detalle completo de la empresa"
+                aria-label="Ver detalle completo"
                 (click)="openCompanyDetails(summary)"
               >
                 <i class="pi pi-eye"></i>
@@ -215,7 +202,7 @@
               <button
                 type="button"
                 class="company-action"
-                title="Administrar empresa"
+                title="Gestionar en Control de Empresas"
                 aria-label="Administrar empresa"
                 (click)="manageCompany(summary.empresa)"
               >
@@ -228,7 +215,12 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8">No hay empresas que coincidan con la busqueda.</td>
+          <td colspan="7" class="empty-table-cell">
+            <div class="empty-box">
+              <i class="pi pi-building"></i>
+              <span>No se encontraron empresas con los filtros aplicados.</span>
+            </div>
+          </td>
         </tr>
       </ng-template>
     </p-table>
@@ -270,16 +262,36 @@
         <article class="detail-card">
           <h3><i class="pi pi-building"></i> Identidad fiscal</h3>
           <dl>
-            <div><dt>Razón social</dt><dd>{{ summary.empresa.razonSocial }}</dd></div>
-            <div><dt>Nombre comercial</dt><dd>{{ summary.empresa.nombreComercial || 'No registrado' }}</dd></div>
-            <div><dt>Documento</dt><dd>{{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}</dd></div>
-            <div><dt>País</dt><dd>{{ summary.empresa.paisNombre || 'No registrado' }} ({{ summary.empresa.paisCodigo || '—' }})</dd></div>
-            <div><dt>Dirección</dt><dd>{{ summary.empresa.direccionFiscal || 'No registrada' }}</dd></div>
+            <div>
+              <dt>Razón social</dt>
+              <dd>{{ summary.empresa.razonSocial }}</dd>
+            </div>
+            <div>
+              <dt>Nombre comercial</dt>
+              <dd>{{ summary.empresa.nombreComercial || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Documento</dt>
+              <dd>
+                {{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}
+              </dd>
+            </div>
+            <div>
+              <dt>País</dt>
+              <dd>
+                {{ summary.empresa.paisNombre || 'No registrado' }} ({{
+                  summary.empresa.paisCodigo || '—'
+                }})
+              </dd>
+            </div>
+            <div>
+              <dt>Dirección</dt>
+              <dd>{{ summary.empresa.direccionFiscal || 'No registrada' }}</dd>
+            </div>
             <div>
               <dt>Ubicación</dt>
               <dd>
-                {{ summary.empresa.distrito || '—' }},
-                {{ summary.empresa.provincia || '—' }},
+                {{ summary.empresa.distrito || '—' }}, {{ summary.empresa.provincia || '—' }},
                 {{ summary.empresa.departamento || '—' }}
               </dd>
             </div>
@@ -289,20 +301,44 @@
         <article class="detail-card">
           <h3><i class="pi pi-address-book"></i> Contacto</h3>
           <dl>
-            <div><dt>Correo</dt><dd>{{ summary.empresa.correoPrincipal || 'No registrado' }}</dd></div>
-            <div><dt>Teléfono</dt><dd>{{ summary.empresa.telefono || 'No registrado' }}</dd></div>
-            <div><dt>Celular</dt><dd>{{ summary.empresa.celular || 'No registrado' }}</dd></div>
-            <div><dt>Sitio web</dt><dd>{{ summary.empresa.sitioWeb || 'No registrado' }}</dd></div>
-            <div><dt>Facebook</dt><dd>{{ summary.empresa.facebook || 'No registrado' }}</dd></div>
-            <div><dt>Instagram</dt><dd>{{ summary.empresa.instagram || 'No registrado' }}</dd></div>
+            <div>
+              <dt>Correo</dt>
+              <dd>{{ summary.empresa.correoPrincipal || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Teléfono</dt>
+              <dd>{{ summary.empresa.telefono || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Celular</dt>
+              <dd>{{ summary.empresa.celular || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Sitio web</dt>
+              <dd>{{ summary.empresa.sitioWeb || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Facebook</dt>
+              <dd>{{ summary.empresa.facebook || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Instagram</dt>
+              <dd>{{ summary.empresa.instagram || 'No registrado' }}</dd>
+            </div>
           </dl>
         </article>
 
         <article class="detail-card">
           <h3><i class="pi pi-user"></i> Representante</h3>
           <dl>
-            <div><dt>Nombre</dt><dd>{{ summary.empresa.representanteNombre || 'No registrado' }}</dd></div>
-            <div><dt>Cargo</dt><dd>{{ summary.empresa.representanteCargo || 'No registrado' }}</dd></div>
+            <div>
+              <dt>Nombre</dt>
+              <dd>{{ summary.empresa.representanteNombre || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Cargo</dt>
+              <dd>{{ summary.empresa.representanteCargo || 'No registrado' }}</dd>
+            </div>
             <div>
               <dt>Documento</dt>
               <dd>
@@ -310,20 +346,54 @@
                 {{ summary.empresa.representanteNumeroDocumento || 'No registrado' }}
               </dd>
             </div>
-            <div><dt>Correo</dt><dd>{{ summary.empresa.representanteCorreo || 'No registrado' }}</dd></div>
-            <div><dt>Teléfono</dt><dd>{{ summary.empresa.representanteTelefono || 'No registrado' }}</dd></div>
+            <div>
+              <dt>Correo</dt>
+              <dd>{{ summary.empresa.representanteCorreo || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Teléfono</dt>
+              <dd>{{ summary.empresa.representanteTelefono || 'No registrado' }}</dd>
+            </div>
           </dl>
         </article>
 
         <article class="detail-card">
           <h3><i class="pi pi-database"></i> Tenant y localizacion</h3>
           <dl>
-            <div><dt>Tenant ID</dt><dd><code>{{ summary.empresa.tenantId }}</code></dd></div>
-            <div><dt>Schema</dt><dd><code>{{ summary.empresa.schemaName }}</code></dd></div>
-            <div><dt>Zona horaria</dt><dd>{{ summary.empresa.zonaHoraria || 'No registrada' }}</dd></div>
-            <div><dt>Idioma</dt><dd>{{ summary.empresa.idioma || 'No registrado' }}</dd></div>
-            <div><dt>Fecha / hora</dt><dd>{{ summary.empresa.formatoFecha || '—' }} · {{ summary.empresa.formatoHora || '—' }}</dd></div>
-            <div><dt>Moneda</dt><dd>{{ summary.empresa.monedaCodigo || '—' }} ({{ summary.empresa.monedaSimbolo || '—' }})</dd></div>
+            <div>
+              <dt>Tenant ID</dt>
+              <dd>
+                <code>{{ summary.empresa.tenantId }}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Schema</dt>
+              <dd>
+                <code>{{ summary.empresa.schemaName }}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Zona horaria</dt>
+              <dd>{{ summary.empresa.zonaHoraria || 'No registrada' }}</dd>
+            </div>
+            <div>
+              <dt>Idioma</dt>
+              <dd>{{ summary.empresa.idioma || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Fecha / hora</dt>
+              <dd>
+                {{ summary.empresa.formatoFecha || '—' }} · {{ summary.empresa.formatoHora || '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt>Moneda</dt>
+              <dd>
+                {{ summary.empresa.monedaCodigo || '—' }} ({{
+                  summary.empresa.monedaSimbolo || '—'
+                }})
+              </dd>
+            </div>
           </dl>
         </article>
 
@@ -331,15 +401,35 @@
           <h3><i class="pi pi-wallet"></i> Plan y suscripción</h3>
           @if (summary.suscripcion; as subscription) {
             <dl>
-              <div><dt>Plan</dt><dd>{{ subscription.planNombre }} ({{ subscription.planCodigo }})</dd></div>
+              <div>
+                <dt>Plan</dt>
+                <dd>{{ subscription.planNombre }} ({{ subscription.planCodigo }})</dd>
+              </div>
               <div>
                 <dt>Precio mensual</dt>
-                <dd>{{ summary.precioMensual | currency:(summary.empresa.monedaCodigo || 'PEN'):'symbol-narrow':'1.2-2' }}</dd>
+                <dd>
+                  {{
+                    summary.precioMensual
+                      | currency: summary.empresa.monedaCodigo || 'PEN' : 'symbol-narrow' : '1.2-2'
+                  }}
+                </dd>
               </div>
-              <div><dt>Estado</dt><dd>{{ subscription.estado }}</dd></div>
-              <div><dt>Inicio</dt><dd>{{ subscription.fechaInicio | date:'dd/MM/yyyy' }}</dd></div>
-              <div><dt>Fin</dt><dd>{{ (subscription.fechaFin | date:'dd/MM/yyyy') || 'Sin fecha de fin' }}</dd></div>
-              <div><dt>Cupo base del plan</dt><dd>{{ subscription.limiteUsuariosPlan }} usuarios</dd></div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{{ subscription.estado }}</dd>
+              </div>
+              <div>
+                <dt>Inicio</dt>
+                <dd>{{ subscription.fechaInicio | date: 'dd/MM/yyyy' }}</dd>
+              </div>
+              <div>
+                <dt>Fin</dt>
+                <dd>{{ (subscription.fechaFin | date: 'dd/MM/yyyy') || 'Sin fecha de fin' }}</dd>
+              </div>
+              <div>
+                <dt>Cupo base del plan</dt>
+                <dd>{{ subscription.limiteUsuariosPlan }} usuarios</dd>
+              </div>
               <div>
                 <dt>Cupo efectivo</dt>
                 <dd>
@@ -349,7 +439,10 @@
                   }
                 </dd>
               </div>
-              <div><dt>Bolsa mensual</dt><dd>{{ summary.limiteMensualBolsa | number:'1.0-0' }}</dd></div>
+              <div>
+                <dt>Bolsa mensual</dt>
+                <dd>{{ summary.limiteMensualBolsa | number: '1.0-0' }}</dd>
+              </div>
             </dl>
           } @else {
             <p class="detail-empty">La empresa no tiene una suscripción registrada.</p>
@@ -360,16 +453,30 @@
           <h3><i class="pi pi-users"></i> Usuarios y capacidad</h3>
           @if (summary.conteoUsuariosDisponible) {
             <div class="user-summary">
-              <div><strong>{{ summary.usuariosTotal }}</strong><span>Registrados</span></div>
-              <div><strong>{{ summary.usuariosActivos }}</strong><span>Activos</span></div>
-              <div><strong>{{ summary.usuariosInactivos }}</strong><span>Inhabilitados</span></div>
               <div>
-                <strong [class.quota-danger]="summary.cupoExcedido">{{ summary.cuposDisponibles ?? 0 }}</strong>
+                <strong>{{ summary.usuariosTotal }}</strong
+                ><span>Registrados</span>
+              </div>
+              <div>
+                <strong>{{ summary.usuariosActivos }}</strong
+                ><span>Activos</span>
+              </div>
+              <div>
+                <strong>{{ summary.usuariosInactivos }}</strong
+                ><span>Inhabilitados</span>
+              </div>
+              <div>
+                <strong [class.quota-danger]="summary.cupoExcedido">{{
+                  summary.cuposDisponibles ?? 0
+                }}</strong>
                 <span>Disponibles</span>
               </div>
             </div>
             @if (summary.suscripcion) {
-              <span class="seat-meter seat-meter--large" [class.seat-meter--danger]="summary.cupoExcedido">
+              <span
+                class="seat-meter seat-meter--large"
+                [class.seat-meter--danger]="summary.cupoExcedido"
+              >
                 <span [style.width.%]="userUsagePercentage(summary)"></span>
               </span>
               <p>
@@ -378,12 +485,16 @@
               </p>
             }
           } @else {
-            <p class="detail-empty">No fue posible consultar los usuarios del schema de este tenant.</p>
+            <p class="detail-empty">
+              No fue posible consultar los usuarios del schema de este tenant.
+            </p>
           }
         </article>
 
         <article class="detail-card detail-card--wide">
-          <h3><i class="pi pi-th-large"></i> Módulos activos ({{ summary.moduloCodigos.length }})</h3>
+          <h3>
+            <i class="pi pi-th-large"></i> Módulos activos ({{ summary.moduloCodigos.length }})
+          </h3>
           <div class="module-chips module-chips--large">
             @for (moduleCode of summary.moduloCodigos; track moduleCode) {
               <span>{{ moduleCode }}</span>
@@ -396,9 +507,18 @@
         <article class="detail-card detail-card--wide">
           <h3><i class="pi pi-history"></i> Registro y marca</h3>
           <dl class="audit-details">
-            <div><dt>Creada</dt><dd>{{ (summary.creadaEn | date:'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd></div>
-            <div><dt>Ultima actualizacion</dt><dd>{{ (summary.actualizadaEn | date:'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd></div>
-            <div><dt>Logo del panel</dt><dd>{{ summary.empresa.logoPanelUrl ? 'Configurado' : 'No configurado' }}</dd></div>
+            <div>
+              <dt>Creada</dt>
+              <dd>{{ (summary.creadaEn | date: 'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd>
+            </div>
+            <div>
+              <dt>Ultima actualizacion</dt>
+              <dd>{{ (summary.actualizadaEn | date: 'dd/MM/yyyy HH:mm') || 'No disponible' }}</dd>
+            </div>
+            <div>
+              <dt>Logo del panel</dt>
+              <dd>{{ summary.empresa.logoPanelUrl ? 'Configurado' : 'No configurado' }}</dd>
+            </div>
           </dl>
         </article>
       </div>
@@ -406,7 +526,12 @@
   }
 
   <ng-template pTemplate="footer">
-    <p-button label="Cerrar" severity="secondary" styleClass="az-secondary" (onClick)="closeCompanyDetails()" />
+    <p-button
+      label="Cerrar"
+      severity="secondary"
+      styleClass="az-secondary"
+      (onClick)="closeCompanyDetails()"
+    />
     @if (selectedCompanySummary(); as summary) {
       <p-button
         label="Administrar empresa"
@@ -431,7 +556,11 @@
   <form class="company-form">
     <label>
       País <span class="required-marker">*</span>
-      <select [ngModel]="form.paisCodigo" (ngModelChange)="onCountryChanged($event)" name="paisCodigo">
+      <select
+        [ngModel]="form.paisCodigo"
+        (ngModelChange)="onCountryChanged($event)"
+        name="paisCodigo"
+      >
         @for (country of countryOptions; track country.code) {
           <option [value]="country.code">{{ country.name }}</option>
         }
@@ -440,12 +569,24 @@
 
     <label>
       Tipo de identificador fiscal <span class="required-marker">*</span>
-      <input pInputText name="tipoDocumentoFiscal" [(ngModel)]="form.tipoDocumentoFiscal" maxlength="20" />
+      <input
+        pInputText
+        name="tipoDocumentoFiscal"
+        [(ngModel)]="form.tipoDocumentoFiscal"
+        maxlength="20"
+      />
     </label>
 
     <label>
-      {{ form.tipoDocumentoFiscal || 'Identificador fiscal' }} <span class="required-marker">*</span>
-      <input pInputText name="ruc" maxlength="40" [(ngModel)]="form.ruc" placeholder="Identificador tributario" />
+      {{ form.tipoDocumentoFiscal || 'Identificador fiscal' }}
+      <span class="required-marker">*</span>
+      <input
+        pInputText
+        name="ruc"
+        maxlength="40"
+        [(ngModel)]="form.ruc"
+        placeholder="Identificador tributario"
+      />
     </label>
 
     <label>
@@ -461,18 +602,31 @@
 
     <label>
       Nombre comercial
-      <input pInputText name="nombreComercial" [(ngModel)]="form.nombreComercial" placeholder="Nombre visible" />
+      <input
+        pInputText
+        name="nombreComercial"
+        [(ngModel)]="form.nombreComercial"
+        placeholder="Nombre visible"
+      />
     </label>
 
     <label>
       Tenant ID <span class="required-marker">*</span>
       <input pInputText name="tenantId" [(ngModel)]="form.tenantId" placeholder="empresa_demo" />
-      <small>Identificador técnico único. Usa de 3 a 63 caracteres: minúsculas, números y guion bajo.</small>
+      <small
+        >Identificador técnico único. Usa de 3 a 63 caracteres: minúsculas, números y guion
+        bajo.</small
+      >
     </label>
 
     <label>
       Nombre del esquema <span class="required-marker">*</span>
-      <input pInputText name="schemaName" [(ngModel)]="form.schemaName" placeholder="tenant_empresa_demo" />
+      <input
+        pInputText
+        name="schemaName"
+        [(ngModel)]="form.schemaName"
+        placeholder="tenant_empresa_demo"
+      />
     </label>
 
     <label>
@@ -485,7 +639,10 @@
         placeholder="Seleccionar plan"
         [showClear]="false"
       />
-      <small>Los módulos del plan se asignan automáticamente durante el aprovisionamiento inicial.</small>
+      <small
+        >Los módulos del plan se asignan automáticamente durante el aprovisionamiento
+        inicial.</small
+      >
     </label>
 
     <label>
@@ -496,7 +653,9 @@
     <div class="modules-field">
       <div class="modules-field__header">
         <strong>Módulos incluidos en el plan</strong>
-        <small>Se asignan desde el plan seleccionado y no pueden modificarse durante el registro.</small>
+        <small
+          >Se asignan desde el plan seleccionado y no pueden modificarse durante el registro.</small
+        >
       </div>
 
       <div class="modules-grid">
@@ -524,7 +683,12 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" styleClass="az-secondary" severity="secondary" (onClick)="closeCreateDialog()" />
+    <p-button
+      label="Cancelar"
+      styleClass="az-secondary"
+      severity="secondary"
+      (onClick)="closeCreateDialog()"
+    />
     <p-button
       label="Registrar empresa"
       icon="pi pi-save"

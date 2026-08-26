@@ -12,8 +12,16 @@
 .cash-hero {
   align-items: center;
   background:
-    radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--az-blue) 14%, transparent), transparent 34%),
-    linear-gradient(135deg, var(--az-surface), color-mix(in srgb, var(--az-blue-soft) 72%, var(--az-surface)));
+    radial-gradient(
+      circle at 88% 0%,
+      color-mix(in srgb, var(--az-blue) 14%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      var(--az-surface),
+      color-mix(in srgb, var(--az-blue-soft) 72%, var(--az-surface))
+    );
   border: 1px solid var(--az-border);
   border-radius: 1rem;
   display: flex;
@@ -85,8 +93,11 @@
 
 .shift-card {
   align-items: center;
-  background:
-    linear-gradient(125deg, color-mix(in srgb, #0f766e 94%, #0b1324), color-mix(in srgb, #0284c7 80%, #0b1324));
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, #0f766e 94%, #0b1324),
+    color-mix(in srgb, #0284c7 80%, #0b1324)
+  );
   border: 1px solid color-mix(in srgb, #2dd4bf 28%, transparent);
   border-radius: 1rem;
   box-shadow: 0 14px 32px color-mix(in srgb, #0f766e 20%, transparent);
@@ -102,7 +113,7 @@
 .shift-card::after {
   border: 1.5rem solid color-mix(in srgb, #fff 5%, transparent);
   border-radius: 50%;
-  content: "";
+  content: '';
   height: 8rem;
   position: absolute;
   right: 18%;
@@ -265,7 +276,11 @@
 }
 
 .cash-kpi--primary {
-  background: linear-gradient(135deg, color-mix(in srgb, #10b981 10%, var(--az-surface)), var(--az-surface)) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #10b981 10%, var(--az-surface)),
+    var(--az-surface)
+  ) !important;
   border-color: color-mix(in srgb, #10b981 26%, var(--az-border)) !important;
 }
 
