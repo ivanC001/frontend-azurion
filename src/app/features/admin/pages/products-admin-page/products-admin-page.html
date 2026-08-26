@@ -6,9 +6,24 @@
       <p>Registra productos rápidamente con lector de barras, precios y existencias iniciales.</p>
     </div>
     <div class="header-actions">
-      <p-button label="Nuevo producto" icon="pi pi-plus" styleClass="az-primary" (onClick)="openCreateProductDialog()" />
-      <p-button label="Ingresar stock" icon="pi pi-box" styleClass="az-secondary" (onClick)="goToInventory()" />
-      <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadData()" />
+      <p-button
+        label="Nuevo producto"
+        icon="pi pi-plus"
+        styleClass="az-primary"
+        (onClick)="openCreateProductDialog()"
+      />
+      <p-button
+        label="Ingresar stock"
+        icon="pi pi-box"
+        styleClass="az-secondary"
+        (onClick)="goToInventory()"
+      />
+      <p-button
+        label="Recargar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="loadData()"
+      />
     </div>
   </header>
 
@@ -81,7 +96,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-item>
         <tr [class.product-row--low]="isLowStock(item)">
-          <td><strong>{{ item.sku }}</strong></td>
+          <td>
+            <strong>{{ item.sku }}</strong>
+          </td>
           <td>
             <div class="product-main">{{ item.nombre }}</div>
             <div class="product-meta">
@@ -94,21 +111,29 @@
           <td>{{ unidadLabel(item) }}</td>
           <td>{{ categoriaLabel(item) }}</td>
           <td><p-tag [value]="item.tipoProducto || 'PRODUCTO'" severity="info" /></td>
-          <td><strong>S/ {{ item.precio | number: '1.2-2' }}</strong></td>
+          <td>
+            <strong>S/ {{ item.precio | number: '1.2-2' }}</strong>
+          </td>
           <td>
             <div class="stock-cell">
               <p-tag [value]="stockStatus(item)" [severity]="stockSeverity(item)" />
               @if (item.tipoProducto !== 'SERVICIO') {
-                <small>{{ item.stockCantidad || 0 }} disponibles · mínimo {{ item.stockMinimo || item.stockMinimoGlobal || 0 }}</small>
+                <small
+                  >{{ item.stockCantidad || 0 }} disponibles · mínimo
+                  {{ item.stockMinimo || item.stockMinimoGlobal || 0 }}</small
+                >
               }
             </div>
           </td>
           <td>
-            <p-tag [value]="item.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(item.activo)" />
+            <p-tag
+              [value]="item.activo ? 'Activo' : 'Inactivo'"
+              [severity]="statusSeverity(item.activo)"
+            />
           </td>
           <td>
             @if (item.updatedAt || item.createdAt) {
-              {{ (item.updatedAt || item.createdAt) | date: 'dd/MM/yyyy HH:mm' }}
+              {{ item.updatedAt || item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
             } @else {
               -
             }
@@ -153,7 +178,9 @@
           <td colspan="10">
             <div class="empty-state">
               <strong>No hay productos registrados.</strong>
-              <span>Escanea un código o crea el primer producto con el botón “Nuevo producto”.</span>
+              <span
+                >Escanea un código o crea el primer producto con el botón “Nuevo producto”.</span
+              >
             </div>
           </td>
         </tr>
@@ -199,7 +226,10 @@
     </div>
     <div class="required-legend span-2">
       <i class="pi pi-info-circle"></i>
-      <span>Los campos marcados con <strong>*</strong> son obligatorios. Los identificadores internos se generan al guardar.</span>
+      <span
+        >Los campos marcados con <strong>*</strong> son obligatorios. Los identificadores internos
+        se generan al guardar.</span
+      >
     </div>
     @if (errorMessage()) {
       <div class="alert alert--error span-2">{{ errorMessage() }}</div>
@@ -227,7 +257,12 @@
           @if (checkingBarcode()) {
             <i class="pi pi-spin pi-spinner"></i>
           }
-          {{ barcodeMessage() || (productForm.id ? 'Identificador usado por el POS.' : 'Los lectores USB escriben el código y finalizan con Enter.') }}
+          {{
+            barcodeMessage() ||
+              (productForm.id
+                ? 'Identificador usado por el POS.'
+                : 'Los lectores USB escriben el código y finalizan con Enter.')
+          }}
         </small>
       </label>
       @if (!productForm.id) {
@@ -248,7 +283,15 @@
         Nombre del producto
         <em class="field-required">*</em>
       </span>
-      <input #productNameInput pInputText name="nombre" [(ngModel)]="productForm.nombre" placeholder="Ej. Arroz extra 1 kg" autocomplete="off" required />
+      <input
+        #productNameInput
+        pInputText
+        name="nombre"
+        [(ngModel)]="productForm.nombre"
+        placeholder="Ej. Arroz extra 1 kg"
+        autocomplete="off"
+        required
+      />
     </label>
     <label>
       <span class="field-label">
@@ -271,7 +314,13 @@
         Descripción
         <em class="field-optional">Opcional</em>
       </span>
-      <textarea pTextarea name="descripcion" rows="3" [(ngModel)]="productForm.descripcion" placeholder="Presentación, características o notas internas"></textarea>
+      <textarea
+        pTextarea
+        name="descripcion"
+        rows="3"
+        [(ngModel)]="productForm.descripcion"
+        placeholder="Presentación, características o notas internas"
+      ></textarea>
     </label>
     <label>
       <span class="field-label">
@@ -292,7 +341,16 @@
         Precio final de venta - incluye IGV (S/)
         <em class="field-required">*</em>
       </span>
-      <input pInputText type="number" min="0" step="0.01" name="precio" [(ngModel)]="productForm.precio" placeholder="0.00" required />
+      <input
+        pInputText
+        type="number"
+        min="0"
+        step="0.01"
+        name="precio"
+        [(ngModel)]="productForm.precio"
+        placeholder="0.00"
+        required
+      />
       <small>Este es el importe final que vera y pagara el cliente.</small>
     </label>
     <div class="price-breakdown span-2" aria-label="Desglose automatico del precio de venta">
@@ -359,7 +417,15 @@
               <em class="field-optional">Opcional</em>
             }
           </span>
-          <input pInputText type="number" min="0" step="0.01" name="costoPromedio" [(ngModel)]="productForm.costoPromedio" placeholder="0.00" />
+          <input
+            pInputText
+            type="number"
+            min="0"
+            step="0.01"
+            name="costoPromedio"
+            [(ngModel)]="productForm.costoPromedio"
+            placeholder="0.00"
+          />
           <small>Obligatorio cuando la cantidad inicial es mayor a cero.</small>
         </label>
         <label>
@@ -368,7 +434,15 @@
             Cantidad inicial
             <em class="field-optional">Opcional</em>
           </span>
-          <input pInputText type="number" min="0" step="0.0001" name="cantidadInicial" [(ngModel)]="productForm.cantidadInicial" placeholder="0" />
+          <input
+            pInputText
+            type="number"
+            min="0"
+            step="0.0001"
+            name="cantidadInicial"
+            [(ngModel)]="productForm.cantidadInicial"
+            placeholder="0"
+          />
           <small>Registra stock y kardex en la misma operación.</small>
         </label>
       }
@@ -384,7 +458,9 @@
             [ngModel]="productForm.vencimiento"
             (ngModelChange)="onVencimientoChange($event)"
           />
-          <span>{{ productForm.vencimiento ? 'Sí, controlar vencimiento' : 'No tiene vencimiento' }}</span>
+          <span>{{
+            productForm.vencimiento ? 'Sí, controlar vencimiento' : 'No tiene vencimiento'
+          }}</span>
         </label>
       </div>
       @if (!productForm.id && productForm.vencimiento && productForm.cantidadInicial > 0) {
@@ -394,7 +470,13 @@
             Código de lote
             <em class="field-required">*</em>
           </span>
-          <input pInputText name="codigoLote" [(ngModel)]="productForm.codigoLote" placeholder="LOTE-001" required />
+          <input
+            pInputText
+            name="codigoLote"
+            [(ngModel)]="productForm.codigoLote"
+            placeholder="LOTE-001"
+            required
+          />
         </label>
         <label>
           <span class="field-label">
@@ -402,7 +484,13 @@
             Fecha de vencimiento
             <em class="field-required">*</em>
           </span>
-          <input pInputText type="date" name="fechaVencimiento" [(ngModel)]="productForm.fechaVencimiento" required />
+          <input
+            pInputText
+            type="date"
+            name="fechaVencimiento"
+            [(ngModel)]="productForm.fechaVencimiento"
+            required
+          />
         </label>
         <label>
           <span class="field-label">
@@ -410,7 +498,12 @@
             Fecha de fabricación
             <em class="field-optional">Opcional</em>
           </span>
-          <input pInputText type="date" name="fechaFabricacion" [(ngModel)]="productForm.fechaFabricacion" />
+          <input
+            pInputText
+            type="date"
+            name="fechaFabricacion"
+            [(ngModel)]="productForm.fechaFabricacion"
+          />
         </label>
       }
       <div class="stock-alert-config span-2">
@@ -418,8 +511,8 @@
         <div>
           <strong>Alerta por stock bajo</strong>
           <span>
-            La campana notificará cuando el stock disponible sea igual o menor al mínimo.
-            Con mínimo 0, solo avisará cuando el producto se agote.
+            La campana notificará cuando el stock disponible sea igual o menor al mínimo. Con mínimo
+            0, solo avisará cuando el producto se agote.
           </span>
         </div>
         <label>
@@ -470,7 +563,10 @@
           <span class="photo-placeholder"><i class="pi pi-image"></i></span>
         }
         <div>
-          <strong>{{ selectedPhotoName() || (fotoPreview() ? 'Foto actual del producto' : 'Sin foto seleccionada') }}</strong>
+          <strong>{{
+            selectedPhotoName() ||
+              (fotoPreview() ? 'Foto actual del producto' : 'Sin foto seleccionada')
+          }}</strong>
           <small>La imagen se valida nuevamente al guardar.</small>
         </div>
       </div>
@@ -478,58 +574,83 @@
     @if (!productForm.id) {
       <div class="tax-inherited span-2">
         <i class="pi pi-sitemap"></i>
-        <span>La tributación se heredará de la sucursal y de la empresa. Podrás personalizarla al editar.</span>
+        <span
+          >La tributación se heredará de la sucursal y de la empresa. Podrás personalizarla al
+          editar.</span
+        >
       </div>
     } @else {
-    <div class="product-tax-panel span-2">
-      <div class="product-tax-panel__head">
-        <div>
-          <strong>Tributación</strong>
-          <span>El POS resolverá estos datos automáticamente. El cajero no los selecciona.</span>
-        </div>
-        <label class="expiry-toggle">
-          <input type="checkbox" name="usaConfiguracionEmpresa" [(ngModel)]="productForm.usaConfiguracionEmpresa" />
-          <span>Usar configuración heredada</span>
-        </label>
-      </div>
-      @if (productForm.usaConfiguracionEmpresa) {
-        <div class="tax-inherited">
-          <i class="pi pi-sitemap"></i>
-          <span>Este producto usará primero la configuración de su sucursal y luego la configuración general de empresa.</span>
-        </div>
-      } @else {
-        <div class="product-tax-grid">
-          <label>
-            Tipo afectacion
-            <p-select
-              name="tipoAfectacionIgvId"
-              [options]="afectacionOptions"
-              [(ngModel)]="productForm.tipoAfectacionIgvId"
-              (ngModelChange)="onProductAfectacionChange($event)"
+      <div class="product-tax-panel span-2">
+        <div class="product-tax-panel__head">
+          <div>
+            <strong>Tributación</strong>
+            <span>El POS resolverá estos datos automáticamente. El cajero no los selecciona.</span>
+          </div>
+          <label class="expiry-toggle">
+            <input
+              type="checkbox"
+              name="usaConfiguracionEmpresa"
+              [(ngModel)]="productForm.usaConfiguracionEmpresa"
             />
-          </label>
-          <label>
-            Tributo
-            <p-select name="tributoId" [options]="tributoOptions" [(ngModel)]="productForm.tributoId" />
-          </label>
-          <label>
-            Porcentaje
-            <input pInputText type="number" min="0" max="100" step="0.01" name="porcentajeImpuesto" [(ngModel)]="productForm.porcentajeImpuesto" />
-          </label>
-          <label class="expiry-toggle tax-affect-toggle">
-            <input type="checkbox" name="afectoIgv" [(ngModel)]="productForm.afectoIgv" />
-            <span>Afecto IGV</span>
+            <span>Usar configuración heredada</span>
           </label>
         </div>
-      }
-    </div>
+        @if (productForm.usaConfiguracionEmpresa) {
+          <div class="tax-inherited">
+            <i class="pi pi-sitemap"></i>
+            <span
+              >Este producto usará primero la configuración de su sucursal y luego la configuración
+              general de empresa.</span
+            >
+          </div>
+        } @else {
+          <div class="product-tax-grid">
+            <label>
+              Tipo afectacion
+              <p-select
+                name="tipoAfectacionIgvId"
+                [options]="afectacionOptions"
+                [(ngModel)]="productForm.tipoAfectacionIgvId"
+                (ngModelChange)="onProductAfectacionChange($event)"
+              />
+            </label>
+            <label>
+              Tributo
+              <p-select
+                name="tributoId"
+                [options]="tributoOptions"
+                [(ngModel)]="productForm.tributoId"
+              />
+            </label>
+            <label>
+              Porcentaje
+              <input
+                pInputText
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                name="porcentajeImpuesto"
+                [(ngModel)]="productForm.porcentajeImpuesto"
+              />
+            </label>
+            <label class="expiry-toggle tax-affect-toggle">
+              <input type="checkbox" name="afectoIgv" [(ngModel)]="productForm.afectoIgv" />
+              <span>Afecto IGV</span>
+            </label>
+          </div>
+        }
+      </div>
     }
     @if (productForm.id) {
       <label>
         Estado
         <p-select
           name="activo"
-          [options]="[{ label: 'Activo', value: true }, { label: 'Inactivo', value: false }]"
+          [options]="[
+            { label: 'Activo', value: true },
+            { label: 'Inactivo', value: false },
+          ]"
           [(ngModel)]="productForm.activo"
           placeholder="Estado"
         />
@@ -545,18 +666,36 @@
       @if (productForm.id) {
         <label>
           Código interno
-          <input pInputText name="codigo" [(ngModel)]="productForm.codigo" placeholder="PROD-0001" />
+          <input
+            pInputText
+            name="codigo"
+            [(ngModel)]="productForm.codigo"
+            placeholder="PROD-0001"
+          />
         </label>
         <label>
           ID de marca
-          <input pInputText type="number" name="marcaId" [(ngModel)]="productForm.marcaId" placeholder="Opcional" />
+          <input
+            pInputText
+            type="number"
+            name="marcaId"
+            [(ngModel)]="productForm.marcaId"
+            placeholder="Opcional"
+          />
         </label>
       }
     }
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="productDialogVisible.set(false)">Cancelar</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="productDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
     @if (!productForm.id) {
       <button
         type="button"

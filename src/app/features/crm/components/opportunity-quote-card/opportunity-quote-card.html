@@ -1,0 +1,164 @@
+<article
+  [class.opportunity-quote-card--interest]="appearance() === 'interest'"
+  [class.opportunity-quote-card--negotiation]="mode() === 'negotiation'"
+  [class.opportunity-quote-card--accepted]="negotiationDecision()?.tone === 'accepted'"
+  [class.opportunity-quote-card--adjustment]="negotiationDecision()?.tone === 'adjustment'"
+  [class.opportunity-quote-card--rejected]="negotiationDecision()?.tone === 'rejected'"
+  [class.opportunity-quote-card--waiting]="negotiationDecision()?.tone === 'waiting'"
+>
+  @if (mode() === 'negotiation') {
+    @if (negotiationDecision(); as decision) {
+      <header class="negotiation-heading">
+        <strong class="quote-code">COT-{{ quote().id | number: '3.0-0' }}</strong>
+        <span class="quote-date"
+          ><i class="pi pi-calendar"></i> {{ quote().fechaEmision | date: 'dd/MM/yyyy' }}</span
+        >
+        <b class="quote-total"
+          >{{ currencySymbol() || quote().moneda }} {{ quote().total | number: '1.2-2' }}</b
+        >
+        <em [class]="'negotiation-decision negotiation-decision--' + decision.tone">
+          {{ decision.label }}
+        </em>
+      </header>
+    }
+  } @else {
+    <header class="quote-card-header">
+      <div class="quote-info-line">
+        <strong class="quote-code">COT-{{ quote().id | number: '3.0-0' }}</strong>
+        <span class="quote-date"
+          ><i class="pi pi-calendar"></i> {{ quote().fechaEmision | date: 'dd/MM/yyyy' }}</span
+        >
+        <span class="quote-separator">&middot;</span>
+        <strong class="quote-total"
+          >{{ currencySymbol() || quote().moneda }} {{ quote().total | number: '1.2-2' }}</strong
+        >
+      </div>
+      <em [class]="'quote-status quote-status--' + statusTone()">{{ statusLabel() }}</em>
+    </header>
+    @if (nextStep()) {
+      <p class="quote-next-step"><i class="pi pi-arrow-right"></i> {{ nextStep() }}</p>
+    }
+  }
+
+  <div class="quote-actions-section">
+    <small class="quote-actions-label">Enviar cotización</small>
+    <nav class="quote-action-buttons" aria-label="Acciones de la cotización">
+      <button
+        type="button"
+        class="quote-btn quote-btn--pdf"
+        [disabled]="actionInProgress() || isDownloadingPdf()"
+        (click)="downloadRequested.emit()"
+        title="Descargar cotización en formato PDF"
+      >
+        <i [class]="isDownloadingPdf() ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'"></i>
+        <span>{{ isDownloadingPdf() ? 'Descargando...' : 'PDF' }}</span>
+      </button>
+
+      @if (whatsappAvailable()) {
+        <button
+          type="button"
+          class="quote-btn quote-btn--whatsapp"
+          [disabled]="whatsappSending() || whatsappLocked() || whatsappProcessing()"
+          (click)="whatsappRequested.emit()"
+          [title]="
+            whatsappProcessing()
+              ? 'Enviando documento por WhatsApp...'
+              : 'Enviar cotización PDF por WhatsApp'
+          "
+        >
+          <i [class]="whatsappProcessing() ? 'pi pi-spin pi-spinner' : 'pi pi-whatsapp'"></i>
+          <span>{{
+            whatsappProcessing() ? 'Enviando por WhatsApp...' : whatsappLabel() || 'WhatsApp'
+          }}</span>
+        </button>
+      } @else if (mode() === 'standard') {
+        <button
+          type="button"
+          class="quote-btn quote-btn--whatsapp quote-btn--disabled"
+          disabled
+          title="Registra un teléfono válido en el prospecto para habilitar WhatsApp"
+        >
+          <i class="pi pi-whatsapp"></i>
+          <span>WhatsApp</span>
+        </button>
+      }
+
+      @if (emailAvailable()) {
+        <button
+          type="button"
+          class="quote-btn quote-btn--email"
+          [disabled]="actionInProgress() || emailSending()"
+          (click)="emailRequested.emit()"
+          [title]="
+            emailSending() ? 'Enviando correo...' : 'Enviar cotización por Correo electrónico'
+          "
+        >
+          <i [class]="emailSending() ? 'pi pi-spin pi-spinner' : 'pi pi-envelope'"></i>
+          <span>{{ emailSending() ? 'Enviando por Correo...' : 'Correo' }}</span>
+        </button>
+      } @else if (mode() === 'standard') {
+        <button
+          type="button"
+          class="quote-btn quote-btn--email quote-btn--disabled"
+          disabled
+          title="Registra un correo en el contacto para habilitar este envío"
+        >
+          <i class="pi pi-envelope"></i>
+          <span>Correo</span>
+        </button>
+      }
+
+      @if (mode() === 'negotiation') {
+        <button
+          type="button"
+          class="quote-btn quote-btn--adjust"
+          [disabled]="actionInProgress()"
+          (click)="adjustmentRequested.emit()"
+        >
+          <i class="pi pi-sliders-h"></i>
+          <span>Crear ajuste</span>
+        </button>
+      } @else if (canFollowUp()) {
+        <button
+          type="button"
+          class="quote-btn quote-btn--followup"
+          [disabled]="actionInProgress()"
+          (click)="followUpRequested.emit()"
+        >
+          <i class="pi pi-calendar-clock"></i>
+          <span>Seguimiento</span>
+        </button>
+      }
+
+      @if (mode() === 'standard' && canDecide()) {
+        <button
+          type="button"
+          class="quote-btn quote-btn--accept"
+          [disabled]="actionInProgress()"
+          (click)="acceptedRequested.emit()"
+        >
+          <i class="pi pi-check"></i>
+          <span>Acepta condiciones</span>
+        </button>
+        <button
+          type="button"
+          class="quote-btn quote-btn--adjust"
+          [disabled]="actionInProgress()"
+          (click)="adjustmentRequested.emit()"
+        >
+          <i class="pi pi-sliders-h"></i>
+          <span>No acepta / ajustar</span>
+        </button>
+        <button
+          type="button"
+          class="quote-btn quote-btn--reject"
+          [disabled]="actionInProgress()"
+          (click)="rejectedRequested.emit()"
+        >
+          <i class="pi pi-times"></i>
+          <span>Rechazar</span>
+        </button>
+      }
+    </nav>
+  </div>
+</article>

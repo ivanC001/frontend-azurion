@@ -117,8 +117,7 @@ export class SalesCreditNotePage {
     }
 
     this.saving.set(true);
-    const clientOperationId =
-      this.pendingOperationId ?? createClientOperationId('credit-note');
+    const clientOperationId = this.pendingOperationId ?? createClientOperationId('credit-note');
     this.pendingOperationId = clientOperationId;
     this.api
       .registrarNotaCredito({

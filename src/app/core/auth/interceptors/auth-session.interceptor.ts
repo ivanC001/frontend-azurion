@@ -14,8 +14,25 @@ const AUTH_ENDPOINT_MARKERS = [
 
 export const authSessionInterceptor: HttpInterceptorFn = (req, next) => {
   const sessionService = inject(AuthSessionService);
+  const session = sessionService.currentSession();
 
-  return next(req).pipe(
+  let outgoingReq = req;
+  const isAuthEndpoint = AUTH_ENDPOINT_MARKERS.some((marker) => req.url.includes(marker));
+
+  if (!isAuthEndpoint && session?.accessToken && !sessionService.isTokenExpired(session)) {
+    const headersToAdd: Record<string, string> = {};
+    if (!req.headers.has('Authorization')) {
+      headersToAdd['Authorization'] = `${session.tokenType || 'Bearer'} ${session.accessToken}`;
+    }
+    if (session.tenantId && !req.headers.has('X-Tenant-Id') && !req.headers.has('x-tenant-id')) {
+      headersToAdd['X-Tenant-Id'] = session.tenantId;
+    }
+    if (Object.keys(headersToAdd).length > 0) {
+      outgoingReq = req.clone({ setHeaders: headersToAdd });
+    }
+  }
+
+  return next(outgoingReq).pipe(
     catchError((error: unknown) => {
       if (shouldRedirectToLogin(req.url, error, sessionService)) {
         if (errorCode(error) === 'SESSION_REVOKED') {
@@ -26,7 +43,6 @@ export const authSessionInterceptor: HttpInterceptorFn = (req, next) => {
           sessionService.expireSession();
         }
       }
-
       return throwError(() => error);
     }),
   );

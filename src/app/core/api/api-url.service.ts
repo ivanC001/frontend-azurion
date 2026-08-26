@@ -15,7 +15,10 @@ export class ApiUrlService {
     return `${this.baseUrl(connection)}/${cleanPath}`;
   }
 
-  publicFileUrl(path: string | null | undefined, connection: ApiConnectionName = 'saasCore'): string | null {
+  publicFileUrl(
+    path: string | null | undefined,
+    connection: ApiConnectionName = 'saasCore',
+  ): string | null {
     const rawPath = path?.trim();
     if (!rawPath) {
       return null;

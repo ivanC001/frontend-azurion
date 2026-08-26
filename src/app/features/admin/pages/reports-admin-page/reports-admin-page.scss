@@ -271,8 +271,11 @@
 }
 
 .pipeline-report-card {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--stage-color, #2563eb) 12%, #ffffff), #ffffff 72%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--stage-color, #2563eb) 12%, #ffffff),
+    #ffffff 72%
+  );
   border: 1px solid color-mix(in srgb, var(--stage-color, #2563eb) 35%, #dbe5ef);
   border-radius: 0.8rem;
   box-shadow: 0 12px 22px rgba(15, 23, 42, 0.06);
@@ -419,8 +422,11 @@
   }
 
   .pipeline-report-card {
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--stage-color, #2563eb) 20%, #1f2937), #111827 78%);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--stage-color, #2563eb) 20%, #1f2937),
+      #111827 78%
+    );
     border-color: color-mix(in srgb, var(--stage-color, #2563eb) 45%, rgba(148, 163, 184, 0.28));
   }
 

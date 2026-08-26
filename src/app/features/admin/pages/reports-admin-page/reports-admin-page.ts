@@ -13,14 +13,13 @@ import {
   ExcelReportColumn,
   ExcelReportSheet,
   ExcelReportService,
-} from '../../data/excel-report.service';
+} from '@shared/services/excel-report.service';
 import {
   AdminSaasApiService,
   Almacen,
   Caja,
   CajaMovimiento,
   Compra,
-  CrmPipelineColumn,
   FiscalSummary,
   GuiaRemisionRecord,
   KardexMovimiento,
@@ -29,6 +28,8 @@ import {
   StockItem,
   VentaRecord,
 } from '../../data/admin-saas-api.service';
+import { CrmApiService } from '@features/crm/data/crm-api.service';
+import type { CrmPipelineColumn } from '@features/crm/data/crm-api.types';
 
 type ReportModule =
   | 'ventas'
@@ -56,6 +57,9 @@ type QuickRange = 'today' | 'last7' | 'last30' | 'month';
 })
 export class ReportsAdminPage {
   private readonly api = inject(AdminSaasApiService);
+
+  // Este informe consolida varios dominios; el pipeline lo sirve el CRM.
+  private readonly crmApi = inject(CrmApiService);
   private readonly excelReport = inject(ExcelReportService);
 
   protected readonly ventas = signal<VentaRecord[]>([]);
@@ -168,7 +172,13 @@ export class ReportsAdminPage {
           { key: 'cliente', label: 'Cliente / prospecto', width: 28 },
           { key: 'tipo', label: 'Tipo', width: 16 },
           { key: 'monto', label: 'Monto estimado', align: 'right', format: 'currency', width: 16 },
-          { key: 'probabilidad', label: 'Probabilidad %', align: 'right', format: 'number', width: 14 },
+          {
+            key: 'probabilidad',
+            label: 'Probabilidad %',
+            align: 'right',
+            format: 'number',
+            width: 14,
+          },
           { key: 'cierreEstimado', label: 'Cierre estimado', width: 16 },
           { key: 'responsable', label: 'Responsable', width: 22 },
           { key: 'estado', label: 'Estado', align: 'center', width: 14 },
@@ -317,7 +327,9 @@ export class ReportsAdminPage {
   );
 
   protected readonly canExportXls = computed(
-    () => this.reportRows().length > 0 || (this.moduleFilter() === 'crm_pipeline' && this.crmPipelineCards().length > 0),
+    () =>
+      this.reportRows().length > 0 ||
+      (this.moduleFilter() === 'crm_pipeline' && this.crmPipelineCards().length > 0),
   );
 
   protected readonly metrics = computed(() => {
@@ -378,7 +390,11 @@ export class ReportsAdminPage {
       kardex: safeList(this.api.listKardex(), [] as KardexMovimiento[], 'kardex'),
       cajas: safeList(this.api.listCajas(), [] as Caja[], 'caja'),
       guias: safeList(this.api.listGuiasRemision(), [] as GuiaRemisionRecord[], 'guias'),
-      crmPipeline: safeList(this.api.getCrmPipeline(), [] as CrmPipelineColumn[], 'crm pipeline'),
+      crmPipeline: safeList(
+        this.crmApi.getCrmPipeline(),
+        [] as CrmPipelineColumn[],
+        'crm pipeline',
+      ),
       notasCredito: safeList(
         this.api.listNotasCredito(),
         [] as NotaFiscalRecord[],
@@ -549,7 +565,11 @@ export class ReportsAdminPage {
       ),
     ];
     const csv = `\uFEFF${lines.join('\r\n')}`;
-    this.downloadText(csv, `azurion-reporte-${this.moduleFilter()}-${this.today()}.csv`, 'text/csv;charset=utf-8;');
+    this.downloadText(
+      csv,
+      `azurion-reporte-${this.moduleFilter()}-${this.today()}.csv`,
+      'text/csv;charset=utf-8;',
+    );
     this.successMessage.set(`Reporte CSV generado: ${rows.length} fila(s).`);
   }
 
@@ -638,9 +658,7 @@ export class ReportsAdminPage {
           const caja = this.cajas().find((candidate) => candidate.id === item.turnoId);
           return {
             fecha: this.formatDateTime(item.fechaMovimiento),
-            caja: caja
-              ? `${caja.numero} - ${caja.cajaNombre}`
-              : `Turno ${item.turnoId}`,
+            caja: caja ? `${caja.numero} - ${caja.cajaNombre}` : `Turno ${item.turnoId}`,
             tipo: item.tipoMovimiento,
             descripcion: item.descripcion,
             referencia: item.referencia || '',
@@ -888,7 +906,9 @@ export class ReportsAdminPage {
         responsable: opportunity.responsableId || '',
         estado: opportunity.estado || '',
         creado: this.formatDateTime(opportunity.createdAt),
-        actualizado: this.formatDateTime(opportunity.updatedAt || opportunity.fechaUltimaActualizacion),
+        actualizado: this.formatDateTime(
+          opportunity.updatedAt || opportunity.fechaUltimaActualizacion,
+        ),
         __date: opportunity.fechaCierreEstimada || this.dateOnly(opportunity.createdAt),
         __status: column.etapa.codigo,
         __amount: Number(opportunity.montoEstimado || 0),

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, switchMap } from 'rxjs/operators';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -45,6 +46,7 @@ interface SucursalForm {
 })
 export class BranchesAdminPage {
   private readonly api = inject(AdminSaasApiService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   protected readonly sucursales = signal<Sucursal[]>([]);
   protected readonly ubigeos = signal<Ubigeo[]>([]);
@@ -261,28 +263,32 @@ export class BranchesAdminPage {
   protected toggleStatus(item: Sucursal): void {
     const nextStatus = !item.activo;
     const action = nextStatus ? 'habilitar' : 'deshabilitar';
-    const confirmed = globalThis.confirm(
-      `Se va a ${action} la sucursal ${item.nombre}. Deseas continuar?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    this.changingStatusId.set(item.id);
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-    this.api
-      .changeSucursalStatus(item.id, nextStatus)
-      .pipe(finalize(() => this.changingStatusId.set(null)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(
-            `Sucursal ${nextStatus ? 'habilitada' : 'deshabilitada'} correctamente.`,
-          );
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
+    this.confirmationService.confirm({
+      header: `Confirmar ${action}`,
+      message: `¿Estás seguro de que deseas ${action} la sucursal "${item.nombre}"?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: nextStatus ? 'Habilitar' : 'Deshabilitar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: nextStatus ? 'p-button-success' : 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => {
+        this.changingStatusId.set(item.id);
+        this.errorMessage.set(null);
+        this.successMessage.set(null);
+        this.api
+          .changeSucursalStatus(item.id, nextStatus)
+          .pipe(finalize(() => this.changingStatusId.set(null)))
+          .subscribe({
+            next: () => {
+              this.successMessage.set(
+                `Sucursal ${nextStatus ? 'habilitada' : 'deshabilitada'} correctamente.`,
+              );
+              this.load();
+            },
+            error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+          });
+      },
+    });
   }
 
   protected statusSeverity(active: boolean): 'success' | 'danger' {

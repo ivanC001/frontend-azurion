@@ -8,12 +8,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
-import { InternalMessageNotificationService } from '@core/services/internal-message-notification.service';
-import {
-  AdminSaasApiService,
-  Empresa,
-  UsuarioTenant,
-} from '@features/admin/data/admin-saas-api.service';
+import { InternalMessageNotificationService } from '@features/platform/services/internal-message-notification.service';
+import { AdminSaasApiService, Empresa } from '@features/admin/data/admin-saas-api.service';
+import { UsuarioTenant } from '@core/api/catalog-api.types';
 import {
   InboxMessage,
   MessageAudience,
@@ -64,9 +61,9 @@ export class PlatformMessagesPage {
     const current = this.session.currentSession();
     return Boolean(
       current?.adminGeneral ||
-        current?.roles?.some(
-          (role) => role === 'ROLE_ADMIN_GENERAL' || role === 'ROLE_PLATFORM_ADMIN',
-        ),
+      current?.roles?.some(
+        (role) => role === 'ROLE_ADMIN_GENERAL' || role === 'ROLE_PLATFORM_ADMIN',
+      ),
     );
   });
   protected readonly unreadCount = computed(
@@ -220,9 +217,7 @@ export class PlatformMessagesPage {
       audiencia: this.form.audiencia,
       tenantId: this.audienceNeedsTenant() ? this.form.tenantId : null,
       usuarioIds: this.audienceNeedsUsers() ? this.form.usuarioIds : null,
-      expiraEn: this.form.expirationDays
-        ? this.localIsoAfterDays(this.form.expirationDays)
-        : null,
+      expiraEn: this.form.expirationDays ? this.localIsoAfterDays(this.form.expirationDays) : null,
     };
     this.sending.set(true);
     this.messaging
@@ -244,9 +239,7 @@ export class PlatformMessagesPage {
   }
 
   protected audienceLabel(audience: MessageAudience): string {
-    return (
-      this.audienceOptions.find((option) => option.value === audience)?.label || audience
-    );
+    return this.audienceOptions.find((option) => option.value === audience)?.label || audience;
   }
 
   protected priorityLabel(priority: MessagePriority): string {

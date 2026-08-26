@@ -5,8 +5,26 @@
       <h1>Nota de credito</h1>
     </div>
     <div class="doc-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" [loading]="loading()" (click)="loadData()">Recargar</button>
-      <button pButton type="button" class="p-button-success" icon="pi pi-check" [loading]="saving()" (click)="registrarNotaCredito()">Registrar</button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-refresh"
+        [loading]="loading()"
+        (click)="loadData()"
+      >
+        Recargar
+      </button>
+      <button
+        pButton
+        type="button"
+        class="p-button-success"
+        icon="pi pi-check"
+        [loading]="saving()"
+        (click)="registrarNotaCredito()"
+      >
+        Registrar
+      </button>
     </div>
   </header>
 
@@ -33,15 +51,30 @@
       </label>
       <label>
         Codigo de motivo
-        <p-select [options]="motivoOptions" optionLabel="label" optionValue="value" [ngModel]="motivoCodigo()" (ngModelChange)="motivoCodigo.set($event)" />
+        <p-select
+          [options]="motivoOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="motivoCodigo()"
+          (ngModelChange)="motivoCodigo.set($event)"
+        />
       </label>
       <label>
         Monto de ajuste
-        <input pInputText type="number" [ngModel]="montoAjuste()" (ngModelChange)="montoAjuste.set(+$event || 0)" />
+        <input
+          pInputText
+          type="number"
+          [ngModel]="montoAjuste()"
+          (ngModelChange)="montoAjuste.set(+$event || 0)"
+        />
       </label>
       <label class="wide">
         Motivo
-        <input pInputText [ngModel]="motivoDescripcion()" (ngModelChange)="motivoDescripcion.set($event)" />
+        <input
+          pInputText
+          [ngModel]="motivoDescripcion()"
+          (ngModelChange)="motivoDescripcion.set($event)"
+        />
       </label>
     </div>
   </section>
@@ -50,17 +83,33 @@
     <section class="doc-card">
       <h2>Venta vinculada</h2>
       <div class="summary-grid">
-        <article><span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong></article>
-        <article><span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong></article>
-        <article><span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong></article>
-        <article><span>Total</span><strong>{{ selectedVenta()!.moneda }} {{ selectedVenta()!.total | number: '1.2-2' }}</strong></article>
+        <article>
+          <span>Comprobante</span><strong>{{ selectedVenta()!.externalId }}</strong>
+        </article>
+        <article>
+          <span>Cliente</span><strong>{{ selectedVenta()!.clienteNombre }}</strong>
+        </article>
+        <article>
+          <span>Documento</span><strong>{{ selectedVenta()!.clienteDocumento }}</strong>
+        </article>
+        <article>
+          <span>Total</span
+          ><strong
+            >{{ selectedVenta()!.moneda }} {{ selectedVenta()!.total | number: '1.2-2' }}</strong
+          >
+        </article>
       </div>
     </section>
   }
 
   <section class="doc-card">
     <h2>Estado de notas de credito</h2>
-    <p-table [value]="notas()" [paginator]="notas().length > 8" [rows]="8" responsiveLayout="scroll">
+    <p-table
+      [value]="notas()"
+      [paginator]="notas().length > 8"
+      [rows]="8"
+      responsiveLayout="scroll"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>Nota</th>
@@ -90,9 +139,27 @@
           <td>{{ item.motivoCodigo }} - {{ item.motivoDescripcion }}</td>
           <td>{{ item.facturadorMensaje || 'Pendiente de respuesta' }}</td>
           <td class="file-actions">
-            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-file-pdf" (click)="openAsset(item.facturadorPdfUrl)"></button>
-            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-code" (click)="openAsset(item.facturadorXmlUrl)"></button>
-            <button pButton type="button" class="p-button-text p-button-sm" icon="pi pi-download" (click)="openAsset(item.facturadorCdrUrl)"></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-text p-button-sm"
+              icon="pi pi-file-pdf"
+              (click)="openAsset(item.facturadorPdfUrl)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-text p-button-sm"
+              icon="pi pi-code"
+              (click)="openAsset(item.facturadorXmlUrl)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              class="p-button-text p-button-sm"
+              icon="pi pi-download"
+              (click)="openAsset(item.facturadorCdrUrl)"
+            ></button>
           </td>
         </tr>
       </ng-template>

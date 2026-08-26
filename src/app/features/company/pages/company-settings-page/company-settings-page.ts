@@ -15,6 +15,7 @@ import { PasswordModule } from 'primeng/password';
 
 import { ApiUrlService } from '@core/api/api-url.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { isValidCertificateFile, isValidLogoFile } from '@core/utils/file-validators';
 import { AdminSaasApiService, Empresa } from '@features/admin/data/admin-saas-api.service';
 import {
   FacturadorApiService,
@@ -97,6 +98,7 @@ export class CompanySettingsPage implements OnDestroy {
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly activeSubTab = signal<'general' | 'contacto' | 'regional'>('general');
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly existingConfig = signal<FacturadorTenantDetail | null>(null);
@@ -1181,36 +1183,11 @@ export class CompanySettingsPage implements OnDestroy {
   }
 
   private isValidLogoFile(file: File): boolean {
-    const maxBytes = 2 * 1024 * 1024;
-    const allowedMimeTypes = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
-    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((extension) =>
-      lowerName.endsWith(extension),
-    );
-    const hasAllowedMime = allowedMimeTypes.has(file.type.toLowerCase());
-
-    return file.size <= maxBytes && (hasAllowedMime || hasAllowedExtension);
+    return isValidLogoFile(file);
   }
 
   private isValidCertificateFile(file: File): boolean {
-    const maxBytes = 5 * 1024 * 1024;
-    const allowedMimeTypes = new Set([
-      'application/x-pkcs12',
-      'application/pkcs12',
-      'application/octet-stream',
-      'application/x-pem-file',
-      'text/plain',
-    ]);
-    const allowedExtensions = ['.pem', '.pfx', '.p12'];
-    const lowerName = file.name.toLowerCase();
-    const hasAllowedExtension = allowedExtensions.some((extension) =>
-      lowerName.endsWith(extension),
-    );
-    const mime = file.type?.toLowerCase?.() ?? '';
-    const hasAllowedMime = mime === '' || allowedMimeTypes.has(mime);
-
-    return file.size <= maxBytes && hasAllowedExtension && hasAllowedMime;
+    return isValidCertificateFile(file);
   }
 
   private setPanelLogoPreview(url: string | null, isObjectUrl: boolean): void {

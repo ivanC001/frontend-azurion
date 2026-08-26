@@ -70,27 +70,26 @@ export class PublicCrmApiService {
         ...publicPayload
       } = request;
       return this.http
-        .post<ApiResponse<PublicCrmLeadResponse>>(
-          this.apiUrl.url('saasCore', `/v1/public/forms/${encodeURIComponent(sourceKey)}/submissions`),
-          publicPayload,
-          { headers: new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey }) },
-        )
+        .post<
+          ApiResponse<PublicCrmLeadResponse>
+        >(this.apiUrl.url('saasCore', `/v1/public/forms/${encodeURIComponent(sourceKey)}/submissions`), publicPayload, { headers: new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey }) })
         .pipe(map((response) => response.data));
     }
     const headers = tenantReference
       ? new HttpHeaders({
-        [this.settings.tenancy.headerName]: tenantReference,
-        'X-Idempotency-Key': idempotencyKey,
-      })
+          [this.settings.tenancy.headerName]: tenantReference,
+          'X-Idempotency-Key': idempotencyKey,
+        })
       : new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey });
     const { tenantId: _tenantId, ...payload } = request;
-    const body = tenantReference && !payload.Ruc_tenant ? { ...payload, Ruc_tenant: tenantReference } : payload;
+    const body =
+      tenantReference && !payload.Ruc_tenant
+        ? { ...payload, Ruc_tenant: tenantReference }
+        : payload;
     return this.http
-      .post<ApiResponse<PublicCrmLeadResponse>>(
-        this.apiUrl.url('saasCore', '/v1/public/crm/leads'),
-        body,
-        { headers },
-      )
+      .post<
+        ApiResponse<PublicCrmLeadResponse>
+      >(this.apiUrl.url('saasCore', '/v1/public/crm/leads'), body, { headers })
       .pipe(map((response) => response.data));
   }
 
@@ -105,10 +104,9 @@ export class PublicCrmApiService {
       [this.settings.tenancy.headerName]: tenantId.trim(),
     });
     return this.http
-      .get<ApiResponse<PublicCrmCatalogoItem>>(
-        this.apiUrl.url('saasCore', `/v1/public/crm/catalogo/${id}`),
-        { headers, params: { token } },
-      )
+      .get<
+        ApiResponse<PublicCrmCatalogoItem>
+      >(this.apiUrl.url('saasCore', `/v1/public/crm/catalogo/${id}`), { headers, params: { token } })
       .pipe(map((response) => response.data));
   }
 }

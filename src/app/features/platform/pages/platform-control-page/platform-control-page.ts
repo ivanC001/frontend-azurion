@@ -17,8 +17,8 @@ import {
   ModuloGlobal,
   Plan,
   Suscripcion,
-  UsuarioTenant,
 } from '@features/admin/data/admin-saas-api.service';
+import { UsuarioTenant } from '@core/api/catalog-api.types';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,23 +73,18 @@ export class PlatformControlPage {
     );
   });
 
-  protected readonly selectedPlan = computed(() =>
-    this.planes().find((plan) => plan.id === this.subscriptionPlanId()) ?? null,
+  protected readonly selectedPlan = computed(
+    () => this.planes().find((plan) => plan.id === this.subscriptionPlanId()) ?? null,
   );
   protected readonly selectedPlanModuleCount = computed(
     () => this.selectedPlan()?.moduloCodigos?.length ?? 0,
   );
-  protected readonly selectedPlanHasModules = computed(
-    () => this.selectedPlanModuleCount() > 0,
-  );
+  protected readonly selectedPlanHasModules = computed(() => this.selectedPlanModuleCount() > 0);
 
   protected readonly planOptions = computed(() => {
     const currentPlanId = this.selectedSubscription()?.planId;
     return this.planes()
-      .filter(
-        (plan) =>
-          plan.estado.toUpperCase() === 'ACTIVO' || plan.id === currentPlanId,
-      )
+      .filter((plan) => plan.estado.toUpperCase() === 'ACTIVO' || plan.id === currentPlanId)
       .map((plan) => ({
         label: `${plan.nombre} · ${plan.moduloCodigos?.length ?? 0} módulos · ${plan.limiteUsuarios} usuarios · S/ ${Number(plan.precioMensual).toFixed(2)}`,
         value: plan.id,
@@ -123,7 +118,8 @@ export class PlatformControlPage {
 
   protected readonly moduleCards = computed(() =>
     this.modulos().map((modulo) => {
-      const assigned = this.empresaModulos().find((item) => item.moduloCodigo === modulo.codigo) ?? null;
+      const assigned =
+        this.empresaModulos().find((item) => item.moduloCodigo === modulo.codigo) ?? null;
       return {
         ...modulo,
         activo: this.moduleDraft()[modulo.codigo] ?? assigned?.activo ?? false,
@@ -257,13 +253,16 @@ export class PlatformControlPage {
 
     const request = {
       modulos: this.modulos().map((modulo) => {
-        const current = this.empresaModulos().find((item) => item.moduloCodigo === modulo.codigo) ?? null;
+        const current =
+          this.empresaModulos().find((item) => item.moduloCodigo === modulo.codigo) ?? null;
         const activo = this.moduleDraft()[modulo.codigo] ?? current?.activo ?? false;
         return {
           moduloCodigo: modulo.codigo,
           activo,
           estado: activo ? 'ACTIVO' : 'INACTIVO',
-          fechaInicio: activo ? current?.fechaInicio || toLocalDateInputValue() : current?.fechaInicio || null,
+          fechaInicio: activo
+            ? current?.fechaInicio || toLocalDateInputValue()
+            : current?.fechaInicio || null,
           fechaFin: activo ? null : current?.fechaFin || null,
           configuracionExtra: current?.configuracionExtra ?? null,
         };
@@ -457,12 +456,9 @@ export class PlatformControlPage {
     const plan = this.planes().find((item) => item.id === planId) ?? fallbackPlan;
 
     this.subscriptionPlanId.set(planId);
-    this.customUserLimitEnabled =
-      subscription?.limiteUsuariosPersonalizado ?? false;
-    this.subscriptionUserLimit =
-      subscription?.limiteUsuarios ?? plan?.limiteUsuarios ?? 1;
-    this.subscriptionStartDate =
-      subscription?.fechaInicio ?? toLocalDateInputValue();
+    this.customUserLimitEnabled = subscription?.limiteUsuariosPersonalizado ?? false;
+    this.subscriptionUserLimit = subscription?.limiteUsuarios ?? plan?.limiteUsuarios ?? 1;
+    this.subscriptionStartDate = subscription?.fechaInicio ?? toLocalDateInputValue();
   }
 
   private buildModuleDraft(modulos: EmpresaModulo[]): Record<string, boolean> {
@@ -486,9 +482,7 @@ export class PlatformControlPage {
         }
       ).error;
       const message =
-        apiError?.details?.[0] ||
-        apiError?.message ||
-        'No se pudo completar la operación.';
+        apiError?.details?.[0] || apiError?.message || 'No se pudo completar la operación.';
       if (apiError?.userActionable === false && apiError.traceId) {
         return `${message} Código de soporte: ${apiError.traceId}`;
       }

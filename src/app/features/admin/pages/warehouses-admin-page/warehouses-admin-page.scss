@@ -34,7 +34,11 @@
 
 .smart-form-intro {
   align-items: center;
-  background: linear-gradient(135deg, color-mix(in srgb, #2563eb 10%, var(--az-surface)), color-mix(in srgb, #8b5cf6 7%, var(--az-surface)));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #2563eb 10%, var(--az-surface)),
+    color-mix(in srgb, #8b5cf6 7%, var(--az-surface))
+  );
   border: 1px solid color-mix(in srgb, #2563eb 25%, var(--az-border));
   border-radius: 1rem;
   display: grid;
@@ -272,7 +276,11 @@
 }
 
 .warehouse-preview {
-  background: linear-gradient(135deg, color-mix(in srgb, #0f172a 3%, var(--az-surface)), color-mix(in srgb, #2563eb 5%, var(--az-surface)));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #0f172a 3%, var(--az-surface)),
+    color-mix(in srgb, #2563eb 5%, var(--az-surface))
+  );
   border-style: solid;
   margin-top: 0.85rem;
 }

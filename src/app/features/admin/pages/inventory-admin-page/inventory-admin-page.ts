@@ -12,9 +12,9 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { LowStockAlertService } from '@features/admin/services/low-stock-alert.service';
 import { createClientOperationId } from '@core/utils/client-operation-id';
-import { ExcelReportService } from '../../data/excel-report.service';
+import { ExcelReportService } from '@shared/services/excel-report.service';
 import {
   AdminSaasApiService,
   Almacen,
@@ -139,14 +139,19 @@ export class InventoryAdminPage {
   protected compraTotals() {
     const detalles = this.compraForm.detalles;
     const subtotalNeto = detalles.reduce(
-      (sum, item) => sum + this.compraDetalleSubtotalNeto(item), 0);
-    const montoIgv = detalles.reduce(
-      (sum, item) => sum + this.compraDetalleIgvTotal(item), 0);
+      (sum, item) => sum + this.compraDetalleSubtotalNeto(item),
+      0,
+    );
+    const montoIgv = detalles.reduce((sum, item) => sum + this.compraDetalleIgvTotal(item), 0);
     const total = subtotalNeto + montoIgv;
     const costoInventariable = detalles.reduce(
-      (sum, item) => sum + this.compraDetalleCostoInventariableTotal(item), 0);
+      (sum, item) => sum + this.compraDetalleCostoInventariableTotal(item),
+      0,
+    );
     const ventaNeta = detalles.reduce(
-      (sum, item) => sum + this.compraDetalleVentaNetaTotal(item), 0);
+      (sum, item) => sum + this.compraDetalleVentaNetaTotal(item),
+      0,
+    );
     const ganancia = ventaNeta - costoInventariable;
     return {
       subtotalNeto,
@@ -469,12 +474,8 @@ export class InventoryAdminPage {
       const productoId = this.stockProductoFilter() || undefined;
       const almacenId = this.stockAlmacenFilter() || undefined;
       const [stock, kardex] = await Promise.all([
-        this.loadAllPages((page, size) =>
-          this.api.pageStock(productoId, almacenId, page, size),
-        ),
-        this.loadAllPages((page, size) =>
-          this.api.pageKardex(productoId, almacenId, page, size),
-        ),
+        this.loadAllPages((page, size) => this.api.pageStock(productoId, almacenId, page, size)),
+        this.loadAllPages((page, size) => this.api.pageKardex(productoId, almacenId, page, size)),
       ]);
       if (!stock.length && !kardex.length) {
         this.errorMessage.set('No hay informacion de inventario para exportar.');
@@ -523,9 +524,7 @@ export class InventoryAdminPage {
     detalle.porcentajeIgv = this.productSalesTaxRate(producto);
   }
 
-  protected onCompraTipoComprobanteChange(
-    tipo: CompraForm['tipoComprobante'],
-  ): void {
+  protected onCompraTipoComprobanteChange(tipo: CompraForm['tipoComprobante']): void {
     this.compraForm.tipoComprobante = tipo;
     this.compraForm.creditoFiscalAplicable = tipo === 'FACTURA';
   }
@@ -536,7 +535,7 @@ export class InventoryAdminPage {
 
   protected compraDetalleIgvUnitario(detalle: CompraDetalleForm): number {
     const rate = Math.max(0, Number(detalle.porcentajeIgv || 0));
-    return Number(detalle.costoNetoUnitario || 0) * rate / 100;
+    return (Number(detalle.costoNetoUnitario || 0) * rate) / 100;
   }
 
   protected compraDetalleIgvTotal(detalle: CompraDetalleForm): number {
@@ -581,9 +580,9 @@ export class InventoryAdminPage {
     const producto = this.productos().find((item) => item.id === detalle.productoId);
     return Boolean(
       producto?.lotes ??
-        producto?.manejaLotes ??
-        producto?.vencimiento ??
-        producto?.manejaVencimiento,
+      producto?.manejaLotes ??
+      producto?.vencimiento ??
+      producto?.manejaVencimiento,
     );
   }
 
@@ -597,10 +596,7 @@ export class InventoryAdminPage {
       this.errorMessage.set('Completa comprobante, fecha de emision y almacen destino.');
       return;
     }
-    if (
-      !this.compraForm.proveedorDocumento.trim() &&
-      !this.compraForm.proveedorNombre.trim()
-    ) {
+    if (!this.compraForm.proveedorDocumento.trim() && !this.compraForm.proveedorNombre.trim()) {
       this.errorMessage.set('Indica el documento o el nombre del proveedor.');
       return;
     }
@@ -747,8 +743,8 @@ export class InventoryAdminPage {
     }
     return Number(
       inherited
-        ? this.taxConfig()?.porcentajeIgvDefault ?? 18
-        : producto?.porcentajeImpuesto ?? 18,
+        ? (this.taxConfig()?.porcentajeIgvDefault ?? 18)
+        : (producto?.porcentajeImpuesto ?? 18),
     );
   }
 
@@ -813,9 +809,7 @@ export class InventoryAdminPage {
     const motivo = this.movimientoForm.motivo.trim();
 
     const invalidQuantity =
-      Number.isNaN(cantidad) ||
-      cantidad < 0 ||
-      (tipoMovimiento !== 'AJUSTE' && cantidad <= 0);
+      Number.isNaN(cantidad) || cantidad < 0 || (tipoMovimiento !== 'AJUSTE' && cantidad <= 0);
     if (!productoId || !almacenId || !motivo || invalidQuantity) {
       this.errorMessage.set('Completa producto, almacen, motivo y una cantidad valida.');
       return;
@@ -836,9 +830,7 @@ export class InventoryAdminPage {
       this.selectedProductControlsLots() &&
       !this.movimientoForm.loteId
     ) {
-      this.errorMessage.set(
-        'Selecciona el lote cuyo saldo deseas ajustar.',
-      );
+      this.errorMessage.set('Selecciona el lote cuyo saldo deseas ajustar.');
       return;
     }
 
@@ -904,9 +896,7 @@ export class InventoryAdminPage {
     if (this.movimientoForm.tipoMovimiento !== 'AJUSTE') {
       return 'Cantidad';
     }
-    return this.selectedProductControlsLots()
-      ? 'Nuevo saldo del lote'
-      : 'Nuevo saldo del almacen';
+    return this.selectedProductControlsLots() ? 'Nuevo saldo del lote' : 'Nuevo saldo del almacen';
   }
 
   protected onMovementWarehouseChange(almacenId: number | null): void {
@@ -1180,10 +1170,10 @@ export class InventoryAdminPage {
     });
   }
 
-  private pageFromEvent(event: {
-    first?: number | null;
-    rows?: number | null;
-  }): { page: number; size: number } {
+  private pageFromEvent(event: { first?: number | null; rows?: number | null }): {
+    page: number;
+    size: number;
+  } {
     const size = event.rows && event.rows > 0 ? event.rows : this.pageSize;
     const first = event.first && event.first > 0 ? event.first : 0;
     return { page: Math.floor(first / size), size };

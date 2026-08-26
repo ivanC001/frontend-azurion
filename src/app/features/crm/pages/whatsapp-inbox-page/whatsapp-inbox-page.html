@@ -1,0 +1,822 @@
+<section class="whatsapp-inbox">
+  <header class="inbox-toolbar">
+    <div class="inbox-title">
+      <span class="whatsapp-logo"><i class="pi pi-whatsapp"></i></span>
+      <div>
+        <h1>Bandeja de WhatsApp</h1>
+        <p>Conversa y gestiona tus contactos desde el CRM</p>
+      </div>
+    </div>
+
+    <div class="toolbar-filters">
+      <label
+        class="channel-selector"
+        [class.channel-selector--connected]="connectionStatus()?.conectado"
+        [title]="connectionStatus()?.message || 'Estado de conexión no comprobado'"
+      >
+        <span class="channel-dot"><i class="pi pi-whatsapp"></i></span>
+        <span>
+          <strong>WhatsApp Meta</strong>
+          <small
+            ><i></i>
+            {{
+              connectionStatus()?.conectado
+                ? 'Canal conectado'
+                : connectionStatus()?.configuracionCompleta
+                  ? 'Conexión pendiente'
+                  : 'Configuración incompleta'
+            }}</small
+          >
+        </span>
+      </label>
+
+      <label class="compact-select">
+        <span class="sr-only">Estado de conversación</span>
+        <select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
+          <option value="">Todos los estados</option>
+          <option value="ABIERTA">Abiertas</option>
+          <option value="RESUELTA">Resueltas</option>
+          <option value="ARCHIVADA">Archivadas</option>
+        </select>
+        <i class="pi pi-chevron-down"></i>
+      </label>
+
+      <label class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          type="search"
+          placeholder="Buscar conversación..."
+          [ngModel]="query()"
+          (ngModelChange)="onQueryChange($event)"
+        />
+      </label>
+
+      <button
+        class="icon-button toolbar-refresh"
+        type="button"
+        title="Actualizar bandeja"
+        (click)="onStatusFilterChange(statusFilter())"
+      >
+        <i class="pi pi-refresh"></i>
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage() || successMessage()) {
+    <div class="feedback" [class.feedback--error]="errorMessage()">
+      <i
+        class="pi"
+        [class.pi-exclamation-circle]="errorMessage()"
+        [class.pi-check-circle]="successMessage()"
+      ></i>
+      <span>{{ errorMessage() || successMessage() }}</span>
+      <button
+        type="button"
+        aria-label="Cerrar aviso"
+        (click)="errorMessage.set(''); successMessage.set('')"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  }
+
+  <div class="inbox-shell" [attr.data-mobile-panel]="mobilePanel()">
+    <aside class="conversation-panel panel-list">
+      <div class="panel-heading">
+        <div>
+          <h2>Conversaciones</h2>
+          <span>{{ conversations().length }} visibles</span>
+        </div>
+        <button
+          class="icon-button"
+          type="button"
+          title="Actualizar"
+          (click)="onStatusFilterChange(statusFilter())"
+        >
+          <i class="pi pi-refresh"></i>
+        </button>
+      </div>
+
+      <nav class="conversation-tabs" aria-label="Filtros de conversación">
+        <button
+          type="button"
+          [class.active]="activeFilter() === 'TODAS'"
+          (click)="setInboxFilter('TODAS')"
+        >
+          Todas
+          <span>{{ conversations().length }}</span>
+        </button>
+        <button
+          type="button"
+          [class.active]="activeFilter() === 'NO_LEIDAS'"
+          (click)="setInboxFilter('NO_LEIDAS')"
+        >
+          No leídas
+          @if (unreadTotal() > 0) {
+            <span>{{ unreadTotal() }}</span>
+          }
+        </button>
+        <button
+          type="button"
+          [class.active]="activeFilter() === 'MIAS'"
+          (click)="setInboxFilter('MIAS')"
+        >
+          Mis chats
+          @if (mineTotal() > 0) {
+            <span>{{ mineTotal() }}</span>
+          }
+        </button>
+      </nav>
+
+      <div class="conversation-list">
+        @if (loadingList() && conversations().length === 0) {
+          @for (placeholder of [1, 2, 3, 4, 5]; track placeholder) {
+            <div class="conversation-skeleton"><i></i><span></span></div>
+          }
+        } @else if (conversations().length === 0) {
+          <div class="empty-list">
+            <span><i class="pi pi-comments"></i></span>
+            <strong>No hay conversaciones</strong>
+            <p>Los mensajes recibidos por el webhook de Meta aparecerán aquí automáticamente.</p>
+          </div>
+        } @else {
+          @for (conversation of conversations(); track conversation.id) {
+            <button
+              type="button"
+              class="conversation-item"
+              [class.active]="selectedProspectId() === conversation.prospectoId"
+              [class.unread]="conversation.noLeidos > 0"
+              (click)="selectConversation(conversation)"
+            >
+              <span class="avatar avatar--{{ conversation.prospectoId % 5 }}">{{
+                initials(conversation.nombre)
+              }}</span>
+              <span class="conversation-copy">
+                <span class="conversation-line">
+                  <strong>{{ conversation.nombre || 'Contacto de WhatsApp' }}</strong>
+                  <time>{{ timeLabel(conversation.ultimoMensajeEn) }}</time>
+                </span>
+                <span class="conversation-line conversation-preview">
+                  <span>
+                    @if (conversation.ultimaDireccion === 'SALIENTE') {
+                      <i class="pi pi-check"></i>
+                    }
+                    {{ conversation.ultimoMensaje || 'Conversación iniciada' }}
+                  </span>
+                  @if (conversation.noLeidos > 0) {
+                    <b>{{ conversation.noLeidos }}</b>
+                  }
+                </span>
+                <span class="conversation-meta">
+                  <em [class.resolved]="conversation.estadoConversacion === 'RESUELTA'">
+                    {{
+                      conversation.estadoConversacion === 'RESUELTA'
+                        ? 'Resuelta'
+                        : conversation.estadoProspecto || 'Nuevo'
+                    }}
+                  </em>
+                  @if (conversation.responsableId) {
+                    <small>{{ conversation.responsableId }}</small>
+                  }
+                </span>
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <main class="chat-panel panel-chat">
+      @if (selectedConversation(); as conversation) {
+        <header class="chat-header">
+          <button
+            class="mobile-back"
+            type="button"
+            aria-label="Volver a conversaciones"
+            (click)="backToList()"
+          >
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <span class="avatar avatar--large avatar--{{ conversation.prospectoId % 5 }}">{{
+            initials(conversation.nombre)
+          }}</span>
+          <div class="chat-contact">
+            <strong>{{ conversation.nombre }}</strong>
+            <span
+              ><i class="pi pi-whatsapp"></i> {{ conversation.telefono || 'Sin teléfono' }}</span
+            >
+          </div>
+          <span
+            class="service-window-chip"
+            [class.service-window-chip--closed]="!conversation.ventanaAtencionAbierta"
+            [title]="serviceWindowLabel()"
+          >
+            <i
+              class="pi"
+              [class.pi-clock]="conversation.ventanaAtencionAbierta"
+              [class.pi-lock]="!conversation.ventanaAtencionAbierta"
+            ></i>
+            {{ conversation.ventanaAtencionAbierta ? 'Ventana activa' : 'Requiere plantilla' }}
+          </span>
+          <div class="chat-actions">
+            <button
+              class="icon-button detail-trigger"
+              type="button"
+              title="Información del contacto"
+              (click)="showDetail()"
+            >
+              <i class="pi pi-user"></i>
+            </button>
+            <button
+              class="resolve-button"
+              type="button"
+              [class.is-resolved]="conversation.estadoConversacion === 'RESUELTA'"
+              [disabled]="savingAction()"
+              (click)="toggleResolved()"
+            >
+              <i
+                class="pi"
+                [class.pi-check-circle]="conversation.estadoConversacion !== 'RESUELTA'"
+                [class.pi-replay]="conversation.estadoConversacion === 'RESUELTA'"
+              ></i>
+              {{
+                conversation.estadoConversacion === 'RESUELTA' ? 'Reabrir' : 'Marcar como resuelta'
+              }}
+            </button>
+          </div>
+        </header>
+
+        <div #messageScroller class="message-history">
+          <div class="day-divider"><span>Conversación</span></div>
+
+          @if (loadingMessages() && messages().length === 0) {
+            <div class="message-loading">
+              <i class="pi pi-spin pi-spinner"></i> Cargando mensajes...
+            </div>
+          } @else if (messages().length === 0) {
+            <div class="empty-chat">
+              <span><i class="pi pi-whatsapp"></i></span>
+              <strong>Aún no hay mensajes</strong>
+              <p>Escribe el primer mensaje para iniciar la conversación con este prospecto.</p>
+            </div>
+          } @else {
+            @for (message of messages(); track message.metaMessageId || message.id) {
+              <article
+                class="message-row"
+                [class.message-row--outgoing]="message.direccion === 'SALIENTE'"
+              >
+                <div class="message-bubble">
+                  @if (message.direccion === 'SALIENTE') {
+                    <small class="message-author"
+                      ><i class="pi pi-user"></i> {{ messageSenderLabel(message) }}</small
+                    >
+                  }
+                  @if (message.tipoMensaje !== 'text') {
+                    <small class="message-type"
+                      ><i class="pi pi-paperclip"></i> {{ message.tipoMensaje }}</small
+                    >
+                  }
+                  <p>{{ message.contenido || 'Mensaje sin contenido visible' }}</p>
+                  @if (isFailedMessage(message)) {
+                    <small class="message-error">
+                      <i class="pi pi-exclamation-triangle"></i>
+                      {{ message.errorDetalle || 'Meta no pudo entregar este mensaje.' }}
+                      @if (message.errorCodigo) {
+                        <b>({{ message.errorCodigo }})</b>
+                      }
+                    </small>
+                  }
+                  <footer>
+                    <time>{{ messageTime(message.mensajeEn || message.createdAt) }}</time>
+                    @if (message.direccion === 'SALIENTE') {
+                      <span
+                        class="message-status"
+                        [class.message-status--failed]="isFailedMessage(message)"
+                      >
+                        <i [class]="messageStatusIcon(message)"></i>
+                        {{ messageStatusLabel(message) }}
+                      </span>
+                    }
+                  </footer>
+                </div>
+              </article>
+            }
+          }
+        </div>
+
+        <footer class="composer">
+          <div
+            class="service-window-notice"
+            [class.service-window-notice--closed]="!serviceWindowOpen()"
+          >
+            <span>
+              <i
+                class="pi"
+                [class.pi-shield]="serviceWindowOpen()"
+                [class.pi-lock]="!serviceWindowOpen()"
+              ></i>
+              <strong>{{
+                serviceWindowOpen() ? 'Conversación habilitada' : 'Ventana de atención cerrada'
+              }}</strong>
+              <small>{{ serviceWindowLabel() }}</small>
+            </span>
+            <span class="reply-identity"
+              ><i class="pi pi-user-edit"></i> Respondiendo como
+              <b>{{ currentResponderName() }}</b></span
+            >
+          </div>
+          @if (!serviceWindowOpen()) {
+            <section class="template-composer">
+              <header>
+                <span class="template-composer-icon"><i class="pi pi-megaphone"></i></span>
+                <span>
+                  <strong>Continuar con una plantilla aprobada</strong>
+                  <small
+                    >Meta exige una plantilla para contactar nuevamente fuera de la ventana de 24
+                    horas.</small
+                  >
+                </span>
+                <button
+                  type="button"
+                  title="Actualizar plantillas aprobadas"
+                  [disabled]="loadingTemplates()"
+                  (click)="reloadTemplates()"
+                >
+                  <i
+                    class="pi"
+                    [class.pi-spin]="loadingTemplates()"
+                    [class.pi-spinner]="loadingTemplates()"
+                    [class.pi-refresh]="!loadingTemplates()"
+                  ></i>
+                </button>
+              </header>
+
+              @if (loadingTemplates()) {
+                <div class="template-state">
+                  <i class="pi pi-spin pi-spinner"></i> Consultando plantillas aprobadas en Meta...
+                </div>
+              } @else if (templates().length === 0) {
+                <div class="template-state template-state--empty">
+                  <i class="pi pi-info-circle"></i>
+                  <span>
+                    <strong>No hay plantillas compatibles disponibles</strong>
+                    <small
+                      >Crea y aprueba una plantilla de texto en WhatsApp Manager, luego actualiza
+                      esta lista.</small
+                    >
+                  </span>
+                </div>
+              } @else {
+                <label class="template-field">
+                  <span>Plantilla aprobada</span>
+                  <select
+                    [ngModel]="selectedTemplateKey()"
+                    (ngModelChange)="selectTemplate($event)"
+                  >
+                    <option value="">Selecciona una plantilla</option>
+                    @for (template of templates(); track templateKey(template)) {
+                      <option [value]="templateKey(template)">
+                        {{ template.nombre }} · {{ template.idioma }}
+                      </option>
+                    }
+                  </select>
+                </label>
+
+                @if (selectedTemplate(); as template) {
+                  <div class="template-preview">
+                    <span><i class="pi pi-comment"></i> Vista previa</span>
+                    <p>{{ templatePreview() }}</p>
+                    <small>{{ template.categoria }} · {{ template.idioma }}</small>
+                  </div>
+                  @if (template.cantidadParametros > 0) {
+                    <div class="template-parameters">
+                      @for (parameter of templateParameters(); track $index) {
+                        <label>
+                          <span>Variable {{ $index + 1 }}</span>
+                          <input
+                            type="text"
+                            maxlength="1024"
+                            [value]="parameter"
+                            [placeholder]="'Valor para {{' + ($index + 1) + '}}'"
+                            (input)="updateTemplateParameter($index, $any($event.target).value)"
+                          />
+                        </label>
+                      }
+                    </div>
+                  }
+                  <footer>
+                    <small
+                      >El envío quedará registrado con tu usuario y Meta informará su
+                      entrega.</small
+                    >
+                    <button
+                      type="button"
+                      [disabled]="!canSendTemplate()"
+                      (click)="sendSelectedTemplate()"
+                    >
+                      @if (sendingTemplate()) {
+                        <i class="pi pi-spin pi-spinner"></i>
+                      } @else {
+                        <i class="pi pi-send"></i>
+                      }
+                      {{ sendingTemplate() ? 'Enviando plantilla...' : 'Enviar plantilla' }}
+                    </button>
+                  </footer>
+                }
+              }
+              @if (templateError()) {
+                <div class="template-error">
+                  <i class="pi pi-exclamation-circle"></i> {{ templateError() }}
+                </div>
+              }
+            </section>
+          } @else {
+            <div class="composer-tabs">
+              <button type="button" class="active" (click)="focusReplyComposer()">
+                <i class="pi pi-send"></i> Responder
+              </button>
+              <button
+                type="button"
+                title="Usa una respuesta guardada en el panel derecho"
+                (click)="openSavedNotes()"
+              >
+                <i class="pi pi-bolt"></i> Respuestas rapidas
+              </button>
+            </div>
+            @if (quotePickerOpen()) {
+              <section class="quote-picker">
+                <header>
+                  <span>
+                    <i class="pi pi-file-pdf"></i>
+                    <strong>Cotizaciones del prospecto</strong>
+                    <small>Selecciona una o varias para enviarlas como PDF.</small>
+                  </span>
+                  <button type="button" class="quote-create-button" (click)="createQuote()">
+                    <i class="pi pi-plus"></i> Crear cotización
+                  </button>
+                </header>
+                @if (loadingQuotes()) {
+                  <div class="quote-picker-state">
+                    <i class="pi pi-spin pi-spinner"></i> Cargando cotizaciones...
+                  </div>
+                } @else if (quotes().length === 0) {
+                  <div class="quote-picker-state">
+                    <i class="pi pi-file"></i>
+                    Este prospecto todavía no tiene cotizaciones vinculadas.
+                  </div>
+                } @else {
+                  <div class="quote-picker-list">
+                    @for (quote of quotes(); track quote.id) {
+                      <label
+                        class="quote-option"
+                        [class.selected]="selectedQuoteIds().has(quote.id)"
+                        [class.quote-option--sent]="isQuoteWhatsappLocked(quote)"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="selectedQuoteIds().has(quote.id)"
+                          [disabled]="isQuoteWhatsappLocked(quote)"
+                          (change)="toggleQuote(quote.id)"
+                        />
+                        <span class="quote-icon"><i class="pi pi-file-pdf"></i></span>
+                        <span class="quote-copy">
+                          <strong>COT-{{ quote.id.toString().padStart(6, '0') }}</strong>
+                          <small>
+                            {{ quote.fechaEmision | date: 'dd/MM/yyyy' }} ·
+                            {{ quoteWhatsappStatusLabel(quote) }}
+                          </small>
+                        </span>
+                        <b>{{ formatQuoteTotal(quote) }}</b>
+                      </label>
+                    }
+                  </div>
+                }
+                <footer>
+                  <small>El texto escrito se usará como mensaje de la primera cotización.</small>
+                  <button
+                    type="button"
+                    [disabled]="
+                      !serviceWindowOpen() || selectedQuoteCount() === 0 || sendingQuotes()
+                    "
+                    (click)="sendSelectedQuotes()"
+                  >
+                    @if (sendingQuotes()) {
+                      <i class="pi pi-spin pi-spinner"></i>
+                    } @else {
+                      <i class="pi pi-whatsapp"></i>
+                    }
+                    {{
+                      sendingQuotes()
+                        ? 'Enviando por WhatsApp...'
+                        : 'Enviar seleccionadas (' + selectedQuoteCount() + ')'
+                    }}
+                  </button>
+                </footer>
+              </section>
+            }
+            <div class="composer-box">
+              <textarea
+                id="whatsapp-reply-composer"
+                rows="3"
+                maxlength="4096"
+                [disabled]="!serviceWindowOpen()"
+                [placeholder]="
+                  serviceWindowOpen()
+                    ? 'Escribe tu mensaje...'
+                    : 'Se necesita una plantilla aprobada para volver a contactar'
+                "
+                [ngModel]="draft()"
+                (ngModelChange)="draft.set($event)"
+                (keydown)="onComposerKeydown($event)"
+              ></textarea>
+              <div class="composer-actions">
+                <div>
+                  <button
+                    type="button"
+                    class="attach-quote-button"
+                    [class.active]="quotePickerOpen()"
+                    title="Adjuntar cotizaciones del prospecto"
+                    [disabled]="!serviceWindowOpen()"
+                    (click)="toggleQuotePicker()"
+                  >
+                    <i class="pi pi-paperclip"></i>
+                    @if (selectedQuoteCount() > 0) {
+                      <span>{{ selectedQuoteCount() }}</span>
+                    }
+                  </button>
+                  <small>Enter para enviar · Shift + Enter para nueva línea</small>
+                </div>
+                <div>
+                  <button
+                    class="send-button"
+                    type="button"
+                    [disabled]="!serviceWindowOpen() || !draft().trim() || sending()"
+                    (click)="sendMessage()"
+                  >
+                    @if (sending()) {
+                      <i class="pi pi-spin pi-spinner"></i>
+                    } @else {
+                      <i class="pi pi-send"></i>
+                    }
+                    Enviar
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </footer>
+      } @else {
+        <div class="no-selection">
+          <div class="no-selection-mark"><i class="pi pi-whatsapp"></i></div>
+          <span class="no-selection-eyebrow">Bandeja compartida CRM</span>
+          <h2>Selecciona una conversación</h2>
+          <p>
+            Revisa el historial, identifica al asesor que respondió y confirma la entrega antes de
+            continuar el seguimiento.
+          </p>
+          <div class="inbox-overview">
+            <span
+              ><b>{{ conversations().length }}</b
+              ><small>Conversaciones</small></span
+            >
+            <span
+              ><b>{{ unreadTotal() }}</b
+              ><small>Sin leer</small></span
+            >
+            <span
+              ><b>{{ openConversationTotal() }}</b
+              ><small>Abiertas</small></span
+            >
+          </div>
+          <div class="inbox-guidance">
+            <span><i class="pi pi-user-edit"></i> Cada salida queda asociada al usuario CRM.</span>
+            <span
+              ><i class="pi pi-check-circle"></i> Meta confirmará si fue enviado, entregado o
+              leído.</span
+            >
+            <span
+              ><i class="pi pi-clock"></i> El texto libre está disponible durante 24 horas.</span
+            >
+          </div>
+        </div>
+      }
+    </main>
+
+    <aside class="contact-panel panel-detail">
+      @if (selectedConversation(); as conversation) {
+        <header class="detail-heading">
+          <button
+            class="mobile-back"
+            type="button"
+            aria-label="Volver al chat"
+            (click)="backToChat()"
+          >
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <strong>Información del contacto</strong>
+          <i class="pi pi-chevron-up"></i>
+        </header>
+
+        <section class="contact-card">
+          <div class="contact-identity">
+            <span class="avatar avatar--profile avatar--{{ conversation.prospectoId % 5 }}">{{
+              initials(conversation.nombre)
+            }}</span>
+            <div>
+              <strong>{{ conversation.nombre }}</strong>
+              <span
+                ><i class="pi pi-whatsapp"></i> {{ conversation.telefono || 'Sin teléfono' }}</span
+              >
+              @if (conversation.correo) {
+                <span><i class="pi pi-envelope"></i> {{ conversation.correo }}</span>
+              }
+              @if (conversation.direccion) {
+                <span><i class="pi pi-map-marker"></i> {{ conversation.direccion }}</span>
+              }
+            </div>
+          </div>
+          <div class="quick-actions">
+            <button type="button" (click)="openProspect()">
+              <i class="pi pi-user"></i><span>Ver perfil</span>
+            </button>
+            <button type="button" (click)="openFollowUp()">
+              <i class="pi pi-calendar-plus"></i><span>Seguimiento</span>
+            </button>
+            <button type="button" (click)="createQuote()">
+              <i class="pi pi-file-edit"></i><span>Cotizar</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="detail-card prospect-card">
+          <header>
+            <strong>Prospecto</strong><span>{{ conversation.estadoProspecto || 'Nuevo' }}</span>
+          </header>
+          <dl>
+            <div>
+              <dt>Origen</dt>
+              <dd>{{ conversation.origen || conversation.canalIngreso || 'WhatsApp' }}</dd>
+            </div>
+            <div>
+              <dt>Campaña</dt>
+              <dd>{{ conversation.campania || 'Sin campaña' }}</dd>
+            </div>
+            <div>
+              <dt>Interés</dt>
+              <dd>{{ conversation.interesPrincipal || 'No especificado' }}</dd>
+            </div>
+            <div>
+              <dt>Responsable</dt>
+              <dd>
+                <select
+                  aria-label="Responsable de la conversación"
+                  [disabled]="savingAction()"
+                  [ngModel]="conversation.responsableId || ''"
+                  (ngModelChange)="assignConversation($event)"
+                >
+                  <option value="">Sin asignar</option>
+                  @for (user of users(); track user.id) {
+                    <option [value]="user.username">{{ user.nombres }}</option>
+                  }
+                </select>
+              </dd>
+            </div>
+          </dl>
+          <button class="outline-button" type="button" (click)="openProspect()">
+            Ver ficha del prospecto
+          </button>
+        </section>
+
+        <section class="detail-card">
+          <header><strong>Actividades próximas</strong><i class="pi pi-chevron-up"></i></header>
+          @if (selectedActivities().length === 0) {
+            <p class="detail-empty">No hay actividades pendientes para este contacto.</p>
+          } @else {
+            <div class="activity-list">
+              @for (activity of selectedActivities(); track activity.id) {
+                <div class="activity-item">
+                  <i
+                    class="pi"
+                    [class.pi-phone]="activity.tipoActividad === 'LLAMADA'"
+                    [class.pi-calendar]="activity.tipoActividad !== 'LLAMADA'"
+                  ></i>
+                  <span
+                    ><strong>{{ activity.asunto }}</strong
+                    ><small>{{
+                      activity.fechaProgramada | date: 'dd MMM yyyy · HH:mm'
+                    }}</small></span
+                  >
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <app-whatsapp-quick-replies
+          [canSend]="serviceWindowOpen()"
+          (useReply)="useQuickReply($event)"
+          (sendReply)="sendQuickReply($event)"
+        />
+
+        <section id="whatsapp-saved-notes" class="detail-card note-card">
+          <header>
+            <span
+              ><strong>Notas internas</strong><small>{{ selectedNotes().length }}/3</small></span
+            >
+            <i class="pi pi-lock" title="Solo visible para tu equipo"></i>
+          </header>
+
+          <div class="saved-note-list">
+            @if (selectedNotes().length === 0) {
+              <p class="saved-note-empty">
+                Guarda informacion interna especifica de este contacto.
+              </p>
+            } @else {
+              @for (note of selectedNotes(); track note.id) {
+                <article
+                  class="saved-note"
+                  [class.active]="selectedNoteId() === note.id"
+                  (click)="selectInternalNote(note)"
+                >
+                  <div>
+                    <strong>Nota {{ note.slot }}</strong>
+                    <span>
+                      <button
+                        type="button"
+                        title="Usar como respuesta"
+                        (click)="useNoteAsReply(note)"
+                      >
+                        <i class="pi pi-reply"></i>
+                      </button>
+                      <button
+                        type="button"
+                        title="Eliminar nota"
+                        (click)="deleteInternalNote(note, $event)"
+                      >
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </span>
+                  </div>
+                  <p>{{ note.contenido }}</p>
+                </article>
+              }
+            }
+          </div>
+
+          <div class="note-editor">
+            <label for="internal-note">
+              {{ selectedNoteId() ? 'Editar nota seleccionada' : 'Nueva nota interna' }}
+            </label>
+            <textarea
+              id="internal-note"
+              rows="4"
+              maxlength="4000"
+              placeholder="Información visible solo para tu equipo..."
+              [ngModel]="noteDraft()"
+              (ngModelChange)="noteDraft.set($event)"
+            ></textarea>
+            <footer>
+              <button
+                type="button"
+                class="note-new-button"
+                [disabled]="savingAction() || selectedNotes().length >= 3"
+                (click)="newInternalNote()"
+              >
+                <i class="pi pi-plus"></i> Nueva
+              </button>
+              <button
+                type="button"
+                class="note-save-button"
+                [disabled]="savingAction() || !noteDraft().trim()"
+                (click)="saveInternalNote()"
+              >
+                @if (savingAction()) {
+                  <i class="pi pi-spin pi-spinner"></i>
+                } @else {
+                  <i class="pi pi-save"></i>
+                }
+                Guardar
+              </button>
+            </footer>
+          </div>
+        </section>
+
+        <section
+          class="detail-card integration-status"
+          [class.integration-status--connected]="connectionStatus()?.conectado"
+        >
+          <span><i class="pi pi-shield"></i></span>
+          <div>
+            <strong>{{
+              connectionStatus()?.conectado ? 'Conectado con Meta' : 'Conexión con Meta pendiente'
+            }}</strong>
+            <small>{{
+              connectionStatus()?.message ||
+                'No se pudo comprobar el estado real de la integracion.'
+            }}</small>
+          </div>
+        </section>
+      }
+    </aside>
+  </div>
+</section>

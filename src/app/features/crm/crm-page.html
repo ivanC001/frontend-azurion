@@ -1,0 +1,2111 @@
+<section class="admin-page crm-page" [class.crm-page--executive]="activeTab() === 'dashboard'">
+  @if (
+    activeTab() !== 'embudo' && activeTab() !== 'seguimientoPagos' && activeTab() !== 'dashboard'
+  ) {
+    <header class="page-header crm-header">
+      <div>
+        <p class="page-eyebrow">{{ pageMeta().eyebrow }}</p>
+        <h1>{{ pageMeta().title }}</h1>
+        <p>{{ pageMeta().description }}</p>
+      </div>
+      <div class="header-actions crm-header-actions">
+        @if (activeTab() !== 'dashboard' && !isCrmConfigTab()) {
+          <label class="search-box crm-header-search">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              name="crmSearch"
+              [ngModel]="query()"
+              (ngModelChange)="updateCrmQuery($event)"
+              [placeholder]="
+                activeTab() === 'seguimiento'
+                  ? 'Buscar prospectos...'
+                  : activeTab() === 'captacion'
+                    ? 'Buscar lead...'
+                    : activeTab() === 'oportunidades'
+                      ? 'Buscar oportunidades...'
+                      : activeTab() === 'clientes'
+                        ? 'Buscar clientes...'
+                        : activeTab() === 'seguimientoPagos'
+                          ? 'Buscar cliente, producto o deuda...'
+                          : 'Buscar nombre, documento, estado...'
+              "
+            />
+          </label>
+        }
+        @if (activeTab() === 'seguimiento') {
+          <div class="followup-header-actions">
+            <button
+              type="button"
+              class="az-light-action"
+              [class.active]="showFollowUpFilters()"
+              (click)="showFollowUpFilters.set(!showFollowUpFilters())"
+            >
+              <i class="pi pi-filter"></i><span>Filtros</span
+              ><i [class]="showFollowUpFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+            </button>
+            <button type="button" class="az-light-action" (click)="exportFollowUpCsv()">
+              <i class="pi pi-download"></i><span>Exportar</span>
+            </button>
+            <button
+              type="button"
+              class="az-primary-action followup-new-activity-action"
+              (click)="openCreateActivity()"
+            >
+              <i class="pi pi-plus"></i><span>Nueva actividad</span>
+            </button>
+          </div>
+        } @else if (activeTab() === 'oportunidades') {
+          <div class="followup-header-actions">
+            <button
+              type="button"
+              class="az-light-action"
+              [class.active]="showOpportunityFilters()"
+              (click)="showOpportunityFilters.set(!showOpportunityFilters())"
+            >
+              <i class="pi pi-filter"></i><span>Filtros</span
+              ><i
+                [class]="showOpportunityFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+              ></i>
+            </button>
+            <button type="button" class="az-light-action" (click)="exportOpportunitiesCsv()">
+              <i class="pi pi-download"></i><span>Exportar</span>
+            </button>
+            <button
+              type="button"
+              class="az-primary-action followup-new-activity-action"
+              (click)="openCreateOpportunity()"
+            >
+              <i class="pi pi-plus"></i><span>Nueva oportunidad</span>
+            </button>
+          </div>
+        } @else if (activeTab() === 'clientes') {
+          <div class="followup-header-actions">
+            <button
+              type="button"
+              class="az-light-action"
+              [class.active]="showClientFilters()"
+              (click)="showClientFilters.set(!showClientFilters())"
+            >
+              <i class="pi pi-filter"></i><span>Filtros</span
+              ><i [class]="showClientFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+            </button>
+            <button type="button" class="az-light-action" (click)="exportClientsCsv()">
+              <i class="pi pi-download"></i><span>Exportar</span>
+            </button>
+          </div>
+        } @else if (activeTab() === 'seguimientoPagos') {
+          <div class="followup-header-actions">
+            <button type="button" class="az-light-action" (click)="exportClientsCsv()">
+              <i class="pi pi-download"></i><span>Exportar clientes</span>
+            </button>
+          </div>
+        } @else if (activeTab() !== 'dashboard' && !isCrmConfigTab()) {
+          @if (activeTab() === 'captacion') {
+            <div class="followup-header-actions prospect-header-actions">
+              <button
+                type="button"
+                class="az-light-action"
+                [class.active]="showProspectFilters()"
+                (click)="showProspectFilters.set(!showProspectFilters())"
+              >
+                <i class="pi pi-filter"></i><span>Filtros</span
+                ><i [class]="showProspectFilters() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+              </button>
+              @if (canManageCrmCatalog()) {
+                <button
+                  type="button"
+                  class="az-icon-action"
+                  title="Productos CRM"
+                  aria-label="Productos CRM"
+                  [class.active]="activeTab() === 'catalogo'"
+                  (click)="setTab('catalogo')"
+                >
+                  <i class="pi pi-tags"></i>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="crm-funnel-actions">
+              <button
+                type="button"
+                title="Nuevo prospecto"
+                aria-label="Nuevo prospecto"
+                (click)="openCreateProspect()"
+              >
+                <i class="pi pi-user-plus"></i>
+              </button>
+              @if (canManageCrmCatalog()) {
+                <button
+                  type="button"
+                  title="Productos CRM"
+                  aria-label="Productos CRM"
+                  [class.active]="activeTab() === 'catalogo'"
+                  (click)="setTab('catalogo')"
+                >
+                  <i class="pi pi-tags"></i>
+                </button>
+              }
+            </div>
+          }
+        }
+        @if (activeTab() === 'captacion') {
+          <button
+            type="button"
+            class="az-primary-action followup-new-activity-action"
+            (click)="openCreateProspect()"
+          >
+            <i class="pi pi-plus"></i>
+            <span>Nuevo prospecto</span>
+          </button>
+        } @else if (
+          activeTab() !== 'seguimiento' &&
+          activeTab() !== 'oportunidades' &&
+          activeTab() !== 'clientes'
+        ) {
+          <p-button
+            label="Actualizar"
+            icon="pi pi-refresh"
+            styleClass="az-secondary"
+            (onClick)="load()"
+          />
+        }
+      </div>
+    </header>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">{{ errorMessage() }}</div>
+  }
+  @if (successMessage()) {
+    <div class="alert alert--success">{{ successMessage() }}</div>
+  }
+  <section class="crm-shell" [class.crm-shell--pipeline]="activeTab() === 'embudo'">
+    @if (isCommercialStageTab() && activeTab() !== 'seguimientoPagos') {
+      <section class="followup-stage-strip crm-stage-strip" aria-label="Proceso comercial">
+        @for (stage of followUpStageCards(); track stage.tab) {
+          <button
+            type="button"
+            [class]="'followup-stage-card followup-stage-card--' + stage.tone"
+            [class.active]="activeTab() === stage.tab"
+            (click)="setTab(stage.tab)"
+          >
+            <span class="followup-stage-card__icon"><i [class]="stage.icon"></i></span>
+            <span class="followup-stage-card__copy">
+              <strong>{{ stage.label }}</strong>
+              <em>{{ stage.detail }}</em>
+            </span>
+            <b>{{ stage.count }}</b>
+          </button>
+        }
+      </section>
+    }
+
+    @if (
+      activeTab() !== 'dashboard' &&
+      activeTab() !== 'embudo' &&
+      activeTab() !== 'catalogo' &&
+      activeTab() !== 'seguimientoPagos' &&
+      !isCommercialStageTab() &&
+      !isCrmConfigTab()
+    ) {
+      <nav class="crm-section-nav" aria-label="Submódulos CRM">
+        @for (item of sectionTabs(); track item.tab) {
+          <button
+            type="button"
+            [class.active]="activeTab() === item.tab"
+            (click)="setTab(item.tab)"
+          >
+            <i [class]="item.icon"></i>
+            <span>
+              <strong>{{ item.label }}</strong>
+              <em>{{ item.detail }}</em>
+            </span>
+            <b>{{ item.count }}</b>
+          </button>
+        }
+      </nav>
+    }
+
+    <app-prospect-distribution-modal
+      [visible]="prospectDistributionDialogOpen()"
+      [leadCount]="distributionCandidateLeads().length"
+      [selectedProspectCount]="selectedProspectCount()"
+      [sellers]="crmSellerUsers()"
+      [selectedSellerIds]="prospectDistributionSelectedSellerIds()"
+      [preview]="prospectDistributionPreview()"
+      [saving]="saving()"
+      [mode]="prospectDistributionMode()"
+      [automaticEnabled]="leadAssignmentConfig().automatico"
+      (closed)="prospectDistributionDialogOpen.set(false)"
+      (modeChange)="prospectDistributionMode.set($event)"
+      (sellerToggled)="updateDistributionSellerSelection($event)"
+      (distributeRequested)="distributeProspects()"
+      (automaticConfigurationRequested)="saveAutomaticLeadAssignment($event)"
+    />
+
+    <app-delete-prospect-modal
+      [visible]="!!prospectDeleteTarget()"
+      [prospect]="prospectDeleteTarget()"
+      [deleting]="prospectDeleting()"
+      (closed)="prospectDeleteTarget.set(null)"
+      (confirmed)="deleteProspect()"
+    />
+
+    <ng-template #prospectActions let-item>
+      <div class="prospect-modern-actions prospect-modern-actions--template">
+        <button
+          type="button"
+          class="prospect-edit-action"
+          title="Editar prospecto"
+          aria-label="Editar prospecto"
+          (click)="openEditProspect(item)"
+        >
+          <i class="pi pi-pencil"></i>
+        </button>
+        <button
+          type="button"
+          class="prospect-follow-action"
+          title="Pasar a seguimiento"
+          aria-label="Pasar a seguimiento"
+          [disabled]="!prospectCanMoveToFollowUp(item) || actionId() === item.id"
+          (click)="moveProspectToFollowUp(item)"
+        >
+          <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+    </ng-template>
+
+    <ng-template #opportunityActions let-item>
+      <div class="row-actions">
+        <button
+          type="button"
+          pButton
+          class="p-button-text p-button-rounded"
+          icon="pi pi-pencil"
+          title="Editar oportunidad"
+          aria-label="Editar oportunidad"
+          (click)="openEditOpportunity(item)"
+        ></button>
+        @if (opportunityView() !== 'GANADAS') {
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded"
+            icon="pi pi-calendar-plus"
+            title="Agendar seguimiento"
+            aria-label="Agendar seguimiento"
+            (click)="openCreateActivity(item)"
+          ></button>
+        }
+        @if (canMoveCrmOpportunities() && opportunityView() === 'NEGOCIACION') {
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded"
+            icon="pi pi-angle-left"
+            title="Retroceder etapa"
+            aria-label="Retroceder etapa"
+            [disabled]="actionId() === item.id"
+            (click)="moveOpportunityStage($event, item, -1)"
+          ></button>
+        }
+        @if (canMoveCrmOpportunities() && opportunityView() !== 'GANADAS') {
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded transition-action"
+            icon="pi pi-angle-right"
+            title="Avanzar etapa"
+            aria-label="Avanzar etapa"
+            [disabled]="actionId() === item.id"
+            (click)="moveOpportunityStage($event, item, 1)"
+          ></button>
+        }
+        @if (canCreateCrmQuotes() && opportunityView() !== 'GANADAS') {
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded"
+            icon="pi pi-file-edit"
+            title="Cotizar oportunidad"
+            aria-label="Cotizar oportunidad"
+            [disabled]="item.estado === 'PERDIDA'"
+            (click)="openQuoteDialog(item)"
+          ></button>
+        }
+        @if (canCloseCrmOpportunities() && opportunityView() !== 'GANADAS') {
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded success-action"
+            icon="pi pi-check-circle"
+            title="Marcar ganada"
+            aria-label="Marcar ganada"
+            [loading]="actionId() === item.id"
+            (click)="markWon(item)"
+          ></button>
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-rounded danger-action"
+            icon="pi pi-times-circle"
+            title="Marcar pérdida"
+            aria-label="Marcar pérdida"
+            [loading]="actionId() === item.id"
+            (click)="markLost(item)"
+          ></button>
+        }
+      </div>
+    </ng-template>
+
+    @if (activeTab() === 'dashboard') {
+      <app-crm-dashboard-page
+        [now]="dashboardNow"
+        [kpis]="executiveKpis()"
+        [pipelineRows]="executivePipelineRows()"
+        [pipelineTotal]="executivePipelineTotalLabel()"
+        [revenueChart]="executiveRevenueChart()"
+        [topDeals]="executiveTopDeals()"
+        [leadSources]="executiveLeadSources()"
+        [sellerRankings]="executiveSellerRankings()"
+        [alerts]="executiveAlerts()"
+        [goalSummary]="executiveGoalSummary()"
+        [canManageGoals]="canManageCrmGoals()"
+        (exportRequested)="exportOpportunitiesCsv()"
+        (configureGoalsRequested)="openCrmGoals()"
+        (createOpportunityRequested)="openCreateOpportunity()"
+        (pipelineRequested)="setTab('embudo')"
+        (openDealRequested)="openOpportunityDetailById($event)"
+        (tabRequested)="setTab($any($event))"
+      />
+    }
+
+    @if (activeTab() === 'captacion') {
+      <app-prospects-page
+        [canAssign]="canAssignCrmProspects()"
+        [canDelete]="canDeleteCrmProspects()"
+        [loading]="loading()"
+        [actionId]="actionId()"
+        [summaryCards]="prospectSummaryCards()"
+        [rows]="prospectPageRows()"
+        [filtersVisible]="showProspectFilters()"
+        [query]="query()"
+        [filters]="prospectFilterState()"
+        [originOptions]="prospectOrigenFilterOptions()"
+        [campaignOptions]="prospectCampaniaFilterOptions()"
+        [advisorOptions]="prospectAsesorFilterOptions()"
+        [allPageSelected]="arePagedProspectsSelected()"
+        [pageRangeLabel]="prospectPageRangeLabel()"
+        [currentPage]="prospectPage()"
+        [totalPages]="prospectTotalPages()"
+        (distributeRequested)="openProspectDistributionDialog()"
+        (refreshRequested)="load()"
+        (filtersVisibleChange)="showProspectFilters.set($event)"
+        (queryChange)="updateCrmQuery($event)"
+        (filtersChange)="updateProspectFilters($event)"
+        (filtersReset)="resetProspectFilters()"
+        (filtersApplied)="applyProspectFilters(); showProspectFilters.set(false)"
+        (pageSelectionChange)="setPagedProspectSelection($event)"
+        (prospectSelectionChange)="setProspectSelection($event.id, $event.selected)"
+        (editRequested)="openEditProspect($event)"
+        (moveToFollowUpRequested)="moveProspectToFollowUp($event)"
+        (deleteRequested)="openDeleteProspect($event)"
+        (pageChange)="prospectPage.set($event)"
+      />
+    }
+
+    @if (activeTab() === 'catalogo') {
+      <section class="catalog-info-strip">
+        <article>
+          <i class="pi pi-link"></i>
+          <div>
+            <strong>ID + snapshot</strong>
+            <span
+              >La landing envia el ID del item y los datos visibles al cliente para congelar el
+              contexto.</span
+            >
+          </div>
+        </article>
+        <article>
+          <i class="pi pi-sitemap"></i>
+          <div>
+            <strong>Separado del ERP</strong>
+            <span
+              >Este catálogo no descuenta stock; sirve para captación, oportunidades y reportes
+              CRM.</span
+            >
+          </div>
+        </article>
+        <article>
+          <i class="pi pi-shield"></i>
+          <div>
+            <strong>Acceso publico protegido</strong>
+            <span
+              >El enlace usa tenant, ID y token. Solo las ofertas activas y publicadas pueden captar
+              leads.</span
+            >
+          </div>
+        </article>
+      </section>
+
+      <section class="catalog-metrics" aria-label="Resumen del catalogo CRM">
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--blue"
+            ><i class="pi pi-tags"></i
+          ></span>
+          <div>
+            <small>Total ofertas</small><strong>{{ catalogStats().total }}</strong>
+          </div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--green"
+            ><i class="pi pi-globe"></i
+          ></span>
+          <div>
+            <small>Publicadas</small><strong>{{ catalogStats().public }}</strong>
+          </div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--violet"
+            ><i class="pi pi-user-plus"></i
+          ></span>
+          <div>
+            <small>Leads captados</small><strong>{{ catalogStats().leads }}</strong>
+          </div>
+        </article>
+        <article>
+          <span class="catalog-metric-icon catalog-metric-icon--amber"
+            ><i class="pi pi-chart-line"></i
+          ></span>
+          <div>
+            <small>Oportunidades</small><strong>{{ catalogStats().opportunities }}</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="table-panel flat-panel catalog-panel">
+        <div class="table-head catalog-table-head">
+          <div>
+            <h2>Productos CRM</h2>
+            <p>
+              Ofertas que pueden venir desde landings: cursos, autos, inmuebles, seguros, software,
+              servicios y mas.
+            </p>
+          </div>
+          @if (canManageCrmCatalog()) {
+            <p-button
+              label="Nuevo producto CRM"
+              icon="pi pi-plus"
+              size="small"
+              (onClick)="openCreateCatalogo()"
+            />
+          }
+        </div>
+        <p-table
+          [value]="filteredCatalogo()"
+          [loading]="loading()"
+          [paginator]="filteredCatalogo().length > 10"
+          [rows]="10"
+          responsiveLayout="scroll"
+          styleClass="crm-table catalog-crm-table"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="catalog-col-offer">Oferta</th>
+              <th class="catalog-col-type">Categoria</th>
+              <th class="catalog-col-price">Precio ref.</th>
+              <th class="catalog-col-usage">Uso CRM</th>
+              <th class="catalog-col-publication">Publicacion</th>
+              <th class="catalog-col-access">Enlace seguro</th>
+              <th class="catalog-col-status">Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td class="catalog-offer-cell">
+                <div class="catalog-offer-main">
+                  <span class="catalog-product-icon">
+                    <i [class]="opportunityTypeMeta(item.tipoItem).icon"></i>
+                  </span>
+                  <div>
+                    <strong>{{ item.nombre }}</strong>
+                    <span>{{ item.descripcion || 'Sin descripcion comercial' }}</span>
+                  </div>
+                </div>
+                <div class="catalog-attribute-chips">
+                  @for (attribute of catalogAttributeBadges(item); track attribute) {
+                    <span>{{ attribute }}</span>
+                  } @empty {
+                    <span class="catalog-attribute-empty">Sin atributos adicionales</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="catalog-type-cell">
+                  <i [class]="opportunityTypeMeta(item.tipoItem).icon"></i>
+                  <div>
+                    <strong>{{ opportunityTypeLabel(item.tipoItem) }}</strong>
+                    <small>{{ item.tipoItem }}</small>
+                  </div>
+                </div>
+              </td>
+              <td class="money-cell">
+                <i class="pi pi-wallet"></i>
+                <strong
+                  >{{ catalogCurrencyPrefix(item.moneda) }}
+                  {{ item.precioReferencial | number: '1.2-2' }}</strong
+                >
+                <small>Valor referencial</small>
+              </td>
+              <td class="catalog-usage-cell">
+                <div class="catalog-usage-counts">
+                  <span title="Prospectos asociados">
+                    <i class="pi pi-users"></i>
+                    <strong>{{ item.prospectosCount || 0 }}</strong>
+                    <small>Leads</small>
+                  </span>
+                  <span title="Oportunidades generadas">
+                    <i class="pi pi-chart-line"></i>
+                    <strong>{{ item.oportunidadesCount || 0 }}</strong>
+                    <small>Oportunidades</small>
+                  </span>
+                </div>
+                <div class="catalog-conversion">
+                  <span><span [style.width.%]="catalogConversionRate(item)"></span></span>
+                  <small>{{ catalogConversionRate(item) }}% conversion a oportunidad</small>
+                </div>
+              </td>
+              <td class="catalog-publication-cell">
+                <strong
+                  [class.catalog-public-ready]="catalogIsPublic(item)"
+                  [class.catalog-public-off]="!catalogIsPublic(item)"
+                >
+                  <i
+                    class="pi"
+                    [class.pi-globe]="catalogIsPublic(item)"
+                    [class.pi-eye-slash]="!catalogIsPublic(item)"
+                  ></i>
+                  {{ catalogIsPublic(item) ? 'Publicada' : 'No publicada' }}
+                </strong>
+                <span><i class="pi pi-link"></i> /{{ item.landingSlug || 'sin-slug' }}</span>
+                <span>
+                  <i class="pi pi-sitemap"></i>
+                  {{ item.landingsCount || 0 }}
+                  {{
+                    (item.landingsCount || 0) === 1
+                      ? 'landing configurada'
+                      : 'landings configuradas'
+                  }}
+                </span>
+              </td>
+              <td class="catalog-access-cell">
+                <strong><i class="pi pi-lock"></i> ID #{{ item.id }} · token protegido</strong>
+                <span class="catalog-url-preview" [title]="catalogLandingAbsoluteUrl(item)">
+                  {{ catalogLandingUrl(item) }}
+                </span>
+                <small>{{ catalogTokenMask(item) }}</small>
+              </td>
+              <td class="catalog-status-cell">
+                <p-tag [value]="humanize(item.estado)" [severity]="statusSeverity(item.estado)" />
+                <small>
+                  <i class="pi pi-clock"></i>
+                  {{ (item.updatedAt | date: 'dd/MM/yyyy HH:mm') || 'Sin fecha' }}
+                </small>
+              </td>
+              <td>
+                <div class="row-actions catalog-row-actions">
+                  <button
+                    type="button"
+                    class="catalog-row-action catalog-row-action--preview"
+                    title="Abrir vista publica"
+                    aria-label="Abrir vista publica"
+                    [disabled]="!catalogIsPublic(item)"
+                    (click)="openCatalogLandingPreview(item)"
+                  >
+                    <i class="pi pi-external-link"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="catalog-row-action catalog-row-action--copy"
+                    title="Copiar enlace seguro"
+                    aria-label="Copiar enlace seguro"
+                    [disabled]="!catalogIsPublic(item)"
+                    (click)="copyCatalogLandingUrl(item)"
+                  >
+                    <i class="pi pi-copy"></i>
+                  </button>
+                  @if (canManageCrmCatalog()) {
+                    <button
+                      type="button"
+                      class="catalog-row-action catalog-row-action--edit"
+                      title="Editar oferta"
+                      aria-label="Editar oferta"
+                      (click)="openEditCatalogo(item)"
+                    >
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="8" class="empty-cell">Aún no hay ofertas comerciales CRM.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+
+    @if (isCrmConfigTab()) {
+      <section class="crm-admin-panel">
+        <article class="crm-admin-hero">
+          <div>
+            <span>{{ pageMeta().eyebrow }}</span>
+            <h2>{{ pageMeta().title }}</h2>
+            <p>{{ pageMeta().description }}</p>
+          </div>
+          <div class="crm-admin-hero__actions">
+            @if (
+              (activeTab() === 'administracion' || activeTab() === 'administracionGeneral') &&
+              canManageCrmCatalog()
+            ) {
+              <p-button
+                label="Nuevo producto CRM"
+                icon="pi pi-plus"
+                (onClick)="openCreateCatalogo()"
+              />
+            }
+          </div>
+        </article>
+
+        @if (activeTab() === 'administracion' || activeTab() === 'administracionGeneral') {
+          <section class="crm-admin-grid">
+            <article>
+              <i class="pi pi-tags"></i>
+              <span>Productos CRM</span>
+              <strong>{{ catalogoItems().length }}</strong>
+              <p>
+                Cursos, vehiculos, inmuebles, servicios o cualquier oferta que recibira leads desde
+                landing.
+              </p>
+              <button type="button" (click)="setTab('catalogo')">Administrar productos</button>
+            </article>
+            <article>
+              <i class="pi pi-chart-line"></i>
+              <span>Embudo comercial</span>
+              <strong>{{ etapas().length }}</strong>
+              <p>
+                Etapas configuradas para mover oportunidades desde prospecto calificado hasta ganado
+                o perdido.
+              </p>
+              <button type="button" (click)="setTab('embudo')">Ver embudo</button>
+            </article>
+            <article>
+              <i class="pi pi-shield"></i>
+              <span>Roles CRM</span>
+              <strong>6</strong>
+              <p>
+                CRM_ADMIN, CRM_GERENTE, CRM_SUPERVISOR, CRM_VENDEDOR, CRM_MARKETING y
+                CRM_CALLCENTER.
+              </p>
+              <button type="button" routerLink="/admin/seguridad-empresa">Ver permisos</button>
+            </article>
+            <article>
+              <i class="pi pi-dollar"></i>
+              <span>Monedas</span>
+              <strong>{{ crmCurrencyConfigs().length }}</strong>
+              <p>
+                Define dólar, euro, tipo de cambio y margen de conversión para cotizaciones CRM.
+              </p>
+              <button type="button" (click)="setTab('administracionMonedas')">
+                Configurar monedas
+              </button>
+            </article>
+            @if (canManageCrmConfig()) {
+              <article class="crm-admin-config-card">
+                <i class="pi pi-calendar-clock"></i>
+                <span>Cierre automatico</span>
+                <strong>{{ crmLocalConfig().cierreEstimadoDias }} dias</strong>
+                <p>
+                  Tiempo por defecto para calcular el cierre estimado al crear una oportunidad desde
+                  prospecto.
+                </p>
+                <div class="crm-admin-config-control">
+                  <input
+                    pInputText
+                    type="number"
+                    min="1"
+                    max="365"
+                    [ngModel]="crmLocalConfig().cierreEstimadoDias"
+                    (ngModelChange)="updateCrmCloseDays($event)"
+                    name="crmCloseDays"
+                  />
+                  <button type="button" (click)="saveCrmLocalConfig()">Guardar</button>
+                </div>
+              </article>
+            }
+          </section>
+        }
+
+        @if (activeTab() === 'administracionCanales') {
+          <section class="crm-integration-admin-card">
+            <header>
+              <div>
+                <span>Captación e integraciones</span>
+                <h3>Tokens por canal</h3>
+                <p>
+                  Configura las credenciales que usan landings, WhatsApp, Instagram y Facebook para
+                  enviar leads al CRM.
+                </p>
+              </div>
+              <strong>{{ crmIntegraciones().length }} canal(es)</strong>
+            </header>
+
+            @if (crmIntegraciones().length) {
+              <nav class="crm-integration-channels" aria-label="Canales de captación">
+                @for (integration of crmIntegraciones(); track integration.canal) {
+                  <button
+                    type="button"
+                    [class]="
+                      'crm-channel-button crm-channel-button--' + integration.canal.toLowerCase()
+                    "
+                    [class.crm-channel-button--selected]="
+                      selectedCrmIntegration().canal === integration.canal
+                    "
+                    [attr.aria-pressed]="selectedCrmIntegration().canal === integration.canal"
+                    (click)="selectedCrmIntegrationCanal.set(integration.canal)"
+                  >
+                    <span class="crm-channel-button__icon"
+                      ><i [class]="crmIntegrationIcon(integration.canal)"></i
+                    ></span>
+                    <span class="crm-channel-button__copy">
+                      <strong>{{ integration.nombre }}</strong>
+                      <small>{{ crmIntegrationDescription(integration.canal) }}</small>
+                    </span>
+                    <em [class.active]="integration.activo"
+                      ><i class="pi pi-circle-fill"></i
+                      >{{ integration.activo ? 'Activo' : 'Inactivo' }}</em
+                    >
+                  </button>
+                }
+              </nav>
+
+              @if (selectedCrmIntegration(); as integration) {
+                <article
+                  [class]="
+                    'crm-integration-editor crm-integration-editor--' +
+                    integration.canal.toLowerCase()
+                  "
+                >
+                  <header class="crm-integration-editor__head">
+                    <span class="crm-integration-editor__icon"
+                      ><i [class]="crmIntegrationIcon(integration.canal)"></i
+                    ></span>
+                    <div>
+                      <small>Configurar canal</small>
+                      <input
+                        pInputText
+                        [name]="'crmIntegrationName' + integration.canal"
+                        [ngModel]="integration.nombre"
+                        (ngModelChange)="
+                          updateCrmIntegrationField(integration.canal, 'nombre', $event)
+                        "
+                        [disabled]="!canManageCrmConfig()"
+                      />
+                      <p>{{ crmIntegrationDescription(integration.canal) }}</p>
+                    </div>
+                    <label class="crm-integration-switch crm-integration-switch--editor">
+                      <input
+                        type="checkbox"
+                        [name]="'crmIntegrationActive' + integration.canal"
+                        [ngModel]="integration.activo"
+                        (ngModelChange)="toggleCrmIntegration(integration.canal, $event)"
+                        [disabled]="!canManageCrmConfig()"
+                      />
+                      <b>{{ integration.activo ? 'Canal activo' : 'Canal inactivo' }}</b>
+                    </label>
+                  </header>
+
+                  @if (integration.canal === 'WEB') {
+                    <div class="crm-landing-channel">
+                      <div class="crm-landing-channel__summary">
+                        <i class="pi pi-inbox"></i>
+                        <div>
+                          <strong>Recepcion segura de formularios web</strong>
+                          <p>
+                            Activa el canal y crea una clave independiente para cada landing que
+                            envia leads al CRM.
+                          </p>
+                        </div>
+                      </div>
+                      <app-landing-channel-config
+                        [canManage]="canManageCrmConfig()"
+                        [catalogItems]="catalogoItems()"
+                        [responsables]="responsableOptions()"
+                      />
+                    </div>
+                  } @else if (integration.canal === 'WHATSAPP') {
+                    <div
+                      class="crm-integration-fields crm-integration-fields--editor crm-whatsapp-fields"
+                    >
+                      <label
+                        >Token de acceso de Meta
+                        <input
+                          pInputText
+                          type="password"
+                          autocomplete="new-password"
+                          [name]="'crmIntegrationAccess' + integration.canal"
+                          [ngModel]="integration.accessToken || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'accessToken', $event)
+                          "
+                          [placeholder]="
+                            integration.accessTokenConfigured
+                              ? 'Configurado; escribe solo para reemplazarlo'
+                              : 'Pega el token generado en Meta'
+                          "
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                        <small
+                          >Meta genera este token. Azurion solo lo guarda y lo valida; no puede
+                          emitirlo.</small
+                        >
+                      </label>
+                      <label
+                        >App ID
+                        <input
+                          pInputText
+                          [name]="'crmIntegrationApp' + integration.canal"
+                          [ngModel]="integration.appId || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'appId', $event)
+                          "
+                          placeholder="ID de la app de Meta"
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >App secret
+                        <input
+                          pInputText
+                          type="password"
+                          autocomplete="new-password"
+                          [name]="'crmIntegrationAppSecret' + integration.canal"
+                          [ngModel]="integration.appSecret || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'appSecret', $event)
+                          "
+                          [placeholder]="
+                            integration.appSecretConfigured
+                              ? 'Configurado; escribe solo para reemplazarlo'
+                              : 'Secreto de la app de Meta'
+                          "
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >WABA ID
+                        <input
+                          pInputText
+                          [name]="'crmIntegrationWaba' + integration.canal"
+                          [ngModel]="integration.wabaId || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'wabaId', $event)
+                          "
+                          placeholder="ID de la cuenta de WhatsApp Business"
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >Phone number ID
+                        <input
+                          pInputText
+                          [name]="'crmIntegrationPhone' + integration.canal"
+                          [ngModel]="integration.phoneNumberId || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)
+                          "
+                          placeholder="ID del numero en WhatsApp Manager"
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+
+                      <section class="wide-field crm-whatsapp-secret">
+                        <header>
+                          <div>
+                            <strong>Verify token</strong>
+                            <small
+                              >Azurion lo genera de forma segura. Debes copiar exactamente el mismo
+                              valor en Meta.</small
+                            >
+                          </div>
+                          <button
+                            type="button"
+                            [disabled]="!canManageCrmConfig() || whatsappTokenGenerating()"
+                            (click)="generateWhatsappVerifyToken(integration)"
+                          >
+                            <i
+                              [class]="
+                                whatsappTokenGenerating() ? 'pi pi-spin pi-spinner' : 'pi pi-key'
+                              "
+                            ></i>
+                            {{
+                              whatsappTokenGenerating()
+                                ? 'Generando...'
+                                : integration.verifyTokenConfigured
+                                  ? 'Regenerar token'
+                                  : 'Generar token'
+                            }}
+                          </button>
+                        </header>
+                        <div class="crm-copy-row">
+                          <input
+                            pInputText
+                            readonly
+                            [value]="whatsappGeneratedVerifyToken() || ''"
+                            [placeholder]="
+                              integration.verifyTokenConfigured
+                                ? 'Configurado. Regenera para obtener un valor nuevo.'
+                                : 'Genera el token para copiarlo en Meta'
+                            "
+                          />
+                          <button
+                            type="button"
+                            title="Copiar verify token"
+                            [disabled]="!whatsappGeneratedVerifyToken()"
+                            (click)="
+                              copyWhatsappValue(whatsappGeneratedVerifyToken(), 'Verify token')
+                            "
+                          >
+                            <i class="pi pi-copy"></i> Copiar
+                          </button>
+                        </div>
+                        @if (whatsappGeneratedVerifyToken()) {
+                          <p>
+                            <i class="pi pi-exclamation-circle"></i> Cópialo ahora: por seguridad no
+                            volverá a mostrarse al recargar la página.
+                          </p>
+                        }
+                      </section>
+
+                      <section class="wide-field crm-whatsapp-callback">
+                        <header>
+                          <div>
+                            <strong>Callback URL para registrar en Meta</strong>
+                            <small>Esta dirección se calcula automáticamente y no se edita.</small>
+                          </div>
+                        </header>
+                        <div class="crm-copy-row">
+                          <input pInputText readonly [value]="whatsappWebhookUrl()" />
+                          <button
+                            type="button"
+                            (click)="copyWhatsappValue(whatsappWebhookUrl(), 'Callback URL')"
+                          >
+                            <i class="pi pi-copy"></i> Copiar
+                          </button>
+                        </div>
+                        @if (!whatsappWebhookIsPublicHttps()) {
+                          <p class="crm-whatsapp-warning">
+                            <i class="pi pi-exclamation-triangle"></i> Meta exige una URL publica
+                            con HTTPS. El dominio actual no cumple esa condicion.
+                          </p>
+                        }
+                      </section>
+
+                      <section class="wide-field crm-whatsapp-status">
+                        @if (whatsappConnectionStatus(); as status) {
+                          <div class="crm-whatsapp-status__checks">
+                            <span [class.ok]="status.accesoMetaValido"
+                              ><i
+                                [class]="
+                                  status.accesoMetaValido
+                                    ? 'pi pi-check-circle'
+                                    : 'pi pi-times-circle'
+                                "
+                              ></i>
+                              Acceso a Meta</span
+                            >
+                            <span [class.ok]="status.wabaSuscrita"
+                              ><i
+                                [class]="
+                                  status.wabaSuscrita ? 'pi pi-check-circle' : 'pi pi-times-circle'
+                                "
+                              ></i>
+                              App suscrita a WABA</span
+                            >
+                            <span [class.ok]="status.webhookVerificado"
+                              ><i
+                                [class]="
+                                  status.webhookVerificado
+                                    ? 'pi pi-check-circle'
+                                    : 'pi pi-times-circle'
+                                "
+                              ></i>
+                              Webhook verificado</span
+                            >
+                            <span [class.ok]="status.lastWebhookAt"
+                              ><i
+                                [class]="
+                                  status.lastWebhookAt ? 'pi pi-check-circle' : 'pi pi-clock'
+                                "
+                              ></i>
+                              Eventos recibidos</span
+                            >
+                          </div>
+                          <p>
+                            {{
+                              status.message ||
+                                (status.conectado
+                                  ? 'WhatsApp está conectado.'
+                                  : 'La conexión aún está incompleta.')
+                            }}
+                          </p>
+                          @if (status.displayPhoneNumber || status.verifiedName) {
+                            <small
+                              >{{ status.verifiedName || 'WhatsApp Business' }} ·
+                              {{ status.displayPhoneNumber || 'Numero sin mostrar' }}
+                              @if (status.qualityRating) {
+                                · Calidad: {{ status.qualityRating }}
+                              }
+                            </small>
+                          }
+                          @if (status.lastWebhookAt) {
+                            <small
+                              >Ultimo webhook: {{ status.lastWebhookAt | date: 'dd/MM/yyyy HH:mm' }}
+                              @if (status.lastInboundMessageAt) {
+                                · Ultimo mensaje:
+                                {{ status.lastInboundMessageAt | date: 'dd/MM/yyyy HH:mm' }}
+                              }
+                            </small>
+                          }
+                        } @else {
+                          <p>Aún no se ha comprobado la conexión con Meta.</p>
+                        }
+                        <div class="crm-whatsapp-actions">
+                          <button
+                            type="button"
+                            class="crm-whatsapp-save"
+                            [disabled]="
+                              !canManageCrmConfig() ||
+                              integrationSaving() === integration.canal ||
+                              whatsappTesting()
+                            "
+                            (click)="saveCrmIntegration(integration)"
+                          >
+                            <i
+                              [class]="
+                                integrationSaving() === integration.canal
+                                  ? 'pi pi-spin pi-spinner'
+                                  : 'pi pi-save'
+                              "
+                            ></i>
+                            {{
+                              integrationSaving() === integration.canal
+                                ? 'Guardando...'
+                                : 'Guardar configuración'
+                            }}
+                          </button>
+                          <button
+                            type="button"
+                            class="crm-whatsapp-subscribe"
+                            [disabled]="
+                              !canManageCrmConfig() ||
+                              whatsappSubscribing() ||
+                              integrationSaving() === integration.canal ||
+                              !integration.accessTokenConfigured ||
+                              !integration.appSecretConfigured ||
+                              !integration.appId ||
+                              !integration.wabaId ||
+                              !integration.phoneNumberId
+                            "
+                            (click)="subscribeWhatsappApp()"
+                          >
+                            <i
+                              [class]="
+                                whatsappSubscribing() ? 'pi pi-spin pi-spinner' : 'pi pi-link'
+                              "
+                            ></i>
+                            {{
+                              whatsappSubscribing()
+                                ? 'Suscribiendo...'
+                                : whatsappConnectionStatus()?.wabaSuscrita
+                                  ? 'Resuscribir app'
+                                  : 'Suscribir app'
+                            }}
+                          </button>
+                          <button
+                            type="button"
+                            class="crm-whatsapp-test"
+                            [disabled]="
+                              !canManageCrmConfig() ||
+                              whatsappTesting() ||
+                              integrationSaving() === integration.canal
+                            "
+                            (click)="testWhatsappConnection()"
+                          >
+                            <i
+                              [class]="whatsappTesting() ? 'pi pi-spin pi-spinner' : 'pi pi-sync'"
+                            ></i>
+                            {{ whatsappTesting() ? 'Comprobando...' : 'Probar conexión' }}
+                          </button>
+                        </div>
+                      </section>
+                      <app-whatsapp-auto-reply-config [canManage]="canManageCrmConfig()" />
+                    </div>
+                  } @else {
+                    <div class="crm-integration-fields crm-integration-fields--editor">
+                      <label
+                        >Token de acceso de Meta
+                        <input
+                          pInputText
+                          type="password"
+                          autocomplete="new-password"
+                          [name]="'crmIntegrationAccess' + integration.canal"
+                          [ngModel]="integration.accessToken || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'accessToken', $event)
+                          "
+                          [placeholder]="
+                            integration.accessTokenConfigured
+                              ? 'Configurado; escribe solo para reemplazarlo'
+                              : 'Token de acceso'
+                          "
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >Verify token
+                        <input
+                          pInputText
+                          type="password"
+                          autocomplete="new-password"
+                          [name]="'crmIntegrationVerify' + integration.canal"
+                          [ngModel]="integration.verifyToken || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'verifyToken', $event)
+                          "
+                          [placeholder]="
+                            integration.verifyTokenConfigured
+                              ? 'Configurado; escribe solo para reemplazarlo'
+                              : 'Token de verificacion'
+                          "
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >App ID
+                        <input
+                          pInputText
+                          [name]="'crmIntegrationApp' + integration.canal"
+                          [ngModel]="integration.appId || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'appId', $event)
+                          "
+                          placeholder="ID de app"
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >App secret
+                        <input
+                          pInputText
+                          type="password"
+                          autocomplete="new-password"
+                          [name]="'crmIntegrationAppSecret' + integration.canal"
+                          [ngModel]="integration.appSecret || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'appSecret', $event)
+                          "
+                          [placeholder]="
+                            integration.appSecretConfigured
+                              ? 'Configurado; escribe solo para reemplazarlo'
+                              : 'Secreto de la app de Meta'
+                          "
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <label
+                        >{{ metaAccountIdLabel(integration.canal) }}
+                        <input
+                          pInputText
+                          [name]="'crmIntegrationPhone' + integration.canal"
+                          [ngModel]="integration.phoneNumberId || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'phoneNumberId', $event)
+                          "
+                          placeholder="Solo WhatsApp si aplica"
+                          [disabled]="!canManageCrmConfig()"
+                        />
+                      </label>
+                      <section class="wide-field crm-meta-callback">
+                        <header>
+                          <div>
+                            <strong>Callback URL para Meta</strong>
+                            <small
+                              >Registra esta URL y el mismo Verify token en Meta Developers.</small
+                            >
+                          </div>
+                        </header>
+                        <div class="crm-copy-row">
+                          <input pInputText readonly [value]="metaWebhookUrl(integration.canal)" />
+                          <button
+                            type="button"
+                            (click)="
+                              copyWhatsappValue(metaWebhookUrl(integration.canal), 'Callback URL')
+                            "
+                          >
+                            <i class="pi pi-copy"></i> Copiar
+                          </button>
+                        </div>
+                        @if (!metaWebhookIsPublicHttps(integration.canal)) {
+                          <p class="crm-whatsapp-warning">
+                            <i class="pi pi-exclamation-triangle"></i> Meta exige una URL publica
+                            con HTTPS; localhost no puede recibir eventos reales.
+                          </p>
+                        }
+                      </section>
+                      <section
+                        class="wide-field crm-meta-requirements"
+                        [class.ready]="metaIntegrationReady(integration)"
+                      >
+                        <strong
+                          ><i class="pi pi-list-check"></i> Requisitos para activar
+                          {{ integration.nombre }}</strong
+                        >
+                        <div>
+                          <span
+                            [class.ok]="
+                              integration.accessToken || integration.accessTokenConfigured
+                            "
+                            ><i
+                              [class]="
+                                integration.accessToken || integration.accessTokenConfigured
+                                  ? 'pi pi-check-circle'
+                                  : 'pi pi-circle'
+                              "
+                            ></i>
+                            Token de acceso</span
+                          >
+                          <span [class.ok]="integration.appId"
+                            ><i
+                              [class]="integration.appId ? 'pi pi-check-circle' : 'pi pi-circle'"
+                            ></i>
+                            App ID</span
+                          >
+                          <span
+                            [class.ok]="integration.appSecret || integration.appSecretConfigured"
+                            ><i
+                              [class]="
+                                integration.appSecret || integration.appSecretConfigured
+                                  ? 'pi pi-check-circle'
+                                  : 'pi pi-circle'
+                              "
+                            ></i>
+                            App secret</span
+                          >
+                          <span
+                            [class.ok]="
+                              integration.verifyToken || integration.verifyTokenConfigured
+                            "
+                            ><i
+                              [class]="
+                                integration.verifyToken || integration.verifyTokenConfigured
+                                  ? 'pi pi-check-circle'
+                                  : 'pi pi-circle'
+                              "
+                            ></i>
+                            Verify token</span
+                          >
+                          <span [class.ok]="metaWebhookIsPublicHttps(integration.canal)"
+                            ><i
+                              [class]="
+                                metaWebhookIsPublicHttps(integration.canal)
+                                  ? 'pi pi-check-circle'
+                                  : 'pi pi-circle'
+                              "
+                            ></i>
+                            Callback HTTPS</span
+                          >
+                        </div>
+                        <small
+                          >En Meta suscribe los campos de mensajes y eventos del canal. El indicador
+                          quedara confirmado cuando Azurion reciba el primer webhook valido.</small
+                        >
+                      </section>
+                      <label class="wide-field"
+                        >Metadata JSON
+                        <textarea
+                          pTextarea
+                          rows="3"
+                          [name]="'crmIntegrationMetadata' + integration.canal"
+                          [ngModel]="integration.metadataJson || ''"
+                          (ngModelChange)="
+                            updateCrmIntegrationField(integration.canal, 'metadataJson', $event)
+                          "
+                          placeholder='{"utm_source":"landing"}'
+                          [disabled]="!canManageCrmConfig()"
+                        ></textarea>
+                      </label>
+                    </div>
+                  }
+
+                  <footer class="crm-integration-editor__footer">
+                    <span
+                      ><i class="pi pi-shield"></i>
+                      {{
+                        integration.canal === 'WEB'
+                          ? 'La landing envia JSON publico y el servidor valida tenant, producto y token.'
+                          : 'Las credenciales se almacenan de forma segura para este tenant.'
+                      }}</span
+                    >
+                    @if (integration.canal !== 'WHATSAPP') {
+                      <button
+                        type="button"
+                        class="crm-integration-save"
+                        [disabled]="
+                          !canManageCrmConfig() ||
+                          integrationSaving() === integration.canal ||
+                          (integration.activo &&
+                            (integration.canal === 'FACEBOOK' ||
+                              integration.canal === 'INSTAGRAM') &&
+                            !metaIntegrationReady(integration))
+                        "
+                        (click)="saveCrmIntegration(integration)"
+                      >
+                        <i
+                          [class]="
+                            integrationSaving() === integration.canal
+                              ? 'pi pi-spin pi-spinner'
+                              : 'pi pi-save'
+                          "
+                        ></i>
+                        {{
+                          integrationSaving() === integration.canal
+                            ? 'Guardando...'
+                            : 'Guardar configuración'
+                        }}
+                      </button>
+                    }
+                  </footer>
+                </article>
+              }
+            } @else {
+              <div class="crm-integration-empty">
+                <i class="pi pi-link"></i><span>No se pudieron cargar las integraciones CRM.</span>
+              </div>
+            }
+          </section>
+        }
+
+        @if (activeTab() === 'administracionCorreo') {
+          <app-email-settings [canManage]="canManageCrmConfig()" />
+        }
+
+        @if (activeTab() === 'administracionMonedas') {
+          <app-crm-currency-config-panel
+            [currencies]="crmCurrencyConfigs()"
+            [availableCurrencies]="crmCurrencyOptions()"
+            [baseCurrencyCode]="tenantBaseCurrencyCode()"
+            [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
+            [canManage]="canManageCrmConfig()"
+            [savingCurrency]="currencySaving()"
+            (fieldChange)="updateCrmCurrencyField($event.moneda, $event.field, $event.value)"
+            (activeChange)="toggleCrmCurrency($event.moneda, $event.activo)"
+            (saveCurrency)="saveCrmCurrency($event)"
+            (addCurrency)="addCrmCurrency($event)"
+          />
+        }
+
+        @if (activeTab() === 'administracionPromociones') {
+          <section class="crm-promotion-admin-card">
+            <header>
+              <div>
+                <span>Promociones comerciales</span>
+                <h3>Promociones reutilizables para cotizaciones</h3>
+                <p>
+                  El administrador registra descuentos o campanas y el vendedor solo las aplica al
+                  cotizar una oportunidad.
+                </p>
+              </div>
+              <strong>{{ promocionesCotizacion().length }} promoción(es)</strong>
+            </header>
+
+            <div class="crm-promotion-admin-layout">
+              <form class="crm-promotion-admin-form">
+                <label>
+                  Código <span class="required">*</span>
+                  <input
+                    pInputText
+                    name="adminPromoCode"
+                    [(ngModel)]="promotionForm.codigo"
+                    placeholder="PROMO10"
+                  />
+                </label>
+                <label>
+                  Nombre <span class="required">*</span>
+                  <input
+                    pInputText
+                    name="adminPromoName"
+                    [(ngModel)]="promotionForm.nombre"
+                    placeholder="Campana de lanzamiento"
+                  />
+                </label>
+                <label>
+                  Tipo
+                  <p-select
+                    name="adminPromoType"
+                    [options]="promotionTypeOptions"
+                    [(ngModel)]="promotionForm.tipoDescuento"
+                    appendTo="body"
+                  />
+                </label>
+                <label>
+                  Valor
+                  <input
+                    pInputText
+                    type="number"
+                    min="0"
+                    name="adminPromoValue"
+                    [(ngModel)]="promotionForm.valor"
+                    placeholder="0"
+                  />
+                </label>
+                <label>
+                  Inicio
+                  <input
+                    pInputText
+                    type="date"
+                    name="adminPromoStart"
+                    [(ngModel)]="promotionForm.fechaInicio"
+                  />
+                </label>
+                <label>
+                  Fin
+                  <input
+                    pInputText
+                    type="date"
+                    name="adminPromoEnd"
+                    [(ngModel)]="promotionForm.fechaFin"
+                  />
+                </label>
+                <label class="wide-field">
+                  Descripcion
+                  <input
+                    pInputText
+                    name="adminPromoDescription"
+                    [(ngModel)]="promotionForm.descripcion"
+                    placeholder="Condicion visible para el equipo comercial"
+                  />
+                </label>
+                <button
+                  type="button"
+                  class="crm-promotion-admin-save"
+                  [disabled]="saving()"
+                  (click)="savePromotion()"
+                >
+                  <i class="pi pi-save"></i>
+                  Guardar promoción
+                </button>
+              </form>
+
+              <div class="crm-promotion-list">
+                @for (promo of promocionesCotizacion(); track promo.id) {
+                  <article>
+                    <div>
+                      <strong>{{ promo.nombre }}</strong>
+                      <span
+                        >{{ promo.codigo }} ·
+                        {{
+                          promo.tipoDescuento === 'PORCENTAJE'
+                            ? promo.valor + '%'
+                            : 'S/ ' + (promo.valor | number: '1.2-2')
+                        }}</span
+                      >
+                      @if (promo.descripcion) {
+                        <p>{{ promo.descripcion }}</p>
+                      }
+                    </div>
+                    <em [class.crm-promotion-list__inactive]="promo.estado !== 'ACTIVA'">{{
+                      humanize(promo.estado)
+                    }}</em>
+                  </article>
+                } @empty {
+                  <div class="crm-promotion-empty">
+                    <i class="pi pi-ticket"></i>
+                    <span
+                      >Aún no hay promociones. Registra la primera para usarla en
+                      cotizaciones.</span
+                    >
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+      </section>
+    }
+
+    @if (activeTab() === 'oportunidades') {
+      <app-opportunities-page
+        [summaryCards]="opportunitySummaryCards()"
+        [rows]="opportunityPageRows()"
+        [totalItems]="opportunityListItems().length"
+        [pageMeta]="opportunityPageMeta()"
+        [loading]="loading()"
+        [filtersVisible]="showOpportunityFilters()"
+        [stageOptions]="opportunityStageFilterOptions()"
+        [responsibleOptions]="opportunityResponsibleFilterOptions()"
+        [statusOptions]="opportunityStatusFilterOptions"
+        [stageFilter]="opportunityStageFilter()"
+        [responsibleFilter]="opportunityResponsibleFilter()"
+        [statusFilter]="opportunityStatusFilter()"
+        (stageFilterChange)="setOpportunityStageFilter($event)"
+        (responsibleFilterChange)="setOpportunityResponsibleFilter($event)"
+        (statusFilterChange)="setOpportunityStatusFilter($event)"
+        (filtersReset)="resetOpportunityFilters()"
+        (previousPageRequested)="opportunityPage.set(opportunityPage() - 1)"
+        (nextPageRequested)="opportunityPage.set(opportunityPage() + 1)"
+        (opportunitySelected)="openOpportunityDetail($event)"
+      />
+    }
+
+    @if (opportunityStagePanel(); as panel) {
+      @if (
+        panel.tab !== 'oportunidades' &&
+        panel.tab !== 'cotizaciones' &&
+        panel.tab !== 'negociacion' &&
+        panel.tab !== 'clientes'
+      ) {
+        <section
+          class="crm-stage-dashboard"
+          [class]="'crm-stage-dashboard crm-stage-dashboard--' + panel.tone"
+        >
+          <header class="crm-stage-hero">
+            <div class="crm-stage-hero__icon">
+              <i [class]="panel.icon"></i>
+            </div>
+            <div>
+              <span>{{ panel.index }}</span>
+              <h2>{{ panel.title }}</h2>
+              <p><i class="pi pi-circle-fill"></i> {{ panel.detail }}</p>
+            </div>
+            <strong>{{ panel.count }}</strong>
+          </header>
+
+          <section class="crm-stage-metrics" aria-label="Metricas comerciales">
+            @for (metric of panel.metrics; track metric.label) {
+              <article [class.metric-danger]="metric.danger">
+                <span>{{ metric.label }}</span>
+                <strong>{{ metric.value }}</strong>
+                <p>
+                  <b>{{ metric.delta }}</b> {{ metric.detail }}
+                </p>
+              </article>
+            }
+          </section>
+
+          <section class="crm-stage-body">
+            <article class="crm-stage-table-panel">
+              <div class="crm-stage-panel-head">
+                <div>
+                  <h3>{{ panel.tableTitle }}</h3>
+                  <p>{{ opportunityPanelDescription() }}</p>
+                </div>
+                <button type="button" (click)="updateCrmQuery('')">Ver todas</button>
+              </div>
+
+              <p-table
+                [value]="panel.items"
+                [loading]="loading()"
+                [paginator]="panel.items.length > 10"
+                [rows]="10"
+                responsiveLayout="scroll"
+                styleClass="crm-table crm-stage-table"
+              >
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Oportunidad</th>
+                    <th>Contacto</th>
+                    <th>Etapa</th>
+                    <th>Valor</th>
+                    <th>Interés</th>
+                    <th>Próxima acción</th>
+                    <th>Cierre</th>
+                    <th>Acciones</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item>
+                  <tr>
+                    <td>
+                      <strong>{{ item.titulo }}</strong>
+                      <span>{{ opportunityTypeLabel(item.tipoOportunidad) }}</span>
+                    </td>
+                    <td>
+                      <strong>{{
+                        item.clienteNombre || item.prospectoNombre || 'Sin contacto'
+                      }}</strong>
+                      <span>{{ relationshipLabel(item) }}</span>
+                    </td>
+                    <td>
+                      <span
+                        class="stage-chip"
+                        [style.border-color]="stageColor(item.etapa)"
+                        [style.color]="stageColor(item.etapa)"
+                      >
+                        {{ stageName(item.etapa) }}
+                      </span>
+                    </td>
+                    <td>S/ {{ item.montoEstimado | number: '1.2-2' }}</td>
+                    <td>
+                      <span
+                        [class]="
+                          'opportunity-temperature opportunity-temperature--' +
+                          opportunityTemperatureTone(item)
+                        "
+                      >
+                        {{ opportunityTemperatureLabel(item) }}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>{{ opportunityNextActionLabel(item) }}</strong>
+                      <span>{{ opportunityNextActionDate(item) }}</span>
+                    </td>
+                    <td>
+                      <strong>{{
+                        item.fechaCierreEstimada
+                          ? (item.fechaCierreEstimada | date: 'dd/MM/yyyy')
+                          : 'Sin fecha'
+                      }}</strong>
+                      <span>{{ opportunityCloseState(item) }}</span>
+                    </td>
+                    <td>
+                      <ng-container
+                        *ngTemplateOutlet="opportunityActions; context: { $implicit: item }"
+                      />
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                  <tr>
+                    <td colspan="8" class="empty-cell">{{ panel.emptyMessage }}</td>
+                  </tr>
+                </ng-template>
+              </p-table>
+
+              <button
+                type="button"
+                class="crm-stage-create-button"
+                (click)="openCreateOpportunity()"
+              >
+                <i class="pi pi-plus"></i>
+                {{ panel.tableAction }}
+              </button>
+            </article>
+
+            <aside class="crm-stage-side-panel">
+              <div class="crm-stage-side-head">
+                <h3>Pipeline por etapa</h3>
+                <span>{{ panel.items.length }} registro(s)</span>
+              </div>
+              <div class="crm-stage-mini-chart">
+                @for (item of panel.items.slice(0, 5); track item.id) {
+                  <article>
+                    <div>
+                      <strong>{{ item.titulo }}</strong>
+                      <span>{{
+                        item.clienteNombre || item.prospectoNombre || 'Sin contacto'
+                      }}</span>
+                    </div>
+                    <b>{{ opportunityTemperatureLabel(item) }}</b>
+                    <i
+                      ><span
+                        [style.width.%]="opportunityProgress(item)"
+                        [style.background]="stageColor(item.etapa)"
+                      ></span
+                    ></i>
+                  </article>
+                } @empty {
+                  <div class="pipeline-empty">{{ panel.emptyMessage }}</div>
+                }
+              </div>
+            </aside>
+          </section>
+        </section>
+      }
+    }
+
+    @if (activeTab() === 'cotizaciones') {
+      <section class="quotes-board">
+        <header class="quotes-hero">
+          <div class="quotes-hero__icon">
+            <i class="pi pi-file-edit"></i>
+          </div>
+          <div>
+            <h2>Cotizaciones</h2>
+            <p><i class="pi pi-circle-fill"></i> Propuestas enviadas</p>
+          </div>
+          <strong>{{ quoteDashboardItems().length }}</strong>
+        </header>
+
+        <section class="quotes-metrics" aria-label="Resumen de cotizaciones">
+          @for (metric of quoteDashboardMetrics(); track metric.label) {
+            <article>
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+              <p>
+                <b>{{ metric.delta }}</b> {{ metric.detail }}
+              </p>
+            </article>
+          }
+        </section>
+
+        <section class="quotes-content">
+          <article class="quotes-list-card">
+            <div class="quotes-card-head">
+              <h3>Cotizaciones recientes</h3>
+              <button type="button" (click)="updateCrmQuery('')">Ver todas</button>
+            </div>
+
+            <div class="quotes-list">
+              @for (item of quoteDashboardItems().slice(0, 6); track item.id) {
+                <article
+                  class="quote-row"
+                  role="button"
+                  tabindex="0"
+                  (click)="openQuoteOpportunityDetail(item)"
+                >
+                  <div>
+                    <strong>COT-{{ item.id | number: '3.0-0' }}</strong>
+                    <span>{{ quoteContactName(item) }} - {{ quoteOpportunityTitle(item) }}</span>
+                  </div>
+                  <b>S/ {{ item.total | number: '1.0-0' }}</b>
+                  <em [class]="'quote-status quote-status--' + quoteStatusTone(item)">{{
+                    quoteStatusLabel(item)
+                  }}</em>
+                  <small>{{ quoteNextStep(item) }}</small>
+                </article>
+              } @empty {
+                <div class="quotes-empty">Todavía no hay cotizaciones registradas.</div>
+              }
+            </div>
+          </article>
+
+          <article class="quotes-chart-card">
+            <div class="quotes-card-head">
+              <h3>Cotizaciones por estado</h3>
+            </div>
+            <div class="quotes-donut-wrap">
+              <div class="quotes-donut" [style.background]="quoteStatusRingBackground()">
+                <span>{{ quoteDashboardItems().length }}</span>
+                <small>Total</small>
+              </div>
+              <div class="quotes-legend">
+                @for (item of quoteStatusSummary(); track item.label) {
+                  <span>
+                    <i [style.background]="item.color"></i>
+                    {{ item.label }}
+                    <b>{{ item.value }} ({{ item.percent }}%)</b>
+                  </span>
+                }
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <button type="button" class="quotes-create-button" (click)="openCreateOpportunity()">
+          <i class="pi pi-plus"></i>
+          Nueva cotización
+        </button>
+      </section>
+    }
+
+    @if (activeTab() === 'negociacion') {
+      <section class="quotes-board negotiation-board">
+        <header class="quotes-hero negotiation-hero">
+          <div class="quotes-hero__icon negotiation-hero__icon">
+            <i class="pi pi-handshake"></i>
+          </div>
+          <div>
+            <h2>Negociación</h2>
+            <p><i class="pi pi-circle-fill"></i> Precio y cierre</p>
+          </div>
+          <strong>{{ negotiationDashboardItems().length }}</strong>
+        </header>
+
+        <section class="quotes-metrics negotiation-metrics" aria-label="Resumen de negociación">
+          @for (metric of negotiationDashboardMetrics(); track metric.label) {
+            <article>
+              <span>{{ metric.label }}</span>
+              <strong>{{ metric.value }}</strong>
+              <p>
+                <b>{{ metric.delta }}</b> {{ metric.detail }}
+              </p>
+            </article>
+          }
+        </section>
+
+        <section class="quotes-content negotiation-content">
+          <article class="quotes-list-card">
+            <div class="quotes-card-head">
+              <h3>Negociaciones activas</h3>
+              <button type="button" (click)="updateCrmQuery('')">Ver todas</button>
+            </div>
+
+            <div class="negotiation-list">
+              @for (item of negotiationDashboardItems().slice(0, 6); track item.id) {
+                <article
+                  class="negotiation-row"
+                  role="button"
+                  tabindex="0"
+                  (click)="openPipelineOpportunityDetail(item, 'NEGOCIACION')"
+                >
+                  <div>
+                    <strong>{{ item.titulo }}</strong>
+                    <span>{{ opportunityContactName(item) }}</span>
+                  </div>
+                  <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
+                  <em>{{ opportunityProgress(item) }}%</em>
+                  <span class="negotiation-pill">Negociación</span>
+                  <nav class="opportunity-row-actions" aria-label="Acciones de negociación">
+                    <button
+                      type="button"
+                      title="Ver detalle"
+                      aria-label="Ver detalle"
+                      (click)="
+                        $event.stopPropagation(); openPipelineOpportunityDetail(item, 'NEGOCIACION')
+                      "
+                    >
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    <button
+                      type="button"
+                      title="Registrar negociación"
+                      aria-label="Registrar negociación"
+                      (click)="$event.stopPropagation(); openOpportunityNegotiationDialog(item)"
+                    >
+                      <i class="pi pi-handshake"></i>
+                    </button>
+                    <button
+                      type="button"
+                      title="Registrar acuerdo final"
+                      aria-label="Registrar acuerdo final"
+                      (click)="$event.stopPropagation(); openOpportunityAgreementDialog(item)"
+                    >
+                      <i class="pi pi-file-check"></i>
+                    </button>
+                    <button
+                      type="button"
+                      title="Marcar perdido"
+                      aria-label="Marcar perdido"
+                      (click)="$event.stopPropagation(); openOpportunityLostDialog(item)"
+                    >
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </nav>
+                </article>
+              } @empty {
+                <div class="quotes-empty">Todavía no hay negociaciones activas.</div>
+              }
+            </div>
+          </article>
+
+          <article class="quotes-chart-card negotiation-chart-card">
+            <div class="quotes-card-head">
+              <h3>Probabilidad de cierre</h3>
+            </div>
+            <div class="negotiation-bars">
+              @for (bucket of negotiationProbabilityBuckets(); track bucket.label) {
+                <article>
+                  <strong>{{ bucket.value }}</strong>
+                  <div>
+                    <i [style.height.%]="bucket.height" [style.background]="bucket.color"></i>
+                  </div>
+                  <span>{{ bucket.label }}</span>
+                </article>
+              }
+            </div>
+          </article>
+        </section>
+
+        <button
+          type="button"
+          class="quotes-create-button negotiation-create-button"
+          (click)="setTab('cotizaciones')"
+        >
+          <i class="pi pi-file-edit"></i>
+          Revisar cotizaciones
+        </button>
+      </section>
+    }
+
+    @if (activeTab() === 'clientes') {
+      <app-customers-page
+        [rows]="customerPageRows()"
+        [totalCustomers]="clientsDashboardItems().length"
+        [metrics]="clientsDashboardMetrics()"
+        [productSummary]="clientsProductSummary()"
+        [productRingBackground]="clientsProductRingBackground()"
+        [filtersVisible]="showClientFilters()"
+        [outcomeFilterOptions]="clientOutcomeFilterOptions"
+        [outcomeFilter]="clientOutcomeFilter()"
+        [pageRangeLabel]="clientPageRangeLabel()"
+        [canGoPrevious]="clientPage() > 0"
+        [canGoNext]="clientPage() < clientTotalPages() - 1"
+        (outcomeFilterChange)="clientOutcomeFilter.set($event); clientPage.set(0)"
+        (clearRequested)="updateCrmQuery('')"
+        (customerSelected)="openPipelineOpportunityDetail($event, 'GANADO')"
+        (previousPageRequested)="clientPage.set(clientPage() - 1)"
+        (nextPageRequested)="clientPage.set(clientPage() + 1)"
+      />
+    }
+
+    @if (activeTab() === 'seguimientoPagos') {
+      <app-payment-tracking-page
+        [query]="query()"
+        [summaryCards]="paymentFollowUpSummaryCards()"
+        [collectionSummary]="paymentCollectionSummary()"
+        [collectionRingBackground]="paymentCollectionRingBackground()"
+        [rows]="paymentTrackingRows()"
+        [upcoming]="paymentTrackingUpcoming()"
+        [filters]="paymentTrackingFilterState()"
+        [responsibleOptions]="paymentTrackingResponsibleOptions()"
+        [pageMeta]="paymentTrackingPageMeta()"
+        (queryChange)="updateCrmQuery($event)"
+        (filtersChange)="updatePaymentTrackingFilters($event)"
+        (previousPageRequested)="paymentTrackingPage.set(paymentTrackingPage() - 1)"
+        (nextPageRequested)="paymentTrackingPage.set(paymentTrackingPage() + 1)"
+        (exportRequested)="exportClientsCsv()"
+        (remindersRequested)="
+          successMessage.set('Recordatorios generados para cuentas pendientes.')
+        "
+        (registerFirstPaymentRequested)="registerFirstPaymentFromTracking()"
+        (viewPayments)="openPaymentTrackingDetail($event)"
+        (registerPayment)="openPaymentTrackingPaymentDialog($event)"
+        (scheduleInstallments)="schedulePaymentTrackingInstallments($event)"
+        (showOverdueRequested)="showPaymentTrackingOverdue()"
+      />
+    }
+
+    @if (activeTab() === 'seguimiento') {
+      <app-followups-page
+        [rows]="followupPageRows()"
+        [loading]="loading()"
+        [filtersVisible]="showFollowUpFilters()"
+        [filters]="followupFilterState()"
+        [contactOptions]="followUpContactOptions"
+        [responsibleOptions]="followUpResponsibleOptions()"
+        [originOptions]="followUpOriginOptions()"
+        [interestOptions]="followUpInterestOptions"
+        [dateOptions]="followUpDateOptions"
+        [tabs]="followUpTableTabs()"
+        [activeTab]="followUpFilter()"
+        [stars]="followUpStars()"
+        [pageMeta]="followUpPageMeta()"
+        (filtersChange)="updateFollowupFilters($event)"
+        (filtersReset)="resetFollowUpAdvancedFilters()"
+        (filtersApplied)="applyFollowUpFilters(); showFollowUpFilters.set(false)"
+        (tabChange)="setFollowUpFilter($event)"
+        (previousPageRequested)="followUpPage.set(followUpPage() - 1)"
+        (nextPageRequested)="followUpPage.set(followUpPage() + 1)"
+        (quickActivityRequested)="openQuickActivity($event, 'LLAMADA', 'Llamar a ' + $event.nombre)"
+        (completeActivityRequested)="openCompleteActivity($event.activity, $event.prospect)"
+        (whatsappRequested)="sendProspectWhatsapp($event)"
+        (emailRequested)="sendProspectByEmail($event)"
+        (opportunityRequested)="openFollowUpOpportunity($event)"
+        (detailRequested)="selectFollowUpProspect($event)"
+      />
+    }
+    <app-followup-detail-modal [host]="modalContext" />
+
+    @if (activeTab() === 'embudo') {
+      <app-pipeline-page
+        [query]="query()"
+        [summaryCards]="pipelineSummaryCards()"
+        [columns]="pipelinePageColumns()"
+        (queryChange)="updateCrmQuery($event)"
+        (clearStageFilterRequested)="setOpportunityStageFilter(null)"
+        (createOpportunityRequested)="openCreateOpportunity()"
+        (opportunitySelected)="openPipelineOpportunityDetail($event.opportunity, $event.stage)"
+        (editOpportunityRequested)="openEditOpportunity($event)"
+        (closedOutcomeRequested)="openClosedOpportunityList($event)"
+      />
+    }
+  </section>
+</section>
+
+<app-opportunity-detail-modal [host]="modalContext" />
+
+<app-opportunity-requirement-modal [host]="modalContext" />
+
+<app-register-negotiation-modal [host]="modalContext" />
+
+@if (selectedOpportunity(); as clientCompletionOpportunity) {
+  <app-complete-client-data-modal
+    [visible]="clientCompletionDialogOpen()"
+    [prospectName]="clientCompletionProspectName()"
+    [opportunityTitle]="clientCompletionOpportunity.titulo"
+    [action]="clientCompletionAction()"
+    [form]="clientCompletionForm"
+    [personTypeOptions]="tipoPersonaOptions"
+    [documentTypeOptions]="documentoOptions"
+    [saving]="saving()"
+    (closed)="closeClientCompletion()"
+    (formChange)="clientCompletionForm = $event"
+    (saveRequested)="saveClientCompletion()"
+  />
+}
+
+@if (selectedOpportunity(); as paymentOpportunity) {
+  <app-register-payment-modal
+    [visible]="opportunityPaymentDialogOpen()"
+    [opportunityTitle]="paymentOpportunity.titulo"
+    [currencySymbol]="catalogCurrencyPrefix(paymentOpportunity.moneda)"
+    [summary]="paymentDialogSummary(paymentOpportunity)"
+    [installments]="paymentDialogInstallments(paymentOpportunity)"
+    [form]="paymentForm"
+    [typeOptions]="paymentTypeOptions"
+    [statusOptions]="paymentStatusOptions"
+    [methodOptions]="paymentMethodOptions"
+    [saving]="saving()"
+    (closed)="opportunityPaymentDialogOpen.set(false)"
+    (formChange)="paymentForm = $event"
+    (installmentSelected)="selectOpportunityPaymentInstallment(paymentOpportunity, $event)"
+    (fileSelected)="onOpportunityPaymentFileSelected($event)"
+    (saveRequested)="saveOpportunityPayment()"
+  />
+}
+
+<app-opportunity-document-modal [host]="modalContext" />
+
+<app-stage-move-review-modal [host]="modalContext" />
+
+<app-mark-lost-modal [host]="modalContext" />
+
+<app-catalog-product-modal [host]="modalContext" />
+
+<app-prospect-form-modal [host]="modalContext" />
+
+<app-create-opportunity-modal [host]="modalContext" />
+
+<app-activity-form-modal [host]="modalContext" />
+
+<app-quote-form-modal [host]="modalContext" />
+
+<app-manage-crm-goals-modal
+  [visible]="goalDialogOpen()"
+  [goals]="crmGoals()"
+  [advisors]="goalAdvisorOptions()"
+  [year]="goalYear()"
+  [month]="goalMonth()"
+  [currency]="tenantBaseCurrencyCode()"
+  [currencySymbol]="tenantBaseCurrencySymbol()"
+  [saving]="goalSaving()"
+  (closed)="goalDialogOpen.set(false)"
+  (periodChanged)="changeCrmGoalPeriod($event)"
+  (saveRequested)="saveCrmGoal($event)"
+  (deleteRequested)="deleteCrmGoal($event)"
+/>

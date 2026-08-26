@@ -95,10 +95,10 @@
 .product-tax-panel {
   background: color-mix(in srgb, #0ea5e9 6%, var(--az-surface));
   border: 1px solid color-mix(in srgb, #0ea5e9 28%, var(--az-border));
-  border-radius: .85rem;
+  border-radius: 0.85rem;
   display: grid;
-  gap: .8rem;
-  padding: .9rem;
+  gap: 0.8rem;
+  padding: 0.9rem;
 }
 
 .product-tax-panel__head {
@@ -110,18 +110,18 @@
 
 .product-tax-panel__head > div {
   display: grid;
-  gap: .15rem;
+  gap: 0.15rem;
 }
 
 .product-tax-panel__head span,
 .tax-inherited {
   color: var(--az-text-soft);
-  font-size: .8rem;
+  font-size: 0.8rem;
 }
 
 .product-tax-grid {
   display: grid;
-  gap: .7rem;
+  gap: 0.7rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -130,8 +130,8 @@
   background: var(--az-surface);
   border: 1px solid var(--az-border);
   display: flex;
-  gap: .5rem;
-  padding: .7rem;
+  gap: 0.5rem;
+  padding: 0.7rem;
 }
 
 .tax-affect-toggle {

@@ -30,7 +30,10 @@ export class AdminEntryPage implements OnInit {
     if (isGeneral) {
       return '/admin/control-empresas';
     }
-    if (this.auth.hasPermission('CRM_REPORTS_READ') || this.auth.hasPermission('CRM_REPORTS_TEAM')) {
+    if (
+      this.auth.hasPermission('CRM_REPORTS_READ') ||
+      this.auth.hasPermission('CRM_REPORTS_TEAM')
+    ) {
       return '/admin/crm';
     }
     if (this.auth.hasPermission('CRM_LEADS_READ')) {

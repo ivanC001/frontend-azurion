@@ -19,7 +19,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
-import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { LowStockAlertService } from '@features/admin/services/low-stock-alert.service';
 import { createClientOperationId } from '@core/utils/client-operation-id';
 import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
 import {
@@ -907,8 +907,7 @@ export class SalesAdminPage implements OnDestroy {
     this.errorMessage.set(null);
     this.infoMessage.set(null);
     this.saving.set(true);
-    const clientOperationId =
-      this.pendingFacturaOperationId ?? createClientOperationId('sale');
+    const clientOperationId = this.pendingFacturaOperationId ?? createClientOperationId('sale');
     this.pendingFacturaOperationId = clientOperationId;
     let settled = false;
     let watchdog: ReturnType<typeof setTimeout> | null = null;
@@ -925,9 +924,8 @@ export class SalesAdminPage implements OnDestroy {
       moneda: this.facturaForm.moneda,
       tipoCambio: Number(this.facturaForm.tipoCambio || 0),
       formaPago: this.facturaForm.formaPago,
-      metodoPago: this.facturaForm.formaPago === 'CREDITO'
-        ? 'CREDITO'
-        : this.facturaForm.metodoPago,
+      metodoPago:
+        this.facturaForm.formaPago === 'CREDITO' ? 'CREDITO' : this.facturaForm.metodoPago,
       cuotas:
         this.facturaForm.formaPago === 'CREDITO' &&
         this.facturaForm.cuotaMonto > 0 &&
@@ -1060,7 +1058,8 @@ export class SalesAdminPage implements OnDestroy {
   protected statusDetailLabel(venta: VentaRecord): string {
     const status = this.rowEstadoLabel(venta).toUpperCase();
     if (status === 'ACEPTADO') return this.isTicketDocument(venta) ? 'Facturador' : 'SUNAT';
-    if (status === 'RECHAZADO' || status === 'ERROR') return this.isTicketDocument(venta) ? 'Error facturador' : 'Error SUNAT';
+    if (status === 'RECHAZADO' || status === 'ERROR')
+      return this.isTicketDocument(venta) ? 'Error facturador' : 'Error SUNAT';
     if (status === 'PENDIENTE' || status === 'PROCESANDO') return 'Por enviar';
     return this.isLegacyInternalTicket(venta) ? 'Registro legado' : 'Facturador';
   }
@@ -1191,10 +1190,7 @@ export class SalesAdminPage implements OnDestroy {
     this.openTraceForVenta(lastVenta);
   }
 
-  protected quickDownloadPdf(
-    venta: VentaRecord,
-    formato: FormatoImpresionComprobante,
-  ): void {
+  protected quickDownloadPdf(venta: VentaRecord, formato: FormatoImpresionComprobante): void {
     if (this.isLegacyInternalTicket(venta) || this.quickPdfVentaId() !== null) {
       return;
     }
@@ -1241,7 +1237,9 @@ export class SalesAdminPage implements OnDestroy {
 
     const previewWindow = window.open('', '_blank');
     if (!previewWindow) {
-      this.errorMessage.set('El navegador bloqueo la vista previa. Habilita las ventanas emergentes para Azurion.');
+      this.errorMessage.set(
+        'El navegador bloqueo la vista previa. Habilita las ventanas emergentes para Azurion.',
+      );
       return;
     }
     previewWindow.opener = null;
@@ -1267,7 +1265,9 @@ export class SalesAdminPage implements OnDestroy {
         },
         error: (error) => {
           previewWindow.close();
-          this.errorMessage.set(this.resolveError(error, 'No se pudo abrir la vista previa del PDF.'));
+          this.errorMessage.set(
+            this.resolveError(error, 'No se pudo abrir la vista previa del PDF.'),
+          );
         },
       });
   }
@@ -1278,9 +1278,8 @@ export class SalesAdminPage implements OnDestroy {
     this.downloadingArtifact.set(key);
     this.errorMessage.set(null);
 
-    const request = asset === 'xml'
-      ? this.api.downloadVentaXml(venta.id)
-      : this.api.downloadVentaCdr(venta.id);
+    const request =
+      asset === 'xml' ? this.api.downloadVentaXml(venta.id) : this.api.downloadVentaCdr(venta.id);
     request
       .pipe(
         timeout(SalesAdminPage.PDF_REQUEST_TIMEOUT_MS),
@@ -1297,10 +1296,14 @@ export class SalesAdminPage implements OnDestroy {
           anchor.click();
           anchor.remove();
           window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-          this.infoMessage.set(`${asset.toUpperCase()} de ${this.officialDocumentNumber(venta)} descargado.`);
+          this.infoMessage.set(
+            `${asset.toUpperCase()} de ${this.officialDocumentNumber(venta)} descargado.`,
+          );
         },
         error: (error) => {
-          this.errorMessage.set(this.resolveError(error, `No se pudo descargar el ${asset.toUpperCase()}.`));
+          this.errorMessage.set(
+            this.resolveError(error, `No se pudo descargar el ${asset.toUpperCase()}.`),
+          );
         },
       });
   }
@@ -1314,8 +1317,10 @@ export class SalesAdminPage implements OnDestroy {
       .pipe(finalize(() => this.retryingVentaId.set(null)))
       .subscribe({
         next: (updated) => {
-          this.ventas.update((rows) => rows.map((row) => row.id === updated.id ? updated : row));
-          this.infoMessage.set(`Reintento programado para ${this.officialDocumentNumber(updated)}.`);
+          this.ventas.update((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+          this.infoMessage.set(
+            `Reintento programado para ${this.officialDocumentNumber(updated)}.`,
+          );
         },
         error: (error) => {
           this.errorMessage.set(this.resolveError(error, 'No se pudo reintentar la emision.'));
@@ -1334,7 +1339,10 @@ export class SalesAdminPage implements OnDestroy {
   }
 
   private pdfFilename(venta: VentaRecord, formato: FormatoImpresionComprobante): string {
-    const safeExternalId = (venta.externalId || `venta-${venta.id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeExternalId = (venta.externalId || `venta-${venta.id}`).replace(
+      /[^a-zA-Z0-9._-]/g,
+      '_',
+    );
     return `Comprobante-${safeExternalId}-${formato === 'A4' ? 'A4' : '80mm'}.pdf`;
   }
 

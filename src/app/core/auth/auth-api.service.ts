@@ -19,7 +19,11 @@ export interface CurrentUserProfile {
   readonly id: number;
   readonly username: string;
   readonly nombres: string;
+  readonly apellidos: string | null;
   readonly email: string | null;
+  readonly telefono: string | null;
+  readonly cargo: string | null;
+  readonly fotoPerfilUrl: string | null;
   readonly activo: boolean;
   readonly puedeEditarDatosPersonales: boolean;
   readonly puedeCambiarContrasena: boolean;
@@ -34,6 +38,10 @@ export interface CurrentUserProfile {
 
 export interface UpdateCurrentUserProfileRequest {
   readonly nombres: string;
+  readonly apellidos: string | null;
+  readonly telefono: string | null;
+  readonly cargo: string | null;
+  readonly email: string | null;
 }
 
 export interface ChangeCurrentUserPasswordRequest {
@@ -66,10 +74,9 @@ export class AuthApiService {
 
   replaceSession(replacementToken: string) {
     return this.http
-      .post<ApiResponse<LoginResponse>>(
-        this.apiUrl.url('saasCore', '/v1/auth/session/replace'),
-        { replacementToken, deviceId: this.device.deviceId },
-      )
+      .post<
+        ApiResponse<LoginResponse>
+      >(this.apiUrl.url('saasCore', '/v1/auth/session/replace'), { replacementToken, deviceId: this.device.deviceId })
       .pipe(map((response) => response.data));
   }
 
@@ -83,34 +90,49 @@ export class AuthApiService {
 
   getCurrentProfile() {
     return this.http
-      .get<ApiResponse<CurrentUserProfile>>(
-        this.apiUrl.url('saasCore', '/v1/auth/profile'),
-        { headers: this.session.apiHeaders() },
-      )
+      .get<
+        ApiResponse<CurrentUserProfile>
+      >(this.apiUrl.url('saasCore', '/v1/auth/profile'), { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   updateCurrentProfile(request: UpdateCurrentUserProfileRequest) {
     return this.http
-      .put<ApiResponse<CurrentUserProfile>>(
-        this.apiUrl.url('saasCore', '/v1/auth/profile'),
-        request,
-        { headers: this.session.apiHeaders() },
-      )
+      .put<
+        ApiResponse<CurrentUserProfile>
+      >(this.apiUrl.url('saasCore', '/v1/auth/profile'), request, { headers: this.session.apiHeaders() })
+      .pipe(map((response) => response.data));
+  }
+
+  updateCurrentProfilePhoto(file: File) {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http
+      .put<
+        ApiResponse<CurrentUserProfile>
+      >(this.apiUrl.url('saasCore', '/v1/auth/profile/photo'), formData, { headers: this.session.apiHeaders() })
+      .pipe(map((response) => response.data));
+  }
+
+  deleteCurrentProfilePhoto() {
+    return this.http
+      .delete<
+        ApiResponse<CurrentUserProfile>
+      >(this.apiUrl.url('saasCore', '/v1/auth/profile/photo'), { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   changeCurrentPassword(request: ChangeCurrentUserPasswordRequest) {
     return this.http
-      .put<ApiResponse<void>>(
-        this.apiUrl.url('saasCore', '/v1/auth/profile/password'),
-        request,
-        { headers: this.session.apiHeaders() },
-      )
+      .put<
+        ApiResponse<void>
+      >(this.apiUrl.url('saasCore', '/v1/auth/profile/password'), request, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
-  private withDevice<T extends object>(request: T): T & Pick<LoginRequest, 'deviceId' | 'deviceName'> {
+  private withDevice<T extends object>(
+    request: T,
+  ): T & Pick<LoginRequest, 'deviceId' | 'deviceName'> {
     return {
       ...request,
       deviceId: this.device.deviceId,

@@ -5,7 +5,7 @@
   [draggable]="false"
   [resizable]="false"
   [closable]="!savingProfile() && !savingPassword()"
-  [style]="{ width: 'min(54rem, calc(100vw - 2rem))' }"
+  [style]="{ width: 'min(68rem, calc(100vw - 2rem))' }"
   styleClass="current-user-profile-dialog"
 >
   <ng-template pTemplate="header">
@@ -31,10 +31,16 @@
     </div>
   } @else if (profile(); as current) {
     <section class="profile-dialog-summary">
-      <span class="profile-dialog-avatar">{{ initials() || 'US' }}</span>
+      <span class="profile-dialog-avatar">
+        @if (photoUrl(); as imageUrl) {
+          <img [src]="imageUrl" [alt]="'Foto de ' + displayName()" />
+        } @else {
+          {{ initials() || 'US' }}
+        }
+      </span>
       <div>
-        <strong>{{ current.nombres || current.username }}</strong>
-        <small>{{ current.tipoCuenta }}</small>
+        <strong>{{ displayName() }}</strong>
+        <small>{{ current.cargo || current.tipoCuenta }}</small>
       </div>
       <span class="profile-dialog-status" [class.profile-dialog-status--inactive]="!current.activo">
         <i [class]="current.activo ? 'pi pi-check-circle' : 'pi pi-ban'"></i>
@@ -53,27 +59,143 @@
         </header>
 
         @if (current.puedeEditarDatosPersonales) {
-          <div class="profile-fields">
-            <label>
-              Nombre completo <b>*</b>
-              <input pInputText name="profileNombres" maxlength="160" [(ngModel)]="personalForm.nombres" autocomplete="name" />
-            </label>
-            <label class="profile-readonly-field">
-              <span>Correo electrónico <i class="pi pi-lock" aria-hidden="true"></i></span>
-              <input pInputText type="email" name="profileEmail" [value]="current.email || 'Sin correo registrado'" readonly aria-readonly="true" />
-              <small>El correo identifica tu cuenta y solo puede cambiarlo un administrador autorizado.</small>
-            </label>
+          <div class="profile-personal-layout">
+            <div class="profile-photo-editor">
+              <span class="profile-photo-preview">
+                @if (photoUrl(); as imageUrl) {
+                  <img [src]="imageUrl" [alt]="'Foto de ' + displayName()" />
+                } @else {
+                  {{ initials() || 'US' }}
+                }
+              </span>
+              <div class="profile-photo-copy">
+                <strong>Foto de perfil</strong>
+                <small>PNG, JPG o WEBP. Tamaño máximo: 1 MB.</small>
+              </div>
+              <div class="profile-photo-actions">
+                <label
+                  class="profile-button profile-button--outline"
+                  [class.profile-button--disabled]="savingProfile()"
+                >
+                  <i class="pi pi-upload"></i>
+                  {{ photoUrl() ? 'Cambiar foto' : 'Seleccionar foto' }}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    [disabled]="savingProfile()"
+                    (change)="selectPhoto($event)"
+                  />
+                </label>
+                @if (photoUrl()) {
+                  <button
+                    type="button"
+                    class="profile-icon-button profile-icon-button--danger"
+                    title="Eliminar foto"
+                    aria-label="Eliminar foto del perfil"
+                    [disabled]="savingProfile()"
+                    (click)="deletePhoto()"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="profile-fields profile-fields--personal">
+              <label>
+                Nombres <b>*</b>
+                <span class="profile-input-shell">
+                  <i class="pi pi-user"></i>
+                  <input
+                    pInputText
+                    name="profileNombres"
+                    maxlength="160"
+                    [(ngModel)]="personalForm.nombres"
+                    autocomplete="given-name"
+                  />
+                </span>
+              </label>
+              <label>
+                Apellidos
+                <span class="profile-input-shell">
+                  <i class="pi pi-id-card"></i>
+                  <input
+                    pInputText
+                    name="profileApellidos"
+                    maxlength="160"
+                    [(ngModel)]="personalForm.apellidos"
+                    autocomplete="family-name"
+                  />
+                </span>
+              </label>
+              <label>
+                Teléfono de contacto
+                <span class="profile-input-shell">
+                  <i class="pi pi-phone"></i>
+                  <input
+                    pInputText
+                    name="profileTelefono"
+                    maxlength="40"
+                    [(ngModel)]="personalForm.telefono"
+                    autocomplete="tel"
+                    placeholder="Ej. +51 999 999 999"
+                  />
+                </span>
+              </label>
+              <label>
+                Cargo o puesto
+                <span class="profile-input-shell">
+                  <i class="pi pi-briefcase"></i>
+                  <input
+                    pInputText
+                    name="profileCargo"
+                    maxlength="120"
+                    [(ngModel)]="personalForm.cargo"
+                    autocomplete="organization-title"
+                    placeholder="Ej. Asesor comercial"
+                  />
+                </span>
+              </label>
+            </div>
+            <div class="profile-readonly-field">
+              <span class="profile-readonly-field__label"
+                >Correo electrónico <i class="pi pi-lock" aria-hidden="true"></i
+              ></span>
+              <span class="profile-input-shell">
+                <i class="pi pi-envelope"></i>
+                <input
+                  pInputText
+                  type="email"
+                  name="profileEmail"
+                  [value]="current.email || 'Sin correo registrado'"
+                  readonly
+                  aria-readonly="true"
+                />
+              </span>
+              <small
+                >El correo identifica tu cuenta y solo puede cambiarlo un administrador
+                autorizado.</small
+              >
+            </div>
           </div>
           <div class="profile-section-actions">
-            <button type="button" class="profile-button profile-button--primary" [disabled]="savingProfile()" (click)="savePersonalData()">
+            <button
+              type="button"
+              class="profile-button profile-button--primary"
+              [disabled]="savingProfile()"
+              (click)="savePersonalData()"
+            >
               <i [class]="savingProfile() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-              {{ savingProfile() ? 'Guardando...' : 'Guardar nombre' }}
+              {{ savingProfile() ? 'Guardando...' : 'Guardar perfil' }}
             </button>
           </div>
         } @else {
           <div class="profile-readonly-note">
             <i class="pi pi-lock"></i>
-            <span>Los datos de la cuenta de plataforma se administran desde Seguridad de plataforma.</span>
+            <span
+              >Los datos de la cuenta de plataforma se administran desde Seguridad de
+              plataforma.</span
+            >
           </div>
         }
       </section>
@@ -90,19 +212,45 @@
         <div class="profile-fields">
           <label>
             Contraseña actual <b>*</b>
-            <input pInputText type="password" name="currentPassword" [(ngModel)]="passwordForm.contrasenaActual" autocomplete="current-password" />
+            <input
+              pInputText
+              type="password"
+              name="currentPassword"
+              [(ngModel)]="passwordForm.contrasenaActual"
+              autocomplete="current-password"
+            />
           </label>
           <label>
             Nueva contraseña <b>*</b>
-            <input pInputText type="password" name="newPassword" [(ngModel)]="passwordForm.nuevaContrasena" minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+            <input
+              pInputText
+              type="password"
+              name="newPassword"
+              [(ngModel)]="passwordForm.nuevaContrasena"
+              minlength="8"
+              autocomplete="new-password"
+              placeholder="Mínimo 8 caracteres"
+            />
           </label>
           <label class="profile-field--wide">
             Confirmar nueva contraseña <b>*</b>
-            <input pInputText type="password" name="confirmPassword" [(ngModel)]="passwordForm.confirmarContrasena" minlength="8" autocomplete="new-password" />
+            <input
+              pInputText
+              type="password"
+              name="confirmPassword"
+              [(ngModel)]="passwordForm.confirmarContrasena"
+              minlength="8"
+              autocomplete="new-password"
+            />
           </label>
         </div>
         <div class="profile-section-actions">
-          <button type="button" class="profile-button profile-button--secondary" [disabled]="savingPassword()" (click)="changePassword()">
+          <button
+            type="button"
+            class="profile-button profile-button--secondary"
+            [disabled]="savingPassword()"
+            (click)="changePassword()"
+          >
             <i [class]="savingPassword() ? 'pi pi-spin pi-spinner' : 'pi pi-key'"></i>
             {{ savingPassword() ? 'Actualizando...' : 'Actualizar contraseña' }}
           </button>
@@ -118,7 +266,10 @@
           </div>
         </header>
         <dl class="profile-readonly-grid">
-          <div><dt>Usuario</dt><dd>{{ current.username }}</dd></div>
+          <div>
+            <dt>Usuario</dt>
+            <dd>{{ current.username }}</dd>
+          </div>
           <div class="profile-readonly-item--roles">
             <dt>Roles asignados</dt>
             <dd class="profile-role-list">
@@ -129,14 +280,27 @@
               }
             </dd>
           </div>
-          <div><dt>Sucursales</dt><dd>{{ assignedBranches() }}</dd></div>
-          <div><dt>Estado</dt><dd>{{ current.activo ? 'Activo' : 'Inactivo' }}</dd></div>
+          <div>
+            <dt>Sucursales</dt>
+            <dd>{{ assignedBranches() }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ current.activo ? 'Activo' : 'Inactivo' }}</dd>
+          </div>
         </dl>
       </section>
     </div>
   }
 
   <ng-template pTemplate="footer">
-    <button type="button" class="profile-button profile-button--ghost" [disabled]="savingProfile() || savingPassword()" (click)="close()">Cerrar</button>
+    <button
+      type="button"
+      class="profile-button profile-button--ghost"
+      [disabled]="savingProfile() || savingPassword()"
+      (click)="close()"
+    >
+      Cerrar
+    </button>
   </ng-template>
 </p-dialog>

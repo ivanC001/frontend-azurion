@@ -1,18 +1,29 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, of, switchMap } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 
-import {
-  AuthApiService,
-  CurrentUserProfile,
-} from '@core/auth/auth-api.service';
+import { AuthApiService, CurrentUserProfile } from '@core/auth/auth-api.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { ApiUrlService } from '@core/api/api-url.service';
 import { UiToastService } from '@core/services/ui-toast.service';
+import { isValidProfilePhotoFile } from '@core/utils/file-validators';
 
 interface PersonalProfileForm {
   nombres: string;
+  apellidos: string;
+  telefono: string;
+  cargo: string;
 }
 
 interface PasswordForm {
@@ -34,6 +45,7 @@ export class CurrentUserProfileDialog {
 
   private readonly authApi = inject(AuthApiService);
   private readonly authSession = inject(AuthSessionService);
+  private readonly apiUrl = inject(ApiUrlService);
   private readonly toast = inject(UiToastService);
 
   protected readonly loading = signal(false);
@@ -41,8 +53,21 @@ export class CurrentUserProfileDialog {
   protected readonly savingPassword = signal(false);
   protected readonly profile = signal<CurrentUserProfile | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly selectedPhoto = signal<File | null>(null);
+  protected readonly selectedPhotoPreview = signal<string | null>(null);
+  protected readonly photoUrl = computed(
+    () => this.selectedPhotoPreview() || this.apiUrl.publicFileUrl(this.profile()?.fotoPerfilUrl),
+  );
+  protected readonly displayName = computed(() => {
+    const current = this.profile();
+    return (
+      [current?.nombres, current?.apellidos].filter(Boolean).join(' ').trim() ||
+      current?.username ||
+      'Usuario'
+    );
+  });
   protected readonly initials = computed(() => {
-    const source = this.profile()?.nombres || this.profile()?.username || 'US';
+    const source = this.displayName();
     return source
       .split(/[.\s_-]+/)
       .filter(Boolean)
@@ -50,17 +75,22 @@ export class CurrentUserProfileDialog {
       .map((part) => part.charAt(0).toUpperCase())
       .join('');
   });
-  protected readonly assignedBranches = computed(() =>
-    this.profile()?.sucursales.map((branch) => branch.nombre).join(', ') || 'Sin sucursal asignada',
+  protected readonly assignedBranches = computed(
+    () =>
+      this.profile()
+        ?.sucursales.map((branch) => branch.nombre)
+        .join(', ') || 'Sin sucursal asignada',
   );
 
   protected personalForm: PersonalProfileForm = this.emptyPersonalForm();
   protected passwordForm: PasswordForm = this.emptyPasswordForm();
 
-  ngDoCheck(): void {
-    if (this.visible() && !this.profile() && !this.loading() && !this.errorMessage()) {
-      this.load();
-    }
+  constructor() {
+    effect(() => {
+      if (this.visible() && !this.profile() && !this.loading() && !this.errorMessage()) {
+        this.load();
+      }
+    });
   }
 
   protected retry(): void {
@@ -90,14 +120,61 @@ export class CurrentUserProfileDialog {
 
     this.savingProfile.set(true);
     this.authApi
-      .updateCurrentProfile({ nombres })
+      .updateCurrentProfile({
+        nombres,
+        apellidos: this.nullIfBlank(this.personalForm.apellidos),
+        telefono: this.nullIfBlank(this.personalForm.telefono),
+        cargo: this.nullIfBlank(this.personalForm.cargo),
+        email: profile.email,
+      })
+      .pipe(
+        switchMap((updated) => {
+          const photo = this.selectedPhoto();
+          return photo ? this.authApi.updateCurrentProfilePhoto(photo) : of(updated);
+        }),
+        finalize(() => this.savingProfile.set(false)),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.applyUpdatedProfile(updated);
+          this.clearSelectedPhoto();
+          this.toast.success('Tus datos personales fueron actualizados.', 'Perfil actualizado');
+        },
+        error: (error: unknown) => this.showError(error),
+      });
+  }
+
+  protected selectPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    if (!isValidProfilePhotoFile(file)) {
+      this.toast.warn('Selecciona una imagen PNG, JPG o WEBP de máximo 1 MB.', 'Foto no válida');
+      return;
+    }
+    this.clearSelectedPhoto();
+    this.selectedPhoto.set(file);
+    this.selectedPhotoPreview.set(URL.createObjectURL(file));
+  }
+
+  protected deletePhoto(): void {
+    const profile = this.profile();
+    if (!profile?.fotoPerfilUrl || this.savingProfile()) {
+      this.clearSelectedPhoto();
+      return;
+    }
+    this.savingProfile.set(true);
+    this.authApi
+      .deleteCurrentProfilePhoto()
       .pipe(finalize(() => this.savingProfile.set(false)))
       .subscribe({
         next: (updated) => {
-          this.profile.set(updated);
-          this.personalForm = { nombres: updated.nombres };
-          this.authSession.updateCurrentProfile(updated.nombres);
-          this.toast.success('Tus datos personales fueron actualizados.', 'Perfil actualizado');
+          this.clearSelectedPhoto();
+          this.applyUpdatedProfile(updated);
+          this.toast.success('La foto del perfil fue eliminada.', 'Perfil actualizado');
         },
         error: (error: unknown) => this.showError(error),
       });
@@ -147,7 +224,7 @@ export class CurrentUserProfileDialog {
       .subscribe({
         next: (profile) => {
           this.profile.set(profile);
-          this.personalForm = { nombres: profile.nombres };
+          this.personalForm = this.formFromProfile(profile);
         },
         error: (error: unknown) => {
           this.errorMessage.set(this.resolveError(error));
@@ -156,6 +233,7 @@ export class CurrentUserProfileDialog {
   }
 
   private resetTransientState(): void {
+    this.clearSelectedPhoto();
     this.profile.set(null);
     this.errorMessage.set(null);
     this.personalForm = this.emptyPersonalForm();
@@ -163,7 +241,42 @@ export class CurrentUserProfileDialog {
   }
 
   private emptyPersonalForm(): PersonalProfileForm {
-    return { nombres: '' };
+    return { nombres: '', apellidos: '', telefono: '', cargo: '' };
+  }
+
+  private formFromProfile(profile: CurrentUserProfile): PersonalProfileForm {
+    return {
+      nombres: profile.nombres || '',
+      apellidos: profile.apellidos || '',
+      telefono: profile.telefono || '',
+      cargo: profile.cargo || '',
+    };
+  }
+
+  private applyUpdatedProfile(profile: CurrentUserProfile): void {
+    this.profile.set(profile);
+    this.personalForm = this.formFromProfile(profile);
+    this.authSession.updateCurrentProfile({
+      nombres: profile.nombres,
+      apellidos: profile.apellidos,
+      telefono: profile.telefono,
+      cargo: profile.cargo,
+      fotoPerfilUrl: profile.fotoPerfilUrl,
+    });
+  }
+
+  private clearSelectedPhoto(): void {
+    const preview = this.selectedPhotoPreview();
+    if (preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(preview);
+    }
+    this.selectedPhoto.set(null);
+    this.selectedPhotoPreview.set(null);
+  }
+
+  private nullIfBlank(value: string): string | null {
+    const normalized = value.trim();
+    return normalized || null;
   }
 
   private emptyPasswordForm(): PasswordForm {

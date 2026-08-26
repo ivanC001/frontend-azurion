@@ -3,31 +3,57 @@
     <div>
       <p class="cash-eyebrow">OPERACIÓN DE CAJA</p>
       <h1>Turnos de caja</h1>
-      <p>La caja es permanente. Cada jornada se registra como un turno independiente y auditable.</p>
+      <p>
+        La caja es permanente. Cada jornada se registra como un turno independiente y auditable.
+      </p>
     </div>
     <div class="cash-hero__actions">
       @if (canConfigure()) {
-        <p-button label="Configurar cajas" icon="pi pi-cog" styleClass="az-secondary" (onClick)="openCajaFisicaDialog()" />
+        <p-button
+          label="Configurar cajas"
+          icon="pi pi-cog"
+          styleClass="az-secondary"
+          (onClick)="openCajaFisicaDialog()"
+        />
       }
       @if (!activeTurno()) {
-        <p-button label="Abrir turno" icon="pi pi-play" styleClass="az-primary" (onClick)="openAbrirDialog()" />
+        <p-button
+          label="Abrir turno"
+          icon="pi pi-play"
+          styleClass="az-primary"
+          (onClick)="openAbrirDialog()"
+        />
       }
-      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" [loading]="loading()" (onClick)="loadData()" />
+      <p-button
+        label="Actualizar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        [loading]="loading()"
+        (onClick)="loadData()"
+      />
     </div>
   </header>
 
   @if (errorMessage()) {
-    <div class="cash-alert cash-alert--error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
+    <div class="cash-alert cash-alert--error">
+      <i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}
+    </div>
   }
   @if (successMessage()) {
-    <div class="cash-alert cash-alert--success"><i class="pi pi-check-circle"></i>{{ successMessage() }}</div>
+    <div class="cash-alert cash-alert--success">
+      <i class="pi pi-check-circle"></i>{{ successMessage() }}
+    </div>
   }
 
   @if (selectedTurno(); as turno) {
     <section class="shift-card" [class.shift-card--closed]="turno.estado === 'CERRADO'">
       <div class="shift-card__identity">
         <span class="shift-status" [class.is-open]="turno.estado === 'ABIERTO'">
-          <i class="pi" [class.pi-circle-fill]="turno.estado === 'ABIERTO'" [class.pi-lock]="turno.estado === 'CERRADO'"></i>
+          <i
+            class="pi"
+            [class.pi-circle-fill]="turno.estado === 'ABIERTO'"
+            [class.pi-lock]="turno.estado === 'CERRADO'"
+          ></i>
           {{ turno.estado }}
         </span>
         <div>
@@ -36,18 +62,30 @@
           <div class="shift-meta">
             <span><i class="pi pi-hashtag"></i>{{ turno.numero }}</span>
             <span><i class="pi pi-user"></i>{{ turno.responsableAperturaNombre }}</span>
-            <span><i class="pi pi-clock"></i>{{ turno.fechaApertura | date: 'dd/MM/yyyy HH:mm' }}</span>
+            <span
+              ><i class="pi pi-clock"></i>{{ turno.fechaApertura | date: 'dd/MM/yyyy HH:mm' }}</span
+            >
           </div>
         </div>
       </div>
 
       @if (turno.estado === 'ABIERTO') {
         <div class="shift-card__actions">
-          <button type="button" class="cash-action cash-action--sale" (click)="goToPos()"><i class="pi pi-shopping-cart"></i><span>Registrar venta</span></button>
-          <button type="button" class="cash-action" (click)="openMovimientoDialog('INGRESO')"><i class="pi pi-plus-circle"></i><span>Ingreso</span></button>
-          <button type="button" class="cash-action" (click)="openMovimientoDialog('RETIRO')"><i class="pi pi-minus-circle"></i><span>Retiro</span></button>
-          <button type="button" class="cash-action" (click)="openDepositoDialog()"><i class="pi pi-building-columns"></i><span>Depósito</span></button>
-          <button type="button" class="cash-action cash-action--close" (click)="openCierreDialog()"><i class="pi pi-lock"></i><span>Cerrar turno</span></button>
+          <button type="button" class="cash-action cash-action--sale" (click)="goToPos()">
+            <i class="pi pi-shopping-cart"></i><span>Registrar venta</span>
+          </button>
+          <button type="button" class="cash-action" (click)="openMovimientoDialog('INGRESO')">
+            <i class="pi pi-plus-circle"></i><span>Ingreso</span>
+          </button>
+          <button type="button" class="cash-action" (click)="openMovimientoDialog('RETIRO')">
+            <i class="pi pi-minus-circle"></i><span>Retiro</span>
+          </button>
+          <button type="button" class="cash-action" (click)="openDepositoDialog()">
+            <i class="pi pi-building-columns"></i><span>Depósito</span>
+          </button>
+          <button type="button" class="cash-action cash-action--close" (click)="openCierreDialog()">
+            <i class="pi pi-lock"></i><span>Cerrar turno</span>
+          </button>
         </div>
       }
     </section>
@@ -91,24 +129,67 @@
         <small>Solo el efectivo modifica el saldo esperado del arqueo.</small>
       </header>
       <div class="payment-grid">
-        <article><i class="pi pi-money-bill"></i><span>Efectivo<strong>{{ turno.moneda }} {{ turno.totalEfectivo | number: '1.2-2' }}</strong></span></article>
-        <article><i class="pi pi-credit-card"></i><span>Tarjeta<strong>{{ turno.moneda }} {{ turno.totalTarjeta | number: '1.2-2' }}</strong></span></article>
-        <article><i class="pi pi-mobile"></i><span>Yape / Plin<strong>{{ turno.moneda }} {{ turno.totalBilleteraDigital | number: '1.2-2' }}</strong></span></article>
-        <article><i class="pi pi-building-columns"></i><span>Transferencia<strong>{{ turno.moneda }} {{ turno.totalTransferencia | number: '1.2-2' }}</strong></span></article>
-        <article><i class="pi pi-calendar"></i><span>Crédito<strong>{{ turno.moneda }} {{ turno.totalCredito | number: '1.2-2' }}</strong></span></article>
+        <article>
+          <i class="pi pi-money-bill"></i
+          ><span
+            >Efectivo<strong
+              >{{ turno.moneda }} {{ turno.totalEfectivo | number: '1.2-2' }}</strong
+            ></span
+          >
+        </article>
+        <article>
+          <i class="pi pi-credit-card"></i
+          ><span
+            >Tarjeta<strong
+              >{{ turno.moneda }} {{ turno.totalTarjeta | number: '1.2-2' }}</strong
+            ></span
+          >
+        </article>
+        <article>
+          <i class="pi pi-mobile"></i
+          ><span
+            >Yape / Plin<strong
+              >{{ turno.moneda }} {{ turno.totalBilleteraDigital | number: '1.2-2' }}</strong
+            ></span
+          >
+        </article>
+        <article>
+          <i class="pi pi-building-columns"></i
+          ><span
+            >Transferencia<strong
+              >{{ turno.moneda }} {{ turno.totalTransferencia | number: '1.2-2' }}</strong
+            ></span
+          >
+        </article>
+        <article>
+          <i class="pi pi-calendar"></i
+          ><span
+            >Crédito<strong
+              >{{ turno.moneda }} {{ turno.totalCredito | number: '1.2-2' }}</strong
+            ></span
+          >
+        </article>
       </div>
     </section>
   } @else {
     <section class="cash-empty">
       <i class="pi pi-inbox"></i>
-      <div><h2>No hay turnos registrados</h2><p>Selecciona una caja física asignada e inicia tu primer turno.</p></div>
-      <button type="button" (click)="openAbrirDialog()"><i class="pi pi-play"></i>Abrir turno</button>
+      <div>
+        <h2>No hay turnos registrados</h2>
+        <p>Selecciona una caja física asignada e inicia tu primer turno.</p>
+      </div>
+      <button type="button" (click)="openAbrirDialog()">
+        <i class="pi pi-play"></i>Abrir turno
+      </button>
     </section>
   }
 
   <section class="cash-panel">
     <header class="cash-panel__header">
-      <div><span>TRAZABILIDAD</span><h2>Historial de turnos</h2></div>
+      <div>
+        <span>TRAZABILIDAD</span>
+        <h2>Historial de turnos</h2>
+      </div>
       <div class="cash-filters">
         <p-select
           [options]="estadoOptions"
@@ -126,7 +207,13 @@
         />
       </div>
     </header>
-    <p-table [value]="filteredTurnos()" [loading]="loading()" [paginator]="filteredTurnos().length > 8" [rows]="8" responsiveLayout="scroll">
+    <p-table
+      [value]="filteredTurnos()"
+      [loading]="loading()"
+      [paginator]="filteredTurnos().length > 8"
+      [rows]="8"
+      responsiveLayout="scroll"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>Turno</th>
@@ -141,30 +228,70 @@
       </ng-template>
       <ng-template pTemplate="body" let-item>
         <tr [class.is-selected]="item.id === selectedTurnoId()">
-          <td><strong>{{ item.numero }}</strong><small>{{ item.moneda }}</small></td>
-          <td><strong>{{ item.cajaNombre }}</strong><small>{{ item.sucursalNombre }} · {{ item.cajaCodigo }}</small></td>
+          <td>
+            <strong>{{ item.numero }}</strong
+            ><small>{{ item.moneda }}</small>
+          </td>
+          <td>
+            <strong>{{ item.cajaNombre }}</strong
+            ><small>{{ item.sucursalNombre }} · {{ item.cajaCodigo }}</small>
+          </td>
           <td>{{ item.responsableAperturaNombre }}</td>
-          <td><span>{{ item.fechaApertura | date: 'dd/MM HH:mm' }}</span><small>{{ item.fechaCierre ? (item.fechaCierre | date: 'dd/MM HH:mm') : 'En curso' }}</small></td>
-          <td><strong>{{ item.numeroVentas }}</strong><small>{{ item.moneda }} {{ item.totalVentas | number: '1.2-2' }}</small></td>
-          <td><span [ngClass]="differenceClass(item.diferenciaCierre)">{{ item.diferenciaCierre === null ? 'Pendiente' : (item.diferenciaCierre | number: '1.2-2') }}</span></td>
+          <td>
+            <span>{{ item.fechaApertura | date: 'dd/MM HH:mm' }}</span
+            ><small>{{
+              item.fechaCierre ? (item.fechaCierre | date: 'dd/MM HH:mm') : 'En curso'
+            }}</small>
+          </td>
+          <td>
+            <strong>{{ item.numeroVentas }}</strong
+            ><small>{{ item.moneda }} {{ item.totalVentas | number: '1.2-2' }}</small>
+          </td>
+          <td>
+            <span [ngClass]="differenceClass(item.diferenciaCierre)">{{
+              item.diferenciaCierre === null
+                ? 'Pendiente'
+                : (item.diferenciaCierre | number: '1.2-2')
+            }}</span>
+          </td>
           <td><p-tag [value]="item.estado" [severity]="turnoSeverity(item.estado)" /></td>
-          <td><button type="button" class="icon-button" title="Ver turno" (click)="selectTurno(item.id)"><i class="pi pi-arrow-right"></i></button></td>
+          <td>
+            <button
+              type="button"
+              class="icon-button"
+              title="Ver turno"
+              (click)="selectTurno(item.id)"
+            >
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </td>
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="8">No hay turnos para los filtros seleccionados.</td></tr>
+        <tr>
+          <td colspan="8">No hay turnos para los filtros seleccionados.</td>
+        </tr>
       </ng-template>
     </p-table>
   </section>
 
   <section class="cash-panel">
     <header class="cash-panel__header">
-      <div><span>AUDITORÍA</span><h2>Movimientos del turno</h2></div>
+      <div>
+        <span>AUDITORÍA</span>
+        <h2>Movimientos del turno</h2>
+      </div>
       @if (selectedTurno(); as turno) {
         <small>{{ turno.numero }} · {{ turno.cajaNombre }}</small>
       }
     </header>
-    <p-table [value]="movimientos()" [loading]="loading()" [paginator]="movimientos().length > 10" [rows]="10" responsiveLayout="scroll">
+    <p-table
+      [value]="movimientos()"
+      [loading]="loading()"
+      [paginator]="movimientos().length > 10"
+      [rows]="10"
+      responsiveLayout="scroll"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>Fecha</th>
@@ -179,16 +306,31 @@
       <ng-template pTemplate="body" let-item>
         <tr>
           <td>{{ item.fechaMovimiento | date: 'dd/MM/yyyy HH:mm' }}</td>
-          <td><span class="movement-chip" [ngClass]="movementClass(item.tipoMovimiento)">{{ item.tipoMovimiento }}</span></td>
-          <td><strong>{{ item.origen }}</strong><small>{{ paymentLabel(item.medioPago) }}{{ item.afectaEfectivo ? '' : ' · No efectivo' }}</small></td>
+          <td>
+            <span class="movement-chip" [ngClass]="movementClass(item.tipoMovimiento)">{{
+              item.tipoMovimiento
+            }}</span>
+          </td>
+          <td>
+            <strong>{{ item.origen }}</strong
+            ><small
+              >{{ paymentLabel(item.medioPago)
+              }}{{ item.afectaEfectivo ? '' : ' · No efectivo' }}</small
+            >
+          </td>
           <td>{{ selectedTurno()?.moneda }} {{ item.monto | number: '1.2-2' }}</td>
           <td>{{ selectedTurno()?.moneda }} {{ item.saldoResultante | number: '1.2-2' }}</td>
-          <td><span>{{ item.descripcion }}</span><small>{{ item.referencia || 'Sin referencia' }}</small></td>
+          <td>
+            <span>{{ item.descripcion }}</span
+            ><small>{{ item.referencia || 'Sin referencia' }}</small>
+          </td>
           <td>{{ item.responsableNombre }}</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
-        <tr><td colspan="7">Este turno todavía no tiene movimientos.</td></tr>
+        <tr>
+          <td colspan="7">Este turno todavía no tiene movimientos.</td>
+        </tr>
       </ng-template>
     </p-table>
   </section>
@@ -196,15 +338,27 @@
   @if (canConfigure()) {
     <section class="cash-panel">
       <header class="cash-panel__header">
-        <div><span>CONFIGURACIÓN</span><h2>Cajas físicas</h2><p>Se configuran una sola vez y luego se reutilizan en cada turno.</p></div>
-        <button type="button" class="cash-link-button" (click)="openCajaFisicaDialog()"><i class="pi pi-plus"></i>Nueva caja física</button>
+        <div>
+          <span>CONFIGURACIÓN</span>
+          <h2>Cajas físicas</h2>
+          <p>Se configuran una sola vez y luego se reutilizan en cada turno.</p>
+        </div>
+        <button type="button" class="cash-link-button" (click)="openCajaFisicaDialog()">
+          <i class="pi pi-plus"></i>Nueva caja física
+        </button>
       </header>
       <div class="physical-grid">
         @for (caja of cajasFisicas(); track caja.id) {
           <button type="button" class="physical-card" (click)="openCajaFisicaDialog(caja)">
             <span class="physical-card__icon"><i class="pi pi-desktop"></i></span>
-            <span><b>{{ caja.nombre }}</b><small>{{ caja.codigo }} · {{ caja.sucursalNombre }}</small><small>{{ caja.moneda }} · {{ caja.usuarioIds.length }} cajero(s)</small></span>
-            <span class="physical-status" [class.is-inactive]="caja.estado === 'INACTIVA'">{{ caja.estado }}</span>
+            <span
+              ><b>{{ caja.nombre }}</b
+              ><small>{{ caja.codigo }} · {{ caja.sucursalNombre }}</small
+              ><small>{{ caja.moneda }} · {{ caja.usuarioIds.length }} cajero(s)</small></span
+            >
+            <span class="physical-status" [class.is-inactive]="caja.estado === 'INACTIVA'">{{
+              caja.estado
+            }}</span>
             <i class="pi pi-pencil"></i>
           </button>
         }
@@ -213,109 +367,339 @@
   }
 </section>
 
-<p-dialog header="Abrir turno de caja" [modal]="true" [draggable]="false" [resizable]="false" [visible]="abrirDialogVisible()" (visibleChange)="abrirDialogVisible.set($event)" styleClass="cash-dialog">
-  <div class="dialog-intro"><i class="pi pi-play"></i><p><b>Inicio de jornada</b><span>El usuario, la sucursal y la hora se obtienen automáticamente de tu sesión.</span></p></div>
+<p-dialog
+  header="Abrir turno de caja"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="abrirDialogVisible()"
+  (visibleChange)="abrirDialogVisible.set($event)"
+  styleClass="cash-dialog"
+>
+  <div class="dialog-intro">
+    <i class="pi pi-play"></i>
+    <p>
+      <b>Inicio de jornada</b
+      ><span>El usuario, la sucursal y la hora se obtienen automáticamente de tu sesión.</span>
+    </p>
+  </div>
   <form class="dialog-form">
-    <label>Caja asignada
-      <p-select name="cajaId" [options]="cajaOptions()" [(ngModel)]="abrirForm.cajaId" placeholder="Selecciona una caja" />
+    <label
+      >Caja asignada
+      <p-select
+        name="cajaId"
+        [options]="cajaOptions()"
+        [(ngModel)]="abrirForm.cajaId"
+        placeholder="Selecciona una caja"
+      />
     </label>
-    <label>Saldo inicial
-      <input pInputText type="number" name="saldoApertura" [(ngModel)]="abrirForm.saldoApertura" min="0" />
+    <label
+      >Saldo inicial
+      <input
+        pInputText
+        type="number"
+        name="saldoApertura"
+        [(ngModel)]="abrirForm.saldoApertura"
+        min="0"
+      />
     </label>
-    <label class="wide">Observación
-      <input pInputText name="observacionApertura" [(ngModel)]="abrirForm.observacion" placeholder="Opcional: fondo fijo, relevo, etc." />
+    <label class="wide"
+      >Observación
+      <input
+        pInputText
+        name="observacionApertura"
+        [(ngModel)]="abrirForm.observacion"
+        placeholder="Opcional: fondo fijo, relevo, etc."
+      />
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="abrirDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="abrirTurno()">Abrir turno</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="abrirDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="abrirTurno()">
+      Abrir turno
+    </button>
   </ng-template>
 </p-dialog>
 
-<p-dialog header="Registrar movimiento" [modal]="true" [draggable]="false" [resizable]="false" [visible]="movimientoDialogVisible()" (visibleChange)="movimientoDialogVisible.set($event)" styleClass="cash-dialog">
+<p-dialog
+  header="Registrar movimiento"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="movimientoDialogVisible()"
+  (visibleChange)="movimientoDialogVisible.set($event)"
+  styleClass="cash-dialog"
+>
   <form class="dialog-form">
-    <label>Tipo
-      <p-select name="tipoMovimiento" [options]="movimientoOptions" [(ngModel)]="movimientoForm.tipoMovimiento" />
+    <label
+      >Tipo
+      <p-select
+        name="tipoMovimiento"
+        [options]="movimientoOptions"
+        [(ngModel)]="movimientoForm.tipoMovimiento"
+      />
     </label>
-    <label>Monto
-      <input pInputText type="number" name="montoMovimiento" [(ngModel)]="movimientoForm.monto" min="0.01" />
+    <label
+      >Monto
+      <input
+        pInputText
+        type="number"
+        name="montoMovimiento"
+        [(ngModel)]="movimientoForm.monto"
+        min="0.01"
+      />
     </label>
-    <label class="wide">Descripción
-      <input pInputText name="descripcionMovimiento" [(ngModel)]="movimientoForm.descripcion" placeholder="Motivo del movimiento" />
+    <label class="wide"
+      >Descripción
+      <input
+        pInputText
+        name="descripcionMovimiento"
+        [(ngModel)]="movimientoForm.descripcion"
+        placeholder="Motivo del movimiento"
+      />
     </label>
-    <label class="wide">Referencia
-      <input pInputText name="referenciaMovimiento" [(ngModel)]="movimientoForm.referencia" placeholder="Documento u operación (opcional)" />
+    <label class="wide"
+      >Referencia
+      <input
+        pInputText
+        name="referenciaMovimiento"
+        [(ngModel)]="movimientoForm.referencia"
+        placeholder="Documento u operación (opcional)"
+      />
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="movimientoDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="registrarMovimiento()">Guardar movimiento</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="movimientoDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      [loading]="saving()"
+      (click)="registrarMovimiento()"
+    >
+      Guardar movimiento
+    </button>
   </ng-template>
 </p-dialog>
 
-<p-dialog header="Depositar a cuenta empresarial" [modal]="true" [draggable]="false" [resizable]="false" [visible]="depositoDialogVisible()" (visibleChange)="depositoDialogVisible.set($event)" styleClass="cash-dialog">
-  <div class="dialog-intro dialog-intro--warning"><i class="pi pi-building-columns"></i><p><b>Salida de efectivo</b><span>El depósito reducirá el efectivo esperado del turno.</span></p></div>
+<p-dialog
+  header="Depositar a cuenta empresarial"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="depositoDialogVisible()"
+  (visibleChange)="depositoDialogVisible.set($event)"
+  styleClass="cash-dialog"
+>
+  <div class="dialog-intro dialog-intro--warning">
+    <i class="pi pi-building-columns"></i>
+    <p>
+      <b>Salida de efectivo</b><span>El depósito reducirá el efectivo esperado del turno.</span>
+    </p>
+  </div>
   <form class="dialog-form">
-    <label>Monto
-      <input pInputText type="number" name="montoDeposito" [(ngModel)]="depositoForm.monto" min="0.01" />
+    <label
+      >Monto
+      <input
+        pInputText
+        type="number"
+        name="montoDeposito"
+        [(ngModel)]="depositoForm.monto"
+        min="0.01"
+      />
     </label>
-    <label>Cuenta empresarial
-      <input pInputText name="cuentaEmpresarial" [(ngModel)]="depositoForm.cuentaEmpresarial" placeholder="Banco / cuenta destino" />
+    <label
+      >Cuenta empresarial
+      <input
+        pInputText
+        name="cuentaEmpresarial"
+        [(ngModel)]="depositoForm.cuentaEmpresarial"
+        placeholder="Banco / cuenta destino"
+      />
     </label>
-    <label>Número de operación
-      <input pInputText name="numeroOperacion" [(ngModel)]="depositoForm.numeroOperacion" placeholder="Opcional" />
+    <label
+      >Número de operación
+      <input
+        pInputText
+        name="numeroOperacion"
+        [(ngModel)]="depositoForm.numeroOperacion"
+        placeholder="Opcional"
+      />
     </label>
-    <label>Observación
-      <input pInputText name="observacionDeposito" [(ngModel)]="depositoForm.observacion" placeholder="Detalle adicional" />
+    <label
+      >Observación
+      <input
+        pInputText
+        name="observacionDeposito"
+        [(ngModel)]="depositoForm.observacion"
+        placeholder="Detalle adicional"
+      />
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="depositoDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="registrarDeposito()">Registrar depósito</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="depositoDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      [loading]="saving()"
+      (click)="registrarDeposito()"
+    >
+      Registrar depósito
+    </button>
   </ng-template>
 </p-dialog>
 
-<p-dialog header="Cerrar turno y generar arqueo" [modal]="true" [draggable]="false" [resizable]="false" [visible]="cierreDialogVisible()" (visibleChange)="cierreDialogVisible.set($event)" styleClass="cash-dialog">
+<p-dialog
+  header="Cerrar turno y generar arqueo"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="cierreDialogVisible()"
+  (visibleChange)="cierreDialogVisible.set($event)"
+  styleClass="cash-dialog"
+>
   @if (selectedTurno(); as turno) {
     <div class="close-summary">
-      <article><span>Saldo esperado</span><strong>{{ turno.moneda }} {{ turno.saldoEsperado | number: '1.2-2' }}</strong></article>
-      <article><span>Conteo físico</span><strong>{{ turno.moneda }} {{ cierreForm.conteoFisico | number: '1.2-2' }}</strong></article>
-      <article [ngClass]="differenceClass(cierreDiferenciaPreview())"><span>Diferencia</span><strong>{{ turno.moneda }} {{ cierreDiferenciaPreview() | number: '1.2-2' }}</strong></article>
+      <article>
+        <span>Saldo esperado</span
+        ><strong>{{ turno.moneda }} {{ turno.saldoEsperado | number: '1.2-2' }}</strong>
+      </article>
+      <article>
+        <span>Conteo físico</span
+        ><strong>{{ turno.moneda }} {{ cierreForm().conteoFisico | number: '1.2-2' }}</strong>
+      </article>
+      <article [ngClass]="differenceClass(cierreDiferenciaPreview())">
+        <span>Diferencia</span
+        ><strong>{{ turno.moneda }} {{ cierreDiferenciaPreview() | number: '1.2-2' }}</strong>
+      </article>
     </div>
   }
   <form class="dialog-form dialog-form--close">
-    <label>Conteo físico realizado por el cajero
-      <input pInputText type="number" name="conteoFisico" [(ngModel)]="cierreForm.conteoFisico" min="0" />
+    <label
+      >Conteo físico realizado por el cajero
+      <input
+        pInputText
+        type="number"
+        name="conteoFisico"
+        [ngModel]="cierreForm().conteoFisico"
+        (ngModelChange)="updateCierreConteoFisico($event)"
+        min="0"
+      />
     </label>
-    <label>Observación de cierre
-      <input pInputText name="observacionCierre" [(ngModel)]="cierreForm.observacion" placeholder="Explica diferencias si corresponde" />
+    <label
+      >Observación de cierre
+      <input
+        pInputText
+        name="observacionCierre"
+        [ngModel]="cierreForm().observacion"
+        (ngModelChange)="updateCierreObservacion($event)"
+        placeholder="Explica diferencias si corresponde"
+      />
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="cierreDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="p-button-danger" [loading]="saving()" (click)="cerrarTurno()">Cerrar y generar arqueo</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="cierreDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="p-button-danger"
+      [loading]="saving()"
+      (click)="cerrarTurno()"
+    >
+      Cerrar y generar arqueo
+    </button>
   </ng-template>
 </p-dialog>
 
-<p-dialog [header]="cajaFisicaForm.id ? 'Editar caja física' : 'Nueva caja física'" [modal]="true" [draggable]="false" [resizable]="false" [visible]="cajaFisicaDialogVisible()" (visibleChange)="cajaFisicaDialogVisible.set($event)" styleClass="cash-dialog cash-dialog--wide">
-  <div class="dialog-intro"><i class="pi pi-desktop"></i><p><b>Recurso permanente</b><span>Esta configuración se reutiliza; lo que se abre y cierra diariamente es el turno.</span></p></div>
+<p-dialog
+  [header]="cajaFisicaForm.id ? 'Editar caja física' : 'Nueva caja física'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="cajaFisicaDialogVisible()"
+  (visibleChange)="cajaFisicaDialogVisible.set($event)"
+  styleClass="cash-dialog cash-dialog--wide"
+>
+  <div class="dialog-intro">
+    <i class="pi pi-desktop"></i>
+    <p>
+      <b>Recurso permanente</b
+      ><span
+        >Esta configuración se reutiliza; lo que se abre y cierra diariamente es el turno.</span
+      >
+    </p>
+  </div>
   <form class="dialog-form">
-    <label>Sucursal
-      <p-select name="sucursalFisica" [options]="sucursalOptions()" [(ngModel)]="cajaFisicaForm.sucursalId" placeholder="Selecciona sucursal" />
+    <label
+      >Sucursal
+      <p-select
+        name="sucursalFisica"
+        [options]="sucursalOptions()"
+        [(ngModel)]="cajaFisicaForm.sucursalId"
+        placeholder="Selecciona sucursal"
+      />
     </label>
-    <label>Código
-      <input pInputText name="codigoFisica" [(ngModel)]="cajaFisicaForm.codigo" placeholder="CJ-01" />
+    <label
+      >Código
+      <input
+        pInputText
+        name="codigoFisica"
+        [(ngModel)]="cajaFisicaForm.codigo"
+        placeholder="CJ-01"
+      />
     </label>
-    <label>Nombre
-      <input pInputText name="nombreFisica" [(ngModel)]="cajaFisicaForm.nombre" placeholder="Caja principal" />
+    <label
+      >Nombre
+      <input
+        pInputText
+        name="nombreFisica"
+        [(ngModel)]="cajaFisicaForm.nombre"
+        placeholder="Caja principal"
+      />
     </label>
-    <label>Moneda
+    <label
+      >Moneda
       <p-select name="monedaFisica" [options]="monedaOptions" [(ngModel)]="cajaFisicaForm.moneda" />
     </label>
-    <label>Estado
-      <p-select name="estadoFisica" [options]="cajaEstadoOptions" [(ngModel)]="cajaFisicaForm.estado" />
+    <label
+      >Estado
+      <p-select
+        name="estadoFisica"
+        [options]="cajaEstadoOptions"
+        [(ngModel)]="cajaFisicaForm.estado"
+      />
     </label>
-    <label class="wide">Cajeros autorizados
+    <label class="wide"
+      >Cajeros autorizados
       <p-multiSelect
         name="usuariosFisica"
         [options]="usuarioOptions()"
@@ -328,7 +712,22 @@
     </label>
   </form>
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="cajaFisicaDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" [loading]="saving()" (click)="guardarCajaFisica()">Guardar caja física</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="cajaFisicaDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      [loading]="saving()"
+      (click)="guardarCajaFisica()"
+    >
+      Guardar caja física
+    </button>
   </ng-template>
 </p-dialog>

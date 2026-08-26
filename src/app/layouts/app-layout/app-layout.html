@@ -5,7 +5,12 @@
   [class.sidebar-mobile-open]="!isDesktop() && mobileSidebarOpen()"
 >
   @if (!isDesktop() && mobileSidebarOpen()) {
-    <button class="sidebar-backdrop" type="button" aria-label="Cerrar menu lateral" (click)="closeMobileSidebar()"></button>
+    <button
+      class="sidebar-backdrop"
+      type="button"
+      aria-label="Cerrar menu lateral"
+      (click)="closeMobileSidebar()"
+    ></button>
   }
 
   <aside
@@ -16,7 +21,12 @@
     <div class="sidebar-brand">
       <a class="brand-link" [routerLink]="homeRoute()" (click)="handleNavSelection(homeRoute())">
         <span class="brand-mark">
-          <img [src]="brandLogoSrc()" alt="AZURION" class="brand-mark-image" (error)="handleBrandLogoError()" />
+          <img
+            [src]="brandLogoSrc()"
+            alt="AZURION"
+            class="brand-mark-image"
+            (error)="handleBrandLogoError()"
+          />
         </span>
         <span class="brand-copy">
           <strong>{{ profile().empresaNombre || 'AZURION' }}</strong>
@@ -31,7 +41,10 @@
     </div>
 
     @if (!isGeneralAdmin() && availableWorkspaces().length) {
-      <div class="workspace-switcher" [class.workspace-switcher-single]="availableWorkspaces().length === 1">
+      <div
+        class="workspace-switcher"
+        [class.workspace-switcher-single]="availableWorkspaces().length === 1"
+      >
         @for (workspace of availableWorkspaces(); track workspace.value) {
           <button
             type="button"
@@ -64,13 +77,17 @@
               @if (item.children?.length) {
                 <div
                   class="nav-group"
-                  [class.nav-group-open]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
+                  [class.nav-group-open]="
+                    isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)
+                  "
                   [class.nav-group-active]="groupHasActiveRoute(item)"
                 >
                   <button
                     type="button"
                     class="nav-link nav-group-trigger"
-                    [attr.aria-expanded]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
+                    [attr.aria-expanded]="
+                      isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)
+                    "
                     (click)="toggleGroup(item.groupId || '')"
                   >
                     <span class="nav-link-main">
@@ -80,15 +97,29 @@
                         </span>
                       }
                       <span class="nav-link-text">{{ item.label }}</span>
+                      @if (item.badge) {
+                        <span
+                          class="nav-item-badge"
+                          [class]="'nav-item-badge--' + (item.badgeTone || 'info')"
+                          >{{ item.badge }}</span
+                        >
+                      }
                     </span>
                     <i
                       class="pi nav-chevron"
-                      [class.pi-angle-down]="isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)"
-                      [class.pi-angle-right]="!(isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))"
+                      [class.pi-angle-down]="
+                        isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item)
+                      "
+                      [class.pi-angle-right]="
+                        !(isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))
+                      "
                     ></i>
                   </button>
 
-                  @if (sidebarExpanded() && (isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))) {
+                  @if (
+                    sidebarExpanded() &&
+                    (isGroupExpanded(item.groupId || '') || groupHasActiveRoute(item))
+                  ) {
                     <div class="nav-sub-links">
                       @for (child of item.children; track child.route) {
                         <a
@@ -98,10 +129,19 @@
                           [routerLinkActiveOptions]="exactRouteMatchOptions"
                           (click)="handleNavSelection(child.route)"
                         >
-                          @if (child.icon) {
-                            <i [class]="'pi ' + child.icon + ' sub-link-icon'"></i>
+                          <span class="nav-sub-link-content">
+                            @if (child.icon) {
+                              <i [class]="'pi ' + child.icon + ' sub-link-icon'"></i>
+                            }
+                            <span>{{ child.label }}</span>
+                          </span>
+                          @if (child.badge) {
+                            <span
+                              class="nav-item-badge"
+                              [class]="'nav-item-badge--' + (child.badgeTone || 'info')"
+                              >{{ child.badge }}</span
+                            >
                           }
-                          <span>{{ child.label }}</span>
                         </a>
                       }
                     </div>
@@ -115,12 +155,21 @@
                   [routerLinkActiveOptions]="exactRouteMatchOptions"
                   (click)="handleNavSelection(item.route)"
                 >
-                  @if (item.icon) {
-                    <span class="nav-icon-wrap">
-                      <i [class]="'pi ' + item.icon + ' nav-item-icon'"></i>
-                    </span>
+                  <span class="nav-link-main">
+                    @if (item.icon) {
+                      <span class="nav-icon-wrap">
+                        <i [class]="'pi ' + item.icon + ' nav-item-icon'"></i>
+                      </span>
+                    }
+                    <span class="nav-link-text">{{ item.label }}</span>
+                  </span>
+                  @if (item.badge) {
+                    <span
+                      class="nav-item-badge"
+                      [class]="'nav-item-badge--' + (item.badgeTone || 'info')"
+                      >{{ item.badge }}</span
+                    >
                   }
-                  <span class="nav-link-text">{{ item.label }}</span>
                 </a>
               }
             }
@@ -137,8 +186,17 @@
   <div class="admin-main">
     <header class="admin-header">
       <div class="header-left">
-        <button class="header-toggle" type="button" aria-label="Mostrar u ocultar menu lateral" (click)="toggleSidebar()">
-          <i class="pi" [class.pi-bars]="!mobileSidebarOpen()" [class.pi-times]="mobileSidebarOpen() && !isDesktop()"></i>
+        <button
+          class="header-toggle"
+          type="button"
+          aria-label="Mostrar u ocultar menu lateral"
+          (click)="toggleSidebar()"
+        >
+          <i
+            class="pi"
+            [class.pi-bars]="!mobileSidebarOpen()"
+            [class.pi-times]="mobileSidebarOpen() && !isDesktop()"
+          ></i>
         </button>
 
         <label class="header-search" aria-label="Busqueda rapida">
@@ -186,17 +244,30 @@
             >
               <i class="pi pi-bell"></i>
               @if (notificationBadgeCount()) {
-                <span class="header-mini-badge">{{ notificationBadgeCount() > 99 ? '99+' : notificationBadgeCount() }}</span>
+                <span class="header-mini-badge">{{
+                  notificationBadgeCount() > 99 ? '99+' : notificationBadgeCount()
+                }}</span>
               }
             </button>
           </div>
 
-          <button class="header-user" type="button" aria-label="Perfil de usuario" (click)="toggleAccountPanel()">
+          <button
+            class="header-user"
+            type="button"
+            aria-label="Perfil de usuario"
+            (click)="toggleAccountPanel()"
+          >
             <span class="header-user-copy">
               <strong>{{ profile().displayName }}</strong>
               <small>{{ profile().branchLabel }}</small>
             </span>
-            <span class="header-user-avatar">{{ profile().initials }}</span>
+            <span class="header-user-avatar">
+              @if (profile().photoUrl; as photoUrl) {
+                <img [src]="photoUrl" [alt]="'Foto de ' + profile().displayName" />
+              } @else {
+                {{ profile().initials }}
+              }
+            </span>
           </button>
 
           @if (notificationsPanelOpen()) {
@@ -300,5 +371,7 @@
       [visible]="profileDialogVisible()"
       (visibleChange)="profileDialogVisible.set($event)"
     />
+
+    <p-confirmdialog />
   </div>
 </div>

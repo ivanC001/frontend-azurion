@@ -62,52 +62,42 @@ export class PlatformMessagingService {
 
   inbox(limit = 50) {
     return this.http
-      .get<ApiResponse<InboxMessage[]>>(
-        this.apiUrl.url('saasCore', '/v1/messages/inbox'),
-        {
-          headers: this.session.apiHeaders(),
-          params: { limit },
-        },
-      )
+      .get<ApiResponse<InboxMessage[]>>(this.apiUrl.url('saasCore', '/v1/messages/inbox'), {
+        headers: this.session.apiHeaders(),
+        params: { limit },
+      })
       .pipe(map((response) => response.data));
   }
 
   unreadCount() {
     return this.http
-      .get<ApiResponse<{ unreadCount: number }>>(
-        this.apiUrl.url('saasCore', '/v1/messages/inbox/unread-count'),
-        { headers: this.session.apiHeaders() },
-      )
+      .get<
+        ApiResponse<{ unreadCount: number }>
+      >(this.apiUrl.url('saasCore', '/v1/messages/inbox/unread-count'), { headers: this.session.apiHeaders() })
       .pipe(map((response) => Number(response.data.unreadCount || 0)));
   }
 
   markRead(recipientId: number) {
     return this.http
-      .patch<ApiResponse<InboxMessage>>(
-        this.apiUrl.url('saasCore', `/v1/messages/inbox/${recipientId}/read`),
-        null,
-        { headers: this.session.apiHeaders() },
-      )
+      .patch<
+        ApiResponse<InboxMessage>
+      >(this.apiUrl.url('saasCore', `/v1/messages/inbox/${recipientId}/read`), null, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   markAllRead() {
     return this.http
-      .post<ApiResponse<number>>(
-        this.apiUrl.url('saasCore', '/v1/messages/inbox/read-all'),
-        null,
-        { headers: this.session.apiHeaders() },
-      )
+      .post<
+        ApiResponse<number>
+      >(this.apiUrl.url('saasCore', '/v1/messages/inbox/read-all'), null, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 
   send(request: SendPlatformMessageRequest) {
     return this.http
-      .post<ApiResponse<SentPlatformMessage>>(
-        this.apiUrl.url('saasCore', '/v1/saas/platform/messages'),
-        request,
-        { headers: this.session.apiHeaders() },
-      )
+      .post<
+        ApiResponse<SentPlatformMessage>
+      >(this.apiUrl.url('saasCore', '/v1/saas/platform/messages'), request, { headers: this.session.apiHeaders() })
       .pipe(map((response) => response.data));
   }
 

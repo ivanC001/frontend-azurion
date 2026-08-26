@@ -38,7 +38,15 @@ interface PlanEditForm {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-platform-plans-page',
-  imports: [DecimalPipe, FormsModule, ButtonModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [
+    DecimalPipe,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
+    TableModule,
+    TagModule,
+  ],
   templateUrl: './platform-plans-page.html',
   styleUrl: './platform-plans-page.scss',
 })
@@ -107,11 +115,7 @@ export class PlatformPlansPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    if (
-      !this.form.nombre.trim() ||
-      !this.form.codigo.trim() ||
-      !this.form.moduloCodigos.length
-    ) {
+    if (!this.form.nombre.trim() || !this.form.codigo.trim() || !this.form.moduloCodigos.length) {
       this.errorMessage.set('Completa nombre, codigo y al menos un modulo del plan.');
       return;
     }
@@ -121,7 +125,9 @@ export class PlatformPlansPage {
       this.form.limiteUsuarios < 1 ||
       this.form.precioMensual < 0
     ) {
-      this.errorMessage.set('El plan requiere al menos un usuario; capacidad y precio no pueden ser negativos.');
+      this.errorMessage.set(
+        'El plan requiere al menos un usuario; capacidad y precio no pueden ser negativos.',
+      );
       return;
     }
 

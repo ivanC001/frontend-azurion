@@ -44,7 +44,10 @@ export function normalizeHttpError(error: HttpErrorResponse): HttpErrorResponse 
   });
 }
 
-function normalizePayload(status: number, payload: Partial<ApiErrorPayload> | null): ApiErrorPayload {
+function normalizePayload(
+  status: number,
+  payload: Partial<ApiErrorPayload> | null,
+): ApiErrorPayload {
   const traceId = cleanText(payload?.traceId);
 
   if (payload?.userActionable === true) {
@@ -70,7 +73,11 @@ function normalizePayload(status: number, payload: Partial<ApiErrorPayload> | nu
   }
 
   if (status === 403) {
-    return safeClientPayload('ACCESS_DENIED', 'No tienes permiso para realizar esta operacion.', traceId);
+    return safeClientPayload(
+      'ACCESS_DENIED',
+      'No tienes permiso para realizar esta operacion.',
+      traceId,
+    );
   }
 
   if (status === 404) {

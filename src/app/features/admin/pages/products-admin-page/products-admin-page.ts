@@ -21,7 +21,7 @@ import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { LowStockAlertService } from '@core/services/low-stock-alert.service';
+import { LowStockAlertService } from '@features/admin/services/low-stock-alert.service';
 import {
   AdminSaasApiService,
   Almacen,
@@ -504,14 +504,12 @@ export class ProductsAdminPage {
     const rate = Math.max(
       Number(
         this.productForm.usaConfiguracionEmpresa
-          ? inherited?.porcentajeIgvDefault ?? 18
+          ? (inherited?.porcentajeIgvDefault ?? 18)
           : this.productForm.porcentajeImpuesto,
       ),
       0,
     );
-    const taxable = new Set(['10', '11', '12', '13', '14', '15', '16', '17']).has(
-      afectacion,
-    );
+    const taxable = new Set(['10', '11', '12', '13', '14', '15', '16', '17']).has(afectacion);
     const base = taxable && rate > 0 ? final / (1 + rate / 100) : final;
     return {
       base,

@@ -3,9 +3,18 @@
     <div>
       <p class="page-eyebrow">Administracion tributaria</p>
       <h1>Configuracion tributaria</h1>
-      <p>Define las reglas por defecto. El punto de venta las aplica automaticamente sin pedir datos al cajero.</p>
+      <p>
+        Define las reglas por defecto. El punto de venta las aplica automaticamente sin pedir datos
+        al cajero.
+      </p>
     </div>
-    <p-button label="Recargar" icon="pi pi-refresh" styleClass="az-secondary" [loading]="loading()" (onClick)="load()" />
+    <p-button
+      label="Recargar"
+      icon="pi pi-refresh"
+      styleClass="az-secondary"
+      [loading]="loading()"
+      (onClick)="load()"
+    />
   </header>
 
   <section class="tax-layout">
@@ -14,18 +23,29 @@
         <span><i class="pi pi-shield"></i></span>
         <div>
           <h2>Regla predeterminada de empresa</h2>
-          <p>Las sucursales y productos heredan esta configuracion mientras no tengan una excepcion.</p>
+          <p>
+            Las sucursales y productos heredan esta configuracion mientras no tengan una excepcion.
+          </p>
         </div>
       </div>
 
       <div class="tax-grid">
         <label>
           Tipo de operacion
-          <p-select name="tipoOperacion" [options]="operationOptions" [(ngModel)]="form.tipoOperacionDefaultId" />
+          <p-select
+            name="tipoOperacion"
+            [options]="operationOptions"
+            [(ngModel)]="form.tipoOperacionDefaultId"
+          />
         </label>
         <label>
           Tipo de afectacion
-          <p-select name="tipoAfectacion" [options]="afectacionOptions" [(ngModel)]="form.tipoAfectacionDefaultId" (ngModelChange)="onAfectacionChange($event)" />
+          <p-select
+            name="tipoAfectacion"
+            [options]="afectacionOptions"
+            [(ngModel)]="form.tipoAfectacionDefaultId"
+            (ngModelChange)="onAfectacionChange($event)"
+          />
         </label>
         <label>
           Tributo
@@ -33,7 +53,15 @@
         </label>
         <label>
           Porcentaje IGV
-          <input pInputText type="number" min="0" max="100" step="0.01" name="porcentaje" [(ngModel)]="form.porcentajeIgvDefault" />
+          <input
+            pInputText
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            name="porcentaje"
+            [(ngModel)]="form.porcentajeIgvDefault"
+          />
         </label>
         <label>
           Moneda predeterminada
@@ -42,14 +70,28 @@
       </div>
 
       <div class="tax-summary">
-        <span>Operacion <strong>{{ form.tipoOperacionDefaultId }}</strong></span>
-        <span>Afectacion <strong>{{ form.tipoAfectacionDefaultId }}</strong></span>
-        <span>Tributo <strong>{{ form.tributoDefaultId }}</strong></span>
-        <span>Impuesto <strong>{{ form.porcentajeIgvDefault }}%</strong></span>
+        <span
+          >Operacion <strong>{{ form.tipoOperacionDefaultId }}</strong></span
+        >
+        <span
+          >Afectacion <strong>{{ form.tipoAfectacionDefaultId }}</strong></span
+        >
+        <span
+          >Tributo <strong>{{ form.tributoDefaultId }}</strong></span
+        >
+        <span
+          >Impuesto <strong>{{ form.porcentajeIgvDefault }}%</strong></span
+        >
       </div>
 
       <div class="tax-actions">
-        <p-button label="Guardar configuracion" icon="pi pi-save" styleClass="az-primary" [loading]="saving()" (onClick)="save()" />
+        <p-button
+          label="Guardar configuracion"
+          icon="pi pi-save"
+          styleClass="az-primary"
+          [loading]="saving()"
+          (onClick)="save()"
+        />
       </div>
     </form>
 
@@ -62,7 +104,12 @@
       </ol>
       <div class="pos-note">
         <i class="pi pi-bolt"></i>
-        <div><strong>POS rapido</strong><span>El cajero escanea, cobra e imprime. La tributacion se resuelve en el servidor.</span></div>
+        <div>
+          <strong>POS rapido</strong
+          ><span
+            >El cajero escanea, cobra e imprime. La tributacion se resuelve en el servidor.</span
+          >
+        </div>
       </div>
     </aside>
   </section>

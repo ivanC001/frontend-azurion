@@ -24,7 +24,11 @@ export interface LoginResponse {
   }[];
   readonly userId?: number;
   readonly nombres?: string | null;
+  readonly apellidos?: string | null;
   readonly email?: string | null;
+  readonly telefono?: string | null;
+  readonly cargo?: string | null;
+  readonly fotoPerfilUrl?: string | null;
   readonly empresa?: {
     readonly id: number;
     readonly ruc: string;
@@ -144,7 +148,11 @@ export class AuthSessionService {
     const issuedAtTime = Date.parse(session.issuedAt ?? '');
     const expiresInSeconds = Number(session.expiresInSeconds ?? 0);
 
-    if (!Number.isFinite(issuedAtTime) || !Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
+    if (
+      !Number.isFinite(issuedAtTime) ||
+      !Number.isFinite(expiresInSeconds) ||
+      expiresInSeconds <= 0
+    ) {
       return true;
     }
 
@@ -268,7 +276,13 @@ export class AuthSessionService {
     this.setSession(next);
   }
 
-  updateCurrentProfile(nombres: string): void {
+  updateCurrentProfile(profile: {
+    nombres: string;
+    apellidos?: string | null;
+    telefono?: string | null;
+    cargo?: string | null;
+    fotoPerfilUrl?: string | null;
+  }): void {
     const current = this.session();
     if (!current) {
       return;
@@ -276,7 +290,7 @@ export class AuthSessionService {
 
     this.setSession({
       ...current,
-      nombres,
+      ...profile,
     });
   }
 
@@ -377,7 +391,10 @@ export class AuthSessionService {
   }
 
   private normalizeRoleCode(role: string): string {
-    return role.trim().toUpperCase().replace(/^ROLE_/, '');
+    return role
+      .trim()
+      .toUpperCase()
+      .replace(/^ROLE_/, '');
   }
 
   private initializeChannel(): void {
@@ -419,7 +436,10 @@ export class AuthSessionService {
         return;
       }
 
-      this.expireSession(false);
+      if (message.type === 'SESSION_CLEARED') {
+        this.expireSession(false);
+        return;
+      }
     };
     this.postMessage({ type: 'SYNC_REQUEST' });
   }

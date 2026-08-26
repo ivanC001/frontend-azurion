@@ -5,8 +5,25 @@
       <h1>Guia de remision</h1>
     </div>
     <div class="doc-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-refresh" (click)="loadData()">Recargar</button>
-      <button pButton type="button" class="p-button-success" icon="pi pi-check" [loading]="saving()" (click)="registrarGuia()">Registrar</button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined"
+        icon="pi pi-refresh"
+        (click)="loadData()"
+      >
+        Recargar
+      </button>
+      <button
+        pButton
+        type="button"
+        class="p-button-success"
+        icon="pi pi-check"
+        [loading]="saving()"
+        (click)="registrarGuia()"
+      >
+        Registrar
+      </button>
     </div>
   </header>
 
@@ -21,19 +38,40 @@
     <div class="form-grid">
       <label>
         Sucursal origen
-        <p-select [options]="sucursalOptions()" optionLabel="label" optionValue="value" [ngModel]="sucursalOrigenId()" (ngModelChange)="sucursalOrigenId.set($event)" />
+        <p-select
+          [options]="sucursalOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="sucursalOrigenId()"
+          (ngModelChange)="sucursalOrigenId.set($event)"
+        />
       </label>
       <label>
         Sucursal destino
-        <p-select [options]="sucursalOptions()" optionLabel="label" optionValue="value" [ngModel]="sucursalDestinoId()" (ngModelChange)="sucursalDestinoId.set($event)" />
+        <p-select
+          [options]="sucursalOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="sucursalDestinoId()"
+          (ngModelChange)="sucursalDestinoId.set($event)"
+        />
       </label>
       <label>
         Fecha traslado
-        <input pInputText type="date" [ngModel]="fechaTraslado()" (ngModelChange)="fechaTraslado.set($event)" />
+        <input
+          pInputText
+          type="date"
+          [ngModel]="fechaTraslado()"
+          (ngModelChange)="fechaTraslado.set($event)"
+        />
       </label>
       <label>
         Motivo traslado
-        <input pInputText [ngModel]="motivoTraslado()" (ngModelChange)="motivoTraslado.set($event)" />
+        <input
+          pInputText
+          [ngModel]="motivoTraslado()"
+          (ngModelChange)="motivoTraslado.set($event)"
+        />
       </label>
       <label>
         Transportista
@@ -49,7 +87,15 @@
   <section class="doc-card">
     <h2>Items de traslado</h2>
     <div class="item-actions">
-      <button pButton type="button" class="p-button-secondary p-button-outlined p-button-sm" icon="pi pi-plus" (click)="addItem()">Agregar item</button>
+      <button
+        pButton
+        type="button"
+        class="p-button-secondary p-button-outlined p-button-sm"
+        icon="pi pi-plus"
+        (click)="addItem()"
+      >
+        Agregar item
+      </button>
     </div>
 
     @for (item of items(); track $index) {
@@ -67,13 +113,29 @@
         </label>
         <label>
           Cantidad
-          <input pInputText type="number" [ngModel]="item.cantidad" (ngModelChange)="item.cantidad = +$event || 0" />
+          <input
+            pInputText
+            type="number"
+            [ngModel]="item.cantidad"
+            (ngModelChange)="item.cantidad = +$event || 0"
+          />
         </label>
         <label>
           Descripcion
-          <input pInputText [ngModel]="item.descripcion" (ngModelChange)="item.descripcion = $event" />
+          <input
+            pInputText
+            [ngModel]="item.descripcion"
+            (ngModelChange)="item.descripcion = $event"
+          />
         </label>
-        <button type="button" pButton class="p-button-rounded p-button-danger p-button-text remove-btn" icon="pi pi-trash" (click)="removeItem($index)" [disabled]="items().length <= 1"></button>
+        <button
+          type="button"
+          pButton
+          class="p-button-rounded p-button-danger p-button-text remove-btn"
+          icon="pi pi-trash"
+          (click)="removeItem($index)"
+          [disabled]="items().length <= 1"
+        ></button>
       </div>
     }
   </section>
@@ -111,7 +173,15 @@
           [ngModel]="guiaQuery()"
           (ngModelChange)="guiaQuery.set($event)"
         />
-        <button pButton type="button" class="p-button-secondary p-button-outlined" icon="pi pi-sync" (click)="refreshGuias()">Actualizar</button>
+        <button
+          pButton
+          type="button"
+          class="p-button-secondary p-button-outlined"
+          icon="pi pi-sync"
+          (click)="refreshGuias()"
+        >
+          Actualizar
+        </button>
       </div>
     </div>
 
@@ -188,7 +258,11 @@
           } @empty {
             <tr>
               <td colspan="8" class="empty-row">
-                {{ loading() ? 'Cargando guias...' : 'No hay guias de remision registradas para este tenant.' }}
+                {{
+                  loading()
+                    ? 'Cargando guias...'
+                    : 'No hay guias de remision registradas para este tenant.'
+                }}
               </td>
             </tr>
           }

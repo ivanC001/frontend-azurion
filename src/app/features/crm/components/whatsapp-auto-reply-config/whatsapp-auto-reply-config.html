@@ -1,0 +1,137 @@
+<section class="auto-reply-card">
+  <header class="auto-reply-header">
+    <span class="auto-reply-icon"><i class="pi pi-bolt"></i></span>
+    <div>
+      <small>AUTOMATIZACION DEL TENANT</small>
+      <strong>Respuesta automatica de WhatsApp</strong>
+    </div>
+    @if (config(); as current) {
+      <label class="status-switch">
+        <input
+          type="checkbox"
+          [checked]="current.activo"
+          [disabled]="!canManage()"
+          (change)="updateField('activo', $any($event.target).checked)"
+        />
+        <span>{{ current.activo ? 'Activa' : 'Inactiva' }}</span>
+      </label>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="auto-reply-state">
+      <i class="pi pi-spin pi-spinner"></i> Cargando configuracion...
+    </div>
+  } @else if (config(); as current) {
+    <div class="auto-reply-grid">
+      <div class="auto-reply-main">
+        <label class="field-label" for="auto-reply-message">Mensaje</label>
+        <textarea
+          id="auto-reply-message"
+          rows="5"
+          maxlength="4096"
+          [disabled]="!canManage()"
+          [ngModel]="current.mensaje"
+          (ngModelChange)="updateField('mensaje', $event)"
+          placeholder="Gracias por escribirnos. Un asesor te atendera pronto."
+        ></textarea>
+        <div class="field-meta">
+          <span><i class="pi pi-globe"></i> {{ current.zonaHoraria }}</span>
+          <span>{{ current.mensaje.length }}/4096</span>
+        </div>
+
+        <div class="auto-reply-options">
+          <div>
+            <span class="field-label">Disponibilidad</span>
+            <div class="mode-control">
+              <button
+                type="button"
+                [class.active]="current.modo === 'SIEMPRE'"
+                [disabled]="!canManage()"
+                (click)="updateField('modo', 'SIEMPRE')"
+              >
+                <i class="pi pi-clock"></i> Siempre
+              </button>
+              <button
+                type="button"
+                [class.active]="current.modo === 'HORARIO'"
+                [disabled]="!canManage()"
+                (click)="updateField('modo', 'HORARIO')"
+              >
+                <i class="pi pi-calendar"></i> Por horario
+              </button>
+            </div>
+          </div>
+          <label>
+            <span class="field-label">No repetir durante</span>
+            <select
+              [disabled]="!canManage()"
+              [ngModel]="current.cooldownMinutos"
+              (ngModelChange)="updateField('cooldownMinutos', +$event)"
+            >
+              <option [ngValue]="30">30 minutos</option>
+              <option [ngValue]="120">2 horas</option>
+              <option [ngValue]="720">12 horas</option>
+              <option [ngValue]="1440">24 horas</option>
+              <option [ngValue]="10080">7 dias</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="schedule-panel" [class.schedule-panel--disabled]="current.modo !== 'HORARIO'">
+        <div class="schedule-title">
+          <span><strong>Horario semanal</strong><small>Hora local del tenant</small></span>
+          <i class="pi pi-calendar-clock"></i>
+        </div>
+        @for (schedule of current.horarios; track schedule.diaSemana; let index = $index) {
+          <div class="schedule-row">
+            <label>
+              <input
+                type="checkbox"
+                [checked]="schedule.activo"
+                [disabled]="!canManage() || current.modo !== 'HORARIO'"
+                (change)="updateSchedule(index, 'activo', $any($event.target).checked)"
+              />
+              <span>{{ dayNames[index] }}</span>
+            </label>
+            <div>
+              <input
+                type="time"
+                [disabled]="!canManage() || current.modo !== 'HORARIO' || !schedule.activo"
+                [ngModel]="schedule.horaInicio"
+                (ngModelChange)="updateSchedule(index, 'horaInicio', $event)"
+              />
+              <span>a</span>
+              <input
+                type="time"
+                [disabled]="!canManage() || current.modo !== 'HORARIO' || !schedule.activo"
+                [ngModel]="schedule.horaFin"
+                (ngModelChange)="updateSchedule(index, 'horaFin', $event)"
+              />
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <footer class="auto-reply-footer">
+      <div>
+        @if (error()) {
+          <span class="feedback feedback--error"
+            ><i class="pi pi-times-circle"></i> {{ error() }}</span
+          >
+        }
+        @if (success()) {
+          <span class="feedback feedback--success"
+            ><i class="pi pi-check-circle"></i> {{ success() }}</span
+          >
+        }
+      </div>
+      <button type="button" [disabled]="!canManage() || saving()" (click)="save()">
+        <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+        {{ saving() ? 'Guardando...' : 'Guardar automatizacion' }}
+      </button>
+    </footer>
+  }
+</section>

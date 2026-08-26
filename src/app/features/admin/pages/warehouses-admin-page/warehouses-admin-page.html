@@ -140,7 +140,9 @@
     <section class="form-section">
       <header class="form-section__head">
         <span><i class="pi pi-map-marker"></i></span>
-        <div><strong>Ubicacion operativa</strong><small>Define donde se controlara el stock.</small></div>
+        <div>
+          <strong>Ubicacion operativa</strong><small>Define donde se controlara el stock.</small>
+        </div>
       </header>
       <div class="dialog-grid">
         <label class="wide-field field-control">
@@ -172,13 +174,22 @@
     <section class="form-section">
       <header class="form-section__head">
         <span><i class="pi pi-box"></i></span>
-        <div><strong>Identidad del almacen</strong><small>Puedes ajustar el nombre y la direccion sugeridos.</small></div>
+        <div>
+          <strong>Identidad del almacen</strong
+          ><small>Puedes ajustar el nombre y la direccion sugeridos.</small>
+        </div>
       </header>
       <div class="dialog-grid">
         <label class="field-control">
           <span class="field-label"><i class="pi pi-hashtag"></i> Codigo</span>
           <span class="auto-input">
-            <input pInputText name="codigo" [(ngModel)]="form.codigo" readonly placeholder="Automatico" />
+            <input
+              pInputText
+              name="codigo"
+              [(ngModel)]="form.codigo"
+              readonly
+              placeholder="Automatico"
+            />
             <small><i class="pi pi-lock"></i> Generado</small>
           </span>
         </label>
@@ -225,13 +236,18 @@
       <label class="option-card">
         <input type="checkbox" name="permiteVenta" [(ngModel)]="form.permiteVenta" />
         <span><i class="pi pi-shopping-cart"></i></span>
-        <div><strong>Habilitar ventas</strong><small>Permite despachar ventas desde este almacen.</small></div>
+        <div>
+          <strong>Habilitar ventas</strong
+          ><small>Permite despachar ventas desde este almacen.</small>
+        </div>
       </label>
       @if (form.id) {
         <label class="option-card">
           <input type="checkbox" name="activo" [(ngModel)]="form.activo" />
           <span><i class="pi pi-power-off"></i></span>
-          <div><strong>Almacen activo</strong><small>Disponible para operaciones de inventario.</small></div>
+          <div>
+            <strong>Almacen activo</strong><small>Disponible para operaciones de inventario.</small>
+          </div>
         </label>
       }
     </div>
@@ -241,7 +257,10 @@
       <div>
         <small>Vista previa</small>
         <strong>{{ form.nombre || 'Nuevo almacen' }}</strong>
-        <p>{{ form.codigo || 'Codigo automatico' }} · {{ selectedSucursal()?.nombre || 'Sin sucursal' }}</p>
+        <p>
+          {{ form.codigo || 'Codigo automatico' }} ·
+          {{ selectedSucursal()?.nombre || 'Sin sucursal' }}
+        </p>
       </div>
       <span class="type-pill">{{ warehouseTypeLabel() }}</span>
     </div>

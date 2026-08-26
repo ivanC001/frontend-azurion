@@ -1,19 +1,25 @@
 <header class="navbar" [class.navbar--scrolled]="isScrolled">
   <div class="navbar__inner">
-    <a class="brand" routerLink="/inicio" fragment="inicio" aria-label="AZURION inicio" (click)="closeMenu()">
+    <a
+      class="brand"
+      routerLink="/inicio"
+      fragment="inicio"
+      aria-label="AZURION inicio"
+      (click)="closeMenu()"
+    >
       <span class="brand__mark">
-        <img src="assets/logosinfondo.png" alt="AZURION" />
+        <img src="assets/logosinfondo.png" alt="AZURION Logo" />
       </span>
       <span class="brand__copy">
-        <strong>AZURION</strong>
-        <small>Gestiona. Controla. Crece.</small>
+        <span class="brand__title">AZURION</span>
+        <span class="brand__tagline">ERP &bull; CRM &bull; SUNAT</span>
       </span>
     </a>
 
     <button
       class="menu-toggle"
       type="button"
-      aria-label="Abrir menu"
+      aria-label="Abrir menú"
       [attr.aria-expanded]="isMenuOpen"
       (click)="toggleMenu()"
     >
@@ -21,7 +27,7 @@
     </button>
 
     <div class="navbar__panel" [class.navbar__panel--open]="isMenuOpen">
-      <nav class="nav-links" aria-label="Navegacion principal">
+      <nav class="nav-links" aria-label="Navegación principal">
         @for (item of navItems; track item.label) {
           <a [routerLink]="['/inicio']" [fragment]="item.fragment" (click)="closeMenu()">
             {{ item.label }}
@@ -31,12 +37,12 @@
 
       <div class="navbar__actions">
         <a class="nav-login" routerLink="/auth" (click)="closeMenu()">
-          <i class="pi pi-user"></i>
-          <span>Iniciar sesion</span>
+          <i class="pi pi-sign-in"></i>
+          <span>Ingresar</span>
         </a>
-        <a pButton class="nav-demo" routerLink="/inicio" fragment="contacto" (click)="closeMenu()">
-          <i class="pi pi-send"></i>
-          <span>Solicitar demo</span>
+        <a class="nav-demo-btn" routerLink="/inicio" fragment="contacto" (click)="closeMenu()">
+          <i class="pi pi-sparkles"></i>
+          <span>Solicitar Demo</span>
         </a>
       </div>
     </div>

@@ -1,0 +1,205 @@
+:host {
+  display: block;
+}
+.quick-replies {
+  border: 1px solid #d5dfeb;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  color: #172033;
+}
+.quick-replies > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 50px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #e4eaf1;
+}
+.quick-replies > header > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.quick-replies > header > span > i {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #e7f2ff;
+  color: #2563eb;
+}
+.quick-replies > header span span {
+  display: grid;
+  gap: 1px;
+}
+.quick-replies > header strong {
+  font-size: 12px;
+}
+.quick-replies > header small {
+  color: #667085;
+  font-size: 9px;
+}
+.quick-replies > header b {
+  min-width: 32px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #edf4ff;
+  color: #2563eb;
+  text-align: center;
+  font-size: 10px;
+}
+.quick-replies-state {
+  min-height: 70px;
+  display: grid;
+  place-items: center;
+  color: #667085;
+  font-size: 11px;
+}
+.quick-reply-list {
+  display: grid;
+}
+.quick-reply-list article {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 60px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #edf1f5;
+}
+.quick-reply-slot {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #eef3f9;
+  color: #475467;
+  font-size: 10px;
+  font-weight: 800;
+}
+.quick-reply-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.quick-reply-copy strong {
+  font-size: 11px;
+}
+.quick-reply-copy small {
+  overflow: hidden;
+  color: #667085;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.quick-reply-actions {
+  display: flex;
+  gap: 3px;
+}
+.quick-reply-actions button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d5dfeb;
+  border-radius: 6px;
+  background: #fff;
+  color: #475467;
+  cursor: pointer;
+}
+.quick-reply-actions button:nth-child(2) {
+  color: #078457;
+}
+.quick-reply-actions button:last-child {
+  color: #dc2626;
+}
+.quick-reply-actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.quick-reply-add {
+  width: calc(100% - 20px);
+  height: 34px;
+  margin: 9px 10px;
+  border: 1px dashed #aebed1;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #344054;
+  font-weight: 700;
+  cursor: pointer;
+}
+.quick-reply-editor {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  background: #f8fafc;
+}
+.quick-reply-editor input,
+.quick-reply-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd8e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  padding: 8px 9px;
+  font-size: 11px;
+  resize: vertical;
+}
+.quick-reply-editor footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.quick-reply-editor button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #cbd8e8;
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  font-weight: 700;
+  cursor: pointer;
+}
+.quick-reply-editor button.primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+.quick-reply-error {
+  margin: 0;
+  padding: 7px 10px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 10px;
+}
+:host-context(.dark-theme) .quick-replies,
+:host-context([data-theme='dark']) .quick-replies,
+:host-context(html.dark) .quick-replies {
+  background: #152033;
+  border-color: #34435a;
+  color: #eef4ff;
+}
+:host-context(.dark-theme) .quick-reply-actions button,
+:host-context(.dark-theme) .quick-reply-editor input,
+:host-context(.dark-theme) .quick-reply-editor textarea,
+:host-context([data-theme='dark']) .quick-reply-actions button,
+:host-context([data-theme='dark']) .quick-reply-editor input,
+:host-context([data-theme='dark']) .quick-reply-editor textarea,
+:host-context(html.dark) .quick-reply-actions button,
+:host-context(html.dark) .quick-reply-editor input,
+:host-context(html.dark) .quick-reply-editor textarea {
+  background: #101a2b;
+  border-color: #3b4a61;
+  color: #eef4ff;
+}

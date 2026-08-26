@@ -105,11 +105,11 @@ export class CashAdminPage {
   protected abrirForm: AbrirTurnoForm = this.emptyOpenForm();
   protected movimientoForm: MovimientoForm = this.emptyMovementForm();
   protected depositoForm: DepositoForm = this.emptyDepositForm();
-  protected cierreForm: CierreForm = this.emptyCloseForm();
+  protected readonly cierreForm = signal<CierreForm>(this.emptyCloseForm());
   protected cajaFisicaForm: CajaFisicaForm = this.emptyPhysicalBoxForm();
 
-  protected readonly canConfigure = computed(() =>
-    this.session.hasPermission('CAJA_CONFIGURE') || this.session.hasPermission('CAJA_WRITE'),
+  protected readonly canConfigure = computed(
+    () => this.session.hasPermission('CAJA_CONFIGURE') || this.session.hasPermission('CAJA_WRITE'),
   );
 
   protected readonly selectedTurno = computed(() => {
@@ -122,9 +122,10 @@ export class CashAdminPage {
     if (!userId) {
       return null;
     }
-    return this.turnos().find((turno) =>
-      turno.estado === 'ABIERTO' && turno.usuarioId === userId,
-    ) ?? null;
+    return (
+      this.turnos().find((turno) => turno.estado === 'ABIERTO' && turno.usuarioId === userId) ??
+      null
+    );
   });
 
   protected readonly activePhysicalBoxes = computed(() =>
@@ -134,9 +135,9 @@ export class CashAdminPage {
   protected readonly filteredTurnos = computed(() => {
     const estado = this.estadoFilter();
     const sucursalId = this.sucursalFilter();
-    return this.turnos().filter((turno) =>
-      (!estado || turno.estado === estado)
-      && (!sucursalId || turno.sucursalId === sucursalId),
+    return this.turnos().filter(
+      (turno) =>
+        (!estado || turno.estado === estado) && (!sucursalId || turno.sucursalId === sucursalId),
     );
   });
 
@@ -145,9 +146,11 @@ export class CashAdminPage {
     if (!turno) {
       return 0;
     }
-    return Number(turno.totalRetiros || 0)
-      + Number(turno.totalDepositos || 0)
-      + Number(turno.totalReembolsos || 0);
+    return (
+      Number(turno.totalRetiros || 0) +
+      Number(turno.totalDepositos || 0) +
+      Number(turno.totalReembolsos || 0)
+    );
   });
 
   protected readonly cierreDiferenciaPreview = computed(() => {
@@ -155,7 +158,7 @@ export class CashAdminPage {
     if (!turno) {
       return 0;
     }
-    return Number(this.cierreForm.conteoFisico || 0) - Number(turno.saldoEsperado || 0);
+    return Number(this.cierreForm().conteoFisico || 0) - Number(turno.saldoEsperado || 0);
   });
 
   protected readonly sucursalOptions = computed(() =>
@@ -230,14 +233,16 @@ export class CashAdminPage {
           this.usuarios.set(usuarios);
 
           const currentSelection = preferredTurnoId ?? this.selectedTurnoId();
-          const selectedId = active?.id
-            ?? (currentSelection && turnos.some((turno) => turno.id === currentSelection)
+          const selectedId =
+            active?.id ??
+            (currentSelection && turnos.some((turno) => turno.id === currentSelection)
               ? currentSelection
-              : turnos[0]?.id ?? null);
+              : (turnos[0]?.id ?? null));
           this.selectedTurnoId.set(selectedId);
           this.abrirForm = {
             ...this.emptyOpenForm(),
-            cajaId: active?.cajaId ?? cajasFisicas.find((caja) => caja.estado === 'ACTIVA')?.id ?? null,
+            cajaId:
+              active?.cajaId ?? cajasFisicas.find((caja) => caja.estado === 'ACTIVA')?.id ?? null,
           };
           this.loadMovimientos();
         },
@@ -256,7 +261,9 @@ export class CashAdminPage {
       return;
     }
     if (!this.activePhysicalBoxes().length) {
-      this.errorMessage.set('No tienes cajas activas asignadas. Solicita una asignación al administrador.');
+      this.errorMessage.set(
+        'No tienes cajas activas asignadas. Solicita una asignación al administrador.',
+      );
       return;
     }
     this.clearMessages();
@@ -277,11 +284,12 @@ export class CashAdminPage {
       return;
     }
     this.saving.set(true);
-    this.api.abrirTurnoCaja({
-      cajaId: this.abrirForm.cajaId,
-      saldoApertura: Number(this.abrirForm.saldoApertura),
-      observacion: this.abrirForm.observacion.trim() || null,
-    })
+    this.api
+      .abrirTurnoCaja({
+        cajaId: this.abrirForm.cajaId,
+        saldoApertura: Number(this.abrirForm.saldoApertura),
+        observacion: this.abrirForm.observacion.trim() || null,
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (turno) => {
@@ -312,13 +320,14 @@ export class CashAdminPage {
       return;
     }
     this.saving.set(true);
-    this.api.registrarMovimientoCaja(turno.id, {
-      tipoMovimiento: this.movimientoForm.tipoMovimiento,
-      monto: Number(this.movimientoForm.monto),
-      descripcion: this.movimientoForm.descripcion.trim(),
-      referencia: this.movimientoForm.referencia.trim() || null,
-      clientOperationId: this.movimientoForm.clientOperationId,
-    })
+    this.api
+      .registrarMovimientoCaja(turno.id, {
+        tipoMovimiento: this.movimientoForm.tipoMovimiento,
+        monto: Number(this.movimientoForm.monto),
+        descripcion: this.movimientoForm.descripcion.trim(),
+        referencia: this.movimientoForm.referencia.trim() || null,
+        clientOperationId: this.movimientoForm.clientOperationId,
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
@@ -349,13 +358,14 @@ export class CashAdminPage {
       return;
     }
     this.saving.set(true);
-    this.api.depositarCuentaEmpresarial(turno.id, {
-      monto: Number(this.depositoForm.monto),
-      cuentaEmpresarial: this.depositoForm.cuentaEmpresarial.trim(),
-      numeroOperacion: this.depositoForm.numeroOperacion.trim() || null,
-      observacion: this.depositoForm.observacion.trim() || null,
-      clientOperationId: this.depositoForm.clientOperationId,
-    })
+    this.api
+      .depositarCuentaEmpresarial(turno.id, {
+        monto: Number(this.depositoForm.monto),
+        cuentaEmpresarial: this.depositoForm.cuentaEmpresarial.trim(),
+        numeroOperacion: this.depositoForm.numeroOperacion.trim() || null,
+        observacion: this.depositoForm.observacion.trim() || null,
+        clientOperationId: this.depositoForm.clientOperationId,
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
@@ -374,11 +384,19 @@ export class CashAdminPage {
       return;
     }
     this.clearMessages();
-    this.cierreForm = {
+    this.cierreForm.set({
       conteoFisico: Number(turno.saldoEsperado || 0),
       observacion: '',
-    };
+    });
     this.cierreDialogVisible.set(true);
+  }
+
+  protected updateCierreConteoFisico(value: number | string): void {
+    this.cierreForm.update((prev) => ({ ...prev, conteoFisico: Number(value || 0) }));
+  }
+
+  protected updateCierreObservacion(value: string): void {
+    this.cierreForm.update((prev) => ({ ...prev, observacion: value || '' }));
   }
 
   protected cerrarTurno(): void {
@@ -386,15 +404,17 @@ export class CashAdminPage {
     if (!turno || this.saving()) {
       return;
     }
-    if (Number(this.cierreForm.conteoFisico) < 0) {
+    const form = this.cierreForm();
+    if (Number(form.conteoFisico) < 0) {
       this.errorMessage.set('El conteo físico no puede ser negativo.');
       return;
     }
     this.saving.set(true);
-    this.api.cerrarTurnoCaja(turno.id, {
-      conteoFisico: Number(this.cierreForm.conteoFisico),
-      observacion: this.cierreForm.observacion.trim() || null,
-    })
+    this.api
+      .cerrarTurnoCaja(turno.id, {
+        conteoFisico: Number(form.conteoFisico),
+        observacion: form.observacion.trim() || null,
+      })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (closed) => {
@@ -412,14 +432,14 @@ export class CashAdminPage {
     this.clearMessages();
     this.cajaFisicaForm = caja
       ? {
-        id: caja.id,
-        sucursalId: caja.sucursalId,
-        codigo: caja.codigo,
-        nombre: caja.nombre,
-        moneda: caja.moneda as CajaFisicaForm['moneda'],
-        estado: caja.estado,
-        usuarioIds: [...(caja.usuarioIds || [])],
-      }
+          id: caja.id,
+          sucursalId: caja.sucursalId,
+          codigo: caja.codigo,
+          nombre: caja.nombre,
+          moneda: caja.moneda as CajaFisicaForm['moneda'],
+          estado: caja.estado,
+          usuarioIds: [...(caja.usuarioIds || [])],
+        }
       : this.emptyPhysicalBoxForm();
     this.cajaFisicaDialogVisible.set(true);
   }
@@ -472,9 +492,7 @@ export class CashAdminPage {
   }
 
   protected movementClass(tipo: string): string {
-    return ['RETIRO', 'DEPOSITO', 'REEMBOLSO'].includes(tipo)
-      ? 'movement-out'
-      : 'movement-in';
+    return ['RETIRO', 'DEPOSITO', 'REEMBOLSO'].includes(tipo) ? 'movement-out' : 'movement-in';
   }
 
   protected paymentLabel(value: string): string {
@@ -489,7 +507,12 @@ export class CashAdminPage {
     }
     this.api.listCajaMovimientos(turnoId).subscribe({
       next: (movimientos) => this.movimientos.set(movimientos),
-      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+      error: (error: unknown) => {
+        this.movimientos.set([]);
+        this.errorMessage.set(
+          `No se pudo cargar el historial de movimientos. ${this.resolveError(error)}`,
+        );
+      },
     });
   }
 
@@ -560,9 +583,11 @@ export class CashAdminPage {
       if (httpError.status === 403) {
         return 'No tienes permisos para esta operación de caja.';
       }
-      return httpError.error?.details?.[0]
-        || httpError.error?.message
-        || 'No se pudo completar la operación.';
+      return (
+        httpError.error?.details?.[0] ||
+        httpError.error?.message ||
+        'No se pudo completar la operación.'
+      );
     }
     return 'No se pudo completar la operación.';
   }

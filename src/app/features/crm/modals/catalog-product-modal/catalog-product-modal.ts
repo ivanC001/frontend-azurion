@@ -1,0 +1,35 @@
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+
+import type { CrmPage } from '../../crm-page';
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-catalog-product-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
+    SelectModule,
+    TableModule,
+    TagModule,
+    TextareaModule,
+  ],
+  templateUrl: './catalog-product-modal.html',
+  styleUrl: './catalog-product-modal.scss',
+  encapsulation: ViewEncapsulation.None,
+})
+export class CatalogProductModal {
+  readonly host = input.required<CrmPage>();
+}

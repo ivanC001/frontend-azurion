@@ -20,7 +20,12 @@
         [disabled]="!canOperateInTenant()"
         (onClick)="openRoleDialog()"
       />
-      <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="load()" />
+      <p-button
+        label="Actualizar"
+        icon="pi pi-refresh"
+        styleClass="az-secondary"
+        (onClick)="load()"
+      />
     </div>
   </header>
 
@@ -32,36 +37,64 @@
   }
 
   @if (isGeneralAdmin()) {
-  <section class="tenant-toolbar">
-    <div>
-      <h2>Tenant de trabajo</h2>
-      @if (selectedEmpresa(); as empresa) {
-        <p>{{ empresa.razonSocial }} | RUC {{ empresa.ruc }} | {{ empresa.tenantId }}</p>
-      } @else {
-        <p>Selecciona una empresa para administrar usuarios y roles.</p>
-      }
-    </div>
-    <label class="tenant-field">
-      <span>Empresa / Tenant</span>
-      <p-select
-        name="tenantId"
-        [options]="tenantOptions()"
-        [loading]="loadingEmpresas()"
-        [(ngModel)]="form.tenantId"
-        placeholder="Selecciona empresa / tenant"
-        [showClear]="true"
-        (ngModelChange)="onTenantChange()"
-      />
-    </label>
-  </section>
+    <section class="tenant-toolbar">
+      <div>
+        <h2>Tenant de trabajo</h2>
+        @if (selectedEmpresa(); as empresa) {
+          <p>{{ empresa.razonSocial }} | RUC {{ empresa.ruc }} | {{ empresa.tenantId }}</p>
+        } @else {
+          <p>Selecciona una empresa para administrar usuarios y roles.</p>
+        }
+      </div>
+      <label class="tenant-field">
+        <span>Empresa / Tenant</span>
+        <p-select
+          name="tenantId"
+          [options]="tenantOptions()"
+          [loading]="loadingEmpresas()"
+          [(ngModel)]="form.tenantId"
+          placeholder="Selecciona empresa / tenant"
+          [showClear]="true"
+          (ngModelChange)="onTenantChange()"
+        />
+      </label>
+    </section>
   }
 
   <section class="stats-grid users-stats">
-    <article class="user-stat"><i class="pi pi-users"></i><div><span>Total usuarios</span><strong>{{ usuarios().length }}</strong></div></article>
-    <article class="user-stat user-stat--green"><i class="pi pi-user"></i><div><span>Con acceso</span><strong>{{ activeUsers() }}</strong></div></article>
-    <article class="user-stat user-stat--red"><i class="pi pi-user-minus"></i><div><span>Inhabilitados</span><strong>{{ inactiveUsers() }}</strong></div></article>
-    <article class="user-stat user-stat--green"><i class="pi pi-ticket"></i><div><span>Cupo del plan</span><strong>{{ userQuota()?.activeUsers ?? activeUsers() }} / {{ userQuota()?.limit ?? '—' }}</strong></div></article>
-    <article class="user-stat user-stat--violet"><i class="pi pi-shield"></i><div><span>Roles disponibles</span><strong>{{ roles().length }}</strong></div></article>
+    <article class="user-stat">
+      <i class="pi pi-users"></i>
+      <div>
+        <span>Total usuarios</span><strong>{{ usuarios().length }}</strong>
+      </div>
+    </article>
+    <article class="user-stat user-stat--green">
+      <i class="pi pi-user"></i>
+      <div>
+        <span>Con acceso</span><strong>{{ activeUsers() }}</strong>
+      </div>
+    </article>
+    <article class="user-stat user-stat--red">
+      <i class="pi pi-user-minus"></i>
+      <div>
+        <span>Inhabilitados</span><strong>{{ inactiveUsers() }}</strong>
+      </div>
+    </article>
+    <article class="user-stat user-stat--green">
+      <i class="pi pi-ticket"></i>
+      <div>
+        <span>Cupo del plan</span
+        ><strong
+          >{{ userQuota()?.activeUsers ?? activeUsers() }} / {{ userQuota()?.limit ?? '—' }}</strong
+        >
+      </div>
+    </article>
+    <article class="user-stat user-stat--violet">
+      <i class="pi pi-shield"></i>
+      <div>
+        <span>Roles disponibles</span><strong>{{ roles().length }}</strong>
+      </div>
+    </article>
   </section>
 
   <section class="table-panel">
@@ -77,23 +110,59 @@
         />
       </div>
     </div>
-    <p-table [value]="filteredUsers()" [loading]="loading()" [paginator]="filteredUsers().length > 10" [rows]="10" responsiveLayout="scroll">
+    <p-table
+      [value]="filteredUsers()"
+      [loading]="loading()"
+      [paginator]="filteredUsers().length > 10"
+      [rows]="10"
+      responsiveLayout="scroll"
+      styleClass="users-table az-table"
+    >
       <ng-template pTemplate="header">
         <tr>
-          <th>Usuario</th>
-          <th>Nombres</th>
-          <th>Email</th>
-          <th>Sucursales</th>
-          <th>Roles</th>
-          <th>Estado</th>
-          <th>Acciones</th>
+          <th style="width: 170px">Usuario</th>
+          <th style="width: 190px">Nombres y Apellidos</th>
+          <th style="width: 170px">Email</th>
+          <th style="width: 130px">Sucursales</th>
+          <th style="min-width: 220px">Roles</th>
+          <th style="width: 90px; text-align: center">Estado</th>
+          <th style="width: 170px; text-align: right" class="actions-col">Acciones</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-item>
         <tr>
-          <td><strong>{{ item.username }}</strong></td>
-          <td>{{ item.nombres }}</td>
-          <td>{{ item.email || 'Sin email' }}</td>
+          <td>
+            <div class="user-profile-cell">
+              <span class="user-avatar-badge">
+                @if (userPhotoUrl(item); as photoUrl) {
+                  <img [src]="photoUrl" [alt]="'Foto de ' + item.username" />
+                } @else {
+                  {{ userInitials(item) }}
+                }
+              </span>
+              <div class="user-meta-info">
+                <strong class="user-username-text">{{ item.username }}</strong>
+                @if (item.cargo) {
+                  <small class="user-cargo-label">{{ item.cargo }}</small>
+                }
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="user-names-cell">
+              <span class="user-fullname-text">{{ item.nombres }} {{ item.apellidos || '' }}</span>
+              @if (item.telefono) {
+                <small class="user-phone-label"
+                  ><i class="pi pi-phone"></i> {{ item.telefono }}</small
+                >
+              }
+            </div>
+          </td>
+          <td>
+            <span class="user-email-text" [title]="item.email || 'Sin email'">{{
+              item.email || 'Sin email'
+            }}</span>
+          </td>
           <td>
             <div class="branch-tags">
               @for (sucursal of item.sucursales; track sucursal.id) {
@@ -112,49 +181,53 @@
               }
             </div>
           </td>
-          <td>
-            <p-tag [value]="item.activo ? 'Activo' : 'Inactivo'" [severity]="statusSeverity(item.activo)" />
+          <td style="text-align: center">
+            <p-tag
+              [value]="item.activo ? 'Activo' : 'Inactivo'"
+              [severity]="statusSeverity(item.activo)"
+              styleClass="az-tag-sm"
+            />
           </td>
-          <td>
+          <td class="actions-col">
             <div class="row-actions">
               <button
                 type="button"
-                pButton
-                class="p-button-text p-button-secondary p-button-rounded"
-                icon="pi pi-pencil"
-                pTooltip="Editar"
+                class="action-btn action-btn--edit"
+                pTooltip="Editar usuario"
                 tooltipPosition="top"
                 (click)="openEditDialog(item)"
-              ></button>
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
               <button
                 type="button"
-                pButton
-                class="p-button-text p-button-help p-button-rounded"
-                icon="pi pi-key"
-                pTooltip="Cambiar contrasena"
+                class="action-btn action-btn--key"
+                pTooltip="Cambiar contraseña"
                 tooltipPosition="top"
                 (click)="openPasswordDialog(item)"
-              ></button>
+              >
+                <i class="pi pi-key"></i>
+              </button>
               <button
                 type="button"
-                pButton
-                class="p-button-text p-button-rounded"
-                [class.p-button-warning]="item.activo"
-                [class.p-button-success]="!item.activo"
-                [icon]="item.activo ? 'pi pi-ban' : 'pi pi-check'"
-                [pTooltip]="item.activo ? 'Inhabilitar' : 'Habilitar'"
+                class="action-btn action-btn--toggle"
+                [class.action-btn--warn]="item.activo"
+                [class.action-btn--success]="!item.activo"
+                [pTooltip]="item.activo ? 'Inhabilitar usuario' : 'Habilitar usuario'"
                 tooltipPosition="top"
                 (click)="toggleUsuarioActivo(item)"
-              ></button>
+              >
+                <i [class]="item.activo ? 'pi pi-ban' : 'pi pi-check'"></i>
+              </button>
               <button
                 type="button"
-                pButton
-                class="p-button-text p-button-danger p-button-rounded"
-                icon="pi pi-trash"
-                pTooltip="Eliminar"
+                class="action-btn action-btn--danger"
+                pTooltip="Eliminar usuario"
                 tooltipPosition="top"
                 (click)="deleteUsuario(item)"
-              ></button>
+              >
+                <i class="pi pi-trash"></i>
+              </button>
             </div>
           </td>
         </tr>
@@ -179,7 +252,13 @@
     </label>
     <label>
       Password
-      <input pInputText type="password" name="password" [(ngModel)]="form.password" placeholder="Minimo 8 caracteres" />
+      <input
+        pInputText
+        type="password"
+        name="password"
+        [(ngModel)]="form.password"
+        placeholder="Minimo 8 caracteres"
+      />
     </label>
     <label>
       Nombres
@@ -187,7 +266,13 @@
     </label>
     <label>
       Email
-      <input pInputText type="email" name="email" [(ngModel)]="form.email" placeholder="correo@empresa.com" />
+      <input
+        pInputText
+        type="email"
+        name="email"
+        [(ngModel)]="form.email"
+        placeholder="correo@empresa.com"
+      />
     </label>
     <label class="wide-field">
       Sucursales asignadas
@@ -209,11 +294,17 @@
         @if (loadingRoles()) {
           <small class="tenant-meta">Cargando roles del tenant...</small>
         } @else if (sortedRoles().length === 0) {
-          <small class="tenant-meta tenant-meta--warn">No hay roles registrados en este tenant.</small>
+          <small class="tenant-meta tenant-meta--warn"
+            >No hay roles registrados en este tenant.</small
+          >
         } @else {
           @for (role of sortedRoles(); track role.id) {
             <label class="role-option">
-              <input type="checkbox" [checked]="hasRole(role.codigo)" (change)="toggleRole(role.codigo)" />
+              <input
+                type="checkbox"
+                [checked]="hasRole(role.codigo)"
+                (change)="toggleRole(role.codigo)"
+              />
               <span>
                 <strong>{{ role.nombre }}</strong>
                 <small>{{ role.ambito }} | {{ role.descripcion || role.codigo }}</small>
@@ -226,8 +317,24 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="userDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="save()">Registrar usuario</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="userDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="save()"
+    >
+      Registrar usuario
+    </button>
   </ng-template>
 </p-dialog>
 
@@ -241,7 +348,10 @@
   styleClass="password-dialog"
 >
   <form class="dialog-form password-form">
-    <p>Define una nueva contrasena para <strong>{{ passwordForm.username }}</strong>.</p>
+    <p>
+      Define una nueva contrasena para <strong>{{ passwordForm.username }}</strong
+      >.
+    </p>
     <label>
       Nueva contrasena
       <input
@@ -269,8 +379,24 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="passwordDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-key" [loading]="saving()" (click)="savePassword()">Actualizar contrasena</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="passwordDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-key"
+      [loading]="saving()"
+      (click)="savePassword()"
+    >
+      Actualizar contrasena
+    </button>
   </ng-template>
 </p-dialog>
 
@@ -290,11 +416,22 @@
     </label>
     <label>
       Nombres
-      <input pInputText name="editNombres" [(ngModel)]="editForm.nombres" placeholder="Nombre completo" />
+      <input
+        pInputText
+        name="editNombres"
+        [(ngModel)]="editForm.nombres"
+        placeholder="Nombre completo"
+      />
     </label>
     <label>
       Email
-      <input pInputText type="email" name="editEmail" [(ngModel)]="editForm.email" placeholder="correo@empresa.com" />
+      <input
+        pInputText
+        type="email"
+        name="editEmail"
+        [(ngModel)]="editForm.email"
+        placeholder="correo@empresa.com"
+      />
     </label>
     <label class="wide-field">
       Sucursales asignadas
@@ -316,11 +453,17 @@
         @if (loadingRoles()) {
           <small class="tenant-meta">Cargando roles del tenant...</small>
         } @else if (sortedRoles().length === 0) {
-          <small class="tenant-meta tenant-meta--warn">No hay roles registrados en este tenant.</small>
+          <small class="tenant-meta tenant-meta--warn"
+            >No hay roles registrados en este tenant.</small
+          >
         } @else {
           @for (role of sortedRoles(); track role.id) {
             <label class="role-option">
-              <input type="checkbox" [checked]="hasEditRole(role.codigo)" (change)="toggleEditRole(role.codigo)" />
+              <input
+                type="checkbox"
+                [checked]="hasEditRole(role.codigo)"
+                (change)="toggleEditRole(role.codigo)"
+              />
               <span>
                 <strong>{{ role.nombre }}</strong>
                 <small>{{ role.ambito }} | {{ role.descripcion || role.codigo }}</small>
@@ -333,7 +476,23 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <button type="button" pButton class="az-secondary p-button-outlined" (click)="editDialogVisible.set(false)">Cancelar</button>
-    <button type="button" pButton class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveEditedUser()">Guardar cambios</button>
+    <button
+      type="button"
+      pButton
+      class="az-secondary p-button-outlined"
+      (click)="editDialogVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      pButton
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="saveEditedUser()"
+    >
+      Guardar cambios
+    </button>
   </ng-template>
 </p-dialog>

@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, concatMap, finalize } from 'rxjs/operators';
+import { catchError, concatMap, finalize, forkJoin, of } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,6 +13,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
+import { ApiUrlService } from '@core/api/api-url.service';
 import {
   AdminSaasApiService,
   Empresa,
@@ -30,13 +31,6 @@ interface UsuarioForm {
   email: string;
   roles: string[];
   sucursalIds: number[];
-}
-
-interface RolForm {
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  deleteRoleId: number | null;
 }
 
 interface EditUsuarioForm {
@@ -77,6 +71,8 @@ export class UsersAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly session = inject(AuthSessionService);
   private readonly router = inject(Router);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly apiUrl = inject(ApiUrlService);
 
   protected readonly usuarios = signal<UsuarioTenant[]>([]);
   protected readonly empresas = signal<Empresa[]>([]);
@@ -87,11 +83,9 @@ export class UsersAdminPage {
   protected readonly loadingEmpresas = signal(false);
   protected readonly loadingRoles = signal(false);
   protected readonly saving = signal(false);
-  protected readonly creatingRole = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
   protected readonly userDialogVisible = signal(false);
-  protected readonly roleDialogVisible = signal(false);
   protected readonly editDialogVisible = signal(false);
   protected readonly passwordDialogVisible = signal(false);
   protected readonly searchTerm = signal('');
@@ -104,12 +98,6 @@ export class UsersAdminPage {
     email: '',
     roles: this.session.currentSession()?.adminGeneral ? ['ADMIN_EMPRESA'] : [],
     sucursalIds: [],
-  };
-  protected rolForm: RolForm = {
-    codigo: '',
-    nombre: '',
-    descripcion: '',
-    deleteRoleId: null,
   };
   protected editForm: EditUsuarioForm = {
     id: null,
@@ -180,6 +168,23 @@ export class UsersAdminPage {
         value: sucursal.id,
       })),
   );
+
+  protected userPhotoUrl(usuario: UsuarioTenant): string | null {
+    return this.apiUrl.publicFileUrl(usuario.fotoPerfilUrl);
+  }
+
+  protected userInitials(usuario: UsuarioTenant): string {
+    const name =
+      [usuario.nombres, usuario.apellidos].filter(Boolean).join(' ').trim() ||
+      usuario.username ||
+      'US';
+    return name
+      .split(/[.\s_-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('');
+  }
 
   constructor() {
     if (this.isGeneralAdmin()) {
@@ -301,14 +306,13 @@ export class UsersAdminPage {
 
   protected onTenantChange(): void {
     this.successMessage.set(null);
-    this.rolForm.deleteRoleId = null;
     this.form.roles = [];
     this.form.sucursalIds = [];
     this.load();
   }
 
   protected openUserDialog(): void {
-    if (this.saving() || this.creatingRole()) {
+    if (this.saving()) {
       return;
     }
 
@@ -331,6 +335,73 @@ export class UsersAdminPage {
     this.userDialogVisible.set(true);
   }
 
+  protected canOperateInTenant(): boolean {
+    const tenantId = this.resolveTargetTenant();
+    if (!tenantId) {
+      return false;
+    }
+
+    if (!this.isGeneralAdmin()) {
+      return true;
+    }
+
+    return this.empresas().some((empresa) => empresa.tenantId === tenantId);
+  }
+
+  protected toggleRole(roleCode: string): void {
+    const current = [...this.form.roles];
+    const normalized = roleCode.toUpperCase();
+    const index = current.indexOf(normalized);
+    if (index >= 0) {
+      current.splice(index, 1);
+    } else {
+      current.push(normalized);
+    }
+    this.form.roles = current;
+  }
+
+  protected hasRole(roleCode: string): boolean {
+    return this.form.roles.includes(roleCode.toUpperCase());
+  }
+
+  protected deleteUsuario(user: UsuarioTenant): void {
+    if (this.saving()) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    const tenantId = this.resolveTargetTenant();
+    if (!tenantId) {
+      this.errorMessage.set('Debes indicar el tenant destino.');
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de eliminar el usuario "${user.username}"? Esta acción no se puede deshacer.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => {
+        this.saving.set(true);
+        this.api
+          .deleteUsuario(user.id, { tenantId })
+          .pipe(finalize(() => this.saving.set(false)))
+          .subscribe({
+            next: () => {
+              this.successMessage.set(`Usuario ${user.username} eliminado correctamente.`);
+              this.load();
+            },
+            error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+          });
+      },
+    });
+  }
+
   protected openRoleDialog(): void {
     void this.router.navigate([
       this.isGeneralAdmin() ? '/admin/seguridad-plataforma' : '/admin/seguridad-empresa',
@@ -343,13 +414,6 @@ export class UsersAdminPage {
   }
 
   protected openEditDialog(user: UsuarioTenant): void {
-    if (this.saving() || this.creatingRole()) {
-      return;
-    }
-
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-    this.loadRoles();
     this.editForm = {
       id: user.id,
       username: user.username,
@@ -539,181 +603,6 @@ export class UsersAdminPage {
       });
   }
 
-  protected deleteUsuario(user: UsuarioTenant): void {
-    if (this.saving()) {
-      return;
-    }
-
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-
-    const tenantId = this.resolveTargetTenant();
-    if (!tenantId) {
-      this.errorMessage.set('Debes indicar el tenant destino.');
-      return;
-    }
-
-    const confirmed = globalThis.confirm(
-      `Se eliminara el usuario ${user.username}. Deseas continuar?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    this.saving.set(true);
-    this.api
-      .deleteUsuario(user.id, { tenantId })
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(`Usuario ${user.username} eliminado correctamente.`);
-          this.load();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
-  }
-
-  protected canOperateInTenant(): boolean {
-    const tenantId = this.resolveTargetTenant();
-    if (!tenantId) {
-      return false;
-    }
-
-    if (!this.isGeneralAdmin()) {
-      return true;
-    }
-
-    return this.empresas().some((empresa) => empresa.tenantId === tenantId);
-  }
-
-  protected toggleRole(roleCode: string): void {
-    const current = [...this.form.roles];
-    const normalized = roleCode.toUpperCase();
-    const index = current.indexOf(normalized);
-    if (index >= 0) {
-      current.splice(index, 1);
-    } else {
-      current.push(normalized);
-    }
-    this.form.roles = current;
-  }
-
-  protected hasRole(roleCode: string): boolean {
-    return this.form.roles.includes(roleCode.toUpperCase());
-  }
-
-  protected createRole(): void {
-    if (this.creatingRole()) {
-      return;
-    }
-
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-
-    const tenantId = this.resolveTargetTenant();
-    if (!tenantId) {
-      this.errorMessage.set('Selecciona un tenant para crear roles.');
-      return;
-    }
-
-    if (!this.rolForm.nombre.trim()) {
-      this.errorMessage.set('Completa el nombre del rol.');
-      return;
-    }
-
-    const generatedCode = this.rolForm.codigo.trim() || this.buildRoleCode(this.rolForm.nombre);
-    if (!generatedCode) {
-      this.errorMessage.set('No se pudo generar el codigo del rol.');
-      return;
-    }
-
-    this.creatingRole.set(true);
-    this.api
-      .createRol(
-        {
-          codigo: generatedCode,
-          nombre: this.rolForm.nombre.trim(),
-          descripcion: this.rolForm.descripcion.trim() || null,
-          ambito:
-            this.session.hasModule('CRM') && !this.session.hasModule('ERP') ? 'CRM' : 'ERP',
-        },
-        { tenantId },
-      )
-      .pipe(finalize(() => this.creatingRole.set(false)))
-      .subscribe({
-        next: (role) => {
-          this.successMessage.set(`Rol ${role.codigo} creado y disponible para asignacion.`);
-          this.rolForm = {
-            codigo: '',
-            nombre: '',
-            descripcion: '',
-            deleteRoleId: this.rolForm.deleteRoleId,
-          };
-          this.loadRoles();
-          this.toggleRole(role.codigo);
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
-  }
-
-  protected deleteRole(): void {
-    if (this.creatingRole()) {
-      return;
-    }
-
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
-
-    const tenantId = this.resolveTargetTenant();
-    if (!tenantId) {
-      this.errorMessage.set('Selecciona un tenant para eliminar roles.');
-      return;
-    }
-
-    const roleId = this.rolForm.deleteRoleId;
-    if (!roleId) {
-      this.errorMessage.set('Selecciona un rol para eliminar.');
-      return;
-    }
-
-    const role = this.roles().find((item) => item.id === roleId);
-    if (!role) {
-      this.errorMessage.set('El rol seleccionado ya no existe.');
-      return;
-    }
-
-    this.creatingRole.set(true);
-    this.api
-      .deleteRol(roleId, { tenantId })
-      .pipe(finalize(() => this.creatingRole.set(false)))
-      .subscribe({
-        next: () => {
-          this.successMessage.set(`Rol ${role.codigo} eliminado.`);
-          this.form.roles = this.form.roles.filter((code) => code !== role.codigo);
-          this.rolForm.deleteRoleId = null;
-          this.loadRoles();
-        },
-        error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
-      });
-  }
-
-  protected suggestRoleCodeFromName(): void {
-    if (this.rolForm.codigo.trim()) {
-      return;
-    }
-    this.rolForm.codigo = this.buildRoleCode(this.rolForm.nombre);
-  }
-
-  protected sanitizeRoleCode(event: Event): void {
-    const input = event.target as HTMLInputElement | null;
-    if (!input) {
-      return;
-    }
-    const normalized = this.buildRoleCode(input.value);
-    input.value = normalized;
-    this.rolForm.codigo = normalized;
-  }
-
   private resolveTargetTenant(): string | null {
     if (this.isGeneralAdmin()) {
       return this.form.tenantId.trim() || null;
@@ -731,7 +620,9 @@ export class UsersAdminPage {
       if (httpError.status === 403) {
         const apiMessage = httpError.error?.details?.[0] || httpError.error?.message;
         if (this.isGeneralAdmin()) {
-          return apiMessage || 'El tenant seleccionado no existe, esta inactivo o no esta disponible.';
+          return (
+            apiMessage || 'El tenant seleccionado no existe, esta inactivo o no esta disponible.'
+          );
         }
         return 'Tu usuario no tiene permisos para esta accion. Solicita al administrador general el rol ADMIN_EMPRESA para tu tenant.';
       }
@@ -744,23 +635,6 @@ export class UsersAdminPage {
       return apiError?.details?.[0] || apiError?.message || 'No se pudo completar la operacion.';
     }
     return 'No se pudo completar la operacion.';
-  }
-
-  private buildRoleCode(value: string): string {
-    const base = value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '')
-      .replace(/_+/g, '_')
-      .slice(0, 40);
-
-    if (!base) {
-      return '';
-    }
-
-    return /^[A-Z]/.test(base) ? base : `ROL_${base}`;
   }
 
   private loadRoles(): void {

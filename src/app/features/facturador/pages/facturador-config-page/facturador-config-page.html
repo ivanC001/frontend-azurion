@@ -4,11 +4,16 @@
       <p class="page-header__eyebrow">Configuracion facturador</p>
       <h1>Series, correlativos y tablas de emision</h1>
       <p>
-        Los tenants nuevos inician automaticamente con series por defecto. Esta vista centraliza cambios
-        de series, IGV y moneda por tenant.
+        Los tenants nuevos inician automaticamente con series por defecto. Esta vista centraliza
+        cambios de series, IGV y moneda por tenant.
       </p>
     </div>
-    <p-button label="Actualizar" icon="pi pi-refresh" styleClass="az-secondary" (onClick)="loadTenants()" />
+    <p-button
+      label="Actualizar"
+      icon="pi pi-refresh"
+      styleClass="az-secondary"
+      (onClick)="loadTenants()"
+    />
   </header>
 
   @if (errorMessage()) {
@@ -58,7 +63,10 @@
           </td>
           <td>{{ tenant.ruc }}</td>
           <td>
-            <p-tag [value]="tenant.sunat_mode || tenant.modo_sunat || 'beta'" [severity]="modeTag(tenant.sunat_mode || tenant.modo_sunat)" />
+            <p-tag
+              [value]="tenant.sunat_mode || tenant.modo_sunat || 'beta'"
+              [severity]="modeTag(tenant.sunat_mode || tenant.modo_sunat)"
+            />
           </td>
           <td>{{ tenant.serie_factura || 'F001' }}</td>
           <td>{{ tenant.serie_boleta || 'B001' }}</td>
@@ -74,8 +82,7 @@
               class="p-button-sm p-button-rounded p-button-info p-button-text"
               icon="pi pi-pencil"
               (click)="openEditModal(tenant)"
-            >
-            </button>
+            ></button>
           </td>
         </tr>
       </ng-template>
@@ -101,10 +108,18 @@
     <div class="detail-loading">Cargando configuracion del tenant...</div>
   } @else if (selectedTenantDetail(); as detail) {
     <div class="tenant-meta">
-      <div><span>Empresa</span><strong>{{ detail.business_name }}</strong></div>
-      <div><span>RUC</span><strong>{{ detail.ruc }}</strong></div>
-      <div><span>Schema</span><strong>{{ detail.schema }}</strong></div>
-      <div><span>Tenant</span><strong>{{ detail.tenant_id }}</strong></div>
+      <div>
+        <span>Empresa</span><strong>{{ detail.business_name }}</strong>
+      </div>
+      <div>
+        <span>RUC</span><strong>{{ detail.ruc }}</strong>
+      </div>
+      <div>
+        <span>Schema</span><strong>{{ detail.schema }}</strong>
+      </div>
+      <div>
+        <span>Tenant</span><strong>{{ detail.tenant_id }}</strong>
+      </div>
     </div>
 
     <div class="form-grid">
@@ -139,16 +154,42 @@
     </div>
 
     <div class="series-preview">
-      <article><span>Factura</span><strong>{{ previewSeries().factura }}</strong></article>
-      <article><span>Boleta</span><strong>{{ previewSeries().boleta }}</strong></article>
-      <article><span>Nota credito</span><strong>{{ previewSeries().nc }}</strong></article>
-      <article><span>Nota debito</span><strong>{{ previewSeries().nd }}</strong></article>
-      <article><span>Guia</span><strong>{{ previewSeries().guia }}</strong></article>
+      <article>
+        <span>Factura</span><strong>{{ previewSeries().factura }}</strong>
+      </article>
+      <article>
+        <span>Boleta</span><strong>{{ previewSeries().boleta }}</strong>
+      </article>
+      <article>
+        <span>Nota credito</span><strong>{{ previewSeries().nc }}</strong>
+      </article>
+      <article>
+        <span>Nota debito</span><strong>{{ previewSeries().nd }}</strong>
+      </article>
+      <article>
+        <span>Guia</span><strong>{{ previewSeries().guia }}</strong>
+      </article>
     </div>
   }
 
   <ng-template pTemplate="footer">
-    <button pButton type="button" class="az-secondary p-button-outlined" (click)="editVisible.set(false)">Cancelar</button>
-    <button pButton type="button" class="az-primary" icon="pi pi-save" [loading]="saving()" (click)="saveConfig()">Guardar</button>
+    <button
+      pButton
+      type="button"
+      class="az-secondary p-button-outlined"
+      (click)="editVisible.set(false)"
+    >
+      Cancelar
+    </button>
+    <button
+      pButton
+      type="button"
+      class="az-primary"
+      icon="pi pi-save"
+      [loading]="saving()"
+      (click)="saveConfig()"
+    >
+      Guardar
+    </button>
   </ng-template>
 </p-dialog>

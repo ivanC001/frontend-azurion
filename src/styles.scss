@@ -8,48 +8,78 @@
 :root {
   color-scheme: light;
   --container-bg-color: 255 255 255;
-  --layout-bg-color: 247 250 252;
-  --inverted-bg-color: 0 20 40;
-  --base-text-color: 31 31 31;
-  --az-dark: #111827;
-  --az-slate: #1d2939;
-  --az-blue: #465fff;
-  --az-primary: var(--az-blue);
-  --az-blue-soft: #eef2ff;
-  --az-cyan: #0ba5ec;
+  --layout-bg-color: 248 250 252;
+  --inverted-bg-color: 15 23 42;
+  --base-text-color: 15 23 42;
+  --az-dark: #0f172a;
+  --az-slate: #1e293b;
+  --az-blue: #3b82f6;
+  --az-primary: #3b82f6;
+  --az-primary-hover: #2563eb;
+  --az-primary-soft: #eff6ff;
+  --az-primary-border: #bfdbfe;
+  --az-blue-soft: #eff6ff;
+  --az-cyan: #0ea5e9;
   --az-cyan-hover: #0284c7;
   --az-success: #10b981;
-  --az-bg: #f3f6fb;
+  --az-success-soft: #ecfdf5;
+  --az-success-border: #a7f3d0;
+  --az-warning: #f59e0b;
+  --az-warning-soft: #fffbeb;
+  --az-warning-border: #fde68a;
+  --az-danger: #ef4444;
+  --az-danger-soft: #fef2f2;
+  --az-danger-border: #fecaca;
+  --az-bg: #f8fafc;
   --az-surface: #ffffff;
-  --az-surface-hover: #f2f4f7;
-  --az-text: #101828;
-  --az-text-soft: #667085;
-  --az-border: #dbe3ee;
-  --az-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --az-shadow-md: 0 10px 30px rgba(15, 23, 42, 0.08);
-  --az-shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.12);
+  --az-surface-hover: #f1f5f9;
+  --az-text: #0f172a;
+  --az-text-soft: #64748b;
+  --az-text-muted: #94a3b8;
+  --az-border: #e2e8f0;
+  --az-border-hover: #cbd5e1;
+  --az-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --az-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --az-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --az-radius-sm: 0.45rem;
+  --az-radius-md: 0.65rem;
+  --az-radius-lg: 0.85rem;
 }
 
 html.dark {
   color-scheme: dark;
-  --container-bg-color: 16 24 40;
-  --layout-bg-color: 16 24 40;
-  --base-text-color: 255 255 255;
-  --az-blue: #465fff;
-  --az-cyan: #0ba5ec;
-  --az-success: #12b76a;
-  --az-bg: #101828;
-  --az-surface: rgba(255, 255, 255, 0.03);
-  --az-surface-solid: #101828;
-  --az-surface-alt: #1a2231;
-  --az-surface-hover: rgba(255, 255, 255, 0.05);
-  --az-text: rgba(255, 255, 255, 0.9);
-  --az-text-soft: #98a2b3;
-  --az-border: #1d2939;
-  --az-blue-soft: rgba(70, 95, 255, 0.12);
-  --az-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.36);
-  --az-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.32);
-  --az-shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
+  --container-bg-color: 15 23 42;
+  --layout-bg-color: 15 23 42;
+  --base-text-color: 248 250 252;
+  --az-blue: #3b82f6;
+  --az-primary: #3b82f6;
+  --az-primary-hover: #60a5fa;
+  --az-primary-soft: rgba(59, 130, 246, 0.14);
+  --az-primary-border: rgba(59, 130, 246, 0.28);
+  --az-cyan: #38bdf8;
+  --az-success: #10b981;
+  --az-success-soft: rgba(16, 185, 129, 0.14);
+  --az-success-border: rgba(16, 185, 129, 0.28);
+  --az-warning: #f59e0b;
+  --az-warning-soft: rgba(245, 158, 11, 0.14);
+  --az-warning-border: rgba(245, 158, 11, 0.28);
+  --az-danger: #ef4444;
+  --az-danger-soft: rgba(239, 68, 68, 0.14);
+  --az-danger-border: rgba(239, 68, 68, 0.28);
+  --az-bg: #0b1120;
+  --az-surface: #131d31;
+  --az-surface-solid: #0f172a;
+  --az-surface-alt: #1e293b;
+  --az-surface-hover: #1e293b;
+  --az-text: #f8fafc;
+  --az-text-soft: #94a3b8;
+  --az-text-muted: #64748b;
+  --az-border: #233048;
+  --az-border-hover: #334155;
+  --az-blue-soft: rgba(59, 130, 246, 0.14);
+  --az-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --az-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
+  --az-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.45);
 }
 
 html {
@@ -431,22 +461,8 @@ html.dark .admin-content .p-datatable-tbody > tr:hover > td {
 
 .admin-page {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.6rem;
   min-width: 0;
-}
-
-.crm-page--expanded {
-  margin-inline: -0.85rem;
-  width: calc(100% + 1.7rem);
-}
-
-.crm-page--top-tight {
-  gap: 0.42rem;
-  margin-block-start: -0.85rem;
-}
-
-.crm-page--top-tight .crm-header {
-  margin-bottom: 0;
 }
 
 .page-header {
@@ -1830,7 +1846,7 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
   }
 }
 
-/* WhatsApp configuration is global because the CRM editor uses no encapsulation. */
+/* CRM WhatsApp integration panel styles */
 .crm-whatsapp-fields label > small,
 .crm-whatsapp-secret small,
 .crm-whatsapp-callback small,
@@ -1839,122 +1855,18 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
   font-size: 0.66rem;
   font-weight: 600;
 }
-.crm-whatsapp-secret,
-.crm-whatsapp-callback,
-.crm-whatsapp-status {
-  background: color-mix(in srgb, #16a34a 4%, var(--az-surface));
-  border: 1px solid color-mix(in srgb, #16a34a 20%, var(--az-border));
-  border-radius: 0.78rem;
-  display: grid;
-  gap: 0.65rem;
-  padding: 0.8rem;
-}
-.crm-whatsapp-secret header > div,
-.crm-whatsapp-callback header > div {
-  display: grid;
-  gap: 0.18rem;
-}
-.crm-whatsapp-secret header strong,
-.crm-whatsapp-callback header strong {
-  color: var(--az-text);
-  font-size: 0.78rem;
-}
-.crm-whatsapp-secret button,
-.crm-copy-row button,
-.crm-whatsapp-save,
-.crm-whatsapp-test {
-  background: var(--az-surface);
-  border: 1px solid #86c99e;
-  border-radius: 0.58rem;
-  color: #047857;
-  cursor: pointer;
-  font-size: 0.7rem;
-  font-weight: 900;
-  min-height: 2.45rem;
-  padding: 0.55rem 0.72rem;
-}
-.crm-whatsapp-secret button:disabled,
-.crm-copy-row button:disabled,
-.crm-whatsapp-save:disabled,
-.crm-whatsapp-test:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-.crm-copy-row {
-  display: grid;
-  gap: 0.55rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-.crm-copy-row input {
-  font-family: monospace;
-  font-size: 0.72rem;
-}
-.crm-whatsapp-secret > p,
-.crm-whatsapp-callback > p,
-.crm-whatsapp-status > p {
-  color: var(--az-text-soft);
-  font-size: 0.68rem;
-  margin: 0;
-}
-.crm-whatsapp-warning {
-  color: #b45309 !important;
-  font-weight: 750;
-}
-.crm-whatsapp-status__checks {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(3, 1fr);
-}
-.crm-whatsapp-status__checks span {
-  border: 1px solid #f2b7b7;
-  border-radius: 0.6rem;
-  color: #b91c1c;
-  font-size: 0.68rem;
-  font-weight: 850;
-  padding: 0.6rem;
-  text-align: center;
-}
-.crm-whatsapp-status__checks span.ok {
-  border-color: #8ed5aa;
-  color: #047857;
-}
-.crm-whatsapp-actions {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: flex-end;
-}
-.crm-whatsapp-save {
-  background: #16a34a;
-  color: #fff;
-}
 
-@media (max-width: 640px) {
-  .crm-integration-fields {
-    grid-template-columns: 1fr;
-  }
-  .crm-integration-fields .wide-field {
-    grid-column: auto;
-  }
-  .crm-copy-row,
-  .crm-whatsapp-status__checks {
-    grid-template-columns: 1fr;
-  }
-  .crm-whatsapp-actions {
-    flex-direction: column;
-  }
-}
-
-/* CRM WhatsApp connection controls live globally to keep the large CRM component within its style budget. */
 .crm-whatsapp-secret,
 .crm-whatsapp-callback,
 .crm-whatsapp-status {
   background: color-mix(in srgb, #16a34a 4%, var(--az-surface));
   border: 1px solid color-mix(in srgb, #16a34a 18%, var(--az-border));
-  border-radius: 0.72rem;
+  border-radius: 0.75rem;
   display: grid;
   gap: 0.65rem;
-  padding: 0.75rem;
+  padding: 0.8rem;
 }
+
 .crm-whatsapp-secret header,
 .crm-whatsapp-callback header,
 .crm-whatsapp-actions,
@@ -1964,12 +1876,29 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
   gap: 0.55rem;
   justify-content: space-between;
 }
+
+.crm-whatsapp-secret header > div,
+.crm-whatsapp-callback header > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.crm-whatsapp-secret header strong,
+.crm-whatsapp-callback header strong {
+  color: var(--az-text);
+  font-size: 0.78rem;
+}
+
 .crm-copy-row input {
+  font-family: monospace;
+  font-size: 0.72rem;
   min-width: 0;
   width: 100%;
 }
+
 .crm-copy-row button,
-.crm-whatsapp-actions button {
+.crm-whatsapp-actions button,
+.crm-whatsapp-secret button {
   align-items: center;
   background: var(--az-surface);
   border: 1px solid var(--az-border);
@@ -1981,46 +1910,80 @@ body .crm-dialog--opportunity-detail .p-dialog-content {
   font-weight: 850;
   gap: 0.35rem;
   justify-content: center;
-  min-height: 2.25rem;
+  min-height: 2.35rem;
   padding: 0.45rem 0.72rem;
 }
+
 .crm-whatsapp-actions .crm-whatsapp-save,
-.crm-whatsapp-actions .crm-whatsapp-subscribe {
+.crm-whatsapp-actions .crm-whatsapp-subscribe,
+.crm-whatsapp-save {
   background: #16a34a;
   border-color: #16a34a;
-  color: #fff;
+  color: #ffffff;
 }
+
 .crm-whatsapp-actions button:disabled,
-.crm-copy-row button:disabled {
+.crm-copy-row button:disabled,
+.crm-whatsapp-secret button:disabled,
+.crm-whatsapp-save:disabled,
+.crm-whatsapp-test:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
-.crm-whatsapp-status__checks {
-  display: grid;
-  gap: 0.45rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+.crm-whatsapp-warning {
+  color: #b45309 !important;
+  font-weight: 750;
 }
-.crm-whatsapp-status__checks span {
-  align-items: center;
-  color: var(--az-text-soft);
-  display: inline-flex;
-  font-size: 0.65rem;
-  font-weight: 800;
-  gap: 0.3rem;
-}
-.crm-whatsapp-status__checks span.ok {
-  color: #047857;
-}
+
+.crm-whatsapp-secret > p,
+.crm-whatsapp-callback > p,
 .crm-whatsapp-status > p,
 .crm-whatsapp-status > small {
   color: var(--az-text-soft);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   margin: 0;
 }
+
+.crm-whatsapp-status__checks {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.crm-whatsapp-status__checks span {
+  align-items: center;
+  border: 1px solid #f2b7b7;
+  border-radius: 0.6rem;
+  color: #b91c1c;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 850;
+  gap: 0.3rem;
+  justify-content: center;
+  padding: 0.55rem;
+  text-align: center;
+}
+
+.crm-whatsapp-status__checks span.ok {
+  border-color: #8ed5aa;
+  color: #047857;
+}
+
 @media (max-width: 640px) {
-  .crm-whatsapp-status__checks {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .crm-integration-fields {
+    grid-template-columns: 1fr;
   }
+
+  .crm-integration-fields .wide-field {
+    grid-column: auto;
+  }
+
+  .crm-copy-row,
+  .crm-whatsapp-status__checks {
+    grid-template-columns: 1fr;
+  }
+
   .crm-whatsapp-actions {
     align-items: stretch;
     flex-direction: column;
