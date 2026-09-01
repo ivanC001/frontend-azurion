@@ -56,12 +56,24 @@
         </header>
         <div class="client-completion-grid">
           <label>
+            <span>País <b>*</b></span>
+            <p-select
+              name="clientPaisCodigo"
+              [options]="countryOptions"
+              [ngModel]="currentCountryCode()"
+              (ngModelChange)="onCountryChange($event)"
+              [filter]="true"
+              filterBy="label"
+              appendTo="body"
+            />
+          </label>
+          <label>
             <span>Tipo de cliente <b>*</b></span>
             <p-select
               name="clientTipoPersona"
               [options]="personTypeOptions()"
               [ngModel]="form().tipoPersona"
-              (ngModelChange)="patchForm('tipoPersona', $event)"
+              (ngModelChange)="onPersonTypeChange($event)"
               appendTo="body"
             />
           </label>
@@ -69,24 +81,25 @@
             <span>Tipo de documento <b>*</b></span>
             <p-select
               name="clientTipoDocumento"
-              [options]="documentTypeOptions()"
+              [options]="availableDocumentOptions()"
               [ngModel]="form().tipoDocumento"
               (ngModelChange)="patchForm('tipoDocumento', $event)"
               [disabled]="form().tipoPersona === 'SIN_DEFINIR'"
               appendTo="body"
             />
           </label>
-          <label>
+
+          <label class="span-3">
             <span>Número de documento <b>*</b></span>
             <input
               pInputText
-              inputmode="numeric"
-              maxlength="11"
+              [attr.inputmode]="documentInputMode()"
+              maxlength="30"
               name="clientNumeroDocumento"
               [ngModel]="form().numeroDocumento"
               (ngModelChange)="patchForm('numeroDocumento', $event)"
               [disabled]="form().tipoPersona === 'SIN_DEFINIR'"
-              placeholder="DNI o RUC"
+              [placeholder]="documentPlaceholder()"
             />
             <small>{{ documentHint() }}</small>
           </label>
@@ -134,7 +147,7 @@
               name="clientTelefono"
               [ngModel]="form().telefono"
               (ngModelChange)="patchForm('telefono', $event)"
-              placeholder="999999999"
+              placeholder="Teléfono de contacto"
             />
           </label>
           <label class="span-2">

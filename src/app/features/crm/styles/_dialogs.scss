@@ -1058,33 +1058,33 @@ textarea {
 
 :host ::ng-deep .crm-dialog--followup-detail {
   max-height: calc(100vh - 1.5rem);
-  width: min(84rem, calc(100vw - 1.5rem));
+  width: min(62rem, calc(100vw - 1.5rem));
 }
 
 :host ::ng-deep .crm-dialog--followup-detail .p-dialog-header {
-  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  background: var(--az-surface);
   border-bottom: 1px solid var(--az-border);
   border-radius: 1rem 1rem 0 0;
   flex-shrink: 0;
-  padding: 0.72rem 0.95rem;
+  padding: 0.85rem 1.15rem;
 }
 
 :host ::ng-deep .crm-dialog--followup-detail .p-dialog-title {
   color: var(--az-text);
-  font-size: 0.95rem;
-  font-weight: 950;
+  font-size: 1rem;
+  font-weight: 850;
 }
 
 :host ::ng-deep .crm-dialog--followup-detail .p-dialog-header-close {
   border: 1px solid var(--az-border);
   border-radius: 0.65rem;
   color: var(--az-text-soft);
-  height: 2.3rem;
-  width: 2.3rem;
+  height: 2.2rem;
+  width: 2.2rem;
 }
 
 :host ::ng-deep .crm-dialog--followup-detail .p-dialog-content {
-  background: color-mix(in srgb, var(--az-page-bg) 70%, var(--az-surface));
+  background: var(--az-surface);
   border-radius: 0 0 1rem 1rem;
   max-height: calc(100vh - 5.3rem);
   overflow: auto;
@@ -1249,241 +1249,7 @@ textarea {
   width: min(72rem, calc(100vw - 1rem));
 }
 
-:host ::ng-deep .crm-dialog--prospect-register {
-  max-width: calc(100vw - 1rem);
-  width: min(78rem, calc(100vw - 1rem));
-}
-
-:host ::ng-deep .crm-dialog--prospect-register .p-dialog-content {
-  max-height: calc(100vh - 1.5rem);
-  overflow: auto;
-  padding: 0;
-}
-
-.prospect-register-form {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #f8fafc 78%, var(--az-surface)),
-    var(--az-surface)
-  );
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-}
-
-.prospect-register-head {
-  align-items: center;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.prospect-title-block {
-  align-items: center;
-  display: grid;
-  gap: 0.65rem;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-}
-
-.prospect-title-block > i {
-  align-items: center;
-  background: #dcfce7;
-  border-radius: 0.85rem;
-  color: #059669;
-  display: inline-flex;
-  font-size: 1.15rem;
-  height: 2.5rem;
-  justify-content: center;
-  width: 2.5rem;
-}
-
-.prospect-title-block h2 {
-  font-size: 1.2rem;
-  line-height: 1.1;
-  margin: 0;
-}
-
-.prospect-title-block p {
-  color: var(--az-text-soft);
-  font-size: 0.82rem;
-  margin: 0.2rem 0 0;
-}
-
-.prospect-head-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: flex-end;
-}
-
-.icon-close-button,
-.soft-button,
-.save-button,
-.outline-success-button {
-  align-items: center;
-  border-radius: 0.65rem;
-  cursor: pointer;
-  display: inline-flex;
-  font-family: inherit;
-  font-weight: 850;
-  gap: 0.45rem;
-  min-height: 2.25rem;
-  padding: 0.45rem 0.7rem;
-}
-
-.icon-close-button {
-  background: var(--az-surface);
-  border: 1px solid var(--az-border);
-  color: var(--az-text-soft);
-  justify-content: center;
-  padding: 0;
-  width: 2.25rem;
-}
-
-.soft-button {
-  background: var(--az-surface);
-  border: 1px solid var(--az-border);
-  color: var(--az-text);
-}
-
-.save-button {
-  background: #10b981;
-  border: 1px solid #10b981;
-  color: white;
-}
-
-.save-button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
-.prospect-register-layout {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.prospect-form-card {
-  background: var(--az-surface);
-  border: 1px solid color-mix(in srgb, var(--az-border) 88%, #dbeafe);
-  border-radius: 0.75rem;
-  box-shadow: 0 0.45rem 1.2rem rgba(15, 23, 42, 0.035);
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.8rem;
-}
-
-.section-title {
-  align-items: center;
-  display: grid;
-  gap: 0.55rem;
-  grid-template-columns: 1.8rem minmax(0, 1fr);
-}
-
-.section-title > i {
-  align-items: center;
-  background: #dcfce7;
-  border-radius: 0.6rem;
-  color: #059669;
-  display: inline-flex;
-  height: 1.8rem;
-  justify-content: center;
-  width: 1.8rem;
-}
-
-.section-title strong,
-.section-title span {
-  display: block;
-}
-
-.section-title strong {
-  font-size: 0.9rem;
-}
-
-.section-title span {
-  color: var(--az-text-soft);
-  font-size: 0.76rem;
-}
-
-.prospect-input-grid,
-.compact-fields-grid {
-  display: grid;
-  gap: 0.65rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.prospect-input-grid label,
-.compact-fields-grid label,
-.product-register-grid label {
-  min-width: 0;
-}
-
-.span-2 {
-  grid-column: span 2;
-}
-
-.span-3 {
-  grid-column: 1 / -1;
-}
-
-.product-register-grid {
-  align-items: end;
-  display: grid;
-  gap: 0.65rem;
-  grid-template-columns: minmax(16rem, 0.8fr) minmax(18rem, 1.3fr) auto;
-}
-
-.product-help {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.product-help strong {
-  font-size: 0.88rem;
-}
-
-.product-help p {
-  color: var(--az-text-soft);
-  font-size: 0.8rem;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.outline-success-button {
-  background: var(--az-surface);
-  border: 1px solid #10b981;
-  color: #059669;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.compact-preview {
-  margin-top: -0.15rem;
-}
-
-.prospect-detail-grid {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.notes-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.notes-grid label {
-  grid-column: auto;
-}
-
-.prospect-register-footer {
-  align-items: center;
-  border-top: 1px solid var(--az-border);
-  display: flex;
-  gap: 0.6rem;
-  justify-content: flex-end;
-  padding-top: 0.75rem;
-}
+/* Prospect register styles moved to prospect-form-modal.scss */
 
 :host ::ng-deep .crm-dialog--catalogo {
   width: min(64rem, calc(100vw - 2rem));

@@ -4,7 +4,15 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
-import { CrmClientCompletionAction, CrmClientCompletionDraft } from '../../models';
+import {
+  CrmClientCompletionAction,
+  CrmClientCompletionDraft,
+  PROSPECT_COUNTRIES,
+  ProspectDocumentOption,
+  ProspectPersonType,
+  prospectCountry,
+  prospectDocuments,
+} from '../../models';
 
 interface ClientSelectOption {
   readonly label: string;
@@ -33,14 +41,61 @@ export class CompleteClientDataModal {
   readonly formChange = output<CrmClientCompletionDraft>();
   readonly saveRequested = output<void>();
 
+  readonly countryOptions = PROSPECT_COUNTRIES.map((country) => ({
+    label: country.name,
+    value: country.code,
+  }));
+
+  protected currentCountryCode(): string {
+    return this.form().paisCodigo || 'PE';
+  }
+
+  protected currentCountryName(): string {
+    return prospectCountry(this.currentCountryCode()).name;
+  }
+
+  protected currentPersonType(): ProspectPersonType {
+    const type = this.form().tipoPersona;
+    if (type === 'JURIDICA' || type === 'NATURAL') {
+      return type;
+    }
+    return 'SIN_DEFINIR';
+  }
+
+  protected availableDocumentOptions(): { label: string; value: string }[] {
+    const docs = prospectDocuments(this.currentCountryCode(), this.currentPersonType());
+    if (docs.length > 0) {
+      return docs.map((d) => ({ label: d.label, value: d.value }));
+    }
+    return this.documentTypeOptions();
+  }
+
+  protected selectedDocumentOption(): ProspectDocumentOption | null {
+    const docs = prospectDocuments(this.currentCountryCode(), this.currentPersonType());
+    return docs.find((d) => d.value === this.form().tipoDocumento) ?? null;
+  }
+
   protected patchForm<K extends keyof CrmClientCompletionDraft>(
     field: K,
     value: CrmClientCompletionDraft[K],
   ): void {
     const next = { ...this.form(), [field]: value };
-    if (field === 'tipoPersona') {
-      next.tipoDocumento = value === 'JURIDICA' ? '6' : value === 'NATURAL' ? '1' : '';
-    }
+    this.formChange.emit(next);
+  }
+
+  protected onCountryChange(countryCode: string): void {
+    const next = { ...this.form(), paisCodigo: countryCode };
+    const docs = prospectDocuments(countryCode, this.currentPersonType());
+    next.tipoDocumento = docs[0]?.value || '';
+    this.formChange.emit(next);
+  }
+
+  protected onPersonTypeChange(personType: string): void {
+    const next = { ...this.form(), tipoPersona: personType };
+    const normalizedType: ProspectPersonType =
+      personType === 'JURIDICA' || personType === 'NATURAL' ? personType : 'SIN_DEFINIR';
+    const docs = prospectDocuments(this.currentCountryCode(), normalizedType);
+    next.tipoDocumento = docs[0]?.value || '';
     this.formChange.emit(next);
   }
 
@@ -49,10 +104,10 @@ export class CompleteClientDataModal {
       EDIT: 'actualizar los datos comerciales',
       PAYMENT: 'registrar el pago',
       WON: 'marcar la oportunidad como ganada',
-      QUOTE_CREATE: 'crear la cotizacion',
-      QUOTE_PDF: 'emitir el PDF de la cotizacion',
-      QUOTE_EMAIL: 'enviar la cotizacion por correo',
-      QUOTE_WHATSAPP: 'enviar la cotizacion por WhatsApp',
+      QUOTE_CREATE: 'crear la cotización',
+      QUOTE_PDF: 'emitir el PDF de la cotización',
+      QUOTE_EMAIL: 'enviar la cotización por correo',
+      QUOTE_WHATSAPP: 'enviar la cotización por WhatsApp',
     }[this.action()];
   }
 
@@ -61,7 +116,7 @@ export class CompleteClientDataModal {
       EDIT: 'Guardar datos',
       PAYMENT: 'Guardar y registrar pago',
       WON: 'Guardar y marcar ganado',
-      QUOTE_CREATE: 'Guardar y crear cotizacion',
+      QUOTE_CREATE: 'Guardar y crear cotización',
       QUOTE_PDF: 'Guardar y generar PDF',
       QUOTE_EMAIL: 'Guardar y enviar correo',
       QUOTE_WHATSAPP: 'Guardar y enviar WhatsApp',
@@ -69,11 +124,23 @@ export class CompleteClientDataModal {
   }
 
   protected documentHint(): string {
-    if (this.form().tipoPersona === 'SIN_DEFINIR') {
+    if (this.currentPersonType() === 'SIN_DEFINIR') {
       return 'Primero selecciona persona natural o empresa.';
     }
-    return this.form().tipoDocumento === '6'
-      ? 'El RUC debe tener 11 digitos.'
-      : 'El DNI debe tener 8 digitos.';
+    const doc = this.selectedDocumentOption();
+    if (doc) {
+      return doc.help;
+    }
+    return 'Ingresa el número o código de identificación.';
+  }
+
+  protected documentPlaceholder(): string {
+    const doc = this.selectedDocumentOption();
+    return doc?.placeholder || 'Número de documento';
+  }
+
+  protected documentInputMode(): 'numeric' | 'text' {
+    const doc = this.selectedDocumentOption();
+    return doc?.inputMode || 'text';
   }
 }

@@ -1,196 +1,219 @@
 ::ng-deep .crm-client-completion-dialog {
-  max-height: calc(100vh - 1rem);
-  width: min(58rem, calc(100vw - 1rem));
+  max-height: calc(100vh - 1.5rem);
+  width: min(58rem, calc(100vw - 1.5rem));
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--az-border);
+  background: var(--az-surface);
 }
 
 ::ng-deep .crm-client-completion-dialog .p-dialog-header {
-  background: var(--az-surface-solid, #fff);
-  border-bottom: 1px solid var(--az-border, #dbe4f0);
-  padding: 0.72rem 1rem;
+  background: var(--az-surface);
+  border-bottom: 1px solid var(--az-border);
+  padding: 1rem 1.25rem;
 }
 
 ::ng-deep .crm-client-completion-dialog .p-dialog-content {
-  background: var(--az-surface-solid, #fff);
-  max-height: calc(100vh - 4.5rem);
-  overflow: auto;
+  background: var(--az-surface);
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
 }
 
 .client-completion-title {
   align-items: center;
-  color: var(--az-text, #26344a);
+  color: var(--az-text);
   display: inline-flex;
-  font-size: 0.94rem;
-  font-weight: 900;
-  gap: 0.62rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  gap: 0.65rem;
 }
 
 .client-completion-title > span {
   align-items: center;
-  background: #eaf2ff;
-  border-radius: 50%;
+  background: color-mix(in srgb, #2563eb 12%, var(--az-surface));
+  border-radius: 0.6rem;
   color: #2563eb;
   display: inline-flex;
-  height: 1.9rem;
+  height: 2.2rem;
   justify-content: center;
-  width: 1.9rem;
+  width: 2.2rem;
+  font-size: 1rem;
 }
 
 .client-completion-form {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.8rem 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem 0;
 }
 
 .client-completion-alert {
   align-items: center;
-  background: color-mix(in srgb, #f59e0b 7%, var(--az-surface, #fff));
-  border: 1px solid color-mix(in srgb, #f59e0b 28%, var(--az-border, #dbe4f0));
-  border-radius: 0.5rem;
+  background: color-mix(in srgb, #f59e0b 8%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 30%, var(--az-border));
+  border-radius: 0.65rem;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.75rem;
   grid-template-columns: auto minmax(0, 1fr);
-  padding: 0.58rem 0.72rem;
+  padding: 0.75rem 1rem;
 }
 
 .client-completion-alert > span {
   align-items: center;
-  background: #fef3c7;
-  border-radius: 50%;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  border-radius: 0.55rem;
   color: #d97706;
   display: inline-flex;
-  height: 2rem;
+  height: 2.2rem;
   justify-content: center;
-  width: 2rem;
-}
-
-.client-completion-alert strong,
-.client-completion-alert p {
-  color: var(--az-text, #26344a);
+  width: 2.2rem;
+  font-size: 1.1rem;
 }
 
 .client-completion-alert strong {
-  font-size: 0.7rem;
+  color: var(--az-text);
+  font-size: 0.86rem;
+  font-weight: 750;
 }
 
 .client-completion-alert p {
-  font-size: 0.6rem;
-  margin: 0.12rem 0 0;
+  color: var(--az-text-soft);
+  font-size: 0.76rem;
+  margin: 0.2rem 0 0;
+  line-height: 1.35;
 }
 
 .client-completion-layout {
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: 14rem minmax(0, 1fr);
+  gap: 1rem;
+  grid-template-columns: 14.5rem minmax(0, 1fr);
 }
 
 .client-completion-context,
 .client-completion-fields {
-  background: var(--az-surface, #fff);
-  border: 1px solid var(--az-border, #dbe4f0);
-  border-radius: 0.5rem;
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  border-radius: 0.75rem;
   min-width: 0;
-  padding: 0.8rem;
+  padding: 1rem;
 }
 
 .client-completion-context {
   align-content: start;
-  display: grid;
-  gap: 0.18rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: color-mix(in srgb, var(--az-bg) 50%, var(--az-surface));
 }
 
 .client-avatar {
   align-items: center;
-  background: #eaf2ff;
-  border-radius: 50%;
+  background: color-mix(in srgb, #2563eb 12%, var(--az-surface));
+  border-radius: 0.75rem;
   color: #2563eb;
   display: inline-flex;
-  height: 2.6rem;
+  height: 2.75rem;
   justify-content: center;
-  margin-bottom: 0.45rem;
-  width: 2.6rem;
+  margin-bottom: 0.5rem;
+  width: 2.75rem;
+  font-size: 1.25rem;
 }
 
 .client-completion-context small {
-  color: var(--az-text-soft, #64748b);
-  font-size: 0.56rem;
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .client-completion-context strong,
 .client-completion-context b {
-  color: var(--az-text, #26344a);
-  font-size: 0.7rem;
+  color: var(--az-text);
+  font-size: 0.88rem;
+  font-weight: 750;
   overflow-wrap: anywhere;
+  margin-bottom: 0.35rem;
 }
 
 .client-completion-context > div {
-  border-top: 1px solid var(--az-border, #dbe4f0);
-  margin: 0.62rem 0;
+  border-top: 1px solid var(--az-border);
+  margin: 0.5rem 0;
 }
 
 .client-completion-context ul {
-  border-top: 1px solid var(--az-border, #dbe4f0);
-  display: grid;
-  gap: 0.42rem;
+  border-top: 1px solid var(--az-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
   list-style: none;
-  margin: 0.72rem 0 0;
-  padding: 0.7rem 0 0;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 0 0;
 }
 
 .client-completion-context li {
   align-items: flex-start;
-  color: var(--az-text-soft, #64748b);
+  color: var(--az-text-soft);
   display: flex;
-  font-size: 0.56rem;
-  gap: 0.35rem;
+  font-size: 0.74rem;
+  gap: 0.45rem;
   line-height: 1.35;
 }
 
 .client-completion-context li i {
   color: #10b981;
-  margin-top: 0.08rem;
+  font-size: 0.85rem;
+  margin-top: 0.1rem;
+  flex: 0 0 auto;
 }
 
 .client-completion-fields > header {
   align-items: center;
-  border-bottom: 1px solid var(--az-border, #dbe4f0);
+  border-bottom: 1px solid var(--az-border);
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.7rem;
-  padding-bottom: 0.55rem;
+  gap: 0.65rem;
+  margin-bottom: 0.95rem;
+  padding-bottom: 0.75rem;
 }
 
 .client-completion-fields > header > i {
   color: #2563eb;
+  font-size: 1.15rem;
 }
 
 .client-completion-fields > header div {
-  display: grid;
-  gap: 0.06rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .client-completion-fields > header strong {
-  color: var(--az-text, #26344a);
-  font-size: 0.68rem;
+  color: var(--az-text);
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .client-completion-fields > header small {
-  color: var(--az-text-soft, #64748b);
-  font-size: 0.54rem;
+  color: var(--az-text-soft);
+  font-size: 0.74rem;
 }
 
 .client-completion-grid {
   display: grid;
-  gap: 0.62rem 0.8rem;
+  gap: 0.85rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .client-completion-grid label {
-  color: var(--az-text, #26344a);
-  display: grid;
-  font-size: 0.58rem;
-  font-weight: 800;
-  gap: 0.25rem;
+  color: var(--az-text);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.76rem;
+  font-weight: 700;
+  gap: 0.35rem;
   min-width: 0;
 }
 
@@ -208,79 +231,94 @@
 
 ::ng-deep .crm-client-completion-dialog .p-inputtext,
 ::ng-deep .crm-client-completion-dialog .p-select {
-  border-color: var(--az-border, #dbe4f0);
-  border-radius: 0.35rem;
-  min-height: 2rem;
+  border-color: var(--az-border);
+  border-radius: 0.5rem;
+  min-height: 2.35rem;
   width: 100%;
 }
 
 ::ng-deep .crm-client-completion-dialog .p-inputtext,
 ::ng-deep .crm-client-completion-dialog .p-select-label {
-  color: var(--az-text, #344258);
-  font-size: 0.64rem;
-  padding: 0.46rem 0.55rem;
+  color: var(--az-text);
+  font-size: 0.8rem;
+  padding: 0.45rem 0.65rem;
 }
 
 .client-completion-grid label > small {
-  color: var(--az-text-soft, #64748b);
-  font-size: 0.5rem;
+  color: var(--az-text-soft);
+  font-size: 0.7rem;
   font-weight: 500;
+  margin-top: 0.15rem;
 }
 
 .client-contact-note {
   align-items: center;
-  background: color-mix(in srgb, #2563eb 5%, var(--az-surface, #fff));
-  border-radius: 0.35rem;
+  background: color-mix(in srgb, #2563eb 6%, var(--az-surface));
+  border: 1px solid color-mix(in srgb, #2563eb 20%, var(--az-border));
+  border-radius: 0.55rem;
   color: #2563eb;
   display: flex;
-  font-size: 0.54rem;
-  gap: 0.35rem;
-  margin: 0.65rem 0 0;
-  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0;
+  padding: 0.6rem 0.75rem;
 }
 
 .client-completion-actions {
   align-items: center;
-  background: var(--az-surface-solid, #fff);
-  border-top: 1px solid var(--az-border, #dbe4f0);
+  background: var(--az-surface);
+  border-top: 1px solid var(--az-border);
   bottom: 0;
   display: flex;
-  gap: 0.65rem;
+  gap: 0.75rem;
   justify-content: flex-end;
-  margin: 0 -1rem;
-  padding: 0.65rem 1rem;
+  margin: 0 -1.25rem;
+  padding: 0.85rem 1.25rem;
   position: sticky;
+  z-index: 10;
 }
 
 .client-completion-actions button {
   align-items: center;
-  border-radius: 0.35rem;
+  border-radius: 0.55rem;
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.65rem;
-  font-weight: 800;
-  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 750;
+  gap: 0.45rem;
   justify-content: center;
-  min-height: 2.05rem;
-  padding: 0.4rem 0.9rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 1.15rem;
+  transition: all 0.18s ease;
 }
 
 .client-completion-cancel {
-  background: var(--az-surface, #fff);
-  border: 1px solid var(--az-border, #cbd5e1);
-  color: var(--az-text, #344258);
+  background: var(--az-surface);
+  border: 1px solid var(--az-border);
+  color: var(--az-text);
+
+  &:hover {
+    background: color-mix(in srgb, var(--az-text) 5%, var(--az-surface));
+  }
 }
 
 .client-completion-save {
-  background: #2563eb;
-  border: 1px solid #2563eb;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: 1px solid #1d4ed8;
   color: #fff;
   min-width: 11rem;
-}
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 
-.client-completion-save:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    filter: brightness(1.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
 }
 
 @media (max-width: 760px) {

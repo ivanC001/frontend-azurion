@@ -4861,12 +4861,17 @@ export class CrmPage {
     if (client) {
       this.clientCompletionEditTarget.set('CLIENT');
       const tipoPersona =
-        this.normalizeClientDocumentType(client.tipoDocumento) === '6' ? 'JURIDICA' : 'NATURAL';
+        client.tipoDocumento === '6' ||
+        client.tipoDocumento === 'RFC' ||
+        client.tipoDocumento === 'NIT' ||
+        client.tipoDocumento === 'RUT' ||
+        client.tipoDocumento === 'EIN'
+          ? 'JURIDICA'
+          : 'NATURAL';
       this.clientCompletionForm = {
+        paisCodigo: prospect?.paisCodigo || 'PE',
         tipoPersona,
-        tipoDocumento:
-          this.normalizeClientDocumentType(client.tipoDocumento) ||
-          (tipoPersona === 'JURIDICA' ? '6' : '1'),
+        tipoDocumento: client.tipoDocumento || (tipoPersona === 'JURIDICA' ? '6' : '1'),
         numeroDocumento: client.numeroDocumento || '',
         nombre: tipoPersona === 'JURIDICA' ? '' : client.nombre || '',
         razonSocial: tipoPersona === 'JURIDICA' ? client.nombre || '' : '',
@@ -4883,9 +4888,10 @@ export class CrmPage {
       this.clientCompletionEditTarget.set('PROSPECT');
       const tipoPersona = this.normalizeProspectPersonType(prospect.tipoPersona);
       this.clientCompletionForm = {
+        paisCodigo: prospect.paisCodigo || 'PE',
         tipoPersona,
         tipoDocumento:
-          this.normalizeClientDocumentType(prospect.tipoDocumento) ||
+          prospect.tipoDocumento ||
           (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
         numeroDocumento: prospect.numeroDocumento || '',
         nombre: prospect.nombre || '',
@@ -4996,7 +5002,11 @@ export class CrmPage {
     }
 
     const tipoPersona = client
-      ? this.normalizeClientDocumentType(client.tipoDocumento) === '6'
+      ? client.tipoDocumento === '6' ||
+        client.tipoDocumento === 'RFC' ||
+        client.tipoDocumento === 'NIT' ||
+        client.tipoDocumento === 'RUT' ||
+        client.tipoDocumento === 'EIN'
         ? 'JURIDICA'
         : 'NATURAL'
       : this.normalizeProspectPersonType(prospect?.tipoPersona);
@@ -5005,9 +5015,11 @@ export class CrmPage {
     this.clientCompletionAction.set(action);
     this.clientCompletionEditTarget.set(client ? 'CLIENT' : 'PROSPECT');
     this.clientCompletionForm = {
+      paisCodigo: prospect?.paisCodigo || 'PE',
       tipoPersona,
       tipoDocumento:
-        this.normalizeClientDocumentType(client?.tipoDocumento || prospect?.tipoDocumento) ||
+        client?.tipoDocumento ||
+        prospect?.tipoDocumento ||
         (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
       numeroDocumento: client?.numeroDocumento || prospect?.numeroDocumento || '',
       nombre: client?.nombre || prospect?.nombre || '',
@@ -5075,19 +5087,37 @@ export class CrmPage {
       );
       return;
     }
-    const documentType = this.normalizeClientDocumentType(form.tipoDocumento);
-    const documentNumber = form.numeroDocumento.replace(/\D/g, '');
-    if (!documentType) {
-      this.errorMessage.set('Selecciona DNI o RUC para crear el cliente.');
+
+    const countryCode = form.paisCodigo || prospect?.paisCodigo || 'PE';
+    const personType: ProspectPersonType = form.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
+    const availableDocs = prospectDocuments(countryCode, personType);
+    const selectedDoc = availableDocs.find((d) => d.value === form.tipoDocumento);
+
+    if (!form.tipoDocumento?.trim()) {
+      this.errorMessage.set('Selecciona el tipo de documento para continuar.');
       return;
     }
-    const expectedLength = documentType === '6' ? 11 : 8;
-    if (documentNumber.length !== expectedLength) {
-      this.errorMessage.set(
-        `El ${documentType === '6' ? 'RUC' : 'DNI'} debe tener ${expectedLength} digitos.`,
-      );
+
+    let documentNumber = form.numeroDocumento.trim();
+    if (selectedDoc?.inputMode === 'numeric') {
+      documentNumber = documentNumber.replace(/\D/g, '');
+    } else {
+      documentNumber = documentNumber.replace(/\s+/g, '').toUpperCase();
+    }
+
+    if (!documentNumber) {
+      this.errorMessage.set(`Ingresa el número de ${selectedDoc?.label || 'documento'}.`);
       return;
     }
+
+    if (selectedDoc && !selectedDoc.pattern.test(documentNumber)) {
+      this.errorMessage.set(selectedDoc.validationMessage);
+      return;
+    } else if (!selectedDoc && (documentNumber.length < 3 || documentNumber.length > 30)) {
+      this.errorMessage.set('Ingresa un número de documento válido (entre 3 y 30 caracteres).');
+      return;
+    }
+
     if (form.tipoPersona === 'JURIDICA' ? !form.razonSocial.trim() : !form.nombre.trim()) {
       this.errorMessage.set(
         form.tipoPersona === 'JURIDICA'
@@ -5110,7 +5140,7 @@ export class CrmPage {
     if (this.clientCompletionEditTarget() === 'CLIENT' && client) {
       this.api
         .updateCliente(client.id, {
-          tipoDocumento: documentType,
+          tipoDocumento: form.tipoDocumento,
           numeroDocumento: documentNumber,
           nombre: (form.tipoPersona === 'JURIDICA' ? form.razonSocial : form.nombre).trim(),
           email: form.correo.trim() || null,
@@ -5143,12 +5173,17 @@ export class CrmPage {
 
     this.crmProspects
       .update(prospect.id, {
+        paisCodigo: countryCode,
         tipoPersona: form.tipoPersona,
-        tipoDocumento: documentType,
+        tipoDocumento: form.tipoDocumento,
         numeroDocumento: documentNumber,
-        nombre: form.nombre.trim() || form.razonSocial.trim(),
-        razonSocial: form.razonSocial.trim() || null,
-        nombreComercial: form.nombreComercial.trim() || null,
+        nombre:
+          form.tipoPersona === 'JURIDICA'
+            ? form.nombre.trim() || form.razonSocial.trim()
+            : form.nombre.trim(),
+        razonSocial: form.tipoPersona === 'JURIDICA' ? form.razonSocial.trim() : null,
+        nombreComercial:
+          form.tipoPersona === 'JURIDICA' ? form.nombreComercial.trim() || null : null,
         telefono: form.telefono.trim() || null,
         correo: form.correo.trim() || null,
         direccion: form.direccion.trim() || null,
@@ -5172,12 +5207,27 @@ export class CrmPage {
     if (!['NATURAL', 'JURIDICA'].includes(prospect.tipoPersona)) {
       return false;
     }
-    const documentType = this.normalizeClientDocumentType(prospect.tipoDocumento);
-    const documentNumber = String(prospect.numeroDocumento || '').replace(/\D/g, '');
-    const validDocument =
-      documentType === '6'
-        ? documentNumber.length === 11
-        : documentType === '1' && documentNumber.length === 8;
+    const countryCode = prospect.paisCodigo || 'PE';
+    const personType = prospect.tipoPersona as ProspectPersonType;
+    const availableDocs = prospectDocuments(countryCode, personType);
+    const selectedDoc = availableDocs.find((d) => d.value === prospect.tipoDocumento);
+
+    const documentNumber = String(prospect.numeroDocumento || '').trim();
+    if (!documentNumber) {
+      return false;
+    }
+
+    let validDocument = false;
+    if (selectedDoc) {
+      const clean =
+        selectedDoc.inputMode === 'numeric'
+          ? documentNumber.replace(/\D/g, '')
+          : documentNumber.replace(/\s+/g, '').toUpperCase();
+      validDocument = selectedDoc.pattern.test(clean);
+    } else {
+      validDocument = documentNumber.length >= 3 && documentNumber.length <= 30;
+    }
+
     const validName =
       prospect.tipoPersona === 'JURIDICA'
         ? Boolean(
@@ -7665,13 +7715,15 @@ export class CrmPage {
 
   public quoteCompanyLogoUrl(): string | null {
     const empresa = this.auth.currentSession()?.empresa as
-      { logoPanelUrl?: string | null } | undefined;
+      | { logoPanelUrl?: string | null }
+      | undefined;
     return empresa?.logoPanelUrl || null;
   }
 
   public quoteCompanyName(): string {
     const empresa = this.auth.currentSession()?.empresa as
-      { razonSocial?: string | null } | undefined;
+      | { razonSocial?: string | null }
+      | undefined;
     return empresa?.razonSocial || 'AZURION';
   }
 

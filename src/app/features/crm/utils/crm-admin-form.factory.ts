@@ -209,6 +209,7 @@ export function createOpportunityPaymentForm(now = new Date()): OpportunityPayme
 
 export function createClientCompletionForm(): CrmClientCompletionDraft {
   return {
+    paisCodigo: 'PE',
     tipoPersona: 'SIN_DEFINIR',
     tipoDocumento: '',
     numeroDocumento: '',

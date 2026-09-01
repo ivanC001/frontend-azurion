@@ -12,23 +12,40 @@
     appendTo="body"
     styleClass="crm-dialog crm-dialog--followup-detail"
   >
-    <section class="followup-detail-shell followup-detail-shell--modal">
-      <header class="followup-detail-head">
-        <div>
-          <h2>{{ detail.prospecto.nombre }}</h2>
-          <span class="detail-badge">Prospecto</span>
-          <p>
-            <span>{{
-              detail.prospecto.razonSocial || detail.prospecto.nombreComercial || 'Sin empresa'
-            }}</span>
-            <span>Creado: {{ detail.prospecto.createdAt | date: 'dd/MM/yyyy' }}</span>
-            <span>Origen: {{ host().humanize(detail.prospecto.origen) }}</span>
-          </p>
+    <section class="followup-detail-shell">
+      <!-- Header del prospecto -->
+      <header class="followup-hero-head">
+        <div class="followup-hero-main">
+          <div class="followup-avatar">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="followup-title-block">
+            <div class="followup-title-row">
+              <h2>{{ detail.prospecto.nombre }}</h2>
+              <span class="detail-badge">Prospecto</span>
+            </div>
+            <div class="followup-meta-pills">
+              <span
+                ><i class="pi pi-building"></i>
+                {{
+                  detail.prospecto.razonSocial || detail.prospecto.nombreComercial || 'Sin empresa'
+                }}</span
+              >
+              <span
+                ><i class="pi pi-calendar"></i> Creado:
+                {{ detail.prospecto.createdAt | date: 'dd/MM/yyyy' }}</span
+              >
+              <span
+                ><i class="pi pi-compass"></i> Origen:
+                {{ host().humanize(detail.prospecto.origen) }}</span
+              >
+            </div>
+          </div>
         </div>
-        <div class="detail-head-actions">
+        <div class="followup-hero-actions">
           <button
             type="button"
-            class="soft-button"
+            class="action-primary-button"
             (click)="
               host().openQuickActivity(
                 detail.prospecto,
@@ -37,148 +54,193 @@
               )
             "
           >
+            <i class="pi pi-plus-circle"></i>
             Agregar seguimiento
-          </button>
-          <button
-            type="button"
-            class="icon-close-button"
-            aria-label="Cerrar seguimiento"
-            (click)="host().closeFollowUpDetail()"
-          >
-            <i class="pi pi-times"></i>
           </button>
         </div>
       </header>
 
+      <!-- Ficha de Datos y Calificación -->
       <section class="followup-prospect-strip">
         <div class="followup-prospect-info">
-          <span><b>Nombre</b>{{ detail.prospecto.nombre }}</span>
-          <span
-            ><b>Empresa</b
-            >{{
+          <div class="info-item">
+            <small><i class="pi pi-id-card"></i> Contacto / Razón social</small>
+            <strong>{{ detail.prospecto.nombre }}</strong>
+          </div>
+          <div class="info-item">
+            <small><i class="pi pi-building"></i> Empresa</small>
+            <strong>{{
               detail.prospecto.razonSocial || detail.prospecto.nombreComercial || 'Sin empresa'
-            }}</span
-          >
-          <span><b>Teléfono</b>{{ detail.prospecto.telefono || 'Sin teléfono' }}</span>
-          <span><b>Correo</b>{{ detail.prospecto.correo || 'Sin correo' }}</span>
-          <span><b>Ubicación</b>{{ detail.prospecto.direccion || 'Sin dirección' }}</span>
-          <span
-            ><b>Responsable</b>{{ host().responsibleName(detail.prospecto.responsableId) }}</span
-          >
+            }}</strong>
+          </div>
+          <div class="info-item">
+            <small><i class="pi pi-phone"></i> Teléfono</small>
+            <strong class="phone-link">{{ detail.prospecto.telefono || 'Sin teléfono' }}</strong>
+          </div>
+          <div class="info-item">
+            <small><i class="pi pi-envelope"></i> Correo electrónico</small>
+            <strong class="email-text" [title]="detail.prospecto.correo || ''">{{
+              detail.prospecto.correo || 'Sin correo'
+            }}</strong>
+          </div>
+          <div class="info-item">
+            <small><i class="pi pi-map-marker"></i> Ubicación</small>
+            <strong>{{ detail.prospecto.direccion || 'Sin dirección' }}</strong>
+          </div>
+          <div class="info-item">
+            <small><i class="pi pi-user-check"></i> Asesor asignado</small>
+            <strong>{{ host().responsibleName(detail.prospecto.responsableId) }}</strong>
+          </div>
         </div>
-        <div class="detail-status-card detail-status-card--horizontal">
-          <strong>Calificación</strong>
-          <span
-            [class]="
-              'qualification-temp qualification-temp--' +
-              detail.qualification.temperatura.toLowerCase()
-            "
-          >
-            {{ detail.qualification.score }}/100 ·
-            {{ host().qualificationTemperatureLabel(detail.qualification.temperatura) }}
-          </span>
+
+        <div class="detail-status-card">
+          <div class="status-header">
+            <strong>Calificación</strong>
+            <button
+              type="button"
+              class="followup-edit-link"
+              (click)="host().openEditProspect(detail.prospecto)"
+              title="Editar ficha del prospecto"
+            >
+              <i class="pi pi-pencil"></i>
+              Editar ficha
+            </button>
+          </div>
+          <div class="status-score-row">
+            <span
+              [class]="
+                'qualification-temp qualification-temp--' +
+                detail.qualification.temperatura.toLowerCase()
+              "
+            >
+              <i class="pi pi-bolt"></i>
+              {{ detail.qualification.score }}/100 ·
+              {{ host().qualificationTemperatureLabel(detail.qualification.temperatura) }}
+            </span>
+          </div>
           <div class="detail-progress-line">
             <b [style.width.%]="detail.qualification.score"></b>
           </div>
-          <p>
-            Estado <strong>{{ detail.qualification.label }}</strong>
-          </p>
-          <p>
-            Necesidad <strong>{{ host().qualificationNeedLabel(detail.prospecto) }}</strong>
-          </p>
-          <p>
-            Interés <strong>{{ host().qualificationInterestLabel(detail.prospecto) }}</strong>
-          </p>
+          <div class="status-metrics">
+            <p>
+              <span>Estado:</span> <strong>{{ detail.qualification.label }}</strong>
+            </p>
+            <p>
+              <span>Necesidad:</span>
+              <strong>{{ host().qualificationNeedLabel(detail.prospecto) }}</strong>
+            </p>
+            <p>
+              <span>Interés:</span>
+              <strong>{{ host().qualificationInterestLabel(detail.prospecto) }}</strong>
+            </p>
+            <p>
+              <span>Valor estimado:</span>
+              <strong class="status-value">
+                {{
+                  host().catalogCurrencyPrefix(
+                    detail.oportunidad?.moneda || detail.prospecto.presupuestoMoneda
+                  )
+                }}
+                {{ detail.amount | number: '1.2-2' }}
+              </strong>
+            </p>
+          </div>
           @if (detail.qualification.missing.length) {
-            <small>Falta: {{ detail.qualification.missing.join(', ') }}</small>
+            <div class="status-missing-badge">
+              <i class="pi pi-info-circle"></i> Falta: {{ detail.qualification.missing.join(', ') }}
+            </div>
           }
-          <p>
-            Valor
-            <strong>
-              {{
-                host().catalogCurrencyPrefix(
-                  detail.oportunidad?.moneda || detail.prospecto.presupuestoMoneda
-                )
-              }}
-              {{ detail.amount | number: '1.2-2' }}
-            </strong>
-          </p>
         </div>
-        <button
-          type="button"
-          class="followup-edit-link"
-          (click)="host().openEditProspect(detail.prospecto)"
-        >
-          <i class="pi pi-pencil"></i>
-          Editar
-        </button>
       </section>
 
+      <!-- Banner de Acción Comercial / Calificación -->
       <section class="qualification-action-strip">
-        <div>
-          <strong>{{
-            detail.qualification.canConvert ? 'Listo para oportunidad' : 'Seguir calificando'
-          }}</strong>
-          <span>
-            {{
-              detail.qualification.canConvert
-                ? 'Cumple: necesidad identificada e interés medio o alto.'
-                : 'Registra una actividad con resultado real antes de crear oportunidad.'
-            }}
-          </span>
+        <div class="qualification-strip-text">
+          <div class="strip-icon">
+            <i
+              [class]="detail.qualification.canConvert ? 'pi pi-check-circle' : 'pi pi-compass'"
+            ></i>
+          </div>
+          <div>
+            <strong>{{
+              detail.qualification.canConvert ? 'Listo para oportunidad' : 'Seguir calificando'
+            }}</strong>
+            <p>
+              {{
+                detail.qualification.canConvert
+                  ? 'Cumple los requisitos comerciales: necesidad identificada e interés calificado.'
+                  : 'Registra una actividad con resultado real antes de crear la oportunidad comercial.'
+              }}
+            </p>
+          </div>
         </div>
-        @if (detail.hasActiveOpportunity) {
-          <button
-            type="button"
-            class="qualification-action qualification-action--open"
-            (click)="host().openFollowUpOpportunity(detail)"
-          >
-            <i class="pi pi-briefcase"></i>
-            Ver oportunidad
-          </button>
-        } @else if (detail.qualification.canConvert) {
-          <button
-            type="button"
-            class="qualification-action qualification-action--ready"
-            (click)="host().openFollowUpOpportunity(detail)"
-          >
-            <i class="pi pi-arrow-right"></i>
-            Crear oportunidad
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="qualification-action"
-            (click)="
-              host().openQuickActivity(
-                detail.prospecto,
-                'LLAMADA',
-                'Calificar a ' + detail.prospecto.nombre
-              )
-            "
-          >
-            <i class="pi pi-calendar-plus"></i>
-            Programar siguiente actividad
-          </button>
-        }
+        <div class="qualification-strip-cta">
+          @if (detail.hasActiveOpportunity) {
+            <button
+              type="button"
+              class="qualification-action qualification-action--open"
+              (click)="host().openFollowUpOpportunity(detail)"
+            >
+              <i class="pi pi-briefcase"></i>
+              Ver oportunidad
+            </button>
+          } @else if (detail.qualification.canConvert) {
+            <button
+              type="button"
+              class="qualification-action qualification-action--ready"
+              (click)="host().openFollowUpOpportunity(detail)"
+            >
+              <i class="pi pi-arrow-right"></i>
+              Crear oportunidad
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="qualification-action qualification-action--schedule"
+              (click)="
+                host().openQuickActivity(
+                  detail.prospecto,
+                  'LLAMADA',
+                  'Calificar a ' + detail.prospecto.nombre
+                )
+              "
+            >
+              <i class="pi pi-calendar-plus"></i>
+              Programar siguiente actividad
+            </button>
+          }
+        </div>
       </section>
 
+      <!-- Actividades e Historial -->
       <section class="followup-detail-grid">
         <article class="detail-card">
           <div class="detail-card-head">
-            <h3>Próximas actividades</h3>
-            <button type="button" (click)="host().openCreateActivity(detail.prospecto)">
-              Ver calendario
+            <div class="card-head-title">
+              <i class="pi pi-clock"></i>
+              <h3>Próximas actividades</h3>
+            </div>
+            <button
+              type="button"
+              class="head-link-button"
+              (click)="host().openCreateActivity(detail.prospecto)"
+            >
+              <i class="pi pi-calendar"></i> Ver calendario
             </button>
           </div>
           <div class="upcoming-detail-list">
             @for (item of host().selectedFollowUpUpcoming(); track item.id) {
-              <article>
-                <i [class]="host().followUpActivityIcon(item.tipoActividad)"></i>
-                <div>
+              <article class="upcoming-item">
+                <div class="upcoming-icon">
+                  <i [class]="host().followUpActivityIcon(item.tipoActividad)"></i>
+                </div>
+                <div class="upcoming-content">
                   <strong>{{ item.asunto }}</strong>
                   <span>{{ item.descripcion || 'Actividad pendiente' }}</span>
-                  <em>{{ item.fechaProgramada | date: 'dd/MM/yyyy HH:mm' }}</em>
+                  <em
+                    ><i class="pi pi-calendar"></i>
+                    {{ item.fechaProgramada | date: 'dd/MM/yyyy HH:mm' }}</em
+                  >
                 </div>
                 <button
                   type="button"
@@ -190,14 +252,27 @@
                 </button>
               </article>
             } @empty {
-              <div class="pipeline-empty">Sin actividades pendientes.</div>
+              <div class="followup-empty-state">
+                <i class="pi pi-calendar-plus"></i>
+                <p>Sin actividades pendientes programadas.</p>
+                <button
+                  type="button"
+                  class="empty-cta-button"
+                  (click)="host().openCreateActivity(detail.prospecto)"
+                >
+                  + Agendar tarea o llamada
+                </button>
+              </div>
             }
           </div>
         </article>
 
         <article class="detail-card detail-card--timeline">
           <div class="detail-card-head">
-            <h3>Historial de seguimiento</h3>
+            <div class="card-head-title">
+              <i class="pi pi-history"></i>
+              <h3>Historial de seguimiento</h3>
+            </div>
           </div>
           <div class="detail-timeline-list">
             @for (item of host().selectedFollowUpHistory(); track item.id) {
@@ -207,10 +282,10 @@
                 "
               >
                 <i [class]="host().followUpActivityIcon(item.tipoActividad)"></i>
-                <div>
+                <div class="timeline-body">
                   <header>
                     <strong>{{ host().humanize(item.tipoActividad) }}</strong>
-                    <span>{{ host().humanize(item.estado) }}</span>
+                    <span class="activity-status-badge">{{ host().humanize(item.estado) }}</span>
                     <em>{{ host().activityEffectiveDate(item) | date: 'dd/MM/yyyy HH:mm' }}</em>
                   </header>
                   <p>{{ item.resultado || item.descripcion || item.asunto }}</p>
@@ -226,42 +301,45 @@
                       }
                     </small>
                   }
-                  <small
-                    >por
-                    {{
-                      host().responsibleName(item.usuarioId || detail.prospecto.responsableId)
-                    }}</small
-                  >
+                  <small class="activity-author">
+                    <i class="pi pi-user"></i>
+                    {{ host().responsibleName(item.usuarioId || detail.prospecto.responsableId) }}
+                  </small>
                 </div>
               </article>
             } @empty {
-              <div class="pipeline-empty">
-                Aún no hay actividades completadas para este prospecto.
+              <div class="followup-empty-state">
+                <i class="pi pi-comments"></i>
+                <p>Aún no hay actividades registradas para este prospecto.</p>
+                <button
+                  type="button"
+                  class="empty-cta-button"
+                  (click)="
+                    host().openQuickActivity(
+                      detail.prospecto,
+                      'LLAMADA',
+                      'Llamar a ' + detail.prospecto.nombre
+                    )
+                  "
+                >
+                  + Registrar primer contacto
+                </button>
               </div>
             }
           </div>
-          <button
-            type="button"
-            class="detail-add-followup"
-            (click)="
-              host().openQuickActivity(
-                detail.prospecto,
-                'LLAMADA',
-                'Llamar a ' + detail.prospecto.nombre
-              )
-            "
-          >
-            <i class="pi pi-plus"></i>
-            Registrar nuevo seguimiento
-          </button>
         </article>
       </section>
 
+      <!-- Notas destacadas -->
       <section class="detail-card followup-notes-row">
         <div class="detail-card-head">
-          <h3>Notas destacadas</h3>
+          <div class="card-head-title">
+            <i class="pi pi-bookmark"></i>
+            <h3>Notas y requerimientos</h3>
+          </div>
           <button
             type="button"
+            class="head-link-button"
             (click)="
               host().openQuickActivity(
                 detail.prospecto,
@@ -270,72 +348,79 @@
               )
             "
           >
-            Agregar nota
+            <i class="pi pi-plus"></i> Agregar nota
           </button>
         </div>
         <div class="highlight-note">
-          <i class="pi pi-star"></i>
+          <i class="pi pi-comment"></i>
           <p>
             {{
               detail.prospecto.observacion ||
                 detail.prospecto.interesDetalle ||
-                'Sin notas destacadas por ahora.'
+                'Sin notas destacadas registradas.'
             }}
           </p>
           <span>{{ detail.prospecto.updatedAt | date: 'dd/MM/yyyy' }}</span>
         </div>
       </section>
 
+      <!-- Acciones Rápidas -->
       <section class="detail-quick-register">
-        <strong>Registrar nuevo seguimiento</strong>
-        <button
-          type="button"
-          (click)="
-            host().openQuickActivity(
-              detail.prospecto,
-              'LLAMADA',
-              'Llamar a ' + detail.prospecto.nombre
-            )
-          "
-        >
-          <i class="pi pi-phone"></i> Llamada
-        </button>
-        <button
-          type="button"
-          (click)="
-            host().openQuickActivity(
-              detail.prospecto,
-              'WHATSAPP',
-              'Enviar WhatsApp a ' + detail.prospecto.nombre
-            )
-          "
-        >
-          <i class="pi pi-whatsapp"></i> WhatsApp
-        </button>
-        <button
-          type="button"
-          (click)="
-            host().openQuickActivity(
-              detail.prospecto,
-              'CORREO',
-              'Enviar correo a ' + detail.prospecto.nombre
-            )
-          "
-        >
-          <i class="pi pi-envelope"></i> Correo
-        </button>
-        <button
-          type="button"
-          (click)="
-            host().openQuickActivity(
-              detail.prospecto,
-              'REUNION',
-              'Reunion con ' + detail.prospecto.nombre
-            )
-          "
-        >
-          <i class="pi pi-users"></i> Reunion
-        </button>
+        <strong>Acceso rápido:</strong>
+        <div class="quick-buttons-row">
+          <button
+            type="button"
+            class="quick-btn quick-btn--phone"
+            (click)="
+              host().openQuickActivity(
+                detail.prospecto,
+                'LLAMADA',
+                'Llamar a ' + detail.prospecto.nombre
+              )
+            "
+          >
+            <i class="pi pi-phone"></i> Llamada
+          </button>
+          <button
+            type="button"
+            class="quick-btn quick-btn--whatsapp"
+            (click)="
+              host().openQuickActivity(
+                detail.prospecto,
+                'WHATSAPP',
+                'Enviar WhatsApp a ' + detail.prospecto.nombre
+              )
+            "
+          >
+            <i class="pi pi-whatsapp"></i> WhatsApp
+          </button>
+          <button
+            type="button"
+            class="quick-btn quick-btn--email"
+            (click)="
+              host().openQuickActivity(
+                detail.prospecto,
+                'CORREO',
+                'Enviar correo a ' + detail.prospecto.nombre
+              )
+            "
+          >
+            <i class="pi pi-envelope"></i> Correo
+          </button>
+          <button
+            type="button"
+            class="quick-btn quick-btn--meeting"
+            (click)="
+              host().openQuickActivity(
+                detail.prospecto,
+                'REUNION',
+                'Reunión con ' + detail.prospecto.nombre
+              )
+            "
+          >
+            <i class="pi pi-users"></i> Reunión
+          </button>
+        </div>
       </section>
     </section>
   </p-dialog>

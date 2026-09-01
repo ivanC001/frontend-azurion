@@ -27,6 +27,7 @@ import type { CrmPage } from '../../crm-page';
     TextareaModule,
   ],
   templateUrl: './followup-detail-modal.html',
+  styleUrl: './followup-detail-modal.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class FollowupDetailModal {
