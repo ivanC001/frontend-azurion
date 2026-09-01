@@ -1466,15 +1466,12 @@ export class CrmPage {
     }
   }
 
-<<<<<<< HEAD
   /**
    * Contactos que se estan trabajando pero todavia no llegaron a oportunidad.
    *
    * La regla de reparto vive en resolveFunnelStage: cada contacto cuenta en una
    * sola etapa del embudo.
    */
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   protected readonly followUpProspects = computed(() =>
     this.prospectos().filter((item) => isInFollowUpStage(this.funnelContextFor(item))),
   );
@@ -1870,15 +1867,11 @@ export class CrmPage {
 
   protected readonly quoteDashboardMetrics = computed(() => {
     const items = this.quoteDashboardItems();
-<<<<<<< HEAD
     // Total agregado en moneda base: cada cotizacion conserva su moneda propia.
     const amount = items.reduce(
       (sum, item) => sum + Number(item.totalMonedaBase ?? item.total ?? 0),
       0,
     );
-=======
-    const amount = this.quotations.totalAmount(items);
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     return [
       {
         label: 'Cotizaciones',
@@ -1888,11 +1881,7 @@ export class CrmPage {
       },
       {
         label: 'Valor total',
-<<<<<<< HEAD
         value: `${this.tenantBaseCurrencySymbol()} ${formatCompactAmount(amount)}`,
-=======
-        value: `S/ ${formatCompactAmount(amount)}`,
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         delta: deltaLabel(amount, 0),
         detail: 'vs mes anterior',
       },
@@ -8792,11 +8781,7 @@ export class CrmPage {
     const dueDate = item.fechaVencimiento ? ` Vigencia: ${item.fechaVencimiento}.` : '';
     const observation = item.observacion ? `\n\nObservación: ${item.observacion}` : '';
     const currencySymbol = this.catalogCurrencyPrefix(item.moneda);
-<<<<<<< HEAD
     return `Hola ${contactName}, te comparto la cotización ${quoteCode(item.id)} por ${opportunityTitle}. Total: ${currencySymbol} ${amount}.${dueDate}${observation}`;
-=======
-    return `Hola ${contactName}, te comparto la cotización COT-${String(item.id).padStart(3, '0')} por ${opportunityTitle}. Total: ${currencySymbol} ${amount}.${dueDate}${observation}`;
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   }
 
   protected savePromotion(): void {

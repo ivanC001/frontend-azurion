@@ -257,15 +257,11 @@ export interface CreateSucursalRequest {
   readonly codigo?: string | null;
   readonly nombre: string;
   readonly direccion?: string | null;
-<<<<<<< HEAD
   // Obligatorio solo en Peru; fuera se envia la ubicacion como texto libre.
   readonly ubigeoCodigo?: string | null;
   readonly departamento?: string | null;
   readonly provincia?: string | null;
   readonly distrito?: string | null;
-=======
-  readonly ubigeoCodigo: string;
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   readonly igvPorcentaje: number;
   readonly crearAlmacenPrincipal?: boolean;
 }

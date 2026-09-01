@@ -1091,18 +1091,9 @@ export class AppLayout {
                 icon: 'pi-cog',
                 permission: 'CONFIGURACION_WRITE',
               },
-<<<<<<< HEAD
               // Las sucursales son gestion del ERP: el CRM opera siempre sobre
               // la sede que se crea al provisionar el tenant y no debe poder
               // reconfigurarla desde aqui.
-=======
-              {
-                label: 'Sucursales',
-                route: '/admin/sucursales',
-                icon: 'pi-building',
-                permission: 'SUCURSALES_WRITE',
-              },
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
               {
                 label: 'Usuarios',
                 route: '/admin/usuarios',

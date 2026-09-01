@@ -11,18 +11,11 @@ export interface Sucursal {
   readonly codigo: string;
   readonly nombre: string;
   readonly direccion: string | null;
-<<<<<<< HEAD
   // Codigo del catalogo SUNAT: null para tenants fuera de Peru.
   readonly ubigeoCodigo: string | null;
   readonly departamento: string | null;
   readonly provincia: string | null;
   readonly distrito: string | null;
-=======
-  readonly ubigeoCodigo: string;
-  readonly departamento: string;
-  readonly provincia: string;
-  readonly distrito: string;
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   readonly igvPorcentaje: number;
   readonly tipoOperacionDefaultId?: string | null;
   readonly tipoAfectacionDefaultId?: string | null;

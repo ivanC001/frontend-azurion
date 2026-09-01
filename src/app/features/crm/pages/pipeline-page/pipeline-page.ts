@@ -4,10 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { CrmOportunidad } from '@features/crm/data/crm-api.types';
-<<<<<<< HEAD
 import { currencySymbol } from '@shared/utils/currency-symbol';
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 import type {
   PipelineColumn,
   PipelineQuickFilter,

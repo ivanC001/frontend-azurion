@@ -18,7 +18,6 @@ export interface FollowupFilters {
   readonly interes: string;
   readonly fecha: string;
 }
-<<<<<<< HEAD
 
 /** Etapas del embudo en las que puede estar un contacto. */
 export type FunnelStage = 'PROSPECTO' | 'SEGUIMIENTO' | 'OPORTUNIDAD' | 'CLIENTE';
@@ -80,5 +79,3 @@ export function resolveFunnelStage(context: ProspectFunnelContext): FunnelStage 
 export function isInFollowUpStage(context: ProspectFunnelContext): boolean {
   return resolveFunnelStage(context) === 'SEGUIMIENTO';
 }
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc

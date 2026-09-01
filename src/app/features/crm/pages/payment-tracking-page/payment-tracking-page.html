@@ -64,11 +64,7 @@
             <span>
               <i [style.background]="row.color"></i>
               {{ row.label }} ({{ row.count }})
-<<<<<<< HEAD
               <b>{{ baseCurrencySymbol() }} {{ row.amount | number: '1.2-2' }}</b>
-=======
-              <b>S/ {{ row.amount | number: '1.2-2' }}</b>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
             </span>
           }
         </div>
@@ -210,11 +206,7 @@
                     </div>
                   </td>
                   <td class="payment-amount-danger">
-<<<<<<< HEAD
                     {{ row.currencyPrefix }} {{ row.pendingAmount | number: '1.2-2' }}
-=======
-                    S/ {{ row.pendingAmount | number: '1.2-2' }}
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                   </td>
                   <td>
                     <b>{{ row.installmentProgress }}</b>
@@ -314,11 +306,7 @@
                 <small>Cuota pendiente</small>
               </div>
               <p>
-<<<<<<< HEAD
                 <b>{{ entry.currencyPrefix }} {{ entry.amount | number: '1.2-2' }}</b>
-=======
-                <b>S/ {{ entry.amount | number: '1.2-2' }}</b>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                 <small [class.is-overdue]="entry.overdue">{{ entry.dayLabel }}</small>
               </p>
             </article>

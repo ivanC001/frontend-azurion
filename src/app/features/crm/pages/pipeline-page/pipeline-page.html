@@ -167,13 +167,9 @@
                 <em class="deal-card__client">{{ row.company }}</em>
                 <div class="deal-card__value">
                   <span
-<<<<<<< HEAD
                     ><strong
                       >{{ currencySymbol(row.opportunity.moneda) }}
                       {{ row.amount | number: '1.0-0' }}</strong
-=======
-                    ><strong>S/ {{ row.amount | number: '1.0-0' }}</strong
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                     ><i></i>
                     @if (row.closingDate) {
                       <small>Cierre: {{ row.closingDate | date: 'dd/MM/yyyy' }}</small>

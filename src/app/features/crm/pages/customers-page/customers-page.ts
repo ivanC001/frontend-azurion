@@ -4,10 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 
 import { CrmOportunidad } from '@features/crm/data/crm-api.types';
-<<<<<<< HEAD
 import { currencySymbol } from '@shared/utils/currency-symbol';
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 
 export interface CustomerMetric {
   label: string;

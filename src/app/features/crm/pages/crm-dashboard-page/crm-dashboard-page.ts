@@ -98,11 +98,7 @@ export class CrmDashboardPage {
   readonly now = input.required<Date>();
   readonly kpis = input<readonly CrmExecutiveKpiView[]>([]);
   readonly pipelineRows = input<readonly CrmExecutivePipelineRowView[]>([]);
-<<<<<<< HEAD
   readonly pipelineTotal = input('0');
-=======
-  readonly pipelineTotal = input('S/ 0');
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   readonly revenueChart = input.required<CrmExecutiveRevenueChartView>();
   readonly topDeals = input<readonly CrmExecutiveTopDealView[]>([]);
   readonly leadSources = input<readonly CrmExecutiveLeadSourceView[]>([]);

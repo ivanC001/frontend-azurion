@@ -1522,11 +1522,7 @@
                         {{
                           promo.tipoDescuento === 'PORCENTAJE'
                             ? promo.valor + '%'
-<<<<<<< HEAD
                             : tenantBaseCurrencySymbol() + ' ' + (promo.valor | number: '1.2-2')
-=======
-                            : 'S/ ' + (promo.valor | number: '1.2-2')
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                         }}</span
                       >
                       @if (promo.descripcion) {
@@ -1663,14 +1659,10 @@
                         {{ stageName(item.etapa) }}
                       </span>
                     </td>
-<<<<<<< HEAD
                     <td>
                       {{ catalogCurrencyPrefix(item.moneda) }}
                       {{ item.montoEstimado | number: '1.2-2' }}
                     </td>
-=======
-                    <td>S/ {{ item.montoEstimado | number: '1.2-2' }}</td>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                     <td>
                       <span
                         [class]="
@@ -1790,17 +1782,10 @@
                   (click)="openQuoteOpportunityDetail(item)"
                 >
                   <div>
-<<<<<<< HEAD
                     <strong>{{ quoteCode(item.id) }}</strong>
                     <span>{{ quoteContactName(item) }} - {{ quoteOpportunityTitle(item) }}</span>
                   </div>
                   <b>{{ catalogCurrencyPrefix(item.moneda) }} {{ item.total | number: '1.0-0' }}</b>
-=======
-                    <strong>COT-{{ item.id | number: '3.0-0' }}</strong>
-                    <span>{{ quoteContactName(item) }} - {{ quoteOpportunityTitle(item) }}</span>
-                  </div>
-                  <b>S/ {{ item.total | number: '1.0-0' }}</b>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                   <em [class]="'quote-status quote-status--' + quoteStatusTone(item)">{{
                     quoteStatusLabel(item)
                   }}</em>
@@ -1885,14 +1870,10 @@
                     <strong>{{ item.titulo }}</strong>
                     <span>{{ opportunityContactName(item) }}</span>
                   </div>
-<<<<<<< HEAD
                   <b>
                     {{ catalogCurrencyPrefix(item.moneda) }}
                     {{ item.montoEstimado | number: '1.0-0' }}
                   </b>
-=======
-                  <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                   <em>{{ opportunityProgress(item) }}%</em>
                   <span class="negotiation-pill">Negociación</span>
                   <nav class="opportunity-row-actions" aria-label="Acciones de negociación">
@@ -1993,10 +1974,7 @@
         [query]="query()"
         [summaryCards]="paymentFollowUpSummaryCards()"
         [collectionSummary]="paymentCollectionSummary()"
-<<<<<<< HEAD
         [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         [collectionRingBackground]="paymentCollectionRingBackground()"
         [rows]="paymentTrackingRows()"
         [upcoming]="paymentTrackingUpcoming()"
@@ -2055,10 +2033,7 @@
         [query]="query()"
         [summaryCards]="pipelineSummaryCards()"
         [columns]="pipelinePageColumns()"
-<<<<<<< HEAD
         [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         (queryChange)="updateCrmQuery($event)"
         (clearStageFilterRequested)="setOpportunityStageFilter(null)"
         (createOpportunityRequested)="openCreateOpportunity()"

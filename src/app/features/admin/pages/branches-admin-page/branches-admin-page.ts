@@ -51,10 +51,7 @@ interface SucursalForm {
 export class BranchesAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly confirmationService = inject(ConfirmationService);
-<<<<<<< HEAD
   private readonly auth = inject(AuthSessionService);
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 
   protected readonly sucursales = signal<Sucursal[]>([]);
   protected readonly ubigeos = signal<Ubigeo[]>([]);

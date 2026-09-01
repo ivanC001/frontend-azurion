@@ -1,8 +1,5 @@
 import type { CrmOportunidad } from '@features/crm/data/crm-api.types';
-<<<<<<< HEAD
 import { currencySymbol } from '@shared/utils/currency-symbol';
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 import type {
   OpportunityListView,
   OpportunityPageRow,
@@ -136,18 +133,10 @@ function formatCurrencyGroups(
   formatAmount: (value: number) => string,
 ): string {
   if (!totals.size) {
-<<<<<<< HEAD
     return '0';
   }
   return [...totals.entries()]
     .map(([currency, amount]) => `${currencySymbol(currency)} ${formatAmount(amount)}`)
-=======
-    return 'S/ 0';
-  }
-  const symbols: Record<string, string> = { PEN: 'S/', USD: 'US$', EUR: '€' };
-  return [...totals.entries()]
-    .map(([currency, amount]) => `${symbols[currency] || currency} ${formatAmount(amount)}`)
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     .join(' · ');
 }
 

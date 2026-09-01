@@ -1,18 +1,8 @@
-<<<<<<< HEAD
 :host {
   display: block;
-=======
-.company-page {
-  display: grid;
-  gap: 1rem;
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   min-width: 0;
-  max-width: 80rem;
-  margin: 0 auto;
-  width: 100%;
 }
 
-<<<<<<< HEAD
 .company-page {
   display: grid;
   gap: 1rem;
@@ -22,8 +12,6 @@
   width: 100%;
 }
 
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 .page-header {
   align-items: center;
   background: #ffffff;
@@ -1370,11 +1358,7 @@ label {
 }
 
 .tenant-profile-grid--two-col {
-<<<<<<< HEAD
   grid-template-columns: repeat(2, minmax(0, 1fr));
-=======
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 }
 
 .tenant-regional-layout {
@@ -1549,7 +1533,6 @@ label {
     grid-template-columns: 1fr;
   }
 
-<<<<<<< HEAD
   .tenant-profile-grid,
   .tenant-profile-grid--two-col {
     grid-template-columns: 1fr;
@@ -1599,14 +1582,6 @@ label {
     white-space: normal;
   }
 
-=======
-  .tenant-profile-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 650px) {
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   .company-summary {
     grid-template-columns: 1fr;
   }

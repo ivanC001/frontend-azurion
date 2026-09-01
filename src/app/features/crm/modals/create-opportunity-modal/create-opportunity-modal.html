@@ -18,21 +18,14 @@
             ? host().opportunityTargetLabel()
             : 'Nueva oportunidad comercial'
         }}</strong>
-<<<<<<< HEAD
         <b
           >{{ host().catalogCurrencyPrefix(host().opportunityFormCurrency()) }}
           {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</b
         >
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         <p>
           El cliente y el interés provienen del prospecto. Solo confirma el monto, el responsable y
           la fecha de cierre.
         </p>
-<<<<<<< HEAD
-=======
-        <b>S/ {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</b>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
       </article>
       <article class="or-card" style="--c: #3b82f6; --b: #eff6ff">
         <i class="pi pi-user or-ico"></i>
@@ -49,7 +42,6 @@
       <article class="or-card" style="--c: #f59e0b; --b: #fffbeb">
         <i class="pi pi-calendar or-ico"></i>
         <span>Cierre sugerido</span>
-<<<<<<< HEAD
         <strong>{{
           host().opportunityForm.fechaCierreEstimada
             ? (host().opportunityForm.fechaCierreEstimada | date: 'dd/MM/yyyy')
@@ -57,11 +49,6 @@
         }}</strong>
         <p>
           Sugerido a {{ host().crmLocalConfig().cierreEstimadoDias }} días; configurable por el
-=======
-        <strong>{{ host().opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong>
-        <p>
-          Default: {{ host().crmLocalConfig().cierreEstimadoDias }} dias configurables por
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
           administrador.
         </p>
       </article>
@@ -69,11 +56,7 @@
 
     <section class="or-layout">
       <section class="or-panel">
-<<<<<<< HEAD
         <h4><i class="pi pi-users or-ico"></i>Relación comercial</h4>
-=======
-        <h4><i class="pi pi-users or-ico"></i>Relacion comercial</h4>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         <label
           >Prospecto nuevo<p-select
             name="opProspecto"
@@ -93,11 +76,7 @@
             appendTo="body"
         /></label>
         <label
-<<<<<<< HEAD
           >Oferta del catálogo CRM <span class="required">*</span
-=======
-          >Oferta del catalogo CRM <span class="required">*</span
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
           ><p-select
             name="opCatalogoItem"
             [options]="host().catalogoOptions()"
@@ -112,11 +91,7 @@
       <section class="or-panel">
         <h4><i class="pi pi-list-check or-ico"></i>Datos de la oportunidad</h4>
         <label class="full-field"
-<<<<<<< HEAD
           >Título <span class="required">*</span
-=======
-          >Titulo <span class="required">*</span
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
           ><input
             pInputText
             name="opTitulo"
@@ -208,12 +183,8 @@
           <i class="pi pi-dollar or-ico"></i
           ><span
             >Monto estimado<strong
-<<<<<<< HEAD
               >{{ host().catalogCurrencyPrefix(host().opportunityFormCurrency()) }}
               {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</strong
-=======
-              >S/ {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</strong
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
             ></span
           >
         </p>
@@ -221,13 +192,9 @@
           <i class="pi pi-calendar or-ico"></i
           ><span
             >Cierre estimado<strong>{{
-<<<<<<< HEAD
               host().opportunityForm.fechaCierreEstimada
                 ? (host().opportunityForm.fechaCierreEstimada | date: 'dd/MM/yyyy')
                 : 'Sin fecha'
-=======
-              host().opportunityForm.fechaCierreEstimada || 'Sin fecha'
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
             }}</strong></span
           >
         </p>

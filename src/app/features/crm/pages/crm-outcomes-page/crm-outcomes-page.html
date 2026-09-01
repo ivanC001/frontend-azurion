@@ -131,13 +131,9 @@
                   >{{ item.estado === 'GANADA' ? 'Ganada' : 'Pérdida' }}</span
                 >
               </td>
-<<<<<<< HEAD
               <td class="outcome-money">
                 {{ currencySymbol(item.moneda) }} {{ money(item.montoReal || item.montoEstimado) }}
               </td>
-=======
-              <td class="outcome-money">S/ {{ money(item.montoReal || item.montoEstimado) }}</td>
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
               <td>{{ closureDate(item) | date: 'dd/MM/yyyy' }}</td>
               <td>{{ item.responsableId || 'Sin responsable' }}</td>
               <td>

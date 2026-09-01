@@ -10,17 +10,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin, of } from 'rxjs';
 
-<<<<<<< HEAD
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { PageResponse } from '@core/api/catalog-api.types';
 import { CrmOportunidad, CrmResultadosResumen } from '@features/crm/data/crm-api.types';
 import { currencySymbol } from '@shared/utils/currency-symbol';
-=======
-import { CrmApiService } from '@features/crm/data/crm-api.service';
-import { PageResponse } from '@core/api/catalog-api.types';
-import { CrmOportunidad, CrmResultadosResumen } from '@features/crm/data/crm-api.types';
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 
 type OutcomeFilter = 'TODOS' | 'GANADA' | 'PERDIDA';
 
@@ -34,10 +28,7 @@ type OutcomeFilter = 'TODOS' | 'GANADA' | 'PERDIDA';
 })
 export class CrmOutcomesPage implements OnDestroy {
   private readonly api = inject(CrmApiService);
-<<<<<<< HEAD
   private readonly session = inject(AuthSessionService);
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly currencySymbol = currencySymbol;
@@ -97,22 +88,14 @@ export class CrmOutcomesPage implements OnDestroy {
       {
         label: 'Ganadas',
         value: String(value.ganadas),
-<<<<<<< HEAD
         detail: `${this.baseCurrencySymbol()} ${this.money(value.montoGanado)}`,
-=======
-        detail: `S/ ${this.money(value.montoGanado)}`,
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         icon: 'pi pi-trophy',
         tone: 'green',
       },
       {
         label: 'Perdidas',
         value: String(value.perdidas),
-<<<<<<< HEAD
         detail: `${this.baseCurrencySymbol()} ${this.money(value.montoPerdido)}`,
-=======
-        detail: `S/ ${this.money(value.montoPerdido)}`,
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         icon: 'pi pi-times-circle',
         tone: 'red',
       },

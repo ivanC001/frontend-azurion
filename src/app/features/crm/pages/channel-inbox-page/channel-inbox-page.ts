@@ -14,10 +14,7 @@ import { finalize } from 'rxjs/operators';
 
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { CrmSentEmail } from '@features/crm/data/crm-api.types';
-<<<<<<< HEAD
 import { quoteCode } from '@shared/utils/quote-code';
-=======
->>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 import { CrmInboxChannelStateService } from '../../services/crm-inbox-channel-state.service';
 
 type InboxChannelCode = 'FACEBOOK' | 'INSTAGRAM' | 'CORREO';
