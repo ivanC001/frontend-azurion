@@ -7665,15 +7665,13 @@ export class CrmPage {
 
   public quoteCompanyLogoUrl(): string | null {
     const empresa = this.auth.currentSession()?.empresa as
-      | { logoPanelUrl?: string | null }
-      | undefined;
+      { logoPanelUrl?: string | null } | undefined;
     return empresa?.logoPanelUrl || null;
   }
 
   public quoteCompanyName(): string {
     const empresa = this.auth.currentSession()?.empresa as
-      | { razonSocial?: string | null }
-      | undefined;
+      { razonSocial?: string | null } | undefined;
     return empresa?.razonSocial || 'AZURION';
   }
 

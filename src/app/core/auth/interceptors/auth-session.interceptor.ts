@@ -95,10 +95,7 @@ function errorCode(error: unknown): string {
 
 function extractErrorMessage(error: HttpErrorResponse): string {
   const payload = error.error as
-    | string
-    | { message?: string; error?: string; details?: string[] }
-    | null
-    | undefined;
+    string | { message?: string; error?: string; details?: string[] } | null | undefined;
 
   if (!payload) {
     return error.message || '';

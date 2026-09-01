@@ -128,49 +128,62 @@ export class CrmApiService {
 
   listCrmLandingConfigurations() {
     return this.http
-      .get<
-        ApiResponse<CrmLandingConfig[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmLandingConfig[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   createCrmLandingConfiguration(request: SaveCrmLandingConfigRequest) {
     return this.http
-      .post<
-        ApiResponse<CrmLandingConfig>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/landings'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmLandingConfiguration(id: number, request: SaveCrmLandingConfigRequest) {
     return this.http
-      .put<
-        ApiResponse<CrmLandingConfig>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}`), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   regenerateCrmLandingKey(id: number) {
     return this.http
-      .post<
-        ApiResponse<CrmLandingConfig>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-key`), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-key`),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   regenerateCrmLandingRelaySecret(id: number) {
     return this.http
-      .post<
-        ApiResponse<CrmLandingConfig>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/configuracion/landings/${id}/regenerar-relay-secret`), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmLandingConfig>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/configuracion/landings/${id}/regenerar-relay-secret`,
+        ),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCrmInboxChannels() {
     return this.http
-      .get<
-        ApiResponse<CrmInboxChannelAvailability[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/canales'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmInboxChannelAvailability[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/canales'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -182,9 +195,10 @@ export class CrmApiService {
       params = params.set('query', query.trim());
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<CrmSentEmail>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/correo/enviados'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<CrmSentEmail>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/bandeja/correo/enviados'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -202,73 +216,88 @@ export class CrmApiService {
 
   generateCrmWhatsappVerifyToken() {
     return this.http
-      .post<
-        ApiResponse<WhatsappVerifyTokenResponse>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/verify-token'), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<WhatsappVerifyTokenResponse>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/verify-token'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   testCrmWhatsappConnection() {
     return this.http
-      .post<
-        ApiResponse<WhatsappConnectionStatus>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/probar'), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/probar'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   subscribeCrmWhatsappApp() {
     return this.http
-      .post<
-        ApiResponse<WhatsappConnectionStatus>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/suscribir'), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/suscribir'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   getCrmWhatsappConnectionStatus() {
     return this.http
-      .get<
-        ApiResponse<WhatsappConnectionStatus>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/estado'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<WhatsappConnectionStatus>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/estado'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   getCrmWhatsappAutoReplyConfig() {
     return this.http
-      .get<
-        ApiResponse<WhatsappAutoReplyConfig>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/respuesta-automatica'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<WhatsappAutoReplyConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/respuesta-automatica'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmWhatsappAutoReplyConfig(request: UpdateWhatsappAutoReplyConfigRequest) {
     return this.http
-      .put<
-        ApiResponse<WhatsappAutoReplyConfig>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/respuesta-automatica'), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<WhatsappAutoReplyConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/configuracion/respuesta-automatica'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCrmWhatsappQuickReplies() {
     return this.http
-      .get<
-        ApiResponse<WhatsappQuickReply[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/respuestas-rapidas'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<WhatsappQuickReply[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/respuestas-rapidas'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   createCrmWhatsappQuickReply(request: SaveWhatsappQuickReplyRequest) {
     return this.http
-      .post<
-        ApiResponse<WhatsappQuickReply>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/respuestas-rapidas'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<WhatsappQuickReply>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/respuestas-rapidas'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmWhatsappQuickReply(id: number, request: SaveWhatsappQuickReplyRequest) {
     return this.http
-      .put<
-        ApiResponse<WhatsappQuickReply>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/respuestas-rapidas/${id}`), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<WhatsappQuickReply>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/respuestas-rapidas/${id}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -295,17 +324,20 @@ export class CrmApiService {
     }
 
     return this.http
-      .get<
-        ApiResponse<CrmWhatsappConversation[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/conversaciones'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<CrmWhatsappConversation[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/conversaciones'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
   markCrmWhatsappConversationRead(prospectoId: number) {
     return this.http
-      .put<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/leer`), {}, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/leer`),
+        {},
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -314,97 +346,129 @@ export class CrmApiService {
     estado: 'ABIERTA' | 'RESUELTA' | 'ARCHIVADA',
   ) {
     return this.http
-      .put<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/estado`), { estado }, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/estado`),
+        { estado },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   assignCrmWhatsappConversation(prospectoId: number, responsableId: string | null) {
     return this.http
-      .put<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/asignacion`), { responsableId }, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/asignacion`,
+        ),
+        { responsableId },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmWhatsappConversationNote(prospectoId: number, nota: string | null) {
     return this.http
-      .put<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/nota`), { nota }, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/nota`),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   createCrmWhatsappConversationNote(prospectoId: number, nota: string) {
     return this.http
-      .post<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas`), { nota }, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas`),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmWhatsappSavedNote(prospectoId: number, noteId: number, nota: string) {
     return this.http
-      .put<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`), { nota }, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`,
+        ),
+        { nota },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   deleteCrmWhatsappSavedNote(prospectoId: number, noteId: number) {
     return this.http
-      .delete<
-        ApiResponse<CrmWhatsappConversation>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`), { headers: this.session.apiHeaders() })
+      .delete<ApiResponse<CrmWhatsappConversation>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/whatsapp/conversaciones/${prospectoId}/notas/${noteId}`,
+        ),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCrmWhatsappMessages(prospectoId: number) {
     return this.http
-      .get<
-        ApiResponse<CrmWhatsappMessage[]>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmWhatsappMessage[]>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   sendCrmWhatsappMessage(prospectoId: number, request: SendCrmWhatsappMessageRequest) {
     return this.http
-      .post<
-        ApiResponse<CrmWhatsappMessage>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmWhatsappMessage>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCrmWhatsappTemplates() {
     return this.http
-      .get<
-        ApiResponse<CrmWhatsappTemplate[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/plantillas'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmWhatsappTemplate[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/plantillas'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   sendCrmWhatsappTemplate(prospectoId: number, request: SendCrmWhatsappTemplateRequest) {
     return this.http
-      .post<
-        ApiResponse<CrmWhatsappMessage>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/plantillas`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmWhatsappMessage>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/plantillas`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCrmWhatsappQuotes(prospectoId: number) {
     return this.http
-      .get<
-        ApiResponse<Cotizacion[]>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones`), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<Cotizacion[]>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones`),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   sendCrmWhatsappQuote(prospectoId: number, quoteId: number, mensaje?: string | null) {
     return this.http
-      .post<
-        ApiResponse<SendCrmWhatsappQuoteResponse>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones/${quoteId}/enviar`), { mensaje: mensaje?.trim() || null }, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<SendCrmWhatsappQuoteResponse>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/cotizaciones/${quoteId}/enviar`,
+        ),
+        { mensaje: mensaje?.trim() || null },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -421,9 +485,10 @@ export class CrmApiService {
 
   listAvailableCrmCurrencies() {
     return this.http
-      .get<
-        ApiResponse<CrmCurrencyOption[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/monedas/disponibles'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmCurrencyOption[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/configuracion/monedas/disponibles'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -520,33 +585,39 @@ export class CrmApiService {
 
   repartirCrmProspectos(request: RepartirCrmProspectosRequest) {
     return this.http
-      .post<
-        ApiResponse<RepartirCrmProspectosResponse>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/repartir'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<RepartirCrmProspectosResponse>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/repartir'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   getCrmWhatsappUnreadSummary() {
     return this.http
-      .get<
-        ApiResponse<WhatsappUnreadSummary>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/notificaciones'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<WhatsappUnreadSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/notificaciones'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   getCrmLeadAssignmentConfig() {
     return this.http
-      .get<
-        ApiResponse<CrmLeadAssignmentConfig>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmLeadAssignmentConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCrmLeadAssignmentConfig(request: UpdateCrmLeadAssignmentConfigRequest) {
     return this.http
-      .put<
-        ApiResponse<CrmLeadAssignmentConfig>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmLeadAssignmentConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/prospectos/reparto-configuracion'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -696,9 +767,11 @@ export class CrmApiService {
 
   moverCrmOportunidadEtapa(id: number, etapaId: number, observacion?: string | null) {
     return this.http
-      .put<
-        ApiResponse<CrmOportunidad>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/etapa`), { etapaId, observacion }, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmOportunidad>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/etapa`),
+        { etapaId, observacion },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -727,9 +800,11 @@ export class CrmApiService {
 
   marcarCrmOportunidadPerdida(id: number, motivo: string) {
     return this.http
-      .post<
-        ApiResponse<CrmOportunidad>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/marcar-perdida`), { motivo }, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmOportunidad>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/marcar-perdida`),
+        { motivo },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -738,9 +813,11 @@ export class CrmApiService {
     request: GenerarCotizacionDesdeOportunidadRequest,
   ) {
     return this.http
-      .post<
-        ApiResponse<Cotizacion>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/generar-cotizacion`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<Cotizacion>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/generar-cotizacion`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -757,9 +834,11 @@ export class CrmApiService {
 
   createCrmNegociacion(oportunidadId: number, request: CreateCrmNegociacionRequest) {
     return this.http
-      .post<
-        ApiResponse<CrmNegociacion>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/negociaciones`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmNegociacion>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/negociaciones`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -773,9 +852,10 @@ export class CrmApiService {
 
   listCrmOportunidadRecursos() {
     return this.http
-      .get<
-        ApiResponse<CrmOportunidadRecurso[]>
-      >(this.apiUrl.url('saasCore', '/v1/saas/crm/oportunidades/recursos'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CrmOportunidadRecurso[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/oportunidades/recursos'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -787,9 +867,11 @@ export class CrmApiService {
   ) {
     const formData = this.crmResourceFormData(tipo, data, file);
     return this.http
-      .post<
-        ApiResponse<CrmOportunidadRecurso>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos`), formData, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CrmOportunidadRecurso>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos`),
+        formData,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -802,17 +884,26 @@ export class CrmApiService {
   ) {
     const formData = this.crmResourceFormData(tipo, data, file);
     return this.http
-      .put<
-        ApiResponse<CrmOportunidadRecurso>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`), formData, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmOportunidadRecurso>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`,
+        ),
+        formData,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   deleteCrmOportunidadRecurso(oportunidadId: number, resourceId: number) {
     return this.http
-      .delete<
-        ApiResponse<string>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`), { headers: this.session.apiHeaders() })
+      .delete<ApiResponse<string>>(
+        this.apiUrl.url(
+          'saasCore',
+          `/v1/saas/crm/oportunidades/${oportunidadId}/recursos/${resourceId}`,
+        ),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -857,18 +948,22 @@ export class CrmApiService {
   realizarCrmActividad(id: number, request?: string | RealizarCrmActividadRequest | null) {
     const body = typeof request === 'string' ? { resultado: request } : (request ?? {});
     return this.http
-      .put<
-        ApiResponse<CrmActividad>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/actividades/${id}/realizar`), body, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmActividad>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/actividades/${id}/realizar`),
+        body,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   cancelarCrmActividad(id: number, request?: string | RealizarCrmActividadRequest | null) {
     const body = typeof request === 'string' ? { resultado: request } : (request ?? {});
     return this.http
-      .put<
-        ApiResponse<CrmActividad>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/actividades/${id}/cancelar`), body, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CrmActividad>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/actividades/${id}/cancelar`),
+        body,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -969,17 +1064,21 @@ export class CrmApiService {
 
   sendCrmOpportunityEmail(id: number, asunto: string, mensaje: string) {
     return this.http
-      .post<
-        ApiResponse<SendCrmOpportunityEmailResponse>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/correo`), { asunto, mensaje }, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<SendCrmOpportunityEmailResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/oportunidades/${id}/correo`),
+        { asunto, mensaje },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   sendCrmProspectEmail(id: number, asunto: string, mensaje: string) {
     return this.http
-      .post<
-        ApiResponse<SendCrmOpportunityEmailResponse>
-      >(this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${id}/correo`), { asunto, mensaje }, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<SendCrmOpportunityEmailResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${id}/correo`),
+        { asunto, mensaje },
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 

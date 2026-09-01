@@ -136,41 +136,49 @@ export class FacturadorApiService {
 
   getTenant(tenantId: number) {
     return this.api
-      .get<
-        FacturadorResponse<FacturadorTenantDetail>
-      >('saasCore', `/v1/saas/facturador/tenants/${tenantId}`)
+      .get<FacturadorResponse<FacturadorTenantDetail>>(
+        'saasCore',
+        `/v1/saas/facturador/tenants/${tenantId}`,
+      )
       .pipe(map((response) => response.data));
   }
 
   createTenant(request: CreateFacturadorTenantRequest) {
     return this.api
-      .post<
-        FacturadorResponse<FacturadorTenant>
-      >('saasCore', '/v1/saas/facturador/tenants', this.toFormData(request))
+      .post<FacturadorResponse<FacturadorTenant>>(
+        'saasCore',
+        '/v1/saas/facturador/tenants',
+        this.toFormData(request),
+      )
       .pipe(map((response) => response.data));
   }
 
   updateTenant(tenantId: number, request: CreateFacturadorTenantRequest) {
     return this.api
-      .put<
-        FacturadorResponse<FacturadorTenant>
-      >('saasCore', `/v1/saas/facturador/tenants/${tenantId}`, this.toFormData(request))
+      .put<FacturadorResponse<FacturadorTenant>>(
+        'saasCore',
+        `/v1/saas/facturador/tenants/${tenantId}`,
+        this.toFormData(request),
+      )
       .pipe(map((response) => response.data));
   }
 
   getCurrentTenant() {
     return this.api
-      .get<
-        FacturadorResponse<FacturadorTenantDetail | null>
-      >('saasCore', '/v1/saas/facturador/tenants/current')
+      .get<FacturadorResponse<FacturadorTenantDetail | null>>(
+        'saasCore',
+        '/v1/saas/facturador/tenants/current',
+      )
       .pipe(map((response) => response.data));
   }
 
   updateCurrentTenant(request: CreateFacturadorTenantRequest) {
     return this.api
-      .put<
-        FacturadorResponse<CurrentFacturadorConfiguration>
-      >('saasCore', '/v1/saas/facturador/tenants/current', this.toFormData(request))
+      .put<FacturadorResponse<CurrentFacturadorConfiguration>>(
+        'saasCore',
+        '/v1/saas/facturador/tenants/current',
+        this.toFormData(request),
+      )
       .pipe(map((response) => response.data));
   }
 

@@ -52,11 +52,7 @@ export interface CatalogRegistrationType {
 }
 
 export type CatalogTypeGroupCode =
-  | 'BIENES'
-  | 'SERVICIOS'
-  | 'PERSONAS'
-  | 'INFRAESTRUCTURA'
-  | 'OTROS';
+  'BIENES' | 'SERVICIOS' | 'PERSONAS' | 'INFRAESTRUCTURA' | 'OTROS';
 
 export interface CatalogTypeGroup {
   readonly code: CatalogTypeGroupCode;

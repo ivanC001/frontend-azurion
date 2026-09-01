@@ -33,6 +33,9 @@
             "styles": [
               "node_modules/primeicons/primeicons.css",
               "src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "exceljs"
             ]
           },
           "configurations": {
@@ -58,11 +61,11 @@
                   "maximumWarning": "850kB",
                   "maximumError": "1.2MB"
                 },
-              {
-                "type": "anyComponentStyle",
-                "maximumWarning": "150kB",
-                "maximumError": "180kB"
-              }
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "150kB",
+                  "maximumError": "180kB"
+                }
               ],
               "outputHashing": "all"
             },

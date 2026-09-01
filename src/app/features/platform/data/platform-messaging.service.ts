@@ -7,11 +7,7 @@ import { ApiUrlService } from '@core/api/api-url.service';
 import { AuthSessionService } from '@core/auth/auth-session.service';
 
 export type MessageAudience =
-  | 'PLATFORM_ADMINS'
-  | 'TENANT_ADMINS'
-  | 'TENANT_USERS'
-  | 'SELECTED_USERS'
-  | 'ALL_USERS';
+  'PLATFORM_ADMINS' | 'TENANT_ADMINS' | 'TENANT_USERS' | 'SELECTED_USERS' | 'ALL_USERS';
 export type MessagePriority = 'INFO' | 'WARNING' | 'CRITICAL';
 
 export interface InboxMessage {
@@ -71,33 +67,38 @@ export class PlatformMessagingService {
 
   unreadCount() {
     return this.http
-      .get<
-        ApiResponse<{ unreadCount: number }>
-      >(this.apiUrl.url('saasCore', '/v1/messages/inbox/unread-count'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<{ unreadCount: number }>>(
+        this.apiUrl.url('saasCore', '/v1/messages/inbox/unread-count'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => Number(response.data.unreadCount || 0)));
   }
 
   markRead(recipientId: number) {
     return this.http
-      .patch<
-        ApiResponse<InboxMessage>
-      >(this.apiUrl.url('saasCore', `/v1/messages/inbox/${recipientId}/read`), null, { headers: this.session.apiHeaders() })
+      .patch<ApiResponse<InboxMessage>>(
+        this.apiUrl.url('saasCore', `/v1/messages/inbox/${recipientId}/read`),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   markAllRead() {
     return this.http
-      .post<
-        ApiResponse<number>
-      >(this.apiUrl.url('saasCore', '/v1/messages/inbox/read-all'), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<number>>(this.apiUrl.url('saasCore', '/v1/messages/inbox/read-all'), null, {
+        headers: this.session.apiHeaders(),
+      })
       .pipe(map((response) => response.data));
   }
 
   send(request: SendPlatformMessageRequest) {
     return this.http
-      .post<
-        ApiResponse<SentPlatformMessage>
-      >(this.apiUrl.url('saasCore', '/v1/saas/platform/messages'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<SentPlatformMessage>>(
+        this.apiUrl.url('saasCore', '/v1/saas/platform/messages'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 

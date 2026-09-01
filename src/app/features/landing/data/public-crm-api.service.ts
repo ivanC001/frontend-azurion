@@ -70,9 +70,14 @@ export class PublicCrmApiService {
         ...publicPayload
       } = request;
       return this.http
-        .post<
-          ApiResponse<PublicCrmLeadResponse>
-        >(this.apiUrl.url('saasCore', `/v1/public/forms/${encodeURIComponent(sourceKey)}/submissions`), publicPayload, { headers: new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey }) })
+        .post<ApiResponse<PublicCrmLeadResponse>>(
+          this.apiUrl.url(
+            'saasCore',
+            `/v1/public/forms/${encodeURIComponent(sourceKey)}/submissions`,
+          ),
+          publicPayload,
+          { headers: new HttpHeaders({ 'X-Idempotency-Key': idempotencyKey }) },
+        )
         .pipe(map((response) => response.data));
     }
     const headers = tenantReference
@@ -87,9 +92,11 @@ export class PublicCrmApiService {
         ? { ...payload, Ruc_tenant: tenantReference }
         : payload;
     return this.http
-      .post<
-        ApiResponse<PublicCrmLeadResponse>
-      >(this.apiUrl.url('saasCore', '/v1/public/crm/leads'), body, { headers })
+      .post<ApiResponse<PublicCrmLeadResponse>>(
+        this.apiUrl.url('saasCore', '/v1/public/crm/leads'),
+        body,
+        { headers },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -104,9 +111,10 @@ export class PublicCrmApiService {
       [this.settings.tenancy.headerName]: tenantId.trim(),
     });
     return this.http
-      .get<
-        ApiResponse<PublicCrmCatalogoItem>
-      >(this.apiUrl.url('saasCore', `/v1/public/crm/catalogo/${id}`), { headers, params: { token } })
+      .get<ApiResponse<PublicCrmCatalogoItem>>(
+        this.apiUrl.url('saasCore', `/v1/public/crm/catalogo/${id}`),
+        { headers, params: { token } },
+      )
       .pipe(map((response) => response.data));
   }
 }

@@ -1,11 +1,5 @@
 export type CrmClientCompletionAction =
-  | 'PAYMENT'
-  | 'WON'
-  | 'EDIT'
-  | 'QUOTE_CREATE'
-  | 'QUOTE_PDF'
-  | 'QUOTE_EMAIL'
-  | 'QUOTE_WHATSAPP';
+  'PAYMENT' | 'WON' | 'EDIT' | 'QUOTE_CREATE' | 'QUOTE_PDF' | 'QUOTE_EMAIL' | 'QUOTE_WHATSAPP';
 
 export interface CrmClientCompletionDraft {
   tipoPersona: 'SIN_DEFINIR' | 'NATURAL' | 'JURIDICA' | string;

@@ -32,14 +32,7 @@ import { CrmApiService } from '@features/crm/data/crm-api.service';
 import type { CrmPipelineColumn } from '@features/crm/data/crm-api.types';
 
 type ReportModule =
-  | 'ventas'
-  | 'compras'
-  | 'stock'
-  | 'kardex'
-  | 'caja'
-  | 'notas'
-  | 'guias'
-  | 'crm_pipeline';
+  'ventas' | 'compras' | 'stock' | 'kardex' | 'caja' | 'notas' | 'guias' | 'crm_pipeline';
 
 interface ReportColumn extends ExcelReportColumn {
   align?: 'left' | 'right' | 'center';

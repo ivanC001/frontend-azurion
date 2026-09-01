@@ -115,9 +115,11 @@ export class CotizacionApiService {
 
   convertCotizacionVenta(id: number, request: ConvertCotizacionVentaRequest) {
     return this.http
-      .post<
-        ApiResponse<ConvertCotizacionVentaResponse>
-      >(this.apiUrl.url('saasCore', `/v1/saas/cotizaciones/${id}/convertir-venta`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<ConvertCotizacionVentaResponse>>(
+        this.apiUrl.url('saasCore', `/v1/saas/cotizaciones/${id}/convertir-venta`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 }

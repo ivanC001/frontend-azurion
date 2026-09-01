@@ -289,9 +289,10 @@ export class AdminSaasApiService {
   pageAlmacenes(page = 0, size = 20) {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http
-      .get<
-        ApiResponse<PageResponse<Almacen>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/almacenes/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<Almacen>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/almacenes/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -308,9 +309,11 @@ export class AdminSaasApiService {
 
   createEmpresaRegistration(request: CreateEmpresaRegistrationRequest) {
     return this.http
-      .post<
-        ApiResponse<EmpresaRegistration>
-      >(this.apiUrl.url('saasCore', '/v1/saas/empresas/registro'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<EmpresaRegistration>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/registro'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(
         map((response) => response.data),
         tap(() => {
@@ -322,9 +325,9 @@ export class AdminSaasApiService {
 
   updateAlmacen(id: number, request: UpdateAlmacenRequest) {
     return this.http
-      .put<
-        ApiResponse<Almacen>
-      >(this.apiUrl.url('saasCore', `/v1/saas/almacenes/${id}`), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<Almacen>>(this.apiUrl.url('saasCore', `/v1/saas/almacenes/${id}`), request, {
+        headers: this.session.apiHeaders(),
+      })
       .pipe(
         map((response) => response.data),
         tap(() => this.invalidateCache('almacenes')),
@@ -522,9 +525,10 @@ export class AdminSaasApiService {
 
   getCajaTurnoActivo() {
     return this.http
-      .get<
-        ApiResponse<CajaTurno | null>
-      >(this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/activo'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CajaTurno | null>>(
+        this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/activo'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -540,57 +544,70 @@ export class AdminSaasApiService {
 
   crearCajaFisica(request: GuardarCajaFisicaRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaFisica>
-      >(this.apiUrl.url('saasCore', '/v1/saas/cajas-fisicas'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaFisica>>(
+        this.apiUrl.url('saasCore', '/v1/saas/cajas-fisicas'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   actualizarCajaFisica(cajaId: number, request: GuardarCajaFisicaRequest) {
     return this.http
-      .put<
-        ApiResponse<CajaFisica>
-      >(this.apiUrl.url('saasCore', `/v1/saas/cajas-fisicas/${cajaId}`), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<CajaFisica>>(
+        this.apiUrl.url('saasCore', `/v1/saas/cajas-fisicas/${cajaId}`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   abrirTurnoCaja(request: AbrirCajaTurnoRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaTurno>
-      >(this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/abrir'), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaTurno>>(
+        this.apiUrl.url('saasCore', '/v1/saas/caja-turnos/abrir'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   cerrarTurnoCaja(turnoId: number, request: CerrarCajaTurnoRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaTurno>
-      >(this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/cerrar`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaTurno>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/cerrar`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   registrarMovimientoCaja(turnoId: number, request: RegistrarMovimientoCajaRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaMovimiento>
-      >(this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaMovimiento>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   depositarCuentaEmpresarial(turnoId: number, request: DepositoCuentaEmpresarialRequest) {
     return this.http
-      .post<
-        ApiResponse<CajaMovimiento>
-      >(this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/depositos-cuenta-empresarial`), request, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<CajaMovimiento>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/depositos-cuenta-empresarial`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   listCajaMovimientos(turnoId: number) {
     return this.http
-      .get<
-        ApiResponse<CajaMovimiento[]>
-      >(this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<CajaMovimiento[]>>(
+        this.apiUrl.url('saasCore', `/v1/saas/caja-turnos/${turnoId}/movimientos`),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -831,33 +848,36 @@ export class AdminSaasApiService {
       params = params.set('q', q.trim());
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<VentaRecord>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/ventas/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<VentaRecord>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/ventas/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
   getVenta(ventaId: number) {
     return this.http
-      .get<
-        ApiResponse<VentaRecord>
-      >(this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}`), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<VentaRecord>>(this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}`), {
+        headers: this.session.apiHeaders(),
+      })
       .pipe(map((response) => response.data));
   }
 
   retryVentaDocument(ventaId: number) {
     return this.http
-      .post<
-        ApiResponse<VentaRecord>
-      >(this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/facturacion/reintentar`), {}, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<VentaRecord>>(
+        this.apiUrl.url('saasCore', `/v1/saas/ventas/${ventaId}/facturacion/reintentar`),
+        {},
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
   getVentasSummary() {
     return this.http
-      .get<
-        ApiResponse<VentaSummary>
-      >(this.apiUrl.url('saasCore', '/v1/saas/ventas/summary'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<VentaSummary>>(this.apiUrl.url('saasCore', '/v1/saas/ventas/summary'), {
+        headers: this.session.apiHeaders(),
+      })
       .pipe(map((response) => response.data));
   }
 
@@ -884,17 +904,19 @@ export class AdminSaasApiService {
       params = params.set('almacenId', almacenId);
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<StockItem>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<StockItem>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
   getInventorySummary() {
     return this.http
-      .get<
-        ApiResponse<InventorySummary>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/summary'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<InventorySummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/summary'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -907,9 +929,10 @@ export class AdminSaasApiService {
       params = params.set('hasta', hasta);
     }
     return this.http
-      .get<
-        ApiResponse<FiscalSummary>
-      >(this.apiUrl.url('saasCore', '/v1/saas/reportes/fiscal'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<FiscalSummary>>(this.apiUrl.url('saasCore', '/v1/saas/reportes/fiscal'), {
+        headers: this.session.apiHeaders(),
+        params,
+      })
       .pipe(map((response) => response.data));
   }
 
@@ -922,9 +945,11 @@ export class AdminSaasApiService {
     },
   ) {
     return this.http
-      .put<
-        ApiResponse<StockItem>
-      >(this.apiUrl.url('saasCore', `/v1/saas/inventory/stock/${stockId}/settings`), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<StockItem>>(
+        this.apiUrl.url('saasCore', `/v1/saas/inventory/stock/${stockId}/settings`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -956,9 +981,10 @@ export class AdminSaasApiService {
       params = params.set('almacenId', almacenId);
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<StockLoteItem>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/lotes/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<StockLoteItem>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/stock/lotes/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -976,9 +1002,10 @@ export class AdminSaasApiService {
       params = params.set('almacenId', almacenId);
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<Compra>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/compras/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<Compra>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/compras/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -1000,17 +1027,19 @@ export class AdminSaasApiService {
       params = params.set('almacenId', almacenId);
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<Producto>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<Producto>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
   getProductSummary() {
     return this.http
-      .get<
-        ApiResponse<ProductSummary>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/summary'), { headers: this.session.apiHeaders() })
+      .get<ApiResponse<ProductSummary>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/productos/summary'),
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -1099,9 +1128,11 @@ export class AdminSaasApiService {
 
   updateCurrentEmpresaProfile(request: UpdateCurrentEmpresaProfileRequest) {
     return this.http
-      .put<
-        ApiResponse<Empresa>
-      >(this.apiUrl.url('saasCore', '/v1/saas/empresas/current'), request, { headers: this.session.apiHeaders() })
+      .put<ApiResponse<Empresa>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/current'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(
         map((response) => response.data),
         tap(() => this.invalidateCache('empresas')),
@@ -1110,9 +1141,11 @@ export class AdminSaasApiService {
 
   synchronizeCurrentEmpresaFacturador() {
     return this.http
-      .post<
-        ApiResponse<Empresa>
-      >(this.apiUrl.url('saasCore', '/v1/saas/empresas/current/facturador/synchronize'), null, { headers: this.session.apiHeaders() })
+      .post<ApiResponse<Empresa>>(
+        this.apiUrl.url('saasCore', '/v1/saas/empresas/current/facturador/synchronize'),
+        null,
+        { headers: this.session.apiHeaders() },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -1156,9 +1189,10 @@ export class AdminSaasApiService {
       params = params.set('almacenId', almacenId);
     }
     return this.http
-      .get<
-        ApiResponse<PageResponse<KardexMovimiento>>
-      >(this.apiUrl.url('saasCore', '/v1/saas/inventory/kardex/page'), { headers: this.session.apiHeaders(), params })
+      .get<ApiResponse<PageResponse<KardexMovimiento>>>(
+        this.apiUrl.url('saasCore', '/v1/saas/inventory/kardex/page'),
+        { headers: this.session.apiHeaders(), params },
+      )
       .pipe(map((response) => response.data));
   }
 
@@ -1191,9 +1225,9 @@ export class AdminSaasApiService {
   getUsuarioQuota(options: TenantScopedOptions = {}) {
     const tenantId = options.tenantId?.trim() || null;
     return this.http
-      .get<
-        ApiResponse<TenantUserQuota>
-      >(this.apiUrl.url('saasCore', '/v1/saas/usuarios/quota'), { headers: this.session.apiHeaders(tenantId) })
+      .get<ApiResponse<TenantUserQuota>>(this.apiUrl.url('saasCore', '/v1/saas/usuarios/quota'), {
+        headers: this.session.apiHeaders(tenantId),
+      })
       .pipe(map((response) => response.data));
   }
 

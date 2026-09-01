@@ -988,10 +988,9 @@
   }
 
   .prospect-filter-bar {
-    grid-template-columns: minmax(14rem, 1.5fr) repeat(3, minmax(7.5rem, 0.75fr)) minmax(
-        16rem,
-        1.1fr
-      ) auto;
+    grid-template-columns:
+      minmax(14rem, 1.5fr) repeat(3, minmax(7.5rem, 0.75fr)) minmax(16rem, 1.1fr)
+      auto;
   }
 }
 
