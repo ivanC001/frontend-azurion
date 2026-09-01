@@ -81,6 +81,7 @@ import type {
   WhatsappAutoReplyConfig,
   WhatsappConnectionStatus,
   WhatsappQuickReply,
+  WhatsappReengagementGuide,
   WhatsappUnreadSummary,
   WhatsappVerifyTokenResponse,
 } from '@features/crm/data/crm-api.types';
@@ -426,6 +427,15 @@ export class CrmApiService {
       .post<ApiResponse<CrmWhatsappMessage>>(
         this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
         request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmWhatsappReengagementGuide() {
+    return this.http
+      .get<ApiResponse<WhatsappReengagementGuide>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/reenganches/guia'),
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));

@@ -680,6 +680,23 @@ export interface CrmWhatsappTemplate {
   readonly cantidadParametros: number;
 }
 
+export interface WhatsappReengagementGuide {
+  readonly listoParaProgramar: boolean;
+  readonly resumen: string;
+  readonly pasos: readonly string[];
+  readonly advertencias: readonly string[];
+  readonly plantillaSugerida: WhatsappReengagementSuggestedTemplate;
+  readonly plantillasUtilizables: readonly CrmWhatsappTemplate[];
+}
+
+export interface WhatsappReengagementSuggestedTemplate {
+  readonly categoria: string;
+  readonly motivoCategoria: string;
+  readonly cuerpo: string;
+  readonly botones: readonly string[];
+  readonly variables: readonly string[];
+}
+
 export interface CrmWhatsappTemplateComponent {
   readonly tipo: string;
   readonly texto: string;

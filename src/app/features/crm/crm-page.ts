@@ -199,6 +199,7 @@ import { EmailSettings } from './settings/email-settings/email-settings';
 import { CrmCurrencyConfigPanel } from './components/crm-currency-config-panel/crm-currency-config-panel';
 import { LandingChannelConfig } from './components/landing-channel-config/landing-channel-config';
 import { WhatsappAutoReplyConfigComponent } from './components/whatsapp-auto-reply-config/whatsapp-auto-reply-config';
+import { WhatsappReengagementGuideComponent } from './components/whatsapp-reengagement-guide/whatsapp-reengagement-guide';
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { CrmCatalogStore } from './services/crm-catalog.store';
 import { CrmCurrencyStore } from './services/crm-currency.store';
@@ -273,6 +274,7 @@ import {
     CrmCurrencyConfigPanel,
     LandingChannelConfig,
     WhatsappAutoReplyConfigComponent,
+    WhatsappReengagementGuideComponent,
   ],
   providers: [
     CrmFeedbackService,

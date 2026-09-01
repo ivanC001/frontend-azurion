@@ -1,0 +1,112 @@
+<section class="reengage-card">
+  <header class="reengage-header" (click)="toggle()">
+    <span class="reengage-icon"><i class="pi pi-history"></i></span>
+    <div>
+      <small>REENGANCHE FUERA DE LAS 24 HORAS</small>
+      <strong>Plantillas para retomar el contacto</strong>
+    </div>
+    @if (guide(); as current) {
+      <span
+        class="reengage-badge"
+        [class.reengage-badge--ok]="current.listoParaProgramar"
+        [class.reengage-badge--pending]="!current.listoParaProgramar"
+      >
+        <i [class]="current.listoParaProgramar ? 'pi pi-check-circle' : 'pi pi-exclamation-circle'"></i>
+        {{ current.listoParaProgramar ? 'Listo' : 'Falta configurar' }}
+      </span>
+    }
+    <button type="button" class="reengage-toggle" [attr.aria-expanded]="expanded()">
+      <i [class]="expanded() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="reengage-state"><i class="pi pi-spin pi-spinner"></i> Revisando tus plantillas...</div>
+  } @else if (error()) {
+    <div class="reengage-state reengage-state--error">
+      <i class="pi pi-times-circle"></i> {{ error() }}
+      <button type="button" class="reengage-retry" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (guide(); as current) {
+    <p class="reengage-summary">{{ current.resumen }}</p>
+
+    @if (expanded()) {
+      <div class="reengage-body">
+        <p class="reengage-intro">
+          WhatsApp cierra la conversacion 24 horas despues del ultimo mensaje del cliente.
+          Pasado ese plazo Meta solo acepta plantillas aprobadas, asi que para retomar el
+          contacto mas adelante hay que programar el envio de una.
+        </p>
+
+        @if (current.advertencias.length) {
+          <ul class="reengage-warnings">
+            @for (warning of current.advertencias; track warning) {
+              <li><i class="pi pi-exclamation-triangle"></i><span>{{ warning }}</span></li>
+            }
+          </ul>
+        }
+
+        @if (current.pasos.length) {
+          <div class="reengage-block">
+            <span class="reengage-label">Que hacer</span>
+            <ol class="reengage-steps">
+              @for (step of current.pasos; track step) {
+                <li>{{ step }}</li>
+              }
+            </ol>
+          </div>
+        }
+
+        <div class="reengage-block">
+          <div class="reengage-block-head">
+            <span class="reengage-label">
+              Plantilla sugerida
+              <em class="reengage-category">{{ current.plantillaSugerida.categoria }}</em>
+            </span>
+            <button type="button" class="reengage-copy" (click)="copyTemplate()">
+              <i [class]="copied() ? 'pi pi-check' : 'pi pi-copy'"></i>
+              {{ copied() ? 'Copiado' : 'Copiar' }}
+            </button>
+          </div>
+          <pre class="reengage-template">{{ current.plantillaSugerida.cuerpo }}</pre>
+
+          <div class="reengage-chips">
+            @for (button of current.plantillaSugerida.botones; track button) {
+              <span class="reengage-chip"><i class="pi pi-reply"></i> {{ button }}</span>
+            }
+          </div>
+
+          <ul class="reengage-vars">
+            @for (variable of current.plantillaSugerida.variables; track variable) {
+              <li>{{ variable }}</li>
+            }
+          </ul>
+
+          <p class="reengage-note">{{ current.plantillaSugerida.motivoCategoria }}</p>
+        </div>
+
+        @if (current.plantillasUtilizables.length) {
+          <div class="reengage-block">
+            <span class="reengage-label">Plantillas listas para usar</span>
+            <ul class="reengage-templates">
+              @for (template of current.plantillasUtilizables; track template.nombre + template.idioma) {
+                <li>
+                  <div>
+                    <strong>{{ template.nombre }}</strong>
+                    <small>{{ template.idioma }} · {{ template.cantidadParametros }} variables</small>
+                  </div>
+                  <span
+                    class="reengage-tag"
+                    [class.reengage-tag--utility]="template.categoria === 'UTILITY'"
+                  >
+                    {{ template.categoria }}
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>
