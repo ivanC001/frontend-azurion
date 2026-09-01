@@ -362,8 +362,12 @@
 }
 
 @media (max-width: 1100px) {
+<<<<<<< HEAD
   .currency-panel__grid,
   .currency-panel__add {
+=======
+  .currency-panel__grid {
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     grid-template-columns: 1fr;
   }
 }

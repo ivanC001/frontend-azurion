@@ -207,6 +207,7 @@
       <header class="form-section__head">
         <span><i class="pi pi-map"></i></span>
         <div>
+<<<<<<< HEAD
           <strong>Ubicacion y tributacion</strong>
           @if (requiresUbigeo()) {
             <small>Selecciona el ubigeo SUNAT y confirma el IGV.</small>
@@ -271,6 +272,26 @@
                   placeholder="Ej. Chapinero"
                 />
               </label>
+=======
+          <strong>Ubicacion y tributacion</strong
+          ><small>Selecciona el ubigeo SUNAT y confirma el IGV.</small>
+        </div>
+      </header>
+      <div class="dialog-grid">
+        <div class="wide-field ubigeo-field">
+          <app-ubigeo-picker
+            name="sucursalUbigeo"
+            [(value)]="form.ubigeoCodigo"
+            [required]="true"
+          />
+        </div>
+        @if (selectedUbigeo(); as ubigeo) {
+          <div class="location-summary">
+            <span><i class="pi pi-map-marker"></i></span>
+            <div>
+              <strong>{{ ubigeo.distrito }}</strong
+              ><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small>
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
             </div>
           </div>
         }
@@ -315,11 +336,15 @@
         <strong>{{ form.nombre || 'Nueva sucursal' }}</strong>
         <p>
           {{ form.codigo || 'Codigo automatico' }} ·
+<<<<<<< HEAD
           @if (requiresUbigeo()) {
             {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}
           } @else {
             {{ form.distrito || form.provincia || countryLabel() }}
           }
+=======
+          {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         </p>
       </div>
       @if (form.crearAlmacenPrincipal) {
@@ -376,6 +401,7 @@
           placeholder="Direccion referencial"
         />
       </label>
+<<<<<<< HEAD
       @if (requiresUbigeo()) {
         <div class="wide-field">
           <app-ubigeo-picker
@@ -422,6 +448,15 @@
           </div>
         </div>
       }
+=======
+      <div class="wide-field">
+        <app-ubigeo-picker
+          name="editSucursalUbigeo"
+          [(value)]="editForm.ubigeoCodigo"
+          [required]="true"
+        />
+      </div>
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
       <label>
         IGV de la sucursal (%) <span class="required">*</span>
         <input

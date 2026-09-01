@@ -2,7 +2,10 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import type { Cotizacion } from '@core/api/cotizacion-api.types';
+<<<<<<< HEAD
 import { quoteCode } from '@shared/utils/quote-code';
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 import {
   type NegotiationQuoteDecision,
   quoteStatusLabel,

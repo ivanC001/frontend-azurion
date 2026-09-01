@@ -17,6 +17,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { WhatsappQuickRepliesComponent } from '../../components/whatsapp-quick-replies/whatsapp-quick-replies';
+<<<<<<< HEAD
 import {
   renderTemplate,
   templateVariables,
@@ -25,6 +26,10 @@ import {
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { Cotizacion } from '@core/api/cotizacion-api.types';
 import { quoteCode } from '@shared/utils/quote-code';
+=======
+import { CrmApiService } from '@features/crm/data/crm-api.service';
+import { Cotizacion } from '@core/api/cotizacion-api.types';
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 import { UsuarioTenant } from '@core/api/catalog-api.types';
 import {
   CrmActividad,
@@ -53,8 +58,11 @@ interface QuoteSendOutcome {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WhatsappInboxPage implements OnInit {
+<<<<<<< HEAD
   protected readonly quoteCode = quoteCode;
 
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   private readonly api = inject(CrmApiService);
   private readonly session = inject(AuthSessionService);
   private readonly router = inject(Router);
@@ -124,6 +132,7 @@ export class WhatsappInboxPage implements OnInit {
   });
   protected readonly templatePreview = computed(() => {
     const selected = this.selectedTemplate();
+<<<<<<< HEAD
     return selected ? renderTemplate(selected, this.templateParameters()) : '';
   });
   protected readonly templateVariables = computed(() => {
@@ -136,6 +145,16 @@ export class WhatsappInboxPage implements OnInit {
       if (error) return error;
     }
     return '';
+=======
+    if (!selected) {
+      return '';
+    }
+    return this.templateParameters().reduce(
+      (text, value, index) =>
+        text.replaceAll(`{{${index + 1}}}`, value.trim() || `{{${index + 1}}}`),
+      selected.cuerpo,
+    );
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   });
   protected readonly selectedActivities = computed(() => {
     const prospectId = this.selectedProspectId();
@@ -201,7 +220,10 @@ export class WhatsappInboxPage implements OnInit {
     this.quotePickerOpen.set(false);
     this.selectedTemplateKey.set('');
     this.templateParameters.set([]);
+<<<<<<< HEAD
     this.templateError.set('');
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     this.mobilePanel.set('CHAT');
     if (changed) {
       this.messages.set([]);
@@ -257,11 +279,15 @@ export class WhatsappInboxPage implements OnInit {
     this.selectedTemplateKey.set(value);
     const selected = this.templates().find((template) => this.templateKey(template) === value);
     this.templateParameters.set(
+<<<<<<< HEAD
       selected
         ? templateVariables(selected, this.selectedConversation()).map(
             (variable) => variable.suggestedValue,
           )
         : [],
+=======
+      Array.from({ length: selected?.cantidadParametros ?? 0 }, () => ''),
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     );
     this.templateError.set('');
   }
@@ -276,12 +302,18 @@ export class WhatsappInboxPage implements OnInit {
     const selected = this.selectedTemplate();
     return (
       !!selected &&
+<<<<<<< HEAD
       !!this.selectedConversation() &&
       selected.disponible !== false &&
       !this.loadingTemplates() &&
       !this.sendingTemplate() &&
       this.templateParameters().length === selected.cantidadParametros &&
       !this.templateValidationError()
+=======
+      !this.sendingTemplate() &&
+      this.templateParameters().length === selected.cantidadParametros &&
+      this.templateParameters().every((value) => !!value.trim())
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     );
   }
 
@@ -303,6 +335,7 @@ export class WhatsappInboxPage implements OnInit {
       })
       .subscribe({
         next: (message) => {
+<<<<<<< HEAD
           this.sendingTemplate.set(false);
           if (this.selectedProspectId() === prospectId) {
             this.messages.update((items) =>
@@ -317,15 +350,31 @@ export class WhatsappInboxPage implements OnInit {
             );
             this.scrollMessagesToBottom();
           }
+=======
+          this.messages.update((items) => [...items, message]);
+          this.sendingTemplate.set(false);
+          this.selectedTemplateKey.set('');
+          this.templateParameters.set([]);
+          this.successMessage.set(
+            'Meta aceptó la plantilla. Su estado se actualizará al entregarse.',
+          );
+          this.scrollMessagesToBottom();
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
           this.loadConversations(true);
         },
         error: (error) => {
           this.sendingTemplate.set(false);
+<<<<<<< HEAD
           if (this.selectedProspectId() === prospectId) {
             this.templateError.set(
               this.readError(error, 'No se pudo enviar la plantilla de WhatsApp.'),
             );
           }
+=======
+          this.templateError.set(
+            this.readError(error, 'No se pudo enviar la plantilla de WhatsApp.'),
+          );
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         },
       });
   }
@@ -866,22 +915,38 @@ export class WhatsappInboxPage implements OnInit {
   }
 
   private loadTemplates(): void {
+<<<<<<< HEAD
     if (this.loadingTemplates() || this.sendingTemplate()) return;
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     this.loadingTemplates.set(true);
     this.templateError.set('');
     this.api.listCrmWhatsappTemplates().subscribe({
       next: (templates) => {
         this.templates.set(templates);
         this.loadingTemplates.set(false);
+<<<<<<< HEAD
         // A refreshed template can have different variables even with the same name and language.
         this.selectedTemplateKey.set('');
         this.templateParameters.set([]);
+=======
+        if (
+          this.selectedTemplateKey() &&
+          !templates.some((template) => this.templateKey(template) === this.selectedTemplateKey())
+        ) {
+          this.selectedTemplateKey.set('');
+          this.templateParameters.set([]);
+        }
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
       },
       error: (error) => {
         this.loadingTemplates.set(false);
         this.templates.set([]);
+<<<<<<< HEAD
         this.selectedTemplateKey.set('');
         this.templateParameters.set([]);
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         this.templateError.set(
           this.readError(error, 'No se pudieron consultar las plantillas aprobadas.'),
         );

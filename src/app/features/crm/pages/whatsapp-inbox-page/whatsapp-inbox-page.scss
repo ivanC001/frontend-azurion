@@ -767,11 +767,17 @@
 .template-composer {
   background: #fbfcff;
   border: 1px solid #d8e2f0;
+<<<<<<< HEAD
   border-radius: 8px;
   margin-top: 0.65rem;
   max-height: min(52dvh, 520px);
   overflow-y: auto;
   min-width: 0;
+=======
+  border-radius: 11px;
+  margin-top: 0.65rem;
+  overflow: hidden;
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 
   > header {
     align-items: center;
@@ -820,10 +826,13 @@
   }
 
   > footer {
+<<<<<<< HEAD
     background: #fff;
     position: sticky;
     bottom: 0;
     flex-wrap: wrap;
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     align-items: center;
     border-top: 1px solid #e2e8f1;
     display: flex;
@@ -882,8 +891,11 @@
   }
 
   select {
+<<<<<<< HEAD
     min-width: 0;
     width: 100%;
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     background: #fff;
     border: 1px solid #cdd9e8;
     border-radius: 7px;
@@ -898,8 +910,12 @@
 .template-preview {
   background: #eef8f1;
   border: 1px solid #c5e7ce;
+<<<<<<< HEAD
   border-radius: 8px;
   overflow-wrap: anywhere;
+=======
+  border-radius: 9px;
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   margin: 0.55rem 0.7rem;
   padding: 0.55rem 0.65rem;
 
@@ -931,16 +947,24 @@
 .template-parameters {
   display: grid;
   gap: 0.45rem;
+<<<<<<< HEAD
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   padding: 0.65rem 0.7rem;
 
   label {
     min-width: 0;
+=======
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 0.7rem 0.65rem;
+
+  label {
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     display: grid;
     gap: 0.2rem;
 
     span {
       color: #405069;
+<<<<<<< HEAD
       font-size: 0.7rem;
       font-weight: 700;
     }
@@ -954,16 +978,30 @@
     min-width: 0;
     width: 100%;
     box-sizing: border-box;
+=======
+      font-size: 0.56rem;
+      font-weight: 700;
+    }
+  }
+
+  input {
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     border: 1px solid #cdd9e8;
     border-radius: 7px;
     color: var(--ink);
     font: inherit;
+<<<<<<< HEAD
     font-size: 0.75rem;
     height: 38px;
+=======
+    font-size: 0.63rem;
+    height: 34px;
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
     padding: 0 0.55rem;
   }
 }
 
+<<<<<<< HEAD
 .template-required {
   color: #b42323;
 }
@@ -974,6 +1012,8 @@
   overflow-wrap: anywhere;
 }
 
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 .template-state {
   align-items: center;
   color: var(--muted);

@@ -592,8 +592,11 @@ export interface WhatsappQuickReply {
 }
 
 export interface CrmWhatsappMessage {
+<<<<<<< HEAD
   readonly plantillaNombre?: string | null;
   readonly plantillaIdioma?: string | null;
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   readonly id: number;
   readonly prospectoId?: number | null;
   readonly metaMessageId: string;
@@ -668,11 +671,14 @@ export interface SendCrmWhatsappMessageRequest {
 }
 
 export interface CrmWhatsappTemplate {
+<<<<<<< HEAD
   readonly id?: string | null;
   readonly estado?: string;
   readonly disponible?: boolean;
   readonly motivoNoDisponible?: string | null;
   readonly componentes?: readonly CrmWhatsappTemplateComponent[];
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
   readonly nombre: string;
   readonly idioma: string;
   readonly categoria: string;
@@ -680,12 +686,15 @@ export interface CrmWhatsappTemplate {
   readonly cantidadParametros: number;
 }
 
+<<<<<<< HEAD
 export interface CrmWhatsappTemplateComponent {
   readonly tipo: string;
   readonly texto: string;
   readonly parametros: readonly string[];
 }
 
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 export interface SendCrmWhatsappTemplateRequest {
   readonly nombre: string;
   readonly idioma: string;

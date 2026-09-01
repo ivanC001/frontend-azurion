@@ -9,7 +9,11 @@
   @if (mode() === 'negotiation') {
     @if (negotiationDecision(); as decision) {
       <header class="negotiation-heading">
+<<<<<<< HEAD
         <strong class="quote-code">{{ quoteCode(quote().id) }}</strong>
+=======
+        <strong class="quote-code">COT-{{ quote().id | number: '3.0-0' }}</strong>
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         <span class="quote-date"
           ><i class="pi pi-calendar"></i> {{ quote().fechaEmision | date: 'dd/MM/yyyy' }}</span
         >
@@ -24,7 +28,11 @@
   } @else {
     <header class="quote-card-header">
       <div class="quote-info-line">
+<<<<<<< HEAD
         <strong class="quote-code">{{ quoteCode(quote().id) }}</strong>
+=======
+        <strong class="quote-code">COT-{{ quote().id | number: '3.0-0' }}</strong>
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
         <span class="quote-date"
           ><i class="pi pi-calendar"></i> {{ quote().fechaEmision | date: 'dd/MM/yyyy' }}</span
         >

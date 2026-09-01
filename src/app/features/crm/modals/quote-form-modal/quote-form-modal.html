@@ -128,6 +128,7 @@
         </div>
         @for (line of host().quoteForm.detalles; track $index) {
           <div class="quote-line quote-line--modern">
+<<<<<<< HEAD
             <label class="quote-line-field">
               <span class="quote-line-label">Producto CRM</span>
               <p-select
@@ -191,6 +192,53 @@
             </label>
             <div class="quote-line-total">
               <span class="quote-line-label">Total</span>
+=======
+            <p-select
+              name="quoteCatalogo{{ $index }}"
+              [options]="host().catalogoOptions()"
+              [ngModel]="line.catalogoItemId"
+              (ngModelChange)="host().onQuoteCatalogChange(line, $event)"
+              appendTo="body"
+              placeholder="Selecciona un producto CRM"
+              [filter]="true"
+              filterBy="label"
+            />
+            <input
+              pInputText
+              type="number"
+              min="1"
+              step="1"
+              name="quoteCant{{ $index }}"
+              [ngModel]="line.cantidad"
+              (ngModelChange)="line.cantidad = host().normalizeQuoteQuantity($event)"
+              placeholder="Cant."
+            />
+            <input
+              pInputText
+              type="number"
+              min="0"
+              name="quotePrecio{{ $index }}"
+              [(ngModel)]="line.precioUnitario"
+              placeholder="Precio"
+            />
+            <input
+              pInputText
+              type="number"
+              min="0"
+              name="quoteDscto{{ $index }}"
+              [(ngModel)]="line.descuento"
+              placeholder="Desc."
+            />
+            <p-select
+              name="quotePromo{{ $index }}"
+              [options]="host().promotionOptions()"
+              [(ngModel)]="line.promocionId"
+              appendTo="body"
+              placeholder="Promoción"
+              [showClear]="true"
+            />
+            <div class="quote-line-total">
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
               @if (host().linePromotionDiscount(line) > 0) {
                 <small
                   >Promo -{{ host().quoteCurrencyPrefix() }}
@@ -207,7 +255,10 @@
               pButton
               class="p-button-text p-button-rounded danger-action"
               icon="pi pi-trash"
+<<<<<<< HEAD
               aria-label="Quitar producto de la cotización"
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
               (click)="host().removeQuoteLine($index)"
             ></button>
           </div>

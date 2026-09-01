@@ -271,6 +271,7 @@
                       ><i class="pi pi-user"></i> {{ messageSenderLabel(message) }}</small
                     >
                   }
+<<<<<<< HEAD
                   @if (message.tipoMensaje === 'template') {
                     <small class="message-type"
                       ><i class="pi pi-megaphone"></i> Plantilla ·
@@ -280,6 +281,9 @@
                       }
                     </small>
                   } @else if (message.tipoMensaje !== 'text') {
+=======
+                  @if (message.tipoMensaje !== 'text') {
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                     <small class="message-type"
                       ><i class="pi pi-paperclip"></i> {{ message.tipoMensaje }}</small
                     >
@@ -347,8 +351,12 @@
                 <button
                   type="button"
                   title="Actualizar plantillas aprobadas"
+<<<<<<< HEAD
                   aria-label="Sincronizar plantillas con Meta"
                   [disabled]="loadingTemplates() || sendingTemplate()"
+=======
+                  [disabled]="loadingTemplates()"
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                   (click)="reloadTemplates()"
                 >
                   <i
@@ -379,12 +387,16 @@
                 <label class="template-field">
                   <span>Plantilla aprobada</span>
                   <select
+<<<<<<< HEAD
                     [disabled]="sendingTemplate()"
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                     [ngModel]="selectedTemplateKey()"
                     (ngModelChange)="selectTemplate($event)"
                   >
                     <option value="">Selecciona una plantilla</option>
                     @for (template of templates(); track templateKey(template)) {
+<<<<<<< HEAD
                       <option
                         [value]="templateKey(template)"
                         [disabled]="template.disponible === false"
@@ -392,12 +404,17 @@
                       >
                         {{ template.nombre }} · {{ template.idioma
                         }}{{ template.disponible === false ? ' · No compatible' : '' }}
+=======
+                      <option [value]="templateKey(template)">
+                        {{ template.nombre }} · {{ template.idioma }}
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                       </option>
                     }
                   </select>
                 </label>
 
                 @if (selectedTemplate(); as template) {
+<<<<<<< HEAD
                   @if (template.cantidadParametros > 0) {
                     <div class="template-parameters">
                       @for (variable of templateVariables(); track $index) {
@@ -420,14 +437,33 @@
                       }
                     </div>
                   }
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                   <div class="template-preview">
                     <span><i class="pi pi-comment"></i> Vista previa</span>
                     <p>{{ templatePreview() }}</p>
                     <small>{{ template.categoria }} · {{ template.idioma }}</small>
                   </div>
+<<<<<<< HEAD
                   @if (templateValidationError()) {
                     <div class="template-validation" aria-live="polite">
                       {{ templateValidationError() }}
+=======
+                  @if (template.cantidadParametros > 0) {
+                    <div class="template-parameters">
+                      @for (parameter of templateParameters(); track $index) {
+                        <label>
+                          <span>Variable {{ $index + 1 }}</span>
+                          <input
+                            type="text"
+                            maxlength="1024"
+                            [value]="parameter"
+                            [placeholder]="'Valor para {{' + ($index + 1) + '}}'"
+                            (input)="updateTemplateParameter($index, $any($event.target).value)"
+                          />
+                        </label>
+                      }
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                     </div>
                   }
                   <footer>
@@ -506,7 +542,11 @@
                         />
                         <span class="quote-icon"><i class="pi pi-file-pdf"></i></span>
                         <span class="quote-copy">
+<<<<<<< HEAD
                           <strong>{{ quoteCode(quote.id) }}</strong>
+=======
+                          <strong>COT-{{ quote.id.toString().padStart(6, '0') }}</strong>
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
                           <small>
                             {{ quote.fechaEmision | date: 'dd/MM/yyyy' }} ·
                             {{ quoteWhatsappStatusLabel(quote) }}

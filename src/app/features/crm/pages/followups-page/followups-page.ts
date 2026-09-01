@@ -5,7 +5,10 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 
 import { CrmActividad, CrmOportunidad, CrmProspecto } from '@features/crm/data/crm-api.types';
+<<<<<<< HEAD
 import { currencySymbol } from '@shared/utils/currency-symbol';
+=======
+>>>>>>> b50118bff6d4d47a3981a187eab708420ee804bc
 
 export interface FollowupFilterOption {
   label: string;
