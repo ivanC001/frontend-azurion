@@ -478,4 +478,32 @@
   .users-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .table-head .table-tools input {
+    width: 100%;
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  :host ::ng-deep .header-actions .p-button {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+
+  .role-option > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

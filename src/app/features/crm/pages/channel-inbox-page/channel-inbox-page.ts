@@ -14,6 +14,7 @@ import { finalize } from 'rxjs/operators';
 
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { CrmSentEmail } from '@features/crm/data/crm-api.types';
+import { quoteCode } from '@shared/utils/quote-code';
 import { CrmInboxChannelStateService } from '../../services/crm-inbox-channel-state.service';
 
 type InboxChannelCode = 'FACEBOOK' | 'INSTAGRAM' | 'CORREO';
@@ -66,6 +67,8 @@ const CHANNEL_VIEWS: Record<InboxChannelCode, InboxChannelView> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelInboxPage implements OnInit {
+  protected readonly quoteCode = quoteCode;
+
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(CrmApiService);
   private readonly inboxChannels = inject(CrmInboxChannelStateService);

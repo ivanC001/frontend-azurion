@@ -64,7 +64,8 @@
               @if (row.debt <= 0) {
                 Pago completo
               } @else {
-                Debe S/ {{ row.debt | number: '1.2-2' }}
+                Debe {{ currencySymbol(row.opportunity.moneda) }}
+                {{ row.debt | number: '1.2-2' }}
               }
             </b>
           </article>

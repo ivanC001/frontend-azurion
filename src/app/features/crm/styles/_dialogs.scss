@@ -620,6 +620,43 @@
   padding-block: 0;
 }
 
+.quote-line-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.quote-line-label {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .quote-line-label {
+    display: block;
+    color: var(--az-text-soft);
+    font-size: 0.78rem;
+    font-weight: 750;
+  }
+
+  .crm-dialog--quote-modern .quote-line--modern {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-dialog--quote-modern .quote-line--header {
+    display: none;
+  }
+
+  .crm-dialog--quote-modern .quote-line-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .crm-dialog--quote-modern .quote-line--modern {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .quote-line-total {
   display: grid;
   justify-items: end;

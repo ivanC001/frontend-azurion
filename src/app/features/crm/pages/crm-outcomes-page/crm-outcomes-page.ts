@@ -10,9 +10,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin, of } from 'rxjs';
 
+import { AuthSessionService } from '@core/auth/auth-session.service';
 import { CrmApiService } from '@features/crm/data/crm-api.service';
 import { PageResponse } from '@core/api/catalog-api.types';
 import { CrmOportunidad, CrmResultadosResumen } from '@features/crm/data/crm-api.types';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 
 type OutcomeFilter = 'TODOS' | 'GANADA' | 'PERDIDA';
 
@@ -26,7 +28,14 @@ type OutcomeFilter = 'TODOS' | 'GANADA' | 'PERDIDA';
 })
 export class CrmOutcomesPage implements OnDestroy {
   private readonly api = inject(CrmApiService);
+  private readonly session = inject(AuthSessionService);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  protected readonly currencySymbol = currencySymbol;
+
+  protected baseCurrencySymbol(): string {
+    return currencySymbol(this.session.currentSession()?.empresa?.monedaCodigo);
+  }
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -79,14 +88,14 @@ export class CrmOutcomesPage implements OnDestroy {
       {
         label: 'Ganadas',
         value: String(value.ganadas),
-        detail: `S/ ${this.money(value.montoGanado)}`,
+        detail: `${this.baseCurrencySymbol()} ${this.money(value.montoGanado)}`,
         icon: 'pi pi-trophy',
         tone: 'green',
       },
       {
         label: 'Perdidas',
         value: String(value.perdidas),
-        detail: `S/ ${this.money(value.montoPerdido)}`,
+        detail: `${this.baseCurrencySymbol()} ${this.money(value.montoPerdido)}`,
         icon: 'pi pi-times-circle',
         tone: 'red',
       },

@@ -28,7 +28,10 @@
                   : 'Modo libre'
             }}
           </b>
-          <strong>S/ {{ review.opportunity.montoEstimado | number: '1.2-2' }}</strong>
+          <strong>
+            {{ host().catalogCurrencyPrefix(review.opportunity.moneda) }}
+            {{ review.opportunity.montoEstimado | number: '1.2-2' }}
+          </strong>
         </aside>
       </header>
 

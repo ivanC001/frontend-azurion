@@ -36,6 +36,12 @@
             ]
           },
           "configurations": {
+            "responsive-preview": {
+              "browser": "tools/responsive-preview/main.ts",
+              "tsConfig": "tools/responsive-preview/tsconfig.json",
+              "optimization": false,
+              "sourceMap": true
+            },
             "production": {
               "optimization": {
                 "scripts": true,

@@ -1,9 +1,11 @@
 :host {
   display: block;
+  min-width: 0;
 }
 
 .landing-config {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   color: #16233a;
 }
@@ -73,6 +75,7 @@
 }
 .landing-panel,
 .landing-contract {
+  min-width: 0;
   border: 1px solid #d6e1ef;
   border-radius: 8px;
   background: #fff;

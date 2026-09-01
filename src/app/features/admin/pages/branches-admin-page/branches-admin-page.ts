@@ -12,12 +12,16 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { AdminSaasApiService, Sucursal, Ubigeo } from '../../data/admin-saas-api.service';
 import { UbigeoPickerComponent } from '../../components/ubigeo-picker/ubigeo-picker';
+import { AuthSessionService } from '@core/auth/auth-session.service';
 
 interface SucursalForm {
   codigo: string;
   nombre: string;
   direccion: string;
   ubigeoCodigo: string | null;
+  departamento: string;
+  provincia: string;
+  distrito: string;
   igvPorcentaje: number;
   usarConfiguracionEmpresa: boolean;
   tipoOperacionDefaultId: string;
@@ -47,6 +51,7 @@ interface SucursalForm {
 export class BranchesAdminPage {
   private readonly api = inject(AdminSaasApiService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly auth = inject(AuthSessionService);
 
   protected readonly sucursales = signal<Sucursal[]>([]);
   protected readonly ubigeos = signal<Ubigeo[]>([]);
@@ -88,7 +93,9 @@ export class BranchesAdminPage {
 
   constructor() {
     this.load();
-    this.searchUbigeos();
+    if (this.requiresUbigeo()) {
+      this.searchUbigeos();
+    }
   }
 
   protected load(): void {
@@ -130,7 +137,7 @@ export class BranchesAdminPage {
     this.form = {
       ...this.emptyForm(),
       codigo: this.nextBranchCode(),
-      ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null,
+      ubigeoCodigo: this.requiresUbigeo() ? (this.ubigeos()[0]?.codigo ?? null) : null,
     };
     this.createDialogVisible.set(true);
   }
@@ -140,8 +147,12 @@ export class BranchesAdminPage {
     this.successMessage.set(null);
 
     const igvPorcentaje = Number(this.form.igvPorcentaje);
-    if (!this.form.nombre.trim() || !this.form.ubigeoCodigo) {
-      this.errorMessage.set('Completa el nombre y el ubigeo de la sucursal.');
+    if (!this.form.nombre.trim()) {
+      this.errorMessage.set('Completa el nombre de la sucursal.');
+      return;
+    }
+    if (this.requiresUbigeo() && !this.form.ubigeoCodigo) {
+      this.errorMessage.set('Selecciona el ubigeo SUNAT de la sucursal.');
       return;
     }
     if (Number.isNaN(igvPorcentaje) || igvPorcentaje < 0 || igvPorcentaje > 100) {
@@ -155,7 +166,10 @@ export class BranchesAdminPage {
         codigo: this.form.codigo.trim(),
         nombre: this.form.nombre.trim(),
         direccion: this.form.direccion.trim() || null,
-        ubigeoCodigo: this.form.ubigeoCodigo,
+        ubigeoCodigo: this.requiresUbigeo() ? this.form.ubigeoCodigo : null,
+        departamento: this.requiresUbigeo() ? null : this.form.departamento.trim() || null,
+        provincia: this.requiresUbigeo() ? null : this.form.provincia.trim() || null,
+        distrito: this.requiresUbigeo() ? null : this.form.distrito.trim() || null,
         igvPorcentaje,
         crearAlmacenPrincipal: this.form.crearAlmacenPrincipal,
       })
@@ -172,7 +186,7 @@ export class BranchesAdminPage {
           this.form = {
             ...this.emptyForm(),
             codigo: this.nextBranchCode(),
-            ubigeoCodigo: this.ubigeos()[0]?.codigo ?? null,
+            ubigeoCodigo: this.requiresUbigeo() ? (this.ubigeos()[0]?.codigo ?? null) : null,
           };
           this.load();
         },
@@ -194,6 +208,9 @@ export class BranchesAdminPage {
       nombre: item.nombre,
       direccion: item.direccion || '',
       ubigeoCodigo: item.ubigeoCodigo,
+      departamento: item.departamento || '',
+      provincia: item.provincia || '',
+      distrito: item.distrito || '',
       igvPorcentaje: Number(item.igvPorcentaje),
       usarConfiguracionEmpresa,
       tipoOperacionDefaultId: item.tipoOperacionDefaultId || '0101',
@@ -203,13 +220,14 @@ export class BranchesAdminPage {
       porcentajeIgvDefault: effectivePercentage,
       crearAlmacenPrincipal: false,
     };
-    if (!this.ubigeos().some((ubigeo) => ubigeo.codigo === item.ubigeoCodigo)) {
+    const ubigeoActual = item.ubigeoCodigo;
+    if (ubigeoActual && !this.ubigeos().some((ubigeo) => ubigeo.codigo === ubigeoActual)) {
       this.ubigeos.update((items) => [
         {
-          codigo: item.ubigeoCodigo,
-          departamento: item.departamento,
-          provincia: item.provincia,
-          distrito: item.distrito,
+          codigo: ubigeoActual,
+          departamento: item.departamento ?? '',
+          provincia: item.provincia ?? '',
+          distrito: item.distrito ?? '',
         },
         ...items,
       ]);
@@ -305,8 +323,12 @@ export class BranchesAdminPage {
 
   private validateForm(form: SucursalForm): boolean {
     const igvPorcentaje = Number(form.igvPorcentaje);
-    if (!form.codigo.trim() || !form.nombre.trim() || !form.ubigeoCodigo) {
-      this.errorMessage.set('Completa codigo, nombre y ubigeo de la sucursal.');
+    if (!form.codigo.trim() || !form.nombre.trim()) {
+      this.errorMessage.set('Completa el codigo y el nombre de la sucursal.');
+      return false;
+    }
+    if (this.requiresUbigeo() && !form.ubigeoCodigo) {
+      this.errorMessage.set('Selecciona el ubigeo SUNAT de la sucursal.');
       return false;
     }
     if (Number.isNaN(igvPorcentaje) || igvPorcentaje < 0 || igvPorcentaje > 100) {
@@ -317,14 +339,32 @@ export class BranchesAdminPage {
   }
 
   private toRequest(form: SucursalForm) {
+    const usaUbigeo = this.requiresUbigeo();
     return {
       codigo: form.codigo.trim(),
       nombre: form.nombre.trim(),
       direccion: form.direccion.trim() || null,
-      ubigeoCodigo: form.ubigeoCodigo!,
+      ubigeoCodigo: usaUbigeo ? form.ubigeoCodigo : null,
+      departamento: usaUbigeo ? null : form.departamento.trim() || null,
+      provincia: usaUbigeo ? null : form.provincia.trim() || null,
+      distrito: usaUbigeo ? null : form.distrito.trim() || null,
       igvPorcentaje: Number(form.igvPorcentaje),
     };
   }
+
+  /**
+   * El ubigeo es un codigo de SUNAT y solo existe en Peru. Fuera de ahi la
+   * ubicacion se captura como texto libre, igual que hace el backend en
+   * SucursalLocationResolver.
+   */
+  protected readonly requiresUbigeo = computed(
+    () => (this.auth.currentSession()?.empresa?.paisCodigo || 'PE').toUpperCase() === 'PE',
+  );
+
+  /** Etiqueta del pais, para orientar al usuario en el formulario libre. */
+  protected readonly countryLabel = computed(
+    () => this.auth.currentSession()?.empresa?.paisNombre || 'tu pais',
+  );
 
   private emptyForm(): SucursalForm {
     return {
@@ -332,6 +372,9 @@ export class BranchesAdminPage {
       nombre: '',
       direccion: '',
       ubigeoCodigo: null,
+      departamento: '',
+      provincia: '',
+      distrito: '',
       igvPorcentaje: 18,
       usarConfiguracionEmpresa: true,
       tipoOperacionDefaultId: '0101',

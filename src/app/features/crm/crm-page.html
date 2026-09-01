@@ -1522,7 +1522,7 @@
                         {{
                           promo.tipoDescuento === 'PORCENTAJE'
                             ? promo.valor + '%'
-                            : 'S/ ' + (promo.valor | number: '1.2-2')
+                            : tenantBaseCurrencySymbol() + ' ' + (promo.valor | number: '1.2-2')
                         }}</span
                       >
                       @if (promo.descripcion) {
@@ -1659,7 +1659,10 @@
                         {{ stageName(item.etapa) }}
                       </span>
                     </td>
-                    <td>S/ {{ item.montoEstimado | number: '1.2-2' }}</td>
+                    <td>
+                      {{ catalogCurrencyPrefix(item.moneda) }}
+                      {{ item.montoEstimado | number: '1.2-2' }}
+                    </td>
                     <td>
                       <span
                         [class]="
@@ -1779,10 +1782,10 @@
                   (click)="openQuoteOpportunityDetail(item)"
                 >
                   <div>
-                    <strong>COT-{{ item.id | number: '3.0-0' }}</strong>
+                    <strong>{{ quoteCode(item.id) }}</strong>
                     <span>{{ quoteContactName(item) }} - {{ quoteOpportunityTitle(item) }}</span>
                   </div>
-                  <b>S/ {{ item.total | number: '1.0-0' }}</b>
+                  <b>{{ catalogCurrencyPrefix(item.moneda) }} {{ item.total | number: '1.0-0' }}</b>
                   <em [class]="'quote-status quote-status--' + quoteStatusTone(item)">{{
                     quoteStatusLabel(item)
                   }}</em>
@@ -1867,7 +1870,10 @@
                     <strong>{{ item.titulo }}</strong>
                     <span>{{ opportunityContactName(item) }}</span>
                   </div>
-                  <b>S/ {{ item.montoEstimado | number: '1.0-0' }}</b>
+                  <b>
+                    {{ catalogCurrencyPrefix(item.moneda) }}
+                    {{ item.montoEstimado | number: '1.0-0' }}
+                  </b>
                   <em>{{ opportunityProgress(item) }}%</em>
                   <span class="negotiation-pill">Negociación</span>
                   <nav class="opportunity-row-actions" aria-label="Acciones de negociación">
@@ -1968,6 +1974,7 @@
         [query]="query()"
         [summaryCards]="paymentFollowUpSummaryCards()"
         [collectionSummary]="paymentCollectionSummary()"
+        [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
         [collectionRingBackground]="paymentCollectionRingBackground()"
         [rows]="paymentTrackingRows()"
         [upcoming]="paymentTrackingUpcoming()"
@@ -2026,6 +2033,7 @@
         [query]="query()"
         [summaryCards]="pipelineSummaryCards()"
         [columns]="pipelinePageColumns()"
+        [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
         (queryChange)="updateCrmQuery($event)"
         (clearStageFilterRequested)="setOpportunityStageFilter(null)"
         (createOpportunityRequested)="openCreateOpportunity()"

@@ -89,7 +89,7 @@
                     ><small>Entrega SMTP confirmada</small>
                   </td>
                   <td>
-                    <span class="sent-email-code">COT-{{ email.cotizacionId }}</span>
+                    <span class="sent-email-code">{{ quoteCode(email.cotizacionId) }}</span>
                   </td>
                   <td>
                     <strong>{{ email.moneda }} {{ email.total | number: '1.2-2' }}</strong>

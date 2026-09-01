@@ -93,7 +93,15 @@
             <small>Falta: {{ detail.qualification.missing.join(', ') }}</small>
           }
           <p>
-            Valor <strong>S/ {{ detail.amount | number: '1.2-2' }}</strong>
+            Valor
+            <strong>
+              {{
+                host().catalogCurrencyPrefix(
+                  detail.oportunidad?.moneda || detail.prospecto.presupuestoMoneda
+                )
+              }}
+              {{ detail.amount | number: '1.2-2' }}
+            </strong>
           </p>
         </div>
         <button

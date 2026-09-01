@@ -357,13 +357,19 @@ export function resolveNegotiationQuoteDecision(
   quote: Cotizacion,
   records: readonly OpportunityNegotiationRecord[],
 ): NegotiationQuoteDecision {
-  const quoteCode = `COT-${String(quote.id).padStart(3, '0')}`.toUpperCase();
+  // El codigo COT- ha tenido distintos anchos de relleno; comparar por numero.
+  const matchesQuoteCode = (value: string | null | undefined): boolean => {
+    const raw = String(value || '')
+      .trim()
+      .toUpperCase();
+    return raw.startsWith('COT-') && Number(raw.slice(4)) === Number(quote.id);
+  };
   const negotiation =
     records
       .filter(
         (record) =>
           Number(record.cotizacionId) === Number(quote.id) ||
-          String(record.codigoCotizacion || '').toUpperCase() === quoteCode,
+          matchesQuoteCode(record.codigoCotizacion),
       )
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0] ?? null;
 

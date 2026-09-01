@@ -18,11 +18,14 @@
             ? host().opportunityTargetLabel()
             : 'Nueva oportunidad comercial'
         }}</strong>
+        <b
+          >{{ host().catalogCurrencyPrefix(host().opportunityFormCurrency()) }}
+          {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</b
+        >
         <p>
           El cliente y el interés provienen del prospecto. Solo confirma el monto, el responsable y
           la fecha de cierre.
         </p>
-        <b>S/ {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</b>
       </article>
       <article class="or-card" style="--c: #3b82f6; --b: #eff6ff">
         <i class="pi pi-user or-ico"></i>
@@ -39,9 +42,13 @@
       <article class="or-card" style="--c: #f59e0b; --b: #fffbeb">
         <i class="pi pi-calendar or-ico"></i>
         <span>Cierre sugerido</span>
-        <strong>{{ host().opportunityForm.fechaCierreEstimada || 'Sin fecha' }}</strong>
+        <strong>{{
+          host().opportunityForm.fechaCierreEstimada
+            ? (host().opportunityForm.fechaCierreEstimada | date: 'dd/MM/yyyy')
+            : 'Sin fecha'
+        }}</strong>
         <p>
-          Default: {{ host().crmLocalConfig().cierreEstimadoDias }} dias configurables por
+          Sugerido a {{ host().crmLocalConfig().cierreEstimadoDias }} días; configurable por el
           administrador.
         </p>
       </article>
@@ -49,7 +56,7 @@
 
     <section class="or-layout">
       <section class="or-panel">
-        <h4><i class="pi pi-users or-ico"></i>Relacion comercial</h4>
+        <h4><i class="pi pi-users or-ico"></i>Relación comercial</h4>
         <label
           >Prospecto nuevo<p-select
             name="opProspecto"
@@ -69,7 +76,7 @@
             appendTo="body"
         /></label>
         <label
-          >Oferta del catalogo CRM <span class="required">*</span
+          >Oferta del catálogo CRM <span class="required">*</span
           ><p-select
             name="opCatalogoItem"
             [options]="host().catalogoOptions()"
@@ -84,7 +91,7 @@
       <section class="or-panel">
         <h4><i class="pi pi-list-check or-ico"></i>Datos de la oportunidad</h4>
         <label class="full-field"
-          >Titulo <span class="required">*</span
+          >Título <span class="required">*</span
           ><input
             pInputText
             name="opTitulo"
@@ -176,7 +183,8 @@
           <i class="pi pi-dollar or-ico"></i
           ><span
             >Monto estimado<strong
-              >S/ {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</strong
+              >{{ host().catalogCurrencyPrefix(host().opportunityFormCurrency()) }}
+              {{ host().opportunityForm.montoEstimado || 0 | number: '1.2-2' }}</strong
             ></span
           >
         </p>
@@ -184,7 +192,9 @@
           <i class="pi pi-calendar or-ico"></i
           ><span
             >Cierre estimado<strong>{{
-              host().opportunityForm.fechaCierreEstimada || 'Sin fecha'
+              host().opportunityForm.fechaCierreEstimada
+                ? (host().opportunityForm.fechaCierreEstimada | date: 'dd/MM/yyyy')
+                : 'Sin fecha'
             }}</strong></span
           >
         </p>

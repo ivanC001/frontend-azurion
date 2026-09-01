@@ -64,7 +64,7 @@
             <span>
               <i [style.background]="row.color"></i>
               {{ row.label }} ({{ row.count }})
-              <b>S/ {{ row.amount | number: '1.2-2' }}</b>
+              <b>{{ baseCurrencySymbol() }} {{ row.amount | number: '1.2-2' }}</b>
             </span>
           }
         </div>
@@ -206,7 +206,7 @@
                     </div>
                   </td>
                   <td class="payment-amount-danger">
-                    S/ {{ row.pendingAmount | number: '1.2-2' }}
+                    {{ row.currencyPrefix }} {{ row.pendingAmount | number: '1.2-2' }}
                   </td>
                   <td>
                     <b>{{ row.installmentProgress }}</b>
@@ -306,7 +306,7 @@
                 <small>Cuota pendiente</small>
               </div>
               <p>
-                <b>S/ {{ entry.amount | number: '1.2-2' }}</b>
+                <b>{{ entry.currencyPrefix }} {{ entry.amount | number: '1.2-2' }}</b>
                 <small [class.is-overdue]="entry.overdue">{{ entry.dayLabel }}</small>
               </p>
             </article>

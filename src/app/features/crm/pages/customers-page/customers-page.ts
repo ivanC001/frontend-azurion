@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 
 import { CrmOportunidad } from '@features/crm/data/crm-api.types';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 
 export interface CustomerMetric {
   label: string;
@@ -44,6 +45,8 @@ export interface CustomerFilterOption {
   styleUrl: './customers-page.scss',
 })
 export class CustomersPage {
+  protected readonly currencySymbol = currencySymbol;
+
   readonly rows = input.required<CustomerPageRow[]>();
   readonly totalCustomers = input.required<number>();
   readonly metrics = input.required<CustomerMetric[]>();

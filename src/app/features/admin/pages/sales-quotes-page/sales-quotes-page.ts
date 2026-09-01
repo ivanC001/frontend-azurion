@@ -12,6 +12,7 @@ import { TagModule } from 'primeng/tag';
 
 import { AuthSessionService } from '@core/auth/auth-session.service';
 import { canIssueElectronicDocuments } from '@features/facturador/data/facturador-capability';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 import {
   AdminSaasApiService,
   Caja,
@@ -77,14 +78,24 @@ export class SalesQuotesPage {
 
   protected form: QuoteForm = this.emptyForm();
 
+  protected readonly currencySymbol = currencySymbol;
+
   protected readonly metrics = computed(() => ({
     total: this.cotizaciones().length,
     abiertas: this.cotizaciones().filter((item) =>
       ['BORRADOR', 'ENVIADA', 'ACEPTADA'].includes(item.estado),
     ).length,
     convertidas: this.cotizaciones().filter((item) => item.estado === 'CONVERTIDA').length,
-    monto: this.cotizaciones().reduce((sum, item) => sum + Number(item.total || 0), 0),
+    // Cada cotizacion conserva su moneda; el agregado se expresa en moneda base.
+    monto: this.cotizaciones().reduce(
+      (sum, item) => sum + Number(item.totalMonedaBase ?? item.total ?? 0),
+      0,
+    ),
   }));
+
+  protected baseCurrency(): string {
+    return (this.session.currentSession()?.empresa?.monedaCodigo || 'PEN').toUpperCase();
+  }
 
   protected readonly clienteOptions = computed(() =>
     this.clientes().map((cliente) => ({
@@ -227,7 +238,7 @@ export class SalesQuotesPage {
         usuarioNombre: this.actorName(),
         sucursalId: this.form.sucursalId,
         fechaVencimiento: this.form.fechaVencimiento || null,
-        moneda: this.form.moneda || 'PEN',
+        moneda: (this.form.moneda || this.baseCurrency()).trim().toUpperCase(),
         observacion: this.form.observacion.trim() || null,
         detalles,
       })
@@ -316,7 +327,7 @@ export class SalesQuotesPage {
       clienteId: null,
       sucursalId: null,
       fechaVencimiento: '',
-      moneda: 'PEN',
+      moneda: this.baseCurrency(),
       observacion: '',
       detalles: [
         { productoId: null, descripcion: '', cantidad: 1, precioUnitario: 0, descuento: 0 },

@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .company-page {
   display: grid;
   gap: 1rem;
@@ -1353,7 +1358,7 @@ label {
 }
 
 .tenant-profile-grid--two-col {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .tenant-regional-layout {
@@ -1528,12 +1533,55 @@ label {
     grid-template-columns: 1fr;
   }
 
-  .tenant-profile-grid {
+  .tenant-profile-grid,
+  .tenant-profile-grid--two-col {
     grid-template-columns: 1fr;
+  }
+
+  .profile-fields--general {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 650px) {
+  .panel {
+    min-width: 0;
+    padding: 0.85rem;
+  }
+
+  .settings-tabs {
+    display: grid;
+    gap: 0.25rem;
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 0;
+
+    button {
+      min-height: 2.75rem;
+      text-align: left;
+    }
+  }
+
+  .profile-fields--general,
+  .profile-fields--two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-fields .span-2 {
+    grid-column: auto;
+  }
+
+  .profile-fields input,
+  .profile-fields select {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+
+  .company-summary strong,
+  .detail-row__val {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
   .company-summary {
     grid-template-columns: 1fr;
   }

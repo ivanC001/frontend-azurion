@@ -110,7 +110,13 @@
           <td>
             <div class="followup-offer-cell">
               <strong>{{ row.offer }}</strong
-              ><span>S/ {{ row.source.amount | number: '1.0-0' }}</span
+              ><span
+                >{{
+                  currencySymbol(
+                    row.source.oportunidad?.moneda || row.source.prospecto.presupuestoMoneda
+                  )
+                }}
+                {{ row.source.amount | number: '1.0-0' }}</span
               ><em>{{ row.source.interestLabel }}</em>
               @if (row.source.hasActiveOpportunity) {
                 <span class="opportunity-lock-badge"

@@ -25,6 +25,7 @@ export interface PaymentTrackingRow {
   readonly offerName: string;
   readonly opportunityCode: string;
   readonly pendingAmount: number;
+  readonly currencyPrefix: string;
   readonly installmentProgress: string;
   readonly pendingInstallmentsCount: number;
   readonly nextPaymentDate: string | null;
@@ -43,6 +44,7 @@ export interface PaymentTrackingUpcomingItem {
   readonly initials: string;
   readonly contactName: string;
   readonly amount: number;
+  readonly currencyPrefix: string;
   readonly date: string;
   readonly dayLabel: string;
   readonly overdue: boolean;
@@ -82,6 +84,7 @@ export class PaymentTrackingPage {
   readonly query = input('');
   readonly summaryCards = input<readonly PaymentTrackingSummaryCard[]>([]);
   readonly collectionSummary = input<readonly PaymentCollectionSummaryItem[]>([]);
+  readonly baseCurrencySymbol = input('S/');
   readonly collectionRingBackground = input('conic-gradient(#e5e7eb 0 100%)');
   readonly rows = input<readonly PaymentTrackingRow[]>([]);
   readonly upcoming = input<readonly PaymentTrackingUpcomingItem[]>([]);

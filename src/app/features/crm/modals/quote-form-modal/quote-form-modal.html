@@ -128,51 +128,69 @@
         </div>
         @for (line of host().quoteForm.detalles; track $index) {
           <div class="quote-line quote-line--modern">
-            <p-select
-              name="quoteCatalogo{{ $index }}"
-              [options]="host().catalogoOptions()"
-              [ngModel]="line.catalogoItemId"
-              (ngModelChange)="host().onQuoteCatalogChange(line, $event)"
-              appendTo="body"
-              placeholder="Selecciona un producto CRM"
-              [filter]="true"
-              filterBy="label"
-            />
-            <input
-              pInputText
-              type="number"
-              min="1"
-              step="1"
-              name="quoteCant{{ $index }}"
-              [ngModel]="line.cantidad"
-              (ngModelChange)="line.cantidad = host().normalizeQuoteQuantity($event)"
-              placeholder="Cant."
-            />
-            <input
-              pInputText
-              type="number"
-              min="0"
-              name="quotePrecio{{ $index }}"
-              [(ngModel)]="line.precioUnitario"
-              placeholder="Precio"
-            />
-            <input
-              pInputText
-              type="number"
-              min="0"
-              name="quoteDscto{{ $index }}"
-              [(ngModel)]="line.descuento"
-              placeholder="Desc."
-            />
-            <p-select
-              name="quotePromo{{ $index }}"
-              [options]="host().promotionOptions()"
-              [(ngModel)]="line.promocionId"
-              appendTo="body"
-              placeholder="Promoción"
-              [showClear]="true"
-            />
+            <label class="quote-line-field">
+              <span class="quote-line-label">Producto CRM</span>
+              <p-select
+                ariaLabel="Producto CRM"
+                name="quoteCatalogo{{ $index }}"
+                [options]="host().catalogoOptions()"
+                [ngModel]="line.catalogoItemId"
+                (ngModelChange)="host().onQuoteCatalogChange(line, $event)"
+                appendTo="body"
+                placeholder="Selecciona un producto CRM"
+                [filter]="true"
+                filterBy="label"
+              />
+            </label>
+            <label class="quote-line-field">
+              <span class="quote-line-label">Cantidad</span>
+              <input
+                pInputText
+                type="number"
+                min="1"
+                step="1"
+                name="quoteCant{{ $index }}"
+                [ngModel]="line.cantidad"
+                (ngModelChange)="line.cantidad = host().normalizeQuoteQuantity($event)"
+                placeholder="Cant."
+              />
+            </label>
+            <label class="quote-line-field">
+              <span class="quote-line-label">Precio</span>
+              <input
+                pInputText
+                type="number"
+                min="0"
+                name="quotePrecio{{ $index }}"
+                [(ngModel)]="line.precioUnitario"
+                placeholder="Precio"
+              />
+            </label>
+            <label class="quote-line-field">
+              <span class="quote-line-label">Descuento</span>
+              <input
+                pInputText
+                type="number"
+                min="0"
+                name="quoteDscto{{ $index }}"
+                [(ngModel)]="line.descuento"
+                placeholder="Desc."
+              />
+            </label>
+            <label class="quote-line-field">
+              <span class="quote-line-label">Promoción</span>
+              <p-select
+                ariaLabel="Promoción"
+                name="quotePromo{{ $index }}"
+                [options]="host().promotionOptions()"
+                [(ngModel)]="line.promocionId"
+                appendTo="body"
+                placeholder="Promoción"
+                [showClear]="true"
+              />
+            </label>
             <div class="quote-line-total">
+              <span class="quote-line-label">Total</span>
               @if (host().linePromotionDiscount(line) > 0) {
                 <small
                   >Promo -{{ host().quoteCurrencyPrefix() }}
@@ -189,6 +207,7 @@
               pButton
               class="p-button-text p-button-rounded danger-action"
               icon="pi pi-trash"
+              aria-label="Quitar producto de la cotización"
               (click)="host().removeQuoteLine($index)"
             ></button>
           </div>

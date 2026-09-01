@@ -3,7 +3,11 @@
     <div>
       <p class="page-eyebrow">Sedes operativas</p>
       <h1>Sucursales y locales</h1>
-      <p>Registra sedes con ubigeo real e IGV para caja, ventas, comprobantes y reportes.</p>
+      @if (requiresUbigeo()) {
+        <p>Registra sedes con ubigeo real e IGV para caja, ventas, comprobantes y reportes.</p>
+      } @else {
+        <p>Registra sedes con su ubicacion e IGV para caja, ventas, comprobantes y reportes.</p>
+      }
     </div>
     <div class="header-actions">
       <p-button
@@ -54,7 +58,7 @@
       <div class="table-head">
         <div>
           <h2>Sucursales registradas</h2>
-          <p>Administra sedes, ubigeo, estado e IGV operativo desde una sola lista.</p>
+          <p>Administra sedes, ubicacion, estado e IGV operativo desde una sola lista.</p>
         </div>
       </div>
       <p-table
@@ -70,7 +74,7 @@
             <th>Codigo</th>
             <th>Nombre</th>
             <th>Direccion</th>
-            <th>Ubigeo</th>
+            <th>Ubicacion</th>
             <th>IGV</th>
             <th>Estado</th>
             <th>Acciones</th>
@@ -83,7 +87,19 @@
             </td>
             <td>{{ item.nombre }}</td>
             <td>{{ item.direccion || 'Sin direccion' }}</td>
-            <td>{{ item.ubigeoCodigo }} - {{ item.distrito }}, {{ item.provincia }}</td>
+            <td>
+              <div class="branch-location">
+                <strong>{{ item.distrito || item.provincia || 'Sin ubicacion' }}</strong>
+                <small>
+                  @if (item.ubigeoCodigo) {
+                    {{ item.ubigeoCodigo }} · {{ item.provincia }}, {{ item.departamento }}
+                  } @else {
+                    {{ item.provincia || '—'
+                    }}{{ item.departamento ? ', ' + item.departamento : '' }}
+                  }
+                </small>
+              </div>
+            </td>
             <td>{{ item.igvPorcentaje }}%</td>
             <td>
               <p-tag
@@ -191,24 +207,70 @@
       <header class="form-section__head">
         <span><i class="pi pi-map"></i></span>
         <div>
-          <strong>Ubicacion y tributacion</strong
-          ><small>Selecciona el ubigeo SUNAT y confirma el IGV.</small>
+          <strong>Ubicacion y tributacion</strong>
+          @if (requiresUbigeo()) {
+            <small>Selecciona el ubigeo SUNAT y confirma el IGV.</small>
+          } @else {
+            <small>Indica la ubicacion de la sede en {{ countryLabel() }} y confirma el IGV.</small>
+          }
         </div>
       </header>
       <div class="dialog-grid">
-        <div class="wide-field ubigeo-field">
-          <app-ubigeo-picker
-            name="sucursalUbigeo"
-            [(value)]="form.ubigeoCodigo"
-            [required]="true"
-          />
-        </div>
-        @if (selectedUbigeo(); as ubigeo) {
-          <div class="location-summary">
-            <span><i class="pi pi-map-marker"></i></span>
-            <div>
-              <strong>{{ ubigeo.distrito }}</strong
-              ><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small>
+        @if (requiresUbigeo()) {
+          <div class="wide-field ubigeo-field">
+            <app-ubigeo-picker
+              name="sucursalUbigeo"
+              [(value)]="form.ubigeoCodigo"
+              [required]="true"
+            />
+          </div>
+          @if (selectedUbigeo(); as ubigeo) {
+            <div class="location-summary">
+              <span><i class="pi pi-map-marker"></i></span>
+              <div>
+                <strong>{{ ubigeo.distrito }}</strong
+                ><small>{{ ubigeo.provincia }}, {{ ubigeo.departamento }}</small>
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="wide-field free-location">
+            <p class="free-location__hint">
+              <i class="pi pi-globe"></i>
+              El ubigeo es un codigo de SUNAT y solo aplica en Peru. Para
+              {{ countryLabel() }} escribe la ubicacion de la sede; si la dejas vacia se hereda del
+              perfil fiscal de la empresa.
+            </p>
+            <div class="free-location__grid">
+              <label class="field-control">
+                <span class="field-label"><i class="pi pi-map"></i> Departamento / Region</span>
+                <input
+                  pInputText
+                  name="departamento"
+                  [(ngModel)]="form.departamento"
+                  placeholder="Ej. Cundinamarca"
+                />
+              </label>
+              <label class="field-control">
+                <span class="field-label"><i class="pi pi-map"></i> Provincia / Ciudad</span>
+                <input
+                  pInputText
+                  name="provincia"
+                  [(ngModel)]="form.provincia"
+                  placeholder="Ej. Bogota"
+                />
+              </label>
+              <label class="field-control">
+                <span class="field-label"
+                  ><i class="pi pi-map-marker"></i> Distrito / Localidad</span
+                >
+                <input
+                  pInputText
+                  name="distrito"
+                  [(ngModel)]="form.distrito"
+                  placeholder="Ej. Chapinero"
+                />
+              </label>
             </div>
           </div>
         }
@@ -253,7 +315,11 @@
         <strong>{{ form.nombre || 'Nueva sucursal' }}</strong>
         <p>
           {{ form.codigo || 'Codigo automatico' }} ·
-          {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}
+          @if (requiresUbigeo()) {
+            {{ selectedUbigeo()?.distrito || 'Ubigeo pendiente' }}
+          } @else {
+            {{ form.distrito || form.provincia || countryLabel() }}
+          }
         </p>
       </div>
       @if (form.crearAlmacenPrincipal) {
@@ -310,13 +376,52 @@
           placeholder="Direccion referencial"
         />
       </label>
-      <div class="wide-field">
-        <app-ubigeo-picker
-          name="editSucursalUbigeo"
-          [(value)]="editForm.ubigeoCodigo"
-          [required]="true"
-        />
-      </div>
+      @if (requiresUbigeo()) {
+        <div class="wide-field">
+          <app-ubigeo-picker
+            name="editSucursalUbigeo"
+            [(value)]="editForm.ubigeoCodigo"
+            [required]="true"
+          />
+        </div>
+      } @else {
+        <div class="wide-field free-location">
+          <p class="free-location__hint">
+            <i class="pi pi-globe"></i>
+            Ubicacion de la sede en {{ countryLabel() }}. Si la dejas vacia se hereda del perfil
+            fiscal de la empresa.
+          </p>
+          <div class="free-location__grid">
+            <label>
+              Departamento / Region
+              <input
+                pInputText
+                name="editDepartamento"
+                [(ngModel)]="editForm.departamento"
+                placeholder="Ej. Cundinamarca"
+              />
+            </label>
+            <label>
+              Provincia / Ciudad
+              <input
+                pInputText
+                name="editProvincia"
+                [(ngModel)]="editForm.provincia"
+                placeholder="Ej. Bogota"
+              />
+            </label>
+            <label>
+              Distrito / Localidad
+              <input
+                pInputText
+                name="editDistrito"
+                [(ngModel)]="editForm.distrito"
+                placeholder="Ej. Chapinero"
+              />
+            </label>
+          </div>
+        </div>
+      }
       <label>
         IGV de la sucursal (%) <span class="required">*</span>
         <input

@@ -428,6 +428,30 @@
 }
 
 @media (max-width: 520px) {
+  .header-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  :host ::ng-deep .header-actions .p-button {
+    min-height: 2.75rem;
+    width: 100%;
+  }
+
+  .smart-form-intro,
+  .principal-option,
+  .branch-preview,
+  .location-summary {
+    min-width: 0;
+  }
+
+  .branch-preview strong,
+  .branch-preview p {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
   .branch-stats {
     grid-template-columns: 1fr;
   }
@@ -519,4 +543,65 @@
   .branch-tax-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Ubicacion libre: reemplaza al selector de ubigeo fuera de Peru. */
+.free-location {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.free-location__hint {
+  align-items: flex-start;
+  background: color-mix(in srgb, #2563eb 5%, var(--az-surface));
+  border: 1px dashed color-mix(in srgb, #2563eb 30%, var(--az-border));
+  border-radius: 0.75rem;
+  color: var(--az-text-soft);
+  display: grid;
+  font-size: 0.75rem;
+  gap: 0.5rem;
+  grid-template-columns: auto 1fr;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+}
+
+.free-location__hint i {
+  color: #2563eb;
+  font-size: 0.85rem;
+  margin-top: 0.1rem;
+}
+
+.free-location__grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.free-location__grid label {
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 0.38rem;
+}
+
+.free-location__grid input {
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .free-location__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Celda de ubicacion de la tabla: el codigo de ubigeo es opcional. */
+.branch-location {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.branch-location small {
+  color: var(--az-text-soft);
+  font-size: 0.72rem;
 }

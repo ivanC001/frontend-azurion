@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import type { Cotizacion } from '@core/api/cotizacion-api.types';
+import { quoteCode } from '@shared/utils/quote-code';
 import {
   type NegotiationQuoteDecision,
   quoteStatusLabel,
@@ -41,6 +42,8 @@ export class OpportunityQuoteCard {
   readonly acceptedRequested = output<void>();
   readonly adjustmentRequested = output<void>();
   readonly rejectedRequested = output<void>();
+
+  protected readonly quoteCode = quoteCode;
 
   protected readonly status = computed(() => quoteStatusValue(this.quote()));
   protected readonly statusLabel = computed(() => quoteStatusLabel(this.quote()));

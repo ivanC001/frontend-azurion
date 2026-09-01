@@ -243,7 +243,7 @@
   cursor: pointer;
   display: grid;
   gap: 0.65rem;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   min-height: 5.25rem;
   padding: 0.75rem;
   position: relative;
@@ -305,15 +305,13 @@
 
 .crm-channel-button em {
   align-items: center;
-  bottom: 0.48rem;
   color: var(--az-text-soft);
   display: inline-flex;
   font-size: 0.58rem;
   font-style: normal;
   font-weight: 850;
   gap: 0.25rem;
-  left: 4rem;
-  position: absolute;
+  grid-column: 2;
 }
 
 .crm-channel-button em i {
@@ -332,6 +330,7 @@
   border: 1px solid color-mix(in srgb, var(--channel-color) 26%, var(--az-border));
   border-radius: 0.9rem;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
   overflow: hidden;
   padding: 0.9rem;
@@ -360,6 +359,7 @@
 }
 
 .crm-integration-editor__head > div {
+  min-width: 0;
   display: grid;
   gap: 0.2rem;
 }

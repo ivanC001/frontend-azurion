@@ -271,7 +271,15 @@
                       ><i class="pi pi-user"></i> {{ messageSenderLabel(message) }}</small
                     >
                   }
-                  @if (message.tipoMensaje !== 'text') {
+                  @if (message.tipoMensaje === 'template') {
+                    <small class="message-type"
+                      ><i class="pi pi-megaphone"></i> Plantilla ·
+                      {{ message.plantillaNombre || 'WhatsApp' }}
+                      @if (message.plantillaIdioma) {
+                        · {{ message.plantillaIdioma }}
+                      }
+                    </small>
+                  } @else if (message.tipoMensaje !== 'text') {
                     <small class="message-type"
                       ><i class="pi pi-paperclip"></i> {{ message.tipoMensaje }}</small
                     >
@@ -339,7 +347,8 @@
                 <button
                   type="button"
                   title="Actualizar plantillas aprobadas"
-                  [disabled]="loadingTemplates()"
+                  aria-label="Sincronizar plantillas con Meta"
+                  [disabled]="loadingTemplates() || sendingTemplate()"
                   (click)="reloadTemplates()"
                 >
                   <i
@@ -370,38 +379,55 @@
                 <label class="template-field">
                   <span>Plantilla aprobada</span>
                   <select
+                    [disabled]="sendingTemplate()"
                     [ngModel]="selectedTemplateKey()"
                     (ngModelChange)="selectTemplate($event)"
                   >
                     <option value="">Selecciona una plantilla</option>
                     @for (template of templates(); track templateKey(template)) {
-                      <option [value]="templateKey(template)">
-                        {{ template.nombre }} · {{ template.idioma }}
+                      <option
+                        [value]="templateKey(template)"
+                        [disabled]="template.disponible === false"
+                        [title]="template.motivoNoDisponible || ''"
+                      >
+                        {{ template.nombre }} · {{ template.idioma
+                        }}{{ template.disponible === false ? ' · No compatible' : '' }}
                       </option>
                     }
                   </select>
                 </label>
 
                 @if (selectedTemplate(); as template) {
+                  @if (template.cantidadParametros > 0) {
+                    <div class="template-parameters">
+                      @for (variable of templateVariables(); track $index) {
+                        <label>
+                          <span>{{ variable.label }} <b class="template-required">*</b></span>
+                          <small
+                            >{{ '{{' + variable.name + '}}' }} ·
+                            {{ variable.component === 'HEADER' ? 'Encabezado' : 'Mensaje' }}</small
+                          >
+                          <input
+                            type="text"
+                            required
+                            maxlength="1024"
+                            [disabled]="sendingTemplate()"
+                            [value]="templateParameters()[$index]"
+                            [placeholder]="variable.label"
+                            (input)="updateTemplateParameter($index, $any($event.target).value)"
+                          />
+                        </label>
+                      }
+                    </div>
+                  }
                   <div class="template-preview">
                     <span><i class="pi pi-comment"></i> Vista previa</span>
                     <p>{{ templatePreview() }}</p>
                     <small>{{ template.categoria }} · {{ template.idioma }}</small>
                   </div>
-                  @if (template.cantidadParametros > 0) {
-                    <div class="template-parameters">
-                      @for (parameter of templateParameters(); track $index) {
-                        <label>
-                          <span>Variable {{ $index + 1 }}</span>
-                          <input
-                            type="text"
-                            maxlength="1024"
-                            [value]="parameter"
-                            [placeholder]="'Valor para {{' + ($index + 1) + '}}'"
-                            (input)="updateTemplateParameter($index, $any($event.target).value)"
-                          />
-                        </label>
-                      }
+                  @if (templateValidationError()) {
+                    <div class="template-validation" aria-live="polite">
+                      {{ templateValidationError() }}
                     </div>
                   }
                   <footer>
@@ -480,7 +506,7 @@
                         />
                         <span class="quote-icon"><i class="pi pi-file-pdf"></i></span>
                         <span class="quote-copy">
-                          <strong>COT-{{ quote.id.toString().padStart(6, '0') }}</strong>
+                          <strong>{{ quoteCode(quote.id) }}</strong>
                           <small>
                             {{ quote.fechaEmision | date: 'dd/MM/yyyy' }} ·
                             {{ quoteWhatsappStatusLabel(quote) }}

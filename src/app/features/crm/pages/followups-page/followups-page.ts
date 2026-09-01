@@ -5,6 +5,7 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 
 import { CrmActividad, CrmOportunidad, CrmProspecto } from '@features/crm/data/crm-api.types';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 
 export interface FollowupFilterOption {
   label: string;
@@ -106,6 +107,8 @@ export interface FollowupPageMeta {
   styleUrl: './followups-page.scss',
 })
 export class FollowupsPage {
+  protected readonly currencySymbol = currencySymbol;
+
   readonly rows = input.required<FollowupPageRow[]>();
   readonly loading = input(false);
   readonly filtersVisible = input(false);

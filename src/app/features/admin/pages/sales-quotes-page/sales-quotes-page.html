@@ -62,7 +62,7 @@
     </article>
     <article>
       <span>Monto cotizado</span>
-      <strong>S/ {{ metrics().monto | number: '1.2-2' }}</strong>
+      <strong>{{ currencySymbol(baseCurrency()) }} {{ metrics().monto | number: '1.2-2' }}</strong>
     </article>
   </section>
 
@@ -100,7 +100,9 @@
           <td>{{ item.sucursalNombre }}</td>
           <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
           <td>{{ item.fechaVencimiento ? (item.fechaVencimiento | date: 'dd/MM/yyyy') : '-' }}</td>
-          <td class="cell-right">S/ {{ item.total | number: '1.2-2' }}</td>
+          <td class="cell-right">
+            {{ currencySymbol(item.moneda) }} {{ item.total | number: '1.2-2' }}
+          </td>
           <td><p-tag [value]="item.estado" [severity]="statusSeverity(item.estado)"></p-tag></td>
           <td>
             <div class="row-actions">
@@ -254,7 +256,7 @@
             [name]="'descuento-' + $index"
             placeholder="Desc."
           />
-          <strong>S/ {{ lineTotal(line) | number: '1.2-2' }}</strong>
+          <strong>{{ currencySymbol(form.moneda) }} {{ lineTotal(line) | number: '1.2-2' }}</strong>
           <button
             pButton
             type="button"
@@ -279,7 +281,7 @@
     <footer class="dialog-footer">
       <div>
         <span>Total cotizado</span>
-        <strong>S/ {{ formTotal() | number: '1.2-2' }}</strong>
+        <strong>{{ currencySymbol(form.moneda) }} {{ formTotal() | number: '1.2-2' }}</strong>
       </div>
       <button
         pButton

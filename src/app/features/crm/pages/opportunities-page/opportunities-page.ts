@@ -5,6 +5,7 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 
 import { CrmOportunidad } from '@features/crm/data/crm-api.types';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 import type {
   OpportunityFilterOption,
   OpportunityPageMeta,
@@ -42,8 +43,5 @@ export class OpportunitiesPage {
   readonly nextPageRequested = output<void>();
   readonly opportunitySelected = output<CrmOportunidad>();
 
-  protected currencySymbol(currency: string | null | undefined): string {
-    const code = (currency || 'PEN').trim().toUpperCase();
-    return ({ PEN: 'S/', USD: 'US$', EUR: '€' } as Record<string, string>)[code] || code;
-  }
+  protected readonly currencySymbol = currencySymbol;
 }

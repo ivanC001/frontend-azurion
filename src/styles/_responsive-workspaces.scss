@@ -1,0 +1,337 @@
+// Scope shared sizing to configuration views and CRM overlays (not POS/printing).
+@mixin rules {
+  :is(
+    app-crm-page,
+    app-company-settings-page,
+    app-company-roles-permissions-page,
+    app-users-admin-page,
+    app-branches-admin-page
+  ) {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .crm-page
+    :is(
+      .crm-shell,
+      .crm-admin-panel,
+      .crm-admin-grid,
+      .crm-admin-grid > article,
+      .crm-integration-admin-card,
+      .crm-integration-editor,
+      .crm-promotion-admin-card,
+      .crm-promotion-admin-layout,
+      .crm-promotion-admin-form,
+      .crm-promotion-list,
+      .catalog-table-panel
+    ) {
+    min-width: 0;
+  }
+
+  .crm-page .crm-admin-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .crm-page :is(.crm-admin-panel, .catalog-table-panel) :is(input, textarea, .p-select) {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .crm-page .crm-admin-panel input[type='checkbox'] {
+    width: 1rem;
+    flex-shrink: 0;
+  }
+
+  // These dialogs can be appended to body. :host ::ng-deep cannot target them
+  // from a ViewEncapsulation.None component stylesheet.
+  body .crm-dialog.p-dialog {
+    width: min(52rem, calc(100vw - 1.5rem));
+  }
+
+  body .crm-dialog--form.p-dialog {
+    width: min(82rem, calc(100vw - 1.5rem));
+  }
+
+  body
+    .p-dialog:is(
+      .crm-dialog,
+      .crm-payment-dialog,
+      .crm-client-completion-dialog,
+      .users-dialog,
+      .roles-dialog,
+      .password-dialog,
+      .branch-dialog,
+      .permissions-editor-dialog,
+      .permiso-create-dialog,
+      .role-create-dialog
+    ) {
+    min-width: 0;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+
+    .p-dialog-content {
+      min-height: 0;
+      min-width: 0;
+      overscroll-behavior: contain;
+    }
+
+    .p-dialog-header,
+    .p-dialog-footer {
+      flex-shrink: 0;
+    }
+
+    :is(.dialog-form, .dialog-grid, .p-select, .p-multiselect, p-password, .p-password) {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    :is(
+      input:not([type='checkbox']):not([type='radio']),
+      textarea,
+      .p-select,
+      .p-multiselect,
+      p-password,
+      .p-password
+    ) {
+      min-width: 0;
+      width: 100%;
+    }
+
+    :is(.p-select-label, .p-multiselect-label) {
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .crm-page .crm-promotion-admin-layout,
+    .crm-page .crm-promotion-admin-form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .crm-page .crm-promotion-admin-form :is(label, .wide-field) {
+      grid-column: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    body .crm-dialog--negotiation-modern {
+      .negotiation-modern-layout,
+      .negotiation-modern-form,
+      .negotiation-modern-fields,
+      .negotiation-modern-summary {
+        min-width: 0;
+      }
+
+      .negotiation-modern-actions {
+        flex-wrap: wrap;
+        margin-inline: 0;
+        padding-inline: 0;
+      }
+
+      .negotiation-modern-actions button {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+
+      .negotiation-modern-summary header > div,
+      .negotiation-modern-summary dd {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    .crm-page .crm-shell:not(.crm-shell--pipeline):not(.crm-shell--followup) {
+      padding: 0.65rem;
+    }
+
+    .crm-page
+      :is(
+        .crm-admin-hero,
+        .crm-integration-admin-card,
+        .crm-promotion-admin-card,
+        .crm-admin-grid > article
+      ) {
+      padding: 0.75rem;
+      overflow-wrap: anywhere;
+    }
+
+    .crm-page
+      :is(
+        .crm-admin-hero__actions,
+        .crm-admin-hero__actions > p-button,
+        .crm-admin-hero__actions .p-button
+      ) {
+      width: 100%;
+    }
+
+    .crm-page .crm-admin-panel :is(button, .p-button) {
+      min-height: 2.75rem;
+      white-space: normal;
+    }
+
+    .crm-page .crm-admin-panel :is(input:not([type='checkbox']), textarea, .p-select-label) {
+      font-size: 1rem;
+    }
+
+    .crm-page
+      :is(
+        .crm-integration-editor__footer,
+        .crm-whatsapp-secret header,
+        .crm-whatsapp-callback header,
+        .crm-promotion-admin-card header
+      ) {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .crm-page :is(.crm-admin-config-control, .crm-copy-row) {
+      gap: 0.5rem;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .crm-page .crm-promotion-list {
+      max-height: none;
+    }
+
+    body
+      .p-dialog:is(
+        .crm-dialog,
+        .crm-payment-dialog,
+        .crm-client-completion-dialog,
+        .users-dialog,
+        .roles-dialog,
+        .password-dialog,
+        .branch-dialog,
+        .permissions-editor-dialog,
+        .permiso-create-dialog,
+        .role-create-dialog
+      ) {
+      width: calc(100vw - 1rem) !important;
+      max-width: calc(100vw - 1rem) !important;
+      height: auto;
+      max-height: calc(100dvh - 1rem) !important;
+
+      .p-dialog-header {
+        gap: 0.5rem;
+        padding: 0.75rem;
+      }
+
+      .p-dialog-title {
+        min-width: 0;
+        font-size: 1rem;
+        overflow-wrap: anywhere;
+      }
+
+      .p-dialog-header-actions {
+        flex-shrink: 0;
+      }
+
+      .p-dialog-content {
+        max-height: none !important;
+        overflow-y: auto !important;
+      }
+
+      :is(.dialog-grid, .dialog-form:not(.or-form), .or-grid, .or-layout, .or-mini) {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      :is(.dialog-actions, .p-dialog-footer) {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+      }
+
+      :is(.dialog-actions, .p-dialog-footer) > :is(button, p-button) {
+        flex: 0 0 auto;
+        min-width: 0;
+        width: 100%;
+      }
+
+      :is(.dialog-actions, .p-dialog-footer) .p-button {
+        width: 100%;
+      }
+
+      :is(
+        input:not([type='checkbox']):not([type='radio']),
+        textarea,
+        .p-select-label,
+        .p-multiselect-label
+      ) {
+        font-size: 1rem;
+      }
+
+      :is(.p-button, button:not(.p-select-clear-icon):not(.p-multiselect-clear-icon)) {
+        min-height: 2.75rem;
+        white-space: normal;
+      }
+    }
+
+    body .crm-dialog .activity-register-form--complete {
+      .activity-register-layout,
+      .activity-section--main .dialog-grid--activity,
+      .activity-result-grid,
+      .activity-next-section,
+      .activity-next-section > .dialog-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .activity-context-card {
+        min-height: 0;
+      }
+
+      .activity-complete-topbar,
+      .activity-section-title {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .activity-complete-actions {
+        flex-wrap: wrap;
+      }
+    }
+
+    body .crm-dialog--opportunity-detail {
+      .opportunity-detail-head,
+      .opportunity-detail-actions {
+        flex-wrap: wrap;
+        min-width: 0;
+      }
+
+      .opportunity-detail-head {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .opportunity-detail-actions > button {
+        flex: 1 1 8rem;
+      }
+
+      .opportunity-interest-board,
+      .interest-secondary-grid,
+      .interest-requirement-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      :is(
+        .opportunity-detail-view,
+        .opportunity-detail-main,
+        .opportunity-side-stack,
+        .opportunity-detail-grid,
+        .opportunity-interest-board,
+        .interest-mini-card
+      ) {
+        min-width: 0;
+      }
+
+      :is(h2, strong, p, .opportunity-status-pill, .opportunity-stage-pill) {
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+    }
+  }
+}

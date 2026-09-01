@@ -57,7 +57,9 @@ import {
   PHONE_COUNTRIES,
   PROSPECT_COUNTRIES,
   ProspectDocumentOption,
+  ProspectFunnelContext,
   ProspectPersonType,
+  isInFollowUpStage,
   catalogRegistrationType,
   prospectCountry,
   prospectDocuments,
@@ -142,6 +144,7 @@ import {
   toInputDate,
   toInputDateTime,
 } from './utils/crm-admin-form.factory';
+import { quoteCode } from '@shared/utils/quote-code';
 import {
   CrmDashboardPage,
   CrmExecutiveAlertView,
@@ -1463,15 +1466,14 @@ export class CrmPage {
     }
   }
 
+  /**
+   * Contactos que se estan trabajando pero todavia no llegaron a oportunidad.
+   *
+   * La regla de reparto vive en resolveFunnelStage: cada contacto cuenta en una
+   * sola etapa del embudo.
+   */
   protected readonly followUpProspects = computed(() =>
-    this.prospectos().filter(
-      (item) =>
-        !this.hasClosedSaleForProspect(item.id) &&
-        (['CONTACTADO', 'EN_ESPERA', 'CALIFICADO', 'PERDIDO'].includes(item.estado) ||
-          (item.estado === 'NUEVO' &&
-            this.hasProspectActivity(item.id) &&
-            !this.isAutomaticLead(item))),
-    ),
+    this.prospectos().filter((item) => isInFollowUpStage(this.funnelContextFor(item))),
   );
 
   protected readonly negotiationOpportunities = computed(() =>
@@ -1500,7 +1502,9 @@ export class CrmPage {
         detail: 'Tareas y contactos',
         icon: 'pi pi-comments',
         route: '/admin/crm/seguimiento',
-        count: this.followUpProspects().length + this.metrics().actividadesPendientes,
+        // Cuenta contactos, no contactos + actividades: sumar ambos daba una
+        // cifra distinta a la de la propia pantalla de seguimiento.
+        count: this.commercialInbox().length,
       },
       {
         tab: 'embudo',
@@ -1863,7 +1867,11 @@ export class CrmPage {
 
   protected readonly quoteDashboardMetrics = computed(() => {
     const items = this.quoteDashboardItems();
-    const amount = this.quotations.totalAmount(items);
+    // Total agregado en moneda base: cada cotizacion conserva su moneda propia.
+    const amount = items.reduce(
+      (sum, item) => sum + Number(item.totalMonedaBase ?? item.total ?? 0),
+      0,
+    );
     return [
       {
         label: 'Cotizaciones',
@@ -1873,7 +1881,7 @@ export class CrmPage {
       },
       {
         label: 'Valor total',
-        value: `S/ ${formatCompactAmount(amount)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${formatCompactAmount(amount)}`,
         delta: deltaLabel(amount, 0),
         detail: 'vs mes anterior',
       },
@@ -1969,7 +1977,7 @@ export class CrmPage {
     this.promocionesCotizacion()
       .filter((item) => item.estado === 'ACTIVA')
       .map((item) => ({
-        label: `${item.codigo} - ${item.nombre} (${item.tipoDescuento === 'PORCENTAJE' ? `${item.valor}%` : `S/ ${Number(item.valor || 0).toFixed(2)}`})`,
+        label: `${item.codigo} - ${item.nombre} (${item.tipoDescuento === 'PORCENTAJE' ? `${item.valor}%` : `${this.tenantBaseCurrencySymbol()} ${Number(item.valor || 0).toFixed(2)}`})`,
         value: item.id,
       })),
   );
@@ -2003,7 +2011,7 @@ export class CrmPage {
       },
       {
         label: 'Valor en juego',
-        value: `S/ ${this.formatCompactAmount(amount)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(amount)}`,
         delta: this.deltaLabel(amount, 0),
         detail: 'vs mes anterior',
       },
@@ -2167,19 +2175,19 @@ export class CrmPage {
       },
       {
         label: 'Ventas cerradas',
-        value: `S/ ${this.formatCompactAmount(amount)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(amount)}`,
         delta: this.deltaLabel(amount, 0),
         detail: 'valor contratado',
       },
       {
         label: 'Monto cobrado',
-        value: `S/ ${this.formatCompactAmount(paid)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(paid)}`,
         delta: this.deltaLabel(paid, 0),
         detail: 'pagos conciliados',
       },
       {
         label: 'Cuentas por cobrar',
-        value: `S/ ${this.formatCompactAmount(debt)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(debt)}`,
         delta: String(documents),
         detail: 'documentos asociados',
       },
@@ -2193,7 +2201,7 @@ export class CrmPage {
         opportunity: item,
         initials: this.ownerInitials(contactName),
         contactName,
-        purchaseLabel: `${this.quoteOfferName(item)} - Compra S/ ${Number(item.montoReal || item.montoEstimado || 0).toFixed(2)}`,
+        purchaseLabel: `${this.quoteOfferName(item)} - Compra ${this.catalogCurrencyPrefix(item.moneda)} ${Number(item.montoReal || item.montoEstimado || 0).toFixed(2)}`,
         companyLabel: this.opportunityCompanyLabel(item),
         documentCount: this.clientDocumentCount(item),
         closureDate: this.clientClosureDate(item),
@@ -2398,7 +2406,7 @@ export class CrmPage {
       ...this.selectedOpportunityQuotes().map((quote) => ({
         id: `quote-${quote.id}`,
         title: `Cotización ${this.quoteStatusLabel(quote)}`,
-        detail: `COT-${String(quote.id).padStart(3, '0')} - S/ ${Number(quote.total || 0).toFixed(2)}`,
+        detail: `${quoteCode(quote.id)} - ${this.catalogCurrencyPrefix(quote.moneda)} ${Number(quote.total || 0).toFixed(2)}`,
         date: quote.fechaEmision || new Date().toISOString(),
         icon: 'pi pi-file-edit',
         tone: 'violet' as const,
@@ -2406,7 +2414,7 @@ export class CrmPage {
       ...this.selectedOpportunityNegotiations().map((record) => ({
         id: `negotiation-${record.id}`,
         title: `Negociación ${this.humanize(record.resultado)}`,
-        detail: `Precio final S/ ${Number(record.precioFinal || 0).toFixed(2)} - ${record.formaPago || 'Sin forma de pago'}`,
+        detail: `Precio final ${this.negotiationCurrencyPrefix(record)} ${Number(record.precioFinal || 0).toFixed(2)} - ${record.formaPago || 'Sin forma de pago'}`,
         date: record.createdAt,
         icon: 'pi pi-handshake',
         tone:
@@ -2419,7 +2427,7 @@ export class CrmPage {
       ...this.selectedOpportunityPayments().map((payment) => ({
         id: `payment-${payment.id}`,
         title: `Pago ${this.humanize(payment.estado)}`,
-        detail: `${this.humanize(payment.tipo)} - S/ ${Number(payment.monto || 0).toFixed(2)}`,
+        detail: `${this.humanize(payment.tipo)} - ${this.catalogCurrencyPrefix(this.selectedOpportunity()?.moneda)} ${Number(payment.monto || 0).toFixed(2)}`,
         date: payment.fecha || payment.createdAt,
         icon: 'pi pi-credit-card',
         tone:
@@ -2558,7 +2566,7 @@ export class CrmPage {
           },
           {
             label: 'Valor total',
-            value: `S/ ${this.formatCompactAmount(amount)}`,
+            value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(amount)}`,
             delta: this.deltaLabel(amount, 0),
             detail: 'vs mes anterior',
           },
@@ -2600,7 +2608,7 @@ export class CrmPage {
           },
           {
             label: 'Valor en juego',
-            value: `S/ ${this.formatCompactAmount(amount)}`,
+            value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(amount)}`,
             delta: this.deltaLabel(amount, 0),
             detail: 'vs mes anterior',
           },
@@ -2655,7 +2663,7 @@ export class CrmPage {
           },
           {
             label: 'Valor total clientes',
-            value: `S/ ${this.formatCompactAmount(closedAmount)}`,
+            value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(closedAmount)}`,
             delta: this.deltaLabel(closedAmount, 0),
             detail: 'ventas cerradas',
           },
@@ -2692,7 +2700,7 @@ export class CrmPage {
         },
         {
           label: 'Valor total',
-          value: `S/ ${this.formatCompactAmount(amount)}`,
+          value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(amount)}`,
           delta: this.deltaLabel(amount, 0),
           detail: 'vs mes anterior',
         },
@@ -3427,6 +3435,26 @@ export class CrmPage {
     );
   }
 
+  private hasActiveOpportunityForProspect(prospectoId: number | null | undefined): boolean {
+    if (!prospectoId) {
+      return false;
+    }
+    return this.oportunidades().some(
+      (item) => item.prospectoId === prospectoId && this.isActiveOpportunity(item),
+    );
+  }
+
+  /** Resuelve, para un prospecto, los datos que la regla del embudo necesita. */
+  private funnelContextFor(item: CrmProspecto): ProspectFunnelContext {
+    return {
+      estado: item.estado,
+      hasClosedSale: this.hasClosedSaleForProspect(item.id),
+      hasActiveOpportunity: this.hasActiveOpportunityForProspect(item.id),
+      hasActivity: this.hasProspectActivity(item.id),
+      isAutomaticLead: this.isAutomaticLead(item),
+    };
+  }
+
   private activeOpportunityForProspect(
     prospectoId: number | null | undefined,
   ): CrmOportunidad | null {
@@ -4067,6 +4095,8 @@ export class CrmPage {
     return this.availableCurrencyOptions(this.catalogoForm.moneda);
   }
 
+  public readonly quoteCode = quoteCode;
+
   public tenantBaseCurrencyCode(): string {
     return this.currencies.baseCurrencyCode();
   }
@@ -4091,6 +4121,14 @@ export class CrmPage {
       ({ PEN: 'S/', USD: 'US$', EUR: '€' } as Record<string, string>)[currencyCode] ||
       currencyCode
     );
+  }
+
+  /** La negociacion hereda la moneda de su cotizacion; sin ella, la de la oportunidad. */
+  private negotiationCurrencyPrefix(record: { cotizacionId?: number | null }): string {
+    const quote = record.cotizacionId
+      ? this.selectedOpportunityQuotes().find((item) => item.id === record.cotizacionId)
+      : null;
+    return this.catalogCurrencyPrefix(quote?.moneda || this.selectedOpportunity()?.moneda);
   }
 
   public catalogPreviewAttributes(): Array<{ label: string; value: string }> {
@@ -4307,24 +4345,41 @@ export class CrmPage {
   }
 
   public onOpportunityCatalogChange(value: number | null): void {
+    const previous = this.catalogoItems().find(
+      (catalogo) => catalogo.id === this.opportunityForm.catalogoItemId,
+    );
     this.opportunityForm.catalogoItemId = value;
     const item = this.catalogoItems().find((catalogo) => catalogo.id === value);
     if (!item) {
       return;
     }
     this.opportunityForm.tipoOportunidad = this.normalizeOpportunityType(item.tipoItem);
-    if (!this.opportunityForm.titulo.trim()) {
-      this.opportunityForm.titulo = `${this.opportunityTypeLabel(item.tipoItem)} - ${item.nombre}`;
+    // Titulo y detalles solo se regeneran si el usuario no los personalizo
+    // (siguen siendo los autogenerados de la oferta anterior).
+    const titulo = this.opportunityForm.titulo.trim();
+    if (!titulo || (previous && titulo === this.catalogAutoTitle(previous))) {
+      this.opportunityForm.titulo = this.catalogAutoTitle(item);
     }
-    if (!this.opportunityForm.detallePrincipal.trim()) {
+    const detallePrincipal = this.opportunityForm.detallePrincipal.trim();
+    if (!detallePrincipal || (previous && detallePrincipal === previous.nombre)) {
       this.opportunityForm.detallePrincipal = item.nombre;
     }
-    if (!this.opportunityForm.detalleSecundario.trim()) {
+    const detalleSecundario = this.opportunityForm.detalleSecundario.trim();
+    if (
+      !detalleSecundario ||
+      (previous && detalleSecundario === (previous.descripcion || '').trim())
+    ) {
       this.opportunityForm.detalleSecundario = item.descripcion || '';
     }
-    if (!Number(this.opportunityForm.montoEstimado || 0)) {
-      this.opportunityForm.montoEstimado = Number(item.precioReferencial || 0);
-    }
+    // Sin conversiones: al elegir una oferta, el monto toma su precio original
+    // en su moneda; el usuario puede ajustarlo despues.
+    this.opportunityForm.montoEstimado = Number(
+      item.precioReferencial || this.opportunityForm.montoEstimado || 0,
+    );
+  }
+
+  private catalogAutoTitle(item: CrmCatalogoItem): string {
+    return `${this.opportunityTypeLabel(item.tipoItem)} - ${item.nombre}`;
   }
 
   protected openCreateOpportunity(prospecto?: CrmProspecto): void {
@@ -4394,6 +4449,10 @@ export class CrmPage {
     return (
       this.catalogoItems().find((item) => item.id === this.opportunityForm.catalogoItemId) ?? null
     );
+  }
+
+  public opportunityFormCurrency(): string | null {
+    return this.selectedOpportunityCatalogItem()?.moneda ?? null;
   }
 
   public opportunityPersonName(): string {
@@ -6512,12 +6571,13 @@ export class CrmPage {
       return;
     }
     this.selectedOpportunity.set(item);
-    this.quoteForm = this.emptyQuoteForm(this.opportunityCatalogItem(item)?.moneda);
+    const detalles = this.quoteLinesFromOpportunityRequirements(item);
+    this.quoteForm = this.emptyQuoteForm(this.quoteInitialCurrency(item, detalles));
     this.quoteForm.oportunidadId = item.id;
     this.quoteForm.clienteId = item.clienteId ?? null;
     this.quoteForm.sucursalId = this.defaultQuoteSucursalId();
     this.quoteForm.observacion = `Propuesta comercial por ${this.quoteOfferName(item)}.`;
-    this.quoteForm.detalles = this.quoteLinesFromOpportunityRequirements(item);
+    this.quoteForm.detalles = this.alignQuoteLineCurrencies(detalles);
     this.activeDialog.set('cotizacion');
   }
 
@@ -6541,7 +6601,7 @@ export class CrmPage {
     this.quoteForm.clienteId = quote.clienteId ?? opportunity.clienteId ?? null;
     this.quoteForm.sucursalId = quote.sucursalId ?? this.defaultQuoteSucursalId();
     this.quoteForm.fechaVencimiento = '';
-    this.quoteForm.observacion = `Ajuste comercial de COT-${String(quote.id).padStart(3, '0')}.`;
+    this.quoteForm.observacion = `Ajuste comercial de ${quoteCode(quote.id)}.`;
     this.quoteForm.detalles = this.quoteLinesFromExistingQuote(quote);
     this.activeDialog.set('cotizacion');
   }
@@ -6810,6 +6870,7 @@ export class CrmPage {
         );
         this.opportunityRequirementDialogOpen.set(false);
         this.successMessage.set('Requerimiento guardado en la oportunidad.');
+        this.refreshOpportunityAfterEstimateChange(opportunity.id);
       },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
     });
@@ -6822,11 +6883,27 @@ export class CrmPage {
       return;
     }
     this.crmOpportunities.deleteResource(record.oportunidadId, resourceId).subscribe({
-      next: () =>
+      next: () => {
         this.opportunityRequirementRecords.set(
           this.opportunityRequirementRecords().filter((item) => item.id !== id),
-        ),
+        );
+        this.refreshOpportunityAfterEstimateChange(record.oportunidadId);
+      },
       error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
+  }
+
+  /** El backend recalcula el monto estimado con cada requerimiento o cotizacion; refresca la cabecera. */
+  private refreshOpportunityAfterEstimateChange(oportunidadId: number): void {
+    this.crmOpportunities.list().subscribe({
+      next: (oportunidades) => {
+        this.oportunidades.set(oportunidades);
+        const current = oportunidades.find((item) => item.id === oportunidadId);
+        if (current && this.selectedOpportunity()?.id === oportunidadId) {
+          this.selectedOpportunity.set(current);
+        }
+      },
+      error: () => undefined,
     });
   }
 
@@ -7519,6 +7596,45 @@ export class CrmPage {
     return currency?.activo && rate > 0 ? rate : null;
   }
 
+  private quoteLineCurrency(line: QuoteLineForm): string {
+    return this.quoteLineCatalogItem(line)?.moneda || this.tenantBaseCurrencyCode();
+  }
+
+  private quoteInitialCurrency(item: CrmOportunidad, lines: QuoteLineForm[]): string {
+    // La cotizacion abre en la moneda original del primer producto cotizado,
+    // con su precio intacto; el usuario decide despues si cambia la moneda.
+    const firstCatalogCurrency = lines
+      .map((line) => this.quoteLineCatalogItem(line)?.moneda)
+      .find((moneda): moneda is string => !!moneda);
+    if (firstCatalogCurrency) {
+      return firstCatalogCurrency;
+    }
+    return this.opportunityCatalogItem(item)?.moneda || this.tenantBaseCurrencyCode();
+  }
+
+  private alignQuoteLineCurrencies(lines: QuoteLineForm[]): QuoteLineForm[] {
+    const targetCurrency = this.quoteForm.moneda || this.tenantBaseCurrencyCode();
+    lines.forEach((line) => {
+      const sourceCurrency = this.quoteLineCurrency(line);
+      if (sourceCurrency === targetCurrency) {
+        return;
+      }
+      const sourceRate = this.quoteExchangeRate(sourceCurrency);
+      const targetRate = this.quoteExchangeRate(targetCurrency);
+      if (sourceRate === null || targetRate === null) {
+        this.errorMessage.set(
+          `Configura y activa el tipo de cambio de ${sourceRate === null ? sourceCurrency : targetCurrency} antes de cotizar este producto.`,
+        );
+        return;
+      }
+      line.precioUnitario = this.roundMoney(
+        (Number(line.precioUnitario || 0) * sourceRate) / targetRate,
+      );
+      line.descuento = this.roundMoney((Number(line.descuento || 0) * sourceRate) / targetRate);
+    });
+    return lines;
+  }
+
   private roundMoney(value: number): number {
     return Math.round(Number(value || 0) * 100) / 100;
   }
@@ -7954,7 +8070,7 @@ export class CrmPage {
     return [
       {
         label: 'Saldo total pendiente',
-        value: `S/ ${this.formatCompactAmount(pendingAmount)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(pendingAmount)}`,
         detail: `${rows.length} cuentas pendientes`,
         icon: 'pi pi-file-excel',
         color: '#ef4444',
@@ -7962,7 +8078,7 @@ export class CrmPage {
       },
       {
         label: 'Por vencer (proximos 7 dias)',
-        value: `S/ ${this.formatCompactAmount(soonInstallments.reduce((sum, payment) => sum + Number(payment.monto || 0), 0))}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(soonInstallments.reduce((sum, payment) => sum + Number(payment.monto || 0), 0))}`,
         detail: `${soonInstallments.length} cuotas por vencer`,
         icon: 'pi pi-calendar',
         color: '#f97316',
@@ -7970,7 +8086,7 @@ export class CrmPage {
       },
       {
         label: 'Vencidos',
-        value: `S/ ${this.formatCompactAmount(overdueInstallments.reduce((sum, payment) => sum + Number(payment.monto || 0), 0))}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(overdueInstallments.reduce((sum, payment) => sum + Number(payment.monto || 0), 0))}`,
         detail: `${overdueInstallments.length} cuotas vencidas`,
         icon: 'pi pi-exclamation-triangle',
         color: '#ef4444',
@@ -7978,7 +8094,7 @@ export class CrmPage {
       },
       {
         label: 'Pagado este mes',
-        value: `S/ ${this.formatCompactAmount(paidThisMonthAmount)}`,
+        value: `${this.tenantBaseCurrencySymbol()} ${this.formatCompactAmount(paidThisMonthAmount)}`,
         detail: `${paidThisMonth.length} pagos registrados`,
         icon: 'pi pi-dollar',
         color: '#059669',
@@ -8077,6 +8193,7 @@ export class CrmPage {
         offerName: this.quoteOfferName(item),
         opportunityCode: `Oportunidad #OP-${item.id}`,
         pendingAmount: plan.pendingAmount,
+        currencyPrefix: this.catalogCurrencyPrefix(item.moneda),
         installmentProgress: this.paymentInstallmentProgress(item),
         pendingInstallmentsCount: plan.pendingInstallments.length,
         nextPaymentDate: nextPayment?.fecha || null,
@@ -8098,6 +8215,7 @@ export class CrmPage {
       initials: this.contactInitials(this.opportunityContactName(entry.item)),
       contactName: this.opportunityContactName(entry.item),
       amount: Number(entry.payment.monto || 0),
+      currencyPrefix: this.catalogCurrencyPrefix(entry.item.moneda),
       date: entry.payment.fecha,
       dayLabel: this.paymentDaysLabel(entry.payment.fecha),
       overdue: this.paymentDaysUntil(entry.payment.fecha) < 0,
@@ -8663,7 +8781,7 @@ export class CrmPage {
     const dueDate = item.fechaVencimiento ? ` Vigencia: ${item.fechaVencimiento}.` : '';
     const observation = item.observacion ? `\n\nObservación: ${item.observacion}` : '';
     const currencySymbol = this.catalogCurrencyPrefix(item.moneda);
-    return `Hola ${contactName}, te comparto la cotización COT-${String(item.id).padStart(3, '0')} por ${opportunityTitle}. Total: ${currencySymbol} ${amount}.${dueDate}${observation}`;
+    return `Hola ${contactName}, te comparto la cotización ${quoteCode(item.id)} por ${opportunityTitle}. Total: ${currencySymbol} ${amount}.${dueDate}${observation}`;
   }
 
   protected savePromotion(): void {
@@ -8848,7 +8966,9 @@ export class CrmPage {
       item.descripcion ||
       item.titulo ||
       this.opportunityTypeLabel(item.tipoOportunidad);
-    const amount = Number(item.montoEstimado || catalogo?.precioReferencial || 0);
+    // El precio nace del producto registrado; el monto de la oportunidad solo
+    // aplica cuando la oferta no tiene precio referencial.
+    const amount = Number(catalogo?.precioReferencial || item.montoEstimado || 0);
     return {
       id: `default-${item.id}`,
       oportunidadId: item.id,
@@ -8879,11 +8999,13 @@ export class CrmPage {
         observacion: record.observacion,
       })
       .subscribe({
-        next: (resource) =>
+        next: (resource) => {
           this.opportunityRequirementRecords.set([
             ...this.opportunityRequirementRecords(),
             this.mapRequirementResource(resource),
-          ]),
+          ]);
+          this.refreshOpportunityAfterEstimateChange(item.id);
+        },
         error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
       });
   }
@@ -9411,7 +9533,7 @@ export class CrmPage {
 
   private buildQuoteLineFromOpportunity(item: CrmOportunidad): QuoteLineForm {
     const catalogo = this.opportunityCatalogItem(item);
-    const price = Number(item.montoEstimado || catalogo?.precioReferencial || 0);
+    const price = Number(catalogo?.precioReferencial || item.montoEstimado || 0);
     const descriptionParts = [
       catalogo?.nombre || item.titulo,
       catalogo?.descripcion || item.descripcion || null,
@@ -9478,7 +9600,7 @@ export class CrmPage {
             catalogoItemId: null,
             productoId: null,
             promocionId: null,
-            descripcion: `Ajuste de COT-${String(quote.id).padStart(3, '0')}`,
+            descripcion: `Ajuste de ${quoteCode(quote.id)}`,
             cantidad: 1,
             precioUnitario: Math.max(0, Number(quote.total || 0)),
             descuento: 0,
@@ -9649,7 +9771,7 @@ export class CrmPage {
             .moverCrmOportunidadEtapa(
               Number(linkedSaved.crmOportunidadId),
               Number(target.id),
-              `Movimiento automático por cotización COT-${String(linkedSaved.id).padStart(3, '0')}: ${this.quoteStatusLabel(linkedSaved)}`,
+              `Movimiento automático por cotización ${quoteCode(linkedSaved.id)}: ${this.quoteStatusLabel(linkedSaved)}`,
             )
             .pipe(map((opportunity) => ({ saved: linkedSaved, opportunity })));
         }),
@@ -10207,9 +10329,11 @@ export class CrmPage {
       catalogo?.nombre || prospecto.interesPrincipal || this.opportunityForm.detallePrincipal;
     this.opportunityForm.detalleSecundario =
       catalogo?.descripcion || prospecto.interesDetalle || this.opportunityForm.detalleSecundario;
+    // El monto refleja el precio original del producto en su moneda; el
+    // presupuesto del prospecto solo aplica cuando no hay oferta vinculada.
     this.opportunityForm.montoEstimado = Number(
-      prospecto.presupuestoEstimado ||
-        catalogo?.precioReferencial ||
+      catalogo?.precioReferencial ||
+        prospecto.presupuestoEstimado ||
         this.opportunityForm.montoEstimado ||
         0,
     );

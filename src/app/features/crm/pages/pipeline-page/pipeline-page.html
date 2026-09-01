@@ -127,7 +127,7 @@
                   {{ column.visibleItems.length === 1 ? 'oportunidad' : 'oportunidades' }}
                 </span>
                 <i></i>
-                <span>S/ {{ column.visibleTotal | number: '1.0-0' }}</span>
+                <span>{{ baseCurrencySymbol() }} {{ column.visibleTotal | number: '1.0-0' }}</span>
               </small>
             </div>
             <span class="pipeline-stage-icon"><i [class]="column.icon"></i></span>
@@ -167,7 +167,9 @@
                 <em class="deal-card__client">{{ row.company }}</em>
                 <div class="deal-card__value">
                   <span
-                    ><strong>S/ {{ row.amount | number: '1.0-0' }}</strong
+                    ><strong
+                      >{{ currencySymbol(row.opportunity.moneda) }}
+                      {{ row.amount | number: '1.0-0' }}</strong
                     ><i></i>
                     @if (row.closingDate) {
                       <small>Cierre: {{ row.closingDate | date: 'dd/MM/yyyy' }}</small>

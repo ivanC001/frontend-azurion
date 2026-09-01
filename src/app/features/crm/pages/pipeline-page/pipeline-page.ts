@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { CrmOportunidad } from '@features/crm/data/crm-api.types';
+import { currencySymbol } from '@shared/utils/currency-symbol';
 import type {
   PipelineColumn,
   PipelineQuickFilter,
@@ -28,6 +29,9 @@ export class PipelinePage {
   readonly query = input.required<string>();
   readonly summaryCards = input.required<PipelineSummaryCard[]>();
   readonly columns = input.required<PipelineColumn[]>();
+  readonly baseCurrencySymbol = input('S/');
+
+  protected readonly currencySymbol = currencySymbol;
 
   readonly queryChange = output<string>();
   readonly clearStageFilterRequested = output<void>();
