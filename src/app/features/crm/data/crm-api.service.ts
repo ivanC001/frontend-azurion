@@ -80,6 +80,7 @@ import type {
   UpdateWhatsappAutoReplyConfigRequest,
   WhatsappAutoReplyConfig,
   WhatsappConnectionStatus,
+  WhatsappFailedSend,
   WhatsappQuickReply,
   WhatsappReengagementGuide,
   WhatsappUnreadSummary,
@@ -427,6 +428,15 @@ export class CrmApiService {
       .post<ApiResponse<CrmWhatsappMessage>>(
         this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
         request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmWhatsappFailedSends() {
+    return this.http
+      .get<ApiResponse<WhatsappFailedSend[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/envios-fallidos'),
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));

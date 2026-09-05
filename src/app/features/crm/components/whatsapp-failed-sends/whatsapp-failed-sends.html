@@ -1,0 +1,89 @@
+<section class="fails-card">
+  <header class="fails-header" (click)="toggle()">
+    <span class="fails-icon"><i class="pi pi-send"></i></span>
+    <div>
+      <small>DIAGNOSTICO DE ENVIOS</small>
+      <strong>Mensajes que Meta no pudo entregar</strong>
+    </div>
+    @if (!loading()) {
+      <span
+        class="fails-badge"
+        [class.fails-badge--ok]="failures().length === 0"
+        [class.fails-badge--bad]="failures().length > 0"
+      >
+        <i [class]="failures().length ? 'pi pi-times-circle' : 'pi pi-check-circle'"></i>
+        {{ failures().length ? failures().length + ' fallidos' : 'Sin fallos' }}
+      </span>
+    }
+    <button type="button" class="fails-toggle" [attr.aria-expanded]="expanded()">
+      <i [class]="expanded() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="fails-state"><i class="pi pi-spin pi-spinner"></i> Revisando los ultimos envios...</div>
+  } @else if (error()) {
+    <div class="fails-state fails-state--error">
+      <i class="pi pi-times-circle"></i> {{ error() }}
+      <button type="button" class="fails-retry" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (failures().length === 0) {
+    <p class="fails-summary">
+      Ningun envio fallido en los ultimos mensajes. Si alguno falla, el motivo aparece aca.
+    </p>
+  } @else if (expanded()) {
+    @if (repeatedCause(); as shared) {
+      <div class="fails-shared">
+        <i class="pi pi-exclamation-triangle"></i>
+        <div>
+          <strong>Todos los fallos tienen la misma causa.</strong>
+          <span>{{ shared.causa }}</span>
+          @if (shared.solucion) {
+            <em>{{ shared.solucion }}</em>
+          }
+        </div>
+      </div>
+    }
+
+    <ul class="fails-list">
+      @for (failure of failures(); track failure.mensajeId) {
+        <li>
+          <div class="fails-row">
+            <div class="fails-main">
+              <strong>{{ failure.causa }}</strong>
+              <small>
+                {{ failure.prospectoNombre || 'Prospecto eliminado' }}
+                @if (failure.plantillaNombre) {
+                  · {{ failure.plantillaNombre }}
+                }
+                @if (failure.ocurrioEn) {
+                  · {{ failure.ocurrioEn | date: 'dd/MM/yy HH:mm' }}
+                }
+              </small>
+            </div>
+            @if (failure.codigo) {
+              <span class="fails-code">Meta {{ failure.codigo }}</span>
+            }
+            @if (failure.detalle) {
+              <button
+                type="button"
+                class="fails-detail-toggle"
+                (click)="toggleDetail(failure.mensajeId)"
+                [attr.aria-expanded]="detailOpen() === failure.mensajeId"
+              >
+                {{ detailOpen() === failure.mensajeId ? 'Ocultar' : 'Detalle' }}
+              </button>
+            }
+          </div>
+
+          @if (failure.solucion) {
+            <p class="fails-fix"><i class="pi pi-arrow-right"></i> {{ failure.solucion }}</p>
+          }
+          @if (detailOpen() === failure.mensajeId && failure.detalle) {
+            <pre class="fails-raw">{{ failure.detalle }}</pre>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

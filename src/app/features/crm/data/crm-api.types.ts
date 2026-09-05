@@ -680,6 +680,19 @@ export interface CrmWhatsappTemplate {
   readonly cantidadParametros: number;
 }
 
+export interface WhatsappFailedSend {
+  readonly mensajeId: number;
+  readonly prospectoId: number | null;
+  readonly prospectoNombre: string | null;
+  readonly tipoMensaje: string | null;
+  readonly plantillaNombre: string | null;
+  readonly codigo: string | null;
+  readonly causa: string;
+  readonly solucion: string | null;
+  readonly detalle: string | null;
+  readonly ocurrioEn: string | null;
+}
+
 export interface WhatsappReengagementGuide {
   readonly listoParaProgramar: boolean;
   readonly resumen: string;
