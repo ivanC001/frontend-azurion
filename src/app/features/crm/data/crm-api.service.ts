@@ -77,6 +77,8 @@ import type {
   UpdateCrmLeadAssignmentConfigRequest,
   UpdateCrmOportunidadRequest,
   UpdateCrmProspectoRequest,
+  CreateWhatsappTemplateRequest,
+  CrmWhatsappTemplateDraftResult,
   UpdateWhatsappAutoReplyConfigRequest,
   WhatsappAutoReplyConfig,
   WhatsappConnectionStatus,
@@ -427,6 +429,16 @@ export class CrmApiService {
     return this.http
       .post<ApiResponse<CrmWhatsappMessage>>(
         this.apiUrl.url('saasCore', `/v1/saas/crm/prospectos/${prospectoId}/whatsapp/mensajes`),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  createCrmWhatsappTemplate(request: CreateWhatsappTemplateRequest) {
+    return this.http
+      .post<ApiResponse<CrmWhatsappTemplateDraftResult>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/plantillas'),
         request,
         { headers: this.session.apiHeaders() },
       )

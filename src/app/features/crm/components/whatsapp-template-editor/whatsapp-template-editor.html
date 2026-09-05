@@ -1,0 +1,228 @@
+<section class="editor-card">
+  <header class="editor-header" (click)="toggle()">
+    <span class="editor-icon"><i class="pi pi-file-edit"></i></span>
+    <div>
+      <small>PLANTILLAS PROPIAS</small>
+      <strong>Crear una plantilla de WhatsApp</strong>
+    </div>
+    <button type="button" class="editor-toggle" [attr.aria-expanded]="open()">
+      <i [class]="open() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+    </button>
+  </header>
+
+  @if (result(); as created) {
+    <div class="editor-result">
+      <i class="pi pi-check-circle"></i>
+      <div>
+        <strong>{{ created.nombre }} · {{ created.estado }}</strong>
+        <span>{{ created.mensaje }}</span>
+      </div>
+    </div>
+  }
+
+  @if (open()) {
+    <div class="editor-body">
+      <p class="editor-intro">
+        Se compone aca y el CRM la manda a revision a Meta. Solo se puede armar lo que el
+        sistema despues sabe enviar, asi que no vas a aprobar una plantilla que luego falle.
+      </p>
+
+      <div class="editor-grid">
+        <div class="editor-form">
+          <div class="editor-row">
+            <label>
+              Nombre
+              <input
+                type="text"
+                [ngModel]="nombre()"
+                (ngModelChange)="nombre.set($event)"
+                placeholder="seguir_cotizacion"
+                maxlength="512"
+              />
+            </label>
+            <label>
+              Idioma
+              <input
+                type="text"
+                [ngModel]="idioma()"
+                (ngModelChange)="idioma.set($event)"
+                placeholder="es"
+                maxlength="35"
+              />
+            </label>
+          </div>
+
+          <div class="editor-row">
+            <label>
+              Categoria
+              <select [ngModel]="categoria()" (ngModelChange)="categoria.set($event)">
+                <option value="UTILITY">Utility — sobre algo que el cliente pidio</option>
+                <option value="MARKETING">Marketing — promocion o reenganche generico</option>
+              </select>
+            </label>
+          </div>
+          <p class="editor-hint">
+            Utility entrega mejor y cuesta menos, pero solo califica si el mensaje habla de algo
+            concreto que el cliente pidio, como una cotizacion con su numero y su vencimiento.
+          </p>
+
+          <label class="editor-field">
+            Encabezado <em>opcional, solo texto</em>
+            <input
+              type="text"
+              [ngModel]="encabezado()"
+              (ngModelChange)="setEncabezado($event)"
+              placeholder="Cotizacion {{ '{{' }}1{{ '}}' }}"
+              maxlength="60"
+            />
+          </label>
+          @if (variablesEncabezado().length) {
+            <div class="editor-examples">
+              <span class="editor-label">Ejemplos del encabezado</span>
+              @for (variable of variablesEncabezado(); track $index) {
+                <label class="editor-example">
+                  <code>{{ placeholder(variable) }}</code>
+                  <input
+                    type="text"
+                    [ngModel]="ejemploEncabezado()[$index]"
+                    (ngModelChange)="setEjemplo('encabezado', $index, $event)"
+                    placeholder="Valor de ejemplo"
+                  />
+                </label>
+              }
+            </div>
+          }
+
+          <label class="editor-field">
+            Cuerpo <em>obligatorio</em>
+            <textarea
+              rows="5"
+              maxlength="1024"
+              [ngModel]="cuerpo()"
+              (ngModelChange)="setCuerpo($event)"
+              placeholder="Hola {{ '{{' }}1{{ '}}' }}, tu cotizacion vence el {{ '{{' }}2{{ '}}' }}."
+            ></textarea>
+          </label>
+          <button type="button" class="editor-add" (click)="agregarVariable('cuerpo')">
+            <i class="pi pi-plus"></i> Añadir variable al cuerpo
+          </button>
+
+          @if (variablesCuerpo().length) {
+            <div class="editor-examples">
+              <span class="editor-label">Ejemplos del cuerpo</span>
+              <small class="editor-note">Meta exige un ejemplo por variable o rechaza la plantilla.</small>
+              @for (variable of variablesCuerpo(); track $index) {
+                <label class="editor-example">
+                  <code>{{ placeholder(variable) }}</code>
+                  <input
+                    type="text"
+                    [ngModel]="ejemploCuerpo()[$index]"
+                    (ngModelChange)="setEjemplo('cuerpo', $index, $event)"
+                    placeholder="Valor de ejemplo"
+                  />
+                </label>
+              }
+            </div>
+          }
+
+          <label class="editor-field">
+            Pie de pagina <em>opcional, sin variables</em>
+            <input
+              type="text"
+              [ngModel]="pie()"
+              (ngModelChange)="pie.set($event)"
+              placeholder="Azurion CRM"
+              maxlength="60"
+            />
+          </label>
+
+          <div class="editor-buttons">
+            <div class="editor-buttons-head">
+              <span class="editor-label">Botones</span>
+              <button type="button" class="editor-add" (click)="agregarBoton()">
+                <i class="pi pi-plus"></i> Añadir boton
+              </button>
+            </div>
+            <small class="editor-note">
+              Una respuesta rapida reabre la ventana de 24 horas cuando el cliente la toca.
+            </small>
+
+            @for (boton of botones(); track $index) {
+              <div class="editor-button-row">
+                <select
+                  [ngModel]="boton.tipo"
+                  (ngModelChange)="actualizarBoton($index, 'tipo', $event)"
+                >
+                  <option value="QUICK_REPLY">Respuesta rapida</option>
+                  <option value="URL">Enlace</option>
+                  <option value="PHONE_NUMBER">Telefono</option>
+                </select>
+                <input
+                  type="text"
+                  [ngModel]="boton.texto"
+                  (ngModelChange)="actualizarBoton($index, 'texto', $event)"
+                  placeholder="Texto del boton"
+                  maxlength="25"
+                />
+                @if (boton.tipo === 'URL') {
+                  <input
+                    type="url"
+                    [ngModel]="boton.url"
+                    (ngModelChange)="actualizarBoton($index, 'url', $event)"
+                    placeholder="https://azurion.tech"
+                  />
+                }
+                @if (boton.tipo === 'PHONE_NUMBER') {
+                  <input
+                    type="tel"
+                    [ngModel]="boton.telefono"
+                    (ngModelChange)="actualizarBoton($index, 'telefono', $event)"
+                    placeholder="+51999888777"
+                  />
+                }
+                <button type="button" class="editor-remove" (click)="quitarBoton($index)">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <aside class="editor-preview">
+          <span class="editor-label">Vista previa</span>
+          <div class="editor-bubble">
+            @if (preview().encabezado) {
+              <strong>{{ preview().encabezado }}</strong>
+            }
+            <p>{{ preview().cuerpo || 'El mensaje aparece aca.' }}</p>
+            @if (preview().pie) {
+              <small>{{ preview().pie }}</small>
+            }
+          </div>
+          @for (boton of preview().botones; track $index) {
+            <div class="editor-bubble-button"><i class="pi pi-reply"></i> {{ boton }}</div>
+          }
+        </aside>
+      </div>
+
+      @if (error()) {
+        <p class="editor-error"><i class="pi pi-times-circle"></i> {{ error() }}</p>
+      }
+      @if (problema(); as pendiente) {
+        <p class="editor-pending"><i class="pi pi-info-circle"></i> {{ pendiente }}</p>
+      }
+
+      <div class="editor-actions">
+        <button
+          type="button"
+          class="editor-submit"
+          [disabled]="!!problema() || saving()"
+          (click)="enviar()"
+        >
+          <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"></i>
+          {{ saving() ? 'Enviando...' : 'Enviar a revision de Meta' }}
+        </button>
+      </div>
+    </div>
+  }
+</section>
