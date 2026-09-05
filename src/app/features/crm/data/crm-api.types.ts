@@ -680,6 +680,34 @@ export interface CrmWhatsappTemplate {
   readonly cantidadParametros: number;
 }
 
+export interface CreateWhatsappTemplateRequest {
+  readonly nombre: string;
+  readonly idioma: string;
+  readonly categoria: string;
+  readonly encabezado?: string | null;
+  readonly ejemploEncabezado?: readonly string[];
+  readonly cuerpo: string;
+  readonly ejemploCuerpo?: readonly string[];
+  readonly pie?: string | null;
+  readonly botones?: readonly CreateWhatsappTemplateButton[];
+}
+
+export interface CreateWhatsappTemplateButton {
+  readonly tipo: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+  readonly texto: string;
+  readonly url?: string | null;
+  readonly telefono?: string | null;
+}
+
+export interface CrmWhatsappTemplateDraftResult {
+  readonly id: string | null;
+  readonly nombre: string;
+  readonly idioma: string;
+  readonly categoria: string;
+  readonly estado: string;
+  readonly mensaje: string;
+}
+
 export interface WhatsappFailedSend {
   readonly mensajeId: number;
   readonly prospectoId: number | null;
