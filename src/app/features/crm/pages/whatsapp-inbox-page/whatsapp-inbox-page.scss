@@ -1502,6 +1502,131 @@
   }
 }
 
+.prospect-card-header-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.prospect-status {
+  background: #eaf9ef;
+  border: 1px solid #bce8c9;
+  border-radius: 999px;
+  color: #168242;
+  font-size: 0.55rem;
+  padding: 0.14rem 0.4rem;
+}
+
+.prospect-edit-toggle {
+  align-items: center;
+  background: #f0f3f8;
+  border: 0;
+  border-radius: 6px;
+  color: var(--blue);
+  cursor: pointer;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+
+  i {
+    font-size: 0.65rem;
+  }
+
+  &:hover {
+    background: #e2e9f5;
+  }
+}
+
+.prospect-inline-form {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem 0.7rem;
+
+  label {
+    color: #667287;
+    display: grid;
+    font-size: 0.6rem;
+    font-weight: 700;
+    gap: 0.2rem;
+  }
+
+  input,
+  select {
+    background: #fff;
+    border: 1px solid #dce2ea;
+    border-radius: 6px;
+    color: #2d3748;
+    font: inherit;
+    font-size: 0.66rem;
+    font-weight: 500;
+    min-height: 1.9rem;
+    min-width: 0;
+    padding: 0 0.45rem;
+    width: 100%;
+
+    &:focus {
+      border-color: var(--blue);
+      outline: none;
+    }
+  }
+
+  .required {
+    color: #dc2626;
+  }
+}
+
+.prospect-inline-doc {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+}
+
+.prospect-inline-loading {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.6rem;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.prospect-inline-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  padding-top: 0.2rem;
+
+  button {
+    align-items: center;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 0.64rem;
+    font-weight: 700;
+    gap: 0.3rem;
+    padding: 0.4rem 0.7rem;
+  }
+}
+
+.prospect-inline-cancel {
+  background: transparent;
+  border: 1px solid #dce2ea;
+  color: #4e5b70;
+}
+
+.prospect-inline-save {
+  background: var(--blue);
+  border: 1px solid var(--blue);
+  color: #fff;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
+}
+
 .outline-button {
   background: #fff;
   border: 1px solid var(--blue);

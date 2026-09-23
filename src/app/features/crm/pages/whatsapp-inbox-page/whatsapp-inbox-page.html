@@ -674,7 +674,7 @@
             </div>
           </div>
           <div class="quick-actions">
-            <button type="button" (click)="openProspectEdit()">
+            <button type="button" (click)="startProspectInlineEdit()">
               <i class="pi pi-user-edit"></i><span>Editar datos</span>
             </button>
             <button type="button" (click)="openProspect()">
@@ -691,38 +691,131 @@
 
         <section class="detail-card prospect-card">
           <header>
-            <strong>Prospecto</strong><span>{{ conversation.estadoProspecto || 'Nuevo' }}</span>
-          </header>
-          <dl>
-            <div>
-              <dt>Origen</dt>
-              <dd>{{ conversation.origen || conversation.canalIngreso || 'WhatsApp' }}</dd>
-            </div>
-            <div>
-              <dt>Campaña</dt>
-              <dd>{{ conversation.campania || 'Sin campaña' }}</dd>
-            </div>
-            <div>
-              <dt>Interés</dt>
-              <dd>{{ conversation.interesPrincipal || 'No especificado' }}</dd>
-            </div>
-            <div>
-              <dt>Responsable</dt>
-              <dd>
-                <select
-                  aria-label="Responsable de la conversación"
-                  [disabled]="savingAction()"
-                  [ngModel]="conversation.responsableId || ''"
-                  (ngModelChange)="assignConversation($event)"
+            <strong>Prospecto</strong>
+            <div class="prospect-card-header-actions">
+              <span class="prospect-status">{{ conversation.estadoProspecto || 'Nuevo' }}</span>
+              @if (!prospectInlineEditing()) {
+                <button
+                  class="prospect-edit-toggle"
+                  type="button"
+                  title="Editar datos del prospecto"
+                  aria-label="Editar datos del prospecto"
+                  (click)="startProspectInlineEdit()"
                 >
-                  <option value="">Sin asignar</option>
-                  @for (user of users(); track user.id) {
-                    <option [value]="user.username">{{ user.nombres }}</option>
-                  }
-                </select>
-              </dd>
+                  <i class="pi pi-pencil"></i>
+                </button>
+              }
             </div>
-          </dl>
+          </header>
+          @if (prospectInlineEditing()) {
+            <form class="prospect-inline-form" (ngSubmit)="saveProspectEdit()">
+              @if (prospectEditLoading()) {
+                <p class="prospect-inline-loading">
+                  <i class="pi pi-spin pi-spinner"></i> Cargando datos actuales...
+                </p>
+              }
+              <label>
+                Nombre <span class="required">*</span>
+                <input
+                  name="piNombre"
+                  [(ngModel)]="prospectEditForm.nombre"
+                  placeholder="Nombres y apellidos"
+                />
+              </label>
+              <label>
+                Teléfono / WhatsApp
+                <input
+                  name="piTelefono"
+                  inputmode="tel"
+                  [(ngModel)]="prospectEditForm.telefono"
+                  placeholder="Ej. +51 987 654 321"
+                />
+              </label>
+              <label>
+                Correo
+                <input
+                  name="piCorreo"
+                  type="email"
+                  [(ngModel)]="prospectEditForm.correo"
+                  placeholder="correo@cliente.com"
+                />
+              </label>
+              <div class="prospect-inline-doc">
+                <label>
+                  Documento
+                  <select name="piTipoDoc" [(ngModel)]="prospectEditForm.tipoDocumento">
+                    @for (tipo of prospectDocumentTypes; track tipo) {
+                      <option [value]="tipo">{{ tipo }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Número
+                  <input name="piNumeroDoc" [(ngModel)]="prospectEditForm.numeroDocumento" />
+                </label>
+              </div>
+              <label>
+                Dirección
+                <input name="piDireccion" [(ngModel)]="prospectEditForm.direccion" />
+              </label>
+              <label>
+                Interés
+                <input
+                  name="piInteres"
+                  [(ngModel)]="prospectEditForm.interesPrincipal"
+                  placeholder="Producto o servicio de interés"
+                />
+              </label>
+              <div class="prospect-inline-actions">
+                <button type="button" class="prospect-inline-cancel" (click)="cancelProspectInlineEdit()">
+                  Cancelar
+                </button>
+                <button type="submit" class="prospect-inline-save" [disabled]="prospectEditSaving()">
+                  <i [class]="prospectEditSaving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
+                  Guardar
+                </button>
+              </div>
+            </form>
+          } @else {
+            <dl>
+              <div>
+                <dt>Teléfono</dt>
+                <dd>{{ conversation.telefono || 'Sin teléfono' }}</dd>
+              </div>
+              <div>
+                <dt>Correo</dt>
+                <dd>{{ conversation.correo || 'Sin correo' }}</dd>
+              </div>
+              <div>
+                <dt>Origen</dt>
+                <dd>{{ conversation.origen || conversation.canalIngreso || 'WhatsApp' }}</dd>
+              </div>
+              <div>
+                <dt>Campaña</dt>
+                <dd>{{ conversation.campania || 'Sin campaña' }}</dd>
+              </div>
+              <div>
+                <dt>Interés</dt>
+                <dd>{{ conversation.interesPrincipal || 'No especificado' }}</dd>
+              </div>
+              <div>
+                <dt>Responsable</dt>
+                <dd>
+                  <select
+                    aria-label="Responsable de la conversación"
+                    [disabled]="savingAction()"
+                    [ngModel]="conversation.responsableId || ''"
+                    (ngModelChange)="assignConversation($event)"
+                  >
+                    <option value="">Sin asignar</option>
+                    @for (user of users(); track user.id) {
+                      <option [value]="user.username">{{ user.nombres }}</option>
+                    }
+                  </select>
+                </dd>
+              </div>
+            </dl>
+          }
           <button class="outline-button" type="button" (click)="openProspect()">
             Ver ficha del prospecto
           </button>

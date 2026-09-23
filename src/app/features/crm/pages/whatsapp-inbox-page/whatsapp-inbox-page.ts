@@ -95,45 +95,78 @@ export class WhatsappInboxPage implements OnInit {
 
   // --- Edición rápida del prospecto sin salir de la bandeja ---
   protected readonly prospectEditOpen = signal(false);
+  /** Edición en línea desde la tarjeta "Prospecto" del panel de contacto. */
+  protected readonly prospectInlineEditing = signal(false);
   protected readonly prospectEditSaving = signal(false);
   protected readonly prospectEditLoading = signal(false);
   protected readonly prospectDocumentTypes = ['DNI', 'RUC', 'CE', 'PASAPORTE', 'OTRO'];
-  protected prospectEditForm = {
-    nombre: '',
-    telefono: '',
-    correo: '',
-    tipoDocumento: 'DNI',
-    numeroDocumento: '',
-  };
+  protected prospectEditForm = this.emptyProspectEditForm();
 
   protected openProspectEdit(): void {
+    if (this.loadProspectEditForm()) {
+      this.prospectInlineEditing.set(false);
+      this.prospectEditOpen.set(true);
+    }
+  }
+
+  protected startProspectInlineEdit(): void {
+    if (this.loadProspectEditForm()) {
+      this.prospectEditOpen.set(false);
+      this.prospectInlineEditing.set(true);
+    }
+  }
+
+  protected cancelProspectInlineEdit(): void {
+    this.prospectInlineEditing.set(false);
+  }
+
+  private emptyProspectEditForm() {
+    return {
+      nombre: '',
+      telefono: '',
+      correo: '',
+      tipoDocumento: 'DNI',
+      numeroDocumento: '',
+      direccion: '',
+      interesPrincipal: '',
+    };
+  }
+
+  private loadProspectEditForm(): boolean {
     const conversation = this.selectedConversation();
     if (!conversation) {
-      return;
+      return false;
     }
+    const prospectoId = conversation.prospectoId;
     this.prospectEditForm = {
+      ...this.emptyProspectEditForm(),
       nombre: conversation.nombre || '',
       telefono: conversation.telefono || '',
       correo: conversation.correo || '',
-      tipoDocumento: 'DNI',
-      numeroDocumento: '',
+      direccion: conversation.direccion || '',
+      interesPrincipal: conversation.interesPrincipal || '',
     };
-    this.prospectEditOpen.set(true);
     this.prospectEditLoading.set(true);
     // Documento y correo no viajan completos en la conversación: se cargan del prospecto.
-    this.api.getCrmProspecto(conversation.prospectoId).subscribe({
+    this.api.getCrmProspecto(prospectoId).subscribe({
       next: (prospecto) => {
         this.prospectEditLoading.set(false);
+        if (this.selectedProspectId() !== prospectoId) {
+          return;
+        }
         this.prospectEditForm = {
           nombre: prospecto.nombre || this.prospectEditForm.nombre,
           telefono: prospecto.telefono || this.prospectEditForm.telefono,
           correo: prospecto.correo || this.prospectEditForm.correo,
           tipoDocumento: prospecto.tipoDocumento || 'DNI',
           numeroDocumento: prospecto.numeroDocumento || '',
+          direccion: prospecto.direccion || this.prospectEditForm.direccion,
+          interesPrincipal: prospecto.interesPrincipal || this.prospectEditForm.interesPrincipal,
         };
       },
       error: () => this.prospectEditLoading.set(false),
     });
+    return true;
   }
 
   protected saveProspectEdit(): void {
@@ -154,11 +187,14 @@ export class WhatsappInboxPage implements OnInit {
         correo: this.prospectEditForm.correo.trim(),
         tipoDocumento: this.prospectEditForm.tipoDocumento,
         numeroDocumento: this.prospectEditForm.numeroDocumento.trim(),
+        direccion: this.prospectEditForm.direccion.trim(),
+        interesPrincipal: this.prospectEditForm.interesPrincipal.trim(),
       })
       .subscribe({
         next: (prospecto) => {
           this.prospectEditSaving.set(false);
           this.prospectEditOpen.set(false);
+          this.prospectInlineEditing.set(false);
           this.conversations.update((items) =>
             items.map((item) =>
               item.prospectoId === conversation.prospectoId
@@ -167,6 +203,8 @@ export class WhatsappInboxPage implements OnInit {
                     nombre: prospecto.nombre || nombre,
                     telefono: prospecto.telefono ?? item.telefono,
                     correo: prospecto.correo ?? item.correo,
+                    direccion: prospecto.direccion ?? item.direccion,
+                    interesPrincipal: prospecto.interesPrincipal ?? item.interesPrincipal,
                   }
                 : item,
             ),
@@ -323,6 +361,9 @@ export class WhatsappInboxPage implements OnInit {
   protected selectConversation(conversation: CrmWhatsappConversation): void {
     const changed = this.selectedProspectId() !== conversation.prospectoId;
     this.selectedProspectId.set(conversation.prospectoId);
+    if (changed) {
+      this.prospectInlineEditing.set(false);
+    }
     this.selectedNoteId.set(null);
     this.noteDraft.set('');
     this.quotes.set([]);
@@ -914,6 +955,7 @@ export class WhatsappInboxPage implements OnInit {
 
   private clearConversationSelection(): void {
     this.selectedProspectId.set(null);
+    this.prospectInlineEditing.set(false);
     this.messages.set([]);
     this.quotes.set([]);
     this.selectedQuoteIds.set(new Set<number>());

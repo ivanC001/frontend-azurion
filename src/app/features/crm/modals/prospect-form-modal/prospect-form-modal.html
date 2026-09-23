@@ -300,6 +300,16 @@
               }}</strong>
               <span class="prospect-phone-meta__hint">Prefijo editable</span>
             </small>
+            @if (
+              host().prospectForm.id &&
+              host().prospectForm.canalIngreso === 'WHATSAPP' &&
+              !host().prospectForm.telefono.trim()
+            ) {
+              <small class="prospect-field-help">
+                WhatsApp no compartió el número de este contacto (usa usuario de WhatsApp). Pídeselo
+                por el chat y regístralo aquí.
+              </small>
+            }
           </label>
 
           <!-- Email with span-2 -->

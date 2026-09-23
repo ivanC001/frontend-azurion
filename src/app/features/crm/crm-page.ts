@@ -4730,6 +4730,16 @@ export class CrmPage {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+    // ?prospectoId= llega desde la bandeja de WhatsApp a varias rutas: solo cotizaciones
+    // exige oportunidad; en prospectos se abre la ficha para editar y en el resto se ignora.
+    const initialTab = this.route.snapshot.data['initialTab'] as CrmTab | undefined;
+    if (initialTab === 'captacion') {
+      this.openEditProspectById(prospectId);
+      return;
+    }
+    if (initialTab !== 'oportunidades') {
+      return;
+    }
     const opportunity = this.activeOpportunityForProspect(prospectId);
     if (!opportunity) {
       this.errorMessage.set(
@@ -4738,6 +4748,18 @@ export class CrmPage {
       return;
     }
     this.openQuoteDialog(opportunity);
+  }
+
+  private openEditProspectById(prospectId: number): void {
+    const loaded = this.prospectos().find((item) => item.id === prospectId);
+    if (loaded) {
+      this.openEditProspect(loaded);
+      return;
+    }
+    this.api.getCrmProspecto(prospectId).subscribe({
+      next: (prospecto) => this.openEditProspect(prospecto),
+      error: (error: unknown) => this.errorMessage.set(this.resolveError(error)),
+    });
   }
 
   protected updateCrmIntegrationField(
