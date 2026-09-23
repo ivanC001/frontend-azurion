@@ -36,7 +36,12 @@ export type OpportunityDetailTab =
   | 'documentos'
   | 'historial';
 export type DialogType =
-  'prospecto' | 'oportunidad' | 'actividad' | 'cotizacion' | 'catalogo' | null;
+  | 'prospecto'
+  | 'oportunidad'
+  | 'actividad'
+  | 'cotizacion'
+  | 'catalogo'
+  | null;
 export type CatalogStep = 'select' | 'form';
 export type OpportunityView = 'ABIERTAS' | 'COTIZADAS' | 'NEGOCIACION' | 'GANADAS';
 export type CrmIntegrationField =
@@ -50,7 +55,10 @@ export type CrmIntegrationField =
   | 'wabaId'
   | 'metadataJson';
 export type CrmCurrencyField =
-  'nombre' | 'simbolo' | 'tipoCambioBase' | 'margenConversionPorcentaje';
+  | 'nombre'
+  | 'simbolo'
+  | 'tipoCambioBase'
+  | 'margenConversionPorcentaje';
 export const DEFAULT_CRM_INTEGRATIONS: readonly CrmCanalTokenConfig[] = [
   { canal: 'WEB', nombre: 'Landing web', activo: false },
   { canal: 'WHATSAPP', nombre: 'WhatsApp Business', activo: false },
@@ -379,6 +387,7 @@ export interface CrmStagePanel {
   items: CrmOportunidad[];
   tableTitle: string;
   tableAction: string;
+  tableActionIcon?: string;
   emptyMessage: string;
 }
 

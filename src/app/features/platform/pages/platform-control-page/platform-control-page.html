@@ -85,7 +85,8 @@
         <div class="empresa-summary-info">
           <strong class="empresa-name">{{ empresa.razonSocial }}</strong>
           <span class="empresa-meta"
-            >RUC {{ empresa.ruc }} &bull; Tenant <code>{{ empresa.tenantId }}</code></span
+            >{{ empresa.tipoDocumentoFiscal || 'RUC' }} {{ empresa.ruc }} &bull; Tenant
+            <code>{{ empresa.tenantId }}</code></span
           >
         </div>
         <p-tag
@@ -125,11 +126,11 @@
             </div>
             <div class="detail-item">
               <dt>Inicio vigencia</dt>
-              <dd>{{ suscripcion.fechaInicio || 'Sin fecha' }}</dd>
+              <dd>{{ (suscripcion.fechaInicio | date: 'dd/MM/yyyy') || 'Sin fecha' }}</dd>
             </div>
             <div class="detail-item">
               <dt>Fin vigencia</dt>
-              <dd>{{ suscripcion.fechaFin || 'Vigente' }}</dd>
+              <dd>{{ (suscripcion.fechaFin | date: 'dd/MM/yyyy') || 'Vigente' }}</dd>
             </div>
           </dl>
         </div>
@@ -273,7 +274,7 @@
           <ng-template pTemplate="header">
             <tr>
               <th style="width: 25%">Usuario</th>
-              <th style="width: 22%">Nombres</th>
+              <th style="width: 22%">Nombres y apellidos</th>
               <th style="width: 14%">Estado</th>
               <th style="width: 25%">Roles asignados</th>
               <th style="width: 14%; text-align: center">Acciones</th>
@@ -285,7 +286,7 @@
                 <strong class="user-name-text">{{ user.username }}</strong>
                 <small class="user-email-text">{{ user.email || 'Sin correo registrado' }}</small>
               </td>
-              <td>{{ user.nombres }}</td>
+              <td>{{ user.nombres }} {{ user.apellidos || '' }}</td>
               <td>
                 <p-tag
                   [value]="user.activo ? 'Activo' : 'Bloqueado'"

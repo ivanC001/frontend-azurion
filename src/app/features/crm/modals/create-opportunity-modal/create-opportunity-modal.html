@@ -109,15 +109,17 @@
               name="opMonto"
               [(ngModel)]="host().opportunityForm.montoEstimado"
           /></label>
-          <label
-            >Probabilidad comercial <span class="required">*</span
-            ><p-select
-              name="opTemperatura"
-              [options]="host().opportunityTemperatureOptions"
-              [ngModel]="host().opportunityFormTemperature()"
-              (ngModelChange)="host().setOpportunityFormTemperature($event)"
-              appendTo="body"
-          /></label>
+          @if (showAdvanced()) {
+            <label
+              >Probabilidad comercial <span class="required">*</span
+              ><p-select
+                name="opTemperatura"
+                [options]="host().opportunityTemperatureOptions"
+                [ngModel]="host().opportunityFormTemperature()"
+                (ngModelChange)="host().setOpportunityFormTemperature($event)"
+                appendTo="body"
+            /></label>
+          }
           <label
             >Cierre estimado <span class="required">*</span
             ><input
@@ -127,22 +129,42 @@
               [(ngModel)]="host().opportunityForm.fechaCierreEstimada"
           /></label>
         </div>
-        <label
-          >Responsable <span class="required">*</span
-          ><p-select
-            name="opResponsable"
-            [options]="host().responsableOptions()"
-            [(ngModel)]="host().opportunityForm.responsableId"
-            [showClear]="true"
-            appendTo="body"
-        /></label>
-        <label
-          >Etapa<p-select
-            name="opEtapa"
-            [options]="host().etapaOptions()"
-            [(ngModel)]="host().opportunityForm.etapa"
-            appendTo="body"
-        /></label>
+        @if (host().sellerSimpleView()) {
+          <button
+            type="button"
+            class="or-advanced-toggle"
+            (click)="advancedOpen.set(!advancedOpen())"
+          >
+            <i
+              class="pi"
+              [class.pi-angle-down]="!advancedOpen()"
+              [class.pi-angle-up]="advancedOpen()"
+            ></i>
+            {{
+              advancedOpen()
+                ? 'Ocultar ajustes avanzados'
+                : 'Ajustes avanzados (probabilidad, etapa, responsable)'
+            }}
+          </button>
+        }
+        @if (showAdvanced()) {
+          <label
+            >Responsable <span class="required">*</span
+            ><p-select
+              name="opResponsable"
+              [options]="host().responsableOptions()"
+              [(ngModel)]="host().opportunityForm.responsableId"
+              [showClear]="true"
+              appendTo="body"
+          /></label>
+          <label
+            >Etapa<p-select
+              name="opEtapa"
+              [options]="host().etapaOptions()"
+              [(ngModel)]="host().opportunityForm.etapa"
+              appendTo="body"
+          /></label>
+        }
         @if (!host().opportunityForm.id) {
           <div class="or-mini">
             <label

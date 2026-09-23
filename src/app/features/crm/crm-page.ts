@@ -481,6 +481,15 @@ export class CrmPage {
   protected readonly canReadCrmGoals = computed(() =>
     this.hasCrmPermission('CRM_GOALS_READ', 'CRM_GOALS_MANAGE'),
   );
+  /**
+   * Vista simplificada para vendedores: quien no supervisa (ver todo, asignar
+   * o reportes) trabaja sin paneles analiticos y con formularios reducidos.
+   * Los administradores nunca caen aqui porque hasCrmPermission los aprueba.
+   */
+  public readonly sellerSimpleView = computed(
+    () =>
+      !this.hasCrmPermission('CRM_VIEW_ALL', 'CRM_ASSIGN', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'),
+  );
   protected readonly dashboardNow = new Date();
 
   public prospectForm: ProspectForm = this.emptyProspectForm();
@@ -882,9 +891,9 @@ export class CrmPage {
 
   public readonly tipoActividadOptions = [
     { label: 'Llamada', value: 'LLAMADA', icon: 'pi pi-phone' },
-    { label: 'Whatsapp', value: 'WHATSAPP', icon: 'pi pi-whatsapp' },
+    { label: 'WhatsApp', value: 'WHATSAPP', icon: 'pi pi-whatsapp' },
     { label: 'Correo', value: 'CORREO', icon: 'pi pi-envelope' },
-    { label: 'Reunion', value: 'REUNION', icon: 'pi pi-calendar' },
+    { label: 'Reunión', value: 'REUNION', icon: 'pi pi-calendar' },
     { label: 'Visita', value: 'VISITA', icon: 'pi pi-map-marker' },
     { label: 'Tarea', value: 'TAREA', icon: 'pi pi-check-square' },
     { label: 'Nota', value: 'NOTA', icon: 'pi pi-file-edit' },
@@ -901,15 +910,15 @@ export class CrmPage {
   ];
 
   public readonly activityResultOptions = [
-    { label: 'Sin resultado aun', value: '', icon: 'pi pi-users' },
+    { label: 'Sin resultado aún', value: '', icon: 'pi pi-users' },
     { label: 'Contactado', value: 'CONTACTADO', icon: 'pi pi-check-circle' },
     { label: 'Interés medio confirmado', value: 'INTERESADO', icon: 'pi pi-star' },
     { label: 'Interés alto confirmado', value: 'MUY_INTERESADO', icon: 'pi pi-star-fill' },
-    { label: 'Solicito propuesta', value: 'SOLICITA_PROPUESTA', icon: 'pi pi-file-edit' },
+    { label: 'Solicitó propuesta', value: 'SOLICITA_PROPUESTA', icon: 'pi pi-file-edit' },
     { label: 'Solicitó cotización', value: 'COTIZACION_SOLICITADA', icon: 'pi pi-file' },
-    { label: 'Pidio reprogramar', value: 'REPROGRAMADO', icon: 'pi pi-calendar' },
+    { label: 'Pidió reprogramar', value: 'REPROGRAMADO', icon: 'pi pi-calendar' },
     { label: 'Queda en espera', value: 'EN_ESPERA', icon: 'pi pi-clock' },
-    { label: 'No respondio', value: 'SIN_RESPUESTA', icon: 'pi pi-ban' },
+    { label: 'No respondió', value: 'SIN_RESPUESTA', icon: 'pi pi-ban' },
     { label: 'No interesado', value: 'NO_INTERESADO', icon: 'pi pi-times-circle' },
     { label: 'Perdido / descartar', value: 'PERDIDO', icon: 'pi pi-trash' },
   ];
@@ -1546,6 +1555,11 @@ export class CrmPage {
       },
     ];
 
+    // El vendedor opera sus ventas; la postventa (expedientes de clientes)
+    // queda para quien supervisa.
+    if (this.sellerSimpleView()) {
+      return items.filter((item) => item.tab !== 'clientes');
+    }
     return items;
   });
 
@@ -2561,7 +2575,7 @@ export class CrmPage {
         count: quoted.length,
         items,
         tableTitle: 'Cotizaciones recientes',
-        tableAction: 'Nueva cotización',
+        tableAction: 'Nueva oportunidad',
         emptyMessage: 'No hay cotizaciones en seguimiento.',
         metrics: [
           {
@@ -2603,7 +2617,7 @@ export class CrmPage {
         count: negotiation.length,
         items,
         tableTitle: 'Negociaciones activas',
-        tableAction: 'Nueva negociación',
+        tableAction: 'Nueva oportunidad',
         emptyMessage: 'No hay oportunidades en negociación.',
         metrics: [
           {
@@ -2653,7 +2667,8 @@ export class CrmPage {
         items: closedClients,
         tableTitle: 'Clientes con venta cerrada',
         tableAction: 'Exportar clientes',
-        emptyMessage: 'Todavia no hay ventas cerradas con documentacion validada.',
+        tableActionIcon: 'pi pi-download',
+        emptyMessage: 'Todavía no hay ventas cerradas con documentación validada.',
         metrics: [
           {
             label: 'Clientes cerrados',
@@ -2696,7 +2711,7 @@ export class CrmPage {
       items,
       tableTitle: 'Oportunidades activas',
       tableAction: 'Nueva oportunidad',
-      emptyMessage: 'Todavia no hay oportunidades activas.',
+      emptyMessage: 'Todavía no hay oportunidades activas.',
       metrics: [
         {
           label: 'Oportunidades',
@@ -6048,10 +6063,10 @@ export class CrmPage {
     }
     if (diffMs < 0) {
       const days = Math.max(1, Math.round(absHours / 24));
-      return `Vencida hace ${days} dia(s)`;
+      return days === 1 ? 'Vencida hace 1 día' : `Vencida hace ${days} días`;
     }
     const days = Math.max(1, Math.round(absHours / 24));
-    return days === 1 ? 'Manana' : `En ${days} dias`;
+    return days === 1 ? 'Mañana' : `En ${days} días`;
   }
 
   public followUpActivityIcon(type: string | null | undefined): string {
@@ -6149,12 +6164,47 @@ export class CrmPage {
     );
   }
 
+  // Resumen del pie del modal de actividad: lo que importa de una gestion es
+  // con quien se hablo, que resultado dejo y cual es el siguiente paso.
+  public activitySummaryContact(): string {
+    const form = this.activityForm;
+    const option =
+      (form.oportunidadId
+        ? this.oportunidadOptions().find((item) => item.value === form.oportunidadId)
+        : null) ??
+      (form.prospectoId
+        ? this.prospectoOptions().find((item) => item.value === form.prospectoId)
+        : null) ??
+      (form.clienteId ? this.clienteOptions().find((item) => item.value === form.clienteId) : null);
+    return option?.label ?? 'Sin contacto seleccionado';
+  }
+
+  public activitySummaryResult(): string {
+    const value = this.activityForm.resultadoContacto || '';
+    return (
+      this.activityResultOptions.find((item) => item.value === value)?.label ?? 'Sin resultado aún'
+    );
+  }
+
+  public activitySummaryNext(): string {
+    const form = this.activityForm;
+    if (form.estadoActividad === 'REALIZADA') {
+      if (form.programarSiguiente && form.siguienteFechaProgramada) {
+        const fecha = this.shortDateTime(form.siguienteFechaProgramada);
+        return `${form.siguienteAsunto?.trim() || 'Siguiente actividad'}${fecha ? ' · ' + fecha : ''}`;
+      }
+      return 'Sin siguiente actividad programada';
+    }
+    const fecha = this.shortDateTime(form.fechaProgramada);
+    return fecha ? `Queda pendiente para el ${fecha}` : 'Queda pendiente · define fecha y hora';
+  }
+
   protected followUpNextAction(card: CommercialInboxCard): string {
     if (card.nextActivity) {
       return card.nextActivity.asunto;
     }
     if (!card.prospecto.telefono && !card.prospecto.correo) {
-      return 'Completar telefono o correo';
+      return 'Completar teléfono o correo';
     }
     return 'Programar actividad';
   }
@@ -6186,7 +6236,7 @@ export class CrmPage {
 
   protected followUpLastActivityMeta(card: CommercialInboxCard): string {
     if (!card.lastActivity) {
-      return 'Agenda la primera gestion';
+      return 'Agenda la primera gestión';
     }
     const owner = this.responsibleName(card.lastActivity.usuarioId || card.prospecto.responsableId);
     return `${this.activityRelativeLabel(this.activityEffectiveDate(card.lastActivity))} por ${owner}`;
@@ -6214,10 +6264,30 @@ export class CrmPage {
     return 'muted';
   }
 
+  /**
+   * Fecha absoluta de la proxima accion. La etiqueta relativa (Hoy, Vencida...)
+   * ya la muestra la pildora de estado: repetirla aqui duplicaba el dato.
+   */
   protected followUpNextActionDate(card: CommercialInboxCard): string {
-    return card.nextActivity
-      ? this.activityRelativeLabel(card.nextActivity.fechaProgramada)
-      : 'Sin fecha programada';
+    const formatted = this.shortDateTime(card.nextActivity?.fechaProgramada);
+    return formatted ?? 'Sin fecha programada';
+  }
+
+  private shortDateTime(value: string | null | undefined): string | null {
+    const timestamp = Date.parse(value || '');
+    if (!Number.isFinite(timestamp)) {
+      return null;
+    }
+    return new Intl.DateTimeFormat('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+      .format(new Date(timestamp))
+      .replace(',', ' ·');
   }
 
   protected followUpResponsibleId(card: CommercialInboxCard): string | null {
@@ -7561,7 +7631,10 @@ export class CrmPage {
     const nextRate = this.quoteExchangeRate(nextCurrency);
     if (currentRate === null || nextRate === null) {
       this.errorMessage.set(
-        `Configura y activa el tipo de cambio de ${currentRate === null ? currentCurrency : nextCurrency} antes de convertir la cotización.`,
+        this.exchangeRateErrorMessage(
+          currentRate === null ? currentCurrency : nextCurrency,
+          'convertir la cotización',
+        ),
       );
       return;
     }
@@ -7592,7 +7665,10 @@ export class CrmPage {
     const targetRate = this.quoteExchangeRate(this.quoteForm.moneda);
     if (sourceRate === null || targetRate === null) {
       this.errorMessage.set(
-        `Configura y activa el tipo de cambio de ${sourceRate === null ? catalogo.moneda : this.quoteForm.moneda} antes de agregar este producto.`,
+        this.exchangeRateErrorMessage(
+          sourceRate === null ? catalogo.moneda : this.quoteForm.moneda,
+          'agregar este producto',
+        ),
       );
       return;
     }
@@ -7643,6 +7719,14 @@ export class CrmPage {
     return this.quoteForm.detalles.reduce((sum, line) => sum + this.lineTotal(line), 0);
   }
 
+  /** El vendedor no puede configurar monedas: el mensaje le dice a quien acudir. */
+  private exchangeRateErrorMessage(currency: string, accion: string): string {
+    if (this.sellerSimpleView()) {
+      return `El tipo de cambio de ${currency} no está configurado. Pídele a tu administrador activarlo para ${accion}.`;
+    }
+    return `Configura y activa el tipo de cambio de ${currency} antes de ${accion}.`;
+  }
+
   private quoteExchangeRate(moneda: string): number | null {
     if (!moneda || moneda === this.tenantBaseCurrencyCode()) {
       return 1;
@@ -7679,7 +7763,10 @@ export class CrmPage {
       const targetRate = this.quoteExchangeRate(targetCurrency);
       if (sourceRate === null || targetRate === null) {
         this.errorMessage.set(
-          `Configura y activa el tipo de cambio de ${sourceRate === null ? sourceCurrency : targetCurrency} antes de cotizar este producto.`,
+          this.exchangeRateErrorMessage(
+            sourceRate === null ? sourceCurrency : targetCurrency,
+            'cotizar este producto',
+          ),
         );
         return;
       }
@@ -8915,6 +9002,15 @@ export class CrmPage {
     anchor.download = `oportunidades-${new Date().toISOString().slice(0, 10)}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  /** El boton del panel de etapa ejecuta la accion que anuncia su etiqueta. */
+  protected onStagePanelAction(tab: CrmTab): void {
+    if (tab === 'clientes') {
+      this.exportClientsCsv();
+      return;
+    }
+    this.openCreateOpportunity();
   }
 
   protected exportClientsCsv(): void {

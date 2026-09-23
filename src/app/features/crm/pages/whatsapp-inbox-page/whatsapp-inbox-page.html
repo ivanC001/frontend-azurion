@@ -161,7 +161,7 @@
                     @if (conversation.ultimaDireccion === 'SALIENTE') {
                       <i class="pi pi-check"></i>
                     }
-                    {{ conversation.ultimoMensaje || 'Conversación iniciada' }}
+                    {{ messageContentLabel(conversation.ultimoMensaje) || 'Conversación iniciada' }}
                   </span>
                   @if (conversation.noLeidos > 0) {
                     <b>{{ conversation.noLeidos }}</b>
@@ -219,6 +219,15 @@
             {{ conversation.ventanaAtencionAbierta ? 'Ventana activa' : 'Requiere plantilla' }}
           </span>
           <div class="chat-actions">
+            <button
+              class="icon-button"
+              type="button"
+              title="Completar datos del prospecto"
+              aria-label="Completar datos del prospecto"
+              (click)="openProspectEdit()"
+            >
+              <i class="pi pi-user-edit"></i>
+            </button>
             <button
               class="icon-button detail-trigger"
               type="button"
@@ -281,10 +290,13 @@
                     </small>
                   } @else if (message.tipoMensaje !== 'text') {
                     <small class="message-type"
-                      ><i class="pi pi-paperclip"></i> {{ message.tipoMensaje }}</small
+                      ><i class="pi pi-paperclip"></i>
+                      {{ messageTypeLabel(message.tipoMensaje) }}</small
                     >
                   }
-                  <p>{{ message.contenido || 'Mensaje sin contenido visible' }}</p>
+                  <p>
+                    {{ messageContentLabel(message.contenido) || 'Mensaje sin contenido visible' }}
+                  </p>
                   @if (isFailedMessage(message)) {
                     <small class="message-error">
                       <i class="pi pi-exclamation-triangle"></i>
@@ -662,6 +674,9 @@
             </div>
           </div>
           <div class="quick-actions">
+            <button type="button" (click)="openProspectEdit()">
+              <i class="pi pi-user-edit"></i><span>Editar datos</span>
+            </button>
             <button type="button" (click)="openProspect()">
               <i class="pi pi-user"></i><span>Ver perfil</span>
             </button>
@@ -846,3 +861,79 @@
     </aside>
   </div>
 </section>
+
+<p-dialog
+  header="Completar datos del prospecto"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [visible]="prospectEditOpen()"
+  (visibleChange)="prospectEditOpen.set($event)"
+  appendTo="body"
+  [baseZIndex]="7600"
+  [style]="{ width: 'min(30rem, calc(100vw - 1.5rem))' }"
+  styleClass="crm-dialog whatsapp-prospect-dialog"
+>
+  <form class="whatsapp-prospect-form" (ngSubmit)="saveProspectEdit()">
+    @if (prospectEditLoading()) {
+      <p class="whatsapp-prospect-loading">
+        <i class="pi pi-spin pi-spinner"></i> Cargando los datos actuales...
+      </p>
+    }
+    <label>
+      Nombre completo <span class="required">*</span>
+      <input
+        pInputText
+        name="wpNombre"
+        [(ngModel)]="prospectEditForm.nombre"
+        placeholder="Nombres y apellidos del contacto"
+      />
+    </label>
+    <label>
+      Teléfono
+      <input pInputText name="wpTelefono" [(ngModel)]="prospectEditForm.telefono" />
+    </label>
+    <label>
+      Correo
+      <input
+        pInputText
+        type="email"
+        name="wpCorreo"
+        [(ngModel)]="prospectEditForm.correo"
+        placeholder="correo@cliente.com"
+      />
+    </label>
+    <div class="whatsapp-prospect-doc">
+      <label>
+        Tipo de documento
+        <select name="wpTipoDoc" [(ngModel)]="prospectEditForm.tipoDocumento">
+          @for (tipo of prospectDocumentTypes; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Número de documento
+        <input pInputText name="wpNumeroDoc" [(ngModel)]="prospectEditForm.numeroDocumento" />
+      </label>
+    </div>
+    <small class="whatsapp-prospect-note">
+      <i class="pi pi-info-circle"></i>
+      Estos datos acompañan al prospecto en seguimiento, oportunidades y cotizaciones.
+    </small>
+  </form>
+  <ng-template pTemplate="footer">
+    <button type="button" class="whatsapp-prospect-cancel" (click)="prospectEditOpen.set(false)">
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="whatsapp-prospect-save"
+      [disabled]="prospectEditSaving()"
+      (click)="saveProspectEdit()"
+    >
+      <i [class]="prospectEditSaving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+      Guardar datos
+    </button>
+  </ng-template>
+</p-dialog>

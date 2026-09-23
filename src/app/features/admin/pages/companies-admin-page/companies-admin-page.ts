@@ -151,7 +151,7 @@ export class CompaniesAdminPage {
   protected readonly countryOptions = [
     {
       code: 'PE',
-      name: 'Peru',
+      name: 'Perú',
       document: 'RUC',
       currency: 'PEN',
       symbol: 'S/',
@@ -214,10 +214,10 @@ export class CompaniesAdminPage {
     },
     {
       code: 'ES',
-      name: 'Espana',
+      name: 'España',
       document: 'NIF',
       currency: 'EUR',
-      symbol: 'EUR',
+      symbol: '€',
       timezone: 'Europe/Madrid',
       language: 'es-ES',
     },
@@ -232,7 +232,7 @@ export class CompaniesAdminPage {
     },
     {
       code: 'MX',
-      name: 'Mexico',
+      name: 'México',
       document: 'RFC',
       currency: 'MXN',
       symbol: '$',
@@ -244,7 +244,7 @@ export class CompaniesAdminPage {
       name: 'Reino Unido',
       document: 'VAT',
       currency: 'GBP',
-      symbol: 'GBP',
+      symbol: '£',
       timezone: 'Europe/London',
       language: 'en-GB',
     },
@@ -468,7 +468,7 @@ export class CompaniesAdminPage {
       tipoDocumentoFiscal: 'RUC',
       nombreComercial: '',
       paisCodigo: 'PE',
-      paisNombre: 'Peru',
+      paisNombre: 'Perú',
       monedaCodigo: 'PEN',
       monedaSimbolo: 'S/',
       zonaHoraria: 'America/Lima',

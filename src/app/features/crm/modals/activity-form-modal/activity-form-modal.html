@@ -165,42 +165,18 @@
           <h3>
             <span><i class="pi pi-phone"></i></span>Actividad
           </h3>
-          @if (!host().activityForm.id) {
-            <nav class="activity-type-picker" aria-label="Tipo rápido de actividad">
-              @for (option of host().tipoActividadOptions.slice(0, 4); track option.value) {
-                <button
-                  type="button"
-                  [class.is-active]="host().activityForm.tipoActividad === option.value"
-                  [title]="option.label"
-                  [attr.aria-label]="option.label"
-                  (click)="host().activityForm.tipoActividad = option.value"
-                >
-                  <i [class]="option.icon"></i>
-                </button>
-              }
-            </nav>
-          }
+          <nav class="activity-type-picker" aria-label="Tipo de actividad">
+            @for (option of host().tipoActividadOptions; track option.value) {
+              <button
+                type="button"
+                [class.is-active]="host().activityForm.tipoActividad === option.value"
+                (click)="host().activityForm.tipoActividad = option.value"
+              >
+                <i [class]="option.icon"></i><span>{{ option.label }}</span>
+              </button>
+            }
+          </nav>
           <div class="dialog-grid dialog-grid--activity">
-            <label
-              >Tipo <span class="required">*</span
-              ><p-select
-                name="actTipo"
-                styleClass="activity-mini-select"
-                panelStyleClass="activity-mini-panel"
-                [options]="host().tipoActividadOptions"
-                [(ngModel)]="host().activityForm.tipoActividad"
-                appendTo="body"
-                ><ng-template pTemplate="selectedItem" let-option
-                  ><span class="activity-select-option"
-                    ><i [class]="option?.icon"></i>{{ option?.label }}</span
-                  ></ng-template
-                ><ng-template pTemplate="item" let-option
-                  ><span class="activity-select-option"
-                    ><i [class]="option.icon"></i>{{ option.label }}</span
-                  ></ng-template
-                ></p-select
-              ></label
-            >
             <label
               >Estado <span class="required">*</span
               ><p-select
@@ -338,14 +314,9 @@
           }
           @if (!host().activityForm.id) {
             <footer class="activity-create-summary">
-              <span
-                ><i [class]="host().activityTypeIcon()"></i>{{ host().activityTypeLabel() }}</span
-              >
-              <span><i class="pi pi-clock"></i>{{ host().activityStateLabel() }}</span>
-              <span
-                ><i class="pi pi-calendar"></i
-                >{{ host().activityForm.fechaProgramada | date: 'dd/MM/yyyy HH:mm' }}</span
-              >
+              <span><i class="pi pi-user"></i>{{ host().activitySummaryContact() }}</span>
+              <span><i class="pi pi-bullseye"></i>{{ host().activitySummaryResult() }}</span>
+              <span><i class="pi pi-calendar"></i>{{ host().activitySummaryNext() }}</span>
             </footer>
           }
         </section>

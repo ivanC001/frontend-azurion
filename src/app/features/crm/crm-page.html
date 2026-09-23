@@ -387,7 +387,7 @@
         [canDelete]="canDeleteCrmProspects()"
         [loading]="loading()"
         [actionId]="actionId()"
-        [summaryCards]="prospectSummaryCards()"
+        [summaryCards]="sellerSimpleView() ? [] : prospectSummaryCards()"
         [rows]="prospectPageRows()"
         [filtersVisible]="showProspectFilters()"
         [query]="query()"
@@ -513,10 +513,10 @@
           <ng-template pTemplate="header">
             <tr>
               <th class="catalog-col-offer">Oferta</th>
-              <th class="catalog-col-type">Categoria</th>
+              <th class="catalog-col-type">Categoría</th>
               <th class="catalog-col-price">Precio ref.</th>
               <th class="catalog-col-usage">Uso CRM</th>
-              <th class="catalog-col-publication">Publicacion</th>
+              <th class="catalog-col-publication">Publicación</th>
               <th class="catalog-col-access">Enlace seguro</th>
               <th class="catalog-col-status">Estado</th>
               <th>Acciones</th>
@@ -531,7 +531,7 @@
                   </span>
                   <div>
                     <strong>{{ item.nombre }}</strong>
-                    <span>{{ item.descripcion || 'Sin descripcion comercial' }}</span>
+                    <span>{{ item.descripcion || 'Sin descripción comercial' }}</span>
                   </div>
                 </div>
                 <div class="catalog-attribute-chips">
@@ -574,7 +574,7 @@
                 </div>
                 <div class="catalog-conversion">
                   <span><span [style.width.%]="catalogConversionRate(item)"></span></span>
-                  <small>{{ catalogConversionRate(item) }}% conversion a oportunidad</small>
+                  <small>{{ catalogConversionRate(item) }}% conversión a oportunidad</small>
                 </div>
               </td>
               <td class="catalog-publication-cell">
@@ -619,8 +619,8 @@
                   <button
                     type="button"
                     class="catalog-row-action catalog-row-action--preview"
-                    title="Abrir vista publica"
-                    aria-label="Abrir vista publica"
+                    title="Abrir vista pública"
+                    aria-label="Abrir vista pública"
                     [disabled]="!catalogIsPublic(item)"
                     (click)="openCatalogLandingPreview(item)"
                   >
@@ -1554,7 +1554,7 @@
 
     @if (activeTab() === 'oportunidades') {
       <app-opportunities-page
-        [summaryCards]="opportunitySummaryCards()"
+        [summaryCards]="sellerSimpleView() ? [] : opportunitySummaryCards()"
         [rows]="opportunityPageRows()"
         [totalItems]="opportunityListItems().length"
         [pageMeta]="opportunityPageMeta()"
@@ -1599,17 +1599,19 @@
             <strong>{{ panel.count }}</strong>
           </header>
 
-          <section class="crm-stage-metrics" aria-label="Metricas comerciales">
-            @for (metric of panel.metrics; track metric.label) {
-              <article [class.metric-danger]="metric.danger">
-                <span>{{ metric.label }}</span>
-                <strong>{{ metric.value }}</strong>
-                <p>
-                  <b>{{ metric.delta }}</b> {{ metric.detail }}
-                </p>
-              </article>
-            }
-          </section>
+          @if (!sellerSimpleView()) {
+            <section class="crm-stage-metrics" aria-label="Métricas comerciales">
+              @for (metric of panel.metrics; track metric.label) {
+                <article [class.metric-danger]="metric.danger">
+                  <span>{{ metric.label }}</span>
+                  <strong>{{ metric.value }}</strong>
+                  <p>
+                    <b>{{ metric.delta }}</b> {{ metric.detail }}
+                  </p>
+                </article>
+              }
+            </section>
+          }
 
           <section class="crm-stage-body">
             <article class="crm-stage-table-panel">
@@ -1705,9 +1707,9 @@
               <button
                 type="button"
                 class="crm-stage-create-button"
-                (click)="openCreateOpportunity()"
+                (click)="onStagePanelAction(panel.tab)"
               >
-                <i class="pi pi-plus"></i>
+                <i [class]="panel.tableActionIcon || 'pi pi-plus'"></i>
                 {{ panel.tableAction }}
               </button>
             </article>
@@ -1757,17 +1759,19 @@
           <strong>{{ quoteDashboardItems().length }}</strong>
         </header>
 
-        <section class="quotes-metrics" aria-label="Resumen de cotizaciones">
-          @for (metric of quoteDashboardMetrics(); track metric.label) {
-            <article>
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
-              <p>
-                <b>{{ metric.delta }}</b> {{ metric.detail }}
-              </p>
-            </article>
-          }
-        </section>
+        @if (!sellerSimpleView()) {
+          <section class="quotes-metrics" aria-label="Resumen de cotizaciones">
+            @for (metric of quoteDashboardMetrics(); track metric.label) {
+              <article>
+                <span>{{ metric.label }}</span>
+                <strong>{{ metric.value }}</strong>
+                <p>
+                  <b>{{ metric.delta }}</b> {{ metric.detail }}
+                </p>
+              </article>
+            }
+          </section>
+        }
 
         <section class="quotes-content">
           <article class="quotes-list-card">
@@ -1824,7 +1828,7 @@
 
         <button type="button" class="quotes-create-button" (click)="openCreateOpportunity()">
           <i class="pi pi-plus"></i>
-          Nueva cotización
+          Nueva oportunidad
         </button>
       </section>
     }
@@ -1842,17 +1846,19 @@
           <strong>{{ negotiationDashboardItems().length }}</strong>
         </header>
 
-        <section class="quotes-metrics negotiation-metrics" aria-label="Resumen de negociación">
-          @for (metric of negotiationDashboardMetrics(); track metric.label) {
-            <article>
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
-              <p>
-                <b>{{ metric.delta }}</b> {{ metric.detail }}
-              </p>
-            </article>
-          }
-        </section>
+        @if (!sellerSimpleView()) {
+          <section class="quotes-metrics negotiation-metrics" aria-label="Resumen de negociación">
+            @for (metric of negotiationDashboardMetrics(); track metric.label) {
+              <article>
+                <span>{{ metric.label }}</span>
+                <strong>{{ metric.value }}</strong>
+                <p>
+                  <b>{{ metric.delta }}</b> {{ metric.detail }}
+                </p>
+              </article>
+            }
+          </section>
+        }
 
         <section class="quotes-content negotiation-content">
           <article class="quotes-list-card">
@@ -2034,7 +2040,7 @@
     @if (activeTab() === 'embudo') {
       <app-pipeline-page
         [query]="query()"
-        [summaryCards]="pipelineSummaryCards()"
+        [summaryCards]="sellerSimpleView() ? [] : pipelineSummaryCards()"
         [columns]="pipelinePageColumns()"
         [baseCurrencySymbol]="tenantBaseCurrencySymbol()"
         (queryChange)="updateCrmQuery($event)"

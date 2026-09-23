@@ -128,6 +128,22 @@ export class AppLayout {
   });
 
   protected readonly session = this.authSession.currentSession;
+
+  /**
+   * Vendedor CRM sin permisos de supervision: navega solo lo operativo.
+   * Debe coincidir con sellerSimpleView de CrmPage.
+   */
+  private isCrmSellerOnly(): boolean {
+    const session = this.session();
+    if (!session || session.adminEmpresa || session.adminGeneral) {
+      return false;
+    }
+    const permissions = session.permissions ?? [];
+    return !['CRM_VIEW_ALL', 'CRM_ASSIGN', 'CRM_REPORTS_READ', 'CRM_REPORTS_TEAM'].some(
+      (permission) => permissions.includes(permission),
+    );
+  }
+
   protected readonly isGeneralAdmin = computed(() => {
     const session = this.session();
     if (session?.adminGeneral) {
@@ -1003,13 +1019,18 @@ export class AppLayout {
             anyPermission: ['CRM_OPPORTUNITIES_READ', 'CRM_QUOTES_CREATE'],
             module: 'CRM',
           },
-          {
-            label: 'Clientes',
-            route: '/admin/crm/clientes',
-            icon: 'pi-users',
-            anyPermission: ['CRM_OPPORTUNITIES_READ'],
-            module: 'CRM',
-          },
+          // La postventa (expedientes de clientes) es de quien supervisa.
+          ...(this.isCrmSellerOnly()
+            ? []
+            : [
+                {
+                  label: 'Clientes',
+                  route: '/admin/crm/clientes',
+                  icon: 'pi-users',
+                  anyPermission: ['CRM_OPPORTUNITIES_READ'],
+                  module: 'CRM',
+                },
+              ]),
           {
             label: 'Seguimiento de pagos',
             route: '/admin/crm/seguimiento-pagos',

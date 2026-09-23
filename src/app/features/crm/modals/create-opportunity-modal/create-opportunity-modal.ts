@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  input,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -31,4 +37,11 @@ import type { CrmPage } from '../../crm-page';
 })
 export class CreateOpportunityModal {
   readonly host = input.required<CrmPage>();
+
+  /** Para el vendedor, los campos con valor por defecto quedan en "Ajustes avanzados". */
+  protected readonly advancedOpen = signal(false);
+
+  protected showAdvanced(): boolean {
+    return !this.host().sellerSimpleView() || this.advancedOpen();
+  }
 }

@@ -554,7 +554,9 @@ export interface NotaFiscalRecord extends FacturadorDocumentStatus {
 }
 
 type VentasListPayload =
-  VentaRecord[] | { readonly items?: readonly VentaRecord[]; readonly total?: number } | null;
+  | VentaRecord[]
+  | { readonly items?: readonly VentaRecord[]; readonly total?: number }
+  | null;
 
 export interface CategoriaProducto {
   readonly id: number;
@@ -922,6 +924,7 @@ export interface CreateUsuarioTenantRequest {
   readonly username: string;
   readonly password: string;
   readonly nombres: string;
+  readonly apellidos?: string | null;
   readonly email?: string | null;
   readonly rolCodigos?: string[];
   readonly sucursalIds?: number[];
@@ -971,6 +974,8 @@ export interface CreatePermisoRequest {
 }
 export interface UpdateUsuarioTenantRequest {
   readonly nombres: string;
+  /** Ausente = sin cambio; cadena vacia limpia el valor guardado. */
+  readonly apellidos?: string | null;
   readonly email?: string | null;
   readonly activo?: boolean;
   readonly sucursalIds?: number[];

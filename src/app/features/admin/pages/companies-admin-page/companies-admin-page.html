@@ -89,7 +89,7 @@
             type="search"
             [value]="searchTerm()"
             (input)="setSearch($event)"
-            placeholder="Buscar por RUC, nombre o tenant..."
+            placeholder="Buscar por documento, nombre o tenant..."
           />
         </span>
         <p-select
@@ -128,7 +128,10 @@
             <div class="company-cell-primary">
               <strong class="company-name">{{ summary.empresa.razonSocial }}</strong>
               <div class="company-tax-info">
-                <span class="tax-tag">RUC {{ summary.empresa.ruc }}</span>
+                <span class="tax-tag"
+                  >{{ summary.empresa.tipoDocumentoFiscal || 'RUC' }}
+                  {{ summary.empresa.ruc }}</span
+                >
                 @if (summary.empresa.nombreComercial) {
                   <span class="commercial-name">&bull; {{ summary.empresa.nombreComercial }}</span>
                 }
@@ -179,7 +182,7 @@
               title="Ver módulos contratados en el detalle"
             >
               <i class="pi pi-th-large"></i>
-              <span>{{ summary.modulosActivos }} módulos</span>
+              <span>{{ summary.moduloCodigos.length }} módulos</span>
             </button>
           </td>
           <td>
@@ -272,9 +275,7 @@
             </div>
             <div>
               <dt>Documento</dt>
-              <dd>
-                {{ summary.empresa.tipoDocumentoFiscal || 'Fiscal' }} {{ summary.empresa.ruc }}
-              </dd>
+              <dd>{{ summary.empresa.tipoDocumentoFiscal || 'RUC' }} {{ summary.empresa.ruc }}</dd>
             </div>
             <div>
               <dt>País</dt>
@@ -407,12 +408,8 @@
               </div>
               <div>
                 <dt>Precio mensual</dt>
-                <dd>
-                  {{
-                    summary.precioMensual
-                      | currency: summary.empresa.monedaCodigo || 'PEN' : 'symbol-narrow' : '1.2-2'
-                  }}
-                </dd>
+                <!-- El tarifario de planes es de la plataforma (soles), no de la moneda del tenant. -->
+                <dd>{{ summary.precioMensual | currency: 'PEN' : 'symbol-narrow' : '1.2-2' }}</dd>
               </div>
               <div>
                 <dt>Estado</dt>

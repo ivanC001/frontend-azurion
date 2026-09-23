@@ -41,7 +41,10 @@
       <div>
         <h2>Tenant de trabajo</h2>
         @if (selectedEmpresa(); as empresa) {
-          <p>{{ empresa.razonSocial }} | RUC {{ empresa.ruc }} | {{ empresa.tenantId }}</p>
+          <p>
+            {{ empresa.razonSocial }} | {{ empresa.tipoDocumentoFiscal || 'RUC' }}
+            {{ empresa.ruc }} | {{ empresa.tenantId }}
+          </p>
         } @else {
           <p>Selecciona una empresa para administrar usuarios y roles.</p>
         }
@@ -262,7 +265,21 @@
     </label>
     <label>
       Nombres
-      <input pInputText name="nombres" [(ngModel)]="form.nombres" placeholder="Nombre completo" />
+      <input
+        pInputText
+        name="nombres"
+        [(ngModel)]="form.nombres"
+        placeholder="Nombres del usuario"
+      />
+    </label>
+    <label>
+      Apellidos
+      <input
+        pInputText
+        name="apellidos"
+        [(ngModel)]="form.apellidos"
+        placeholder="Apellidos del usuario"
+      />
     </label>
     <label>
       Email
@@ -420,7 +437,16 @@
         pInputText
         name="editNombres"
         [(ngModel)]="editForm.nombres"
-        placeholder="Nombre completo"
+        placeholder="Nombres del usuario"
+      />
+    </label>
+    <label>
+      Apellidos
+      <input
+        pInputText
+        name="editApellidos"
+        [(ngModel)]="editForm.apellidos"
+        placeholder="Apellidos del usuario"
       />
     </label>
     <label>

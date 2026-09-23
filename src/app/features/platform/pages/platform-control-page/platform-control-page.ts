@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -23,7 +24,15 @@ import { UsuarioTenant } from '@core/api/catalog-api.types';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-platform-control-page',
-  imports: [FormsModule, ButtonModule, InputTextModule, SelectModule, TableModule, TagModule],
+  imports: [
+    DatePipe,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule,
+    TableModule,
+    TagModule,
+  ],
   templateUrl: './platform-control-page.html',
   styleUrl: './platform-control-page.scss',
 })

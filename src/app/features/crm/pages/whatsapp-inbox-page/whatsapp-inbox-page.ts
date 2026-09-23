@@ -1,4 +1,6 @@
 import { DatePipe } from '@angular/common';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -47,13 +49,140 @@ interface QuoteSendOutcome {
 @Component({
   selector: 'app-whatsapp-inbox-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, WhatsappQuickRepliesComponent],
+  imports: [DatePipe, DialogModule, FormsModule, InputTextModule, WhatsappQuickRepliesComponent],
   templateUrl: './whatsapp-inbox-page.html',
   styleUrl: './whatsapp-inbox-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WhatsappInboxPage implements OnInit {
   protected readonly quoteCode = quoteCode;
+
+  private static readonly MESSAGE_TYPE_LABELS: Record<string, string> = {
+    text: 'Texto',
+    template: 'Plantilla',
+    image: 'Imagen',
+    audio: 'Nota de voz',
+    video: 'Video',
+    document: 'Documento',
+    sticker: 'Sticker',
+    location: 'Ubicación',
+    contacts: 'Contacto compartido',
+    reaction: 'Reacción',
+    button: 'Respuesta de botón',
+    interactive: 'Respuesta de botón',
+    order: 'Pedido del catálogo',
+    unsupported: 'Contenido no soportado',
+    unknown: 'Contenido no soportado',
+  };
+
+  protected messageTypeLabel(tipo: string | null | undefined): string {
+    const key = (tipo || '').trim().toLowerCase();
+    return WhatsappInboxPage.MESSAGE_TYPE_LABELS[key] || tipo || 'Mensaje';
+  }
+
+  /** Traduce los marcadores antiguos "[Mensaje <tipo>]" guardados antes del arreglo. */
+  protected messageContentLabel(contenido: string | null | undefined): string {
+    const raw = (contenido || '').trim();
+    const legacy = /^\[Mensaje (\w+)\]$/.exec(raw);
+    if (legacy) {
+      const type = legacy[1].toLowerCase();
+      return type === 'unsupported' || type === 'unknown'
+        ? 'Contenido no soportado: revísalo en el teléfono del negocio'
+        : `[${this.messageTypeLabel(type)}]`;
+    }
+    return raw;
+  }
+
+  // --- Edición rápida del prospecto sin salir de la bandeja ---
+  protected readonly prospectEditOpen = signal(false);
+  protected readonly prospectEditSaving = signal(false);
+  protected readonly prospectEditLoading = signal(false);
+  protected readonly prospectDocumentTypes = ['DNI', 'RUC', 'CE', 'PASAPORTE', 'OTRO'];
+  protected prospectEditForm = {
+    nombre: '',
+    telefono: '',
+    correo: '',
+    tipoDocumento: 'DNI',
+    numeroDocumento: '',
+  };
+
+  protected openProspectEdit(): void {
+    const conversation = this.selectedConversation();
+    if (!conversation) {
+      return;
+    }
+    this.prospectEditForm = {
+      nombre: conversation.nombre || '',
+      telefono: conversation.telefono || '',
+      correo: conversation.correo || '',
+      tipoDocumento: 'DNI',
+      numeroDocumento: '',
+    };
+    this.prospectEditOpen.set(true);
+    this.prospectEditLoading.set(true);
+    // Documento y correo no viajan completos en la conversación: se cargan del prospecto.
+    this.api.getCrmProspecto(conversation.prospectoId).subscribe({
+      next: (prospecto) => {
+        this.prospectEditLoading.set(false);
+        this.prospectEditForm = {
+          nombre: prospecto.nombre || this.prospectEditForm.nombre,
+          telefono: prospecto.telefono || this.prospectEditForm.telefono,
+          correo: prospecto.correo || this.prospectEditForm.correo,
+          tipoDocumento: prospecto.tipoDocumento || 'DNI',
+          numeroDocumento: prospecto.numeroDocumento || '',
+        };
+      },
+      error: () => this.prospectEditLoading.set(false),
+    });
+  }
+
+  protected saveProspectEdit(): void {
+    const conversation = this.selectedConversation();
+    if (!conversation || this.prospectEditSaving()) {
+      return;
+    }
+    const nombre = this.prospectEditForm.nombre.trim();
+    if (!nombre) {
+      this.errorMessage.set('Indica el nombre del prospecto.');
+      return;
+    }
+    this.prospectEditSaving.set(true);
+    this.api
+      .updateCrmProspecto(conversation.prospectoId, {
+        nombre,
+        telefono: this.prospectEditForm.telefono.trim(),
+        correo: this.prospectEditForm.correo.trim(),
+        tipoDocumento: this.prospectEditForm.tipoDocumento,
+        numeroDocumento: this.prospectEditForm.numeroDocumento.trim(),
+      })
+      .subscribe({
+        next: (prospecto) => {
+          this.prospectEditSaving.set(false);
+          this.prospectEditOpen.set(false);
+          this.conversations.update((items) =>
+            items.map((item) =>
+              item.prospectoId === conversation.prospectoId
+                ? {
+                    ...item,
+                    nombre: prospecto.nombre || nombre,
+                    telefono: prospecto.telefono ?? item.telefono,
+                    correo: prospecto.correo ?? item.correo,
+                  }
+                : item,
+            ),
+          );
+          this.successMessage.set(
+            'Datos del prospecto actualizados: ya entra a seguimiento con su información completa.',
+          );
+        },
+        error: (error: unknown) => {
+          this.prospectEditSaving.set(false);
+          this.errorMessage.set(
+            this.readError(error, 'No se pudieron guardar los datos del prospecto.'),
+          );
+        },
+      });
+  }
 
   private readonly api = inject(CrmApiService);
   private readonly session = inject(AuthSessionService);

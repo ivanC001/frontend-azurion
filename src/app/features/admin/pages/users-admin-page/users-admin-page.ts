@@ -28,6 +28,7 @@ interface UsuarioForm {
   username: string;
   password: string;
   nombres: string;
+  apellidos: string;
   email: string;
   roles: string[];
   sucursalIds: number[];
@@ -37,6 +38,7 @@ interface EditUsuarioForm {
   id: number | null;
   username: string;
   nombres: string;
+  apellidos: string;
   email: string;
   activo: boolean;
   roles: string[];
@@ -95,6 +97,7 @@ export class UsersAdminPage {
     username: '',
     password: '',
     nombres: '',
+    apellidos: '',
     email: '',
     roles: this.session.currentSession()?.adminGeneral ? ['ADMIN_EMPRESA'] : [],
     sucursalIds: [],
@@ -103,6 +106,7 @@ export class UsersAdminPage {
     id: null,
     username: '',
     nombres: '',
+    apellidos: '',
     email: '',
     activo: true,
     roles: [],
@@ -130,6 +134,7 @@ export class UsersAdminPage {
       (user) =>
         user.username.toLowerCase().includes(term) ||
         user.nombres.toLowerCase().includes(term) ||
+        (user.apellidos || '').toLowerCase().includes(term) ||
         (user.email || '').toLowerCase().includes(term) ||
         user.roles.some((role) => role.toLowerCase().includes(term)),
     );
@@ -235,8 +240,13 @@ export class UsersAdminPage {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    if (!this.form.username.trim() || !this.form.password || !this.form.nombres.trim()) {
-      this.errorMessage.set('Completa username, password y nombres.');
+    if (
+      !this.form.username.trim() ||
+      !this.form.password ||
+      !this.form.nombres.trim() ||
+      !this.form.apellidos.trim()
+    ) {
+      this.errorMessage.set('Completa username, password, nombres y apellidos.');
       return;
     }
     if (this.form.password.length < 8) {
@@ -274,6 +284,7 @@ export class UsersAdminPage {
           username: this.form.username.trim(),
           password: this.form.password,
           nombres: this.form.nombres.trim(),
+          apellidos: this.form.apellidos.trim(),
           email: this.form.email.trim() || null,
           rolCodigos: this.form.roles.map((role) => role.toUpperCase()),
           sucursalIds: this.form.sucursalIds,
@@ -289,6 +300,7 @@ export class UsersAdminPage {
             username: '',
             password: '',
             nombres: '',
+            apellidos: '',
             email: '',
             roles: [],
             sucursalIds: [],
@@ -418,6 +430,7 @@ export class UsersAdminPage {
       id: user.id,
       username: user.username,
       nombres: user.nombres,
+      apellidos: user.apellidos || '',
       email: user.email || '',
       activo: user.activo,
       roles: [...user.roles],
@@ -517,8 +530,8 @@ export class UsersAdminPage {
       return;
     }
 
-    if (!this.editForm.id || !this.editForm.nombres.trim()) {
-      this.errorMessage.set('Completa los datos obligatorios para editar.');
+    if (!this.editForm.id || !this.editForm.nombres.trim() || !this.editForm.apellidos.trim()) {
+      this.errorMessage.set('Completa los nombres y apellidos del usuario.');
       return;
     }
 
@@ -537,6 +550,7 @@ export class UsersAdminPage {
         this.editForm.id,
         {
           nombres: this.editForm.nombres.trim(),
+          apellidos: this.editForm.apellidos.trim(),
           email: this.editForm.email.trim() || null,
           activo: this.editForm.activo,
           sucursalIds: this.editForm.sucursalIds,
