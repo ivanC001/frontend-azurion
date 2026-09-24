@@ -4904,17 +4904,13 @@ export class CrmPage {
     if (client) {
       this.clientCompletionEditTarget.set('CLIENT');
       const tipoPersona =
-        client.tipoDocumento === '6' ||
-        client.tipoDocumento === 'RFC' ||
-        client.tipoDocumento === 'NIT' ||
-        client.tipoDocumento === 'RUT' ||
-        client.tipoDocumento === 'EIN'
-          ? 'JURIDICA'
-          : 'NATURAL';
+        this.isCompanyDocumentType(client.tipoDocumento) ? 'JURIDICA' : 'NATURAL';
+      const paisCodigo = this.clientCompletionCountryCode(prospect, client);
       this.clientCompletionForm = {
-        paisCodigo: prospect?.paisCodigo || 'PE',
+        paisCodigo,
         tipoPersona,
-        tipoDocumento: client.tipoDocumento || (tipoPersona === 'JURIDICA' ? '6' : '1'),
+        tipoDocumento:
+          client.tipoDocumento || this.defaultDocumentType(paisCodigo, tipoPersona),
         numeroDocumento: client.numeroDocumento || '',
         nombre: tipoPersona === 'JURIDICA' ? '' : client.nombre || '',
         razonSocial: tipoPersona === 'JURIDICA' ? client.nombre || '' : '',
@@ -4930,12 +4926,11 @@ export class CrmPage {
     if (prospect) {
       this.clientCompletionEditTarget.set('PROSPECT');
       const tipoPersona = this.normalizeProspectPersonType(prospect.tipoPersona);
+      const paisCodigo = this.clientCompletionCountryCode(prospect, null);
       this.clientCompletionForm = {
-        paisCodigo: prospect.paisCodigo || 'PE',
+        paisCodigo,
         tipoPersona,
-        tipoDocumento:
-          prospect.tipoDocumento ||
-          (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
+        tipoDocumento: prospect.tipoDocumento || this.defaultDocumentType(paisCodigo, tipoPersona),
         numeroDocumento: prospect.numeroDocumento || '',
         nombre: prospect.nombre || '',
         razonSocial: prospect.razonSocial || '',
@@ -5045,25 +5040,22 @@ export class CrmPage {
     }
 
     const tipoPersona = client
-      ? client.tipoDocumento === '6' ||
-        client.tipoDocumento === 'RFC' ||
-        client.tipoDocumento === 'NIT' ||
-        client.tipoDocumento === 'RUT' ||
-        client.tipoDocumento === 'EIN'
+      ? this.isCompanyDocumentType(client.tipoDocumento)
         ? 'JURIDICA'
         : 'NATURAL'
       : this.normalizeProspectPersonType(prospect?.tipoPersona);
+    const paisCodigo = this.clientCompletionCountryCode(prospect, client);
     this.selectedOpportunity.set(item);
     this.clientCompletionOpportunityId.set(item.id);
     this.clientCompletionAction.set(action);
     this.clientCompletionEditTarget.set(client ? 'CLIENT' : 'PROSPECT');
     this.clientCompletionForm = {
-      paisCodigo: prospect?.paisCodigo || 'PE',
+      paisCodigo,
       tipoPersona,
       tipoDocumento:
         client?.tipoDocumento ||
         prospect?.tipoDocumento ||
-        (tipoPersona === 'JURIDICA' ? '6' : tipoPersona === 'NATURAL' ? '1' : ''),
+        this.defaultDocumentType(paisCodigo, tipoPersona),
       numeroDocumento: client?.numeroDocumento || prospect?.numeroDocumento || '',
       nombre: client?.nombre || prospect?.nombre || '',
       razonSocial:
@@ -5131,7 +5123,7 @@ export class CrmPage {
       return;
     }
 
-    const countryCode = form.paisCodigo || prospect?.paisCodigo || 'PE';
+    const countryCode = form.paisCodigo || this.clientCompletionCountryCode(prospect, client);
     const personType: ProspectPersonType = form.tipoPersona === 'JURIDICA' ? 'JURIDICA' : 'NATURAL';
     const availableDocs = prospectDocuments(countryCode, personType);
     const selectedDoc = availableDocs.find((d) => d.value === form.tipoDocumento);
@@ -5250,7 +5242,7 @@ export class CrmPage {
     if (!['NATURAL', 'JURIDICA'].includes(prospect.tipoPersona)) {
       return false;
     }
-    const countryCode = prospect.paisCodigo || 'PE';
+    const countryCode = prospect.paisCodigo || this.defaultProspectCountryCode();
     const personType = prospect.tipoPersona as ProspectPersonType;
     const availableDocs = prospectDocuments(countryCode, personType);
     const selectedDoc = availableDocs.find((d) => d.value === prospect.tipoDocumento);
@@ -5315,6 +5307,36 @@ export class CrmPage {
   private defaultProspectCountryCode(): string {
     const configuredCountry = this.auth.currentSession()?.empresa?.paisCodigo;
     return prospectCountry(configuredCountry).code;
+  }
+
+  /** País del contacto: prospecto directo, prospecto convertido en el cliente o país de la empresa. */
+  private clientCompletionCountryCode(
+    prospect: CrmProspecto | null | undefined,
+    client: Cliente | null | undefined,
+  ): string {
+    const linkedProspect =
+      prospect ??
+      (client ? this.prospectos().find((item) => item.clienteId === client.id) : undefined);
+    return linkedProspect?.paisCodigo || this.defaultProspectCountryCode();
+  }
+
+  private defaultDocumentType(countryCode: string, personType: string): string {
+    if (personType !== 'NATURAL' && personType !== 'JURIDICA') {
+      return '';
+    }
+    return prospectDocuments(countryCode, personType)[0]?.value ?? '';
+  }
+
+  private isCompanyDocumentType(value: string | null | undefined): boolean {
+    const normalized = String(value || '')
+      .trim()
+      .toUpperCase();
+    return (
+      !!normalized &&
+      PROSPECT_COUNTRIES.some((country) =>
+        country.companyDocuments.some((doc) => doc.value === normalized),
+      )
+    );
   }
 
   protected markWon(item: CrmOportunidad): void {
@@ -8702,7 +8724,8 @@ export class CrmPage {
   public canSendQuoteByWhatsapp(item: Cotizacion): boolean {
     const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
     return Boolean(
-      opportunity?.prospectoId && this.onlyDigits(this.opportunityContactPhone(opportunity)),
+      this.whatsappProspectIdForOpportunity(opportunity) &&
+        this.onlyDigits(this.opportunityContactPhone(opportunity!)),
     );
   }
 
@@ -8718,7 +8741,7 @@ export class CrmPage {
       }
       this.clientCompletionQuote.set(null);
     }
-    const prospectId = Number(opportunity?.prospectoId || 0);
+    const prospectId = this.whatsappProspectIdForOpportunity(opportunity);
     if (
       !prospectId ||
       !this.onlyDigits(opportunity ? this.opportunityContactPhone(opportunity) : null)
@@ -9534,7 +9557,10 @@ export class CrmPage {
   }
 
   public opportunityWhatsappAvailable(item: CrmOportunidad): boolean {
-    return Boolean(item.prospectoId && this.onlyDigits(this.opportunityContactPhone(item)));
+    return Boolean(
+      this.whatsappProspectIdForOpportunity(item) &&
+        this.onlyDigits(this.opportunityContactPhone(item)),
+    );
   }
 
   private pipelineStageIcon(stage: string): string {
@@ -9602,7 +9628,7 @@ export class CrmPage {
     if (this.isOpportunityWhatsappSending(item.id)) {
       return;
     }
-    const prospectId = Number(item.prospectoId || 0);
+    const prospectId = this.whatsappProspectIdForOpportunity(item);
     if (!prospectId || !this.onlyDigits(this.opportunityContactPhone(item))) {
       this.errorMessage.set('La oportunidad no tiene un prospecto con teléfono para WhatsApp.');
       return;
@@ -9809,6 +9835,20 @@ export class CrmPage {
     return item.prospectoId
       ? (this.prospectos().find((prospect) => prospect.id === item.prospectoId) ?? null)
       : null;
+  }
+
+  private whatsappProspectIdForOpportunity(item: CrmOportunidad | null | undefined): number {
+    if (!item) {
+      return 0;
+    }
+    if (item.prospectoId) {
+      return Number(item.prospectoId);
+    }
+    // Oportunidades creadas tras convertir el prospecto solo guardan clienteId.
+    const linked = item.clienteId
+      ? this.prospectos().find((prospect) => prospect.clienteId === item.clienteId)
+      : null;
+    return Number(linked?.id || 0);
   }
 
   private clientForOpportunity(item: CrmOportunidad): Cliente | null {
