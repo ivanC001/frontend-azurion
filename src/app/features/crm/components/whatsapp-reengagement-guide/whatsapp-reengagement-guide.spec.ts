@@ -51,7 +51,9 @@ describe('WhatsappReengagementGuideComponent', () => {
           guide({
             listoParaProgramar: false,
             resumen: 'Todavia no hay ninguna plantilla aprobada.',
-            advertencias: ['La plantilla de ejemplo "hello_world" solo corre en numeros de prueba.'],
+            advertencias: [
+              'La plantilla de ejemplo "hello_world" solo corre en numeros de prueba.',
+            ],
           }),
         ),
     } as Partial<CrmApiService>);

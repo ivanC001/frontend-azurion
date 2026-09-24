@@ -254,7 +254,10 @@ export class WhatsappTemplateEditorComponent {
     return null;
   }
 
-  private ajustarEjemplos(signalRef: { set: (value: string[]) => void; (): string[] }, size: number) {
+  private ajustarEjemplos(
+    signalRef: { set: (value: string[]) => void; (): string[] },
+    size: number,
+  ) {
     const current = signalRef();
     const next = Array.from({ length: size }, (_, index) => current[index] ?? '');
     signalRef.set(next);

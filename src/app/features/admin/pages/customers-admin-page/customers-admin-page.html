@@ -121,7 +121,10 @@
           </td>
           <td>
             <strong>{{ currencyPrefix() }} {{ item.limiteCredito | number: '1.2-2' }}</strong>
-            <small>Disponible: {{ currencyPrefix() }} {{ item.creditoDisponible | number: '1.2-2' }}</small>
+            <small
+              >Disponible: {{ currencyPrefix() }}
+              {{ item.creditoDisponible | number: '1.2-2' }}</small
+            >
           </td>
           <td>
             <strong [class.debt-value]="item.deudor"
@@ -357,7 +360,9 @@
       </div>
       <div>
         <span>Deuda pendiente</span>
-        <strong class="debt-value">{{ currencyPrefix() }} {{ cliente.saldoDeuda | number: '1.2-2' }}</strong>
+        <strong class="debt-value"
+          >{{ currencyPrefix() }} {{ cliente.saldoDeuda | number: '1.2-2' }}</strong
+        >
       </div>
     </section>
 

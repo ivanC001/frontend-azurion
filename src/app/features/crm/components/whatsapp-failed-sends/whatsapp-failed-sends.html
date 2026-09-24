@@ -21,7 +21,9 @@
   </header>
 
   @if (loading()) {
-    <div class="fails-state"><i class="pi pi-spin pi-spinner"></i> Revisando los ultimos envios...</div>
+    <div class="fails-state">
+      <i class="pi pi-spin pi-spinner"></i> Revisando los ultimos envios...
+    </div>
   } @else if (error()) {
     <div class="fails-state fails-state--error">
       <i class="pi pi-times-circle"></i> {{ error() }}

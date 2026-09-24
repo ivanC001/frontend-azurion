@@ -1,4 +1,7 @@
-import { PROSPECT_COUNTRIES, prospectCountry } from '@features/crm/models/prospect-identification.model';
+import {
+  PROSPECT_COUNTRIES,
+  prospectCountry,
+} from '@features/crm/models/prospect-identification.model';
 
 export interface CustomerDocumentOption {
   readonly label: string;

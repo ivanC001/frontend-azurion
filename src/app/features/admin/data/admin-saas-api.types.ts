@@ -554,9 +554,7 @@ export interface NotaFiscalRecord extends FacturadorDocumentStatus {
 }
 
 type VentasListPayload =
-  | VentaRecord[]
-  | { readonly items?: readonly VentaRecord[]; readonly total?: number }
-  | null;
+  VentaRecord[] | { readonly items?: readonly VentaRecord[]; readonly total?: number } | null;
 
 export interface CategoriaProducto {
   readonly id: number;

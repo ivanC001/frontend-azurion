@@ -1,0 +1,14 @@
+# El repo siempre guarda LF: asi el VPS (Linux) y los equipos Windows no generan
+# diffs fantasma por finales de linea.
+* text=auto eol=lf
+
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+
+# Binarios: sin conversion ni diff de texto.
+*.woff binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.ico binary

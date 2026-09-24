@@ -143,7 +143,9 @@ describe('WhatsappTemplateEditorComponent', () => {
   it('muestra el motivo cuando Meta rechaza el borrador', () => {
     const editor = crear({
       createCrmWhatsappTemplate: () =>
-        throwError(() => ({ error: { message: 'Meta no acepto la plantilla: nombre duplicado.' } })),
+        throwError(() => ({
+          error: { message: 'Meta no acepto la plantilla: nombre duplicado.' },
+        })),
     } as Partial<CrmApiService>);
 
     completar(editor);

@@ -767,10 +767,18 @@
                 />
               </label>
               <div class="prospect-inline-actions">
-                <button type="button" class="prospect-inline-cancel" (click)="cancelProspectInlineEdit()">
+                <button
+                  type="button"
+                  class="prospect-inline-cancel"
+                  (click)="cancelProspectInlineEdit()"
+                >
                   Cancelar
                 </button>
-                <button type="submit" class="prospect-inline-save" [disabled]="prospectEditSaving()">
+                <button
+                  type="submit"
+                  class="prospect-inline-save"
+                  [disabled]="prospectEditSaving()"
+                >
                   <i [class]="prospectEditSaving() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"></i>
                   Guardar
                 </button>

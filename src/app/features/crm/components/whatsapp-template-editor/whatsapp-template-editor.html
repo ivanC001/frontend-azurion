@@ -23,8 +23,8 @@
   @if (open()) {
     <div class="editor-body">
       <p class="editor-intro">
-        Se compone aca y el CRM la manda a revision a Meta. Solo se puede armar lo que el
-        sistema despues sabe enviar, asi que no vas a aprobar una plantilla que luego falle.
+        Se compone aca y el CRM la manda a revision a Meta. Solo se puede armar lo que el sistema
+        despues sabe enviar, asi que no vas a aprobar una plantilla que luego falle.
       </p>
 
       <div class="editor-grid">
@@ -100,7 +100,9 @@
               maxlength="1024"
               [ngModel]="cuerpo()"
               (ngModelChange)="setCuerpo($event)"
-              placeholder="Hola {{ '{{' }}1{{ '}}' }}, tu cotizacion vence el {{ '{{' }}2{{ '}}' }}."
+              placeholder="Hola {{ '{{' }}1{{ '}}' }}, tu cotizacion vence el {{
+                '{{'
+              }}2{{ '}}' }}."
             ></textarea>
           </label>
           <button type="button" class="editor-add" (click)="agregarVariable('cuerpo')">
@@ -110,7 +112,9 @@
           @if (variablesCuerpo().length) {
             <div class="editor-examples">
               <span class="editor-label">Ejemplos del cuerpo</span>
-              <small class="editor-note">Meta exige un ejemplo por variable o rechaza la plantilla.</small>
+              <small class="editor-note"
+                >Meta exige un ejemplo por variable o rechaza la plantilla.</small
+              >
               @for (variable of variablesCuerpo(); track $index) {
                 <label class="editor-example">
                   <code>{{ placeholder(variable) }}</code>
