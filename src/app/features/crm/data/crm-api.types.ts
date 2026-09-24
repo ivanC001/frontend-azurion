@@ -825,3 +825,36 @@ export interface SaveWhatsappQuickReplyRequest {
 }
 
 export interface GenerarCotizacionDesdeOportunidadRequest extends CreateCotizacionRequest {}
+
+export interface CrmLeadNotificationConfig {
+  readonly activo: boolean;
+  readonly notificarLeadNuevo: boolean;
+  readonly notificarMensajeNuevo: boolean;
+  readonly notificarResponsable: boolean;
+  readonly correosCopia: readonly string[];
+  readonly cooldownMinutos: number;
+  readonly correoTenantListo: boolean;
+  readonly correoTenantDetalle: string;
+}
+
+export interface UpdateCrmLeadNotificationConfigRequest {
+  readonly activo?: boolean;
+  readonly notificarLeadNuevo?: boolean;
+  readonly notificarMensajeNuevo?: boolean;
+  readonly notificarResponsable?: boolean;
+  readonly correosCopia?: readonly string[];
+  readonly cooldownMinutos?: number;
+}
+
+export interface CrmLeadNotificationDispatch {
+  readonly id: number;
+  readonly prospectoId: number;
+  readonly prospectoNombre: string;
+  readonly tipo: 'LEAD_NUEVO' | 'MENSAJE_NUEVO' | string;
+  readonly destinatarios: readonly string[];
+  readonly asunto: string;
+  readonly estado: 'PENDIENTE' | 'ENVIADO' | 'ERROR' | 'OMITIDO' | string;
+  readonly detalle?: string | null;
+  readonly createdAt: string;
+  readonly processedAt?: string | null;
+}

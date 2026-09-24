@@ -199,6 +199,7 @@ import { EmailSettings } from './settings/email-settings/email-settings';
 import { CrmCurrencyConfigPanel } from './components/crm-currency-config-panel/crm-currency-config-panel';
 import { LandingChannelConfig } from './components/landing-channel-config/landing-channel-config';
 import { WhatsappAutoReplyConfigComponent } from './components/whatsapp-auto-reply-config/whatsapp-auto-reply-config';
+import { CrmLeadNotificationConfigComponent } from './components/crm-lead-notification-config/crm-lead-notification-config';
 import { WhatsappFailedSendsComponent } from './components/whatsapp-failed-sends/whatsapp-failed-sends';
 import { WhatsappTemplateEditorComponent } from './components/whatsapp-template-editor/whatsapp-template-editor';
 import { WhatsappReengagementGuideComponent } from './components/whatsapp-reengagement-guide/whatsapp-reengagement-guide';
@@ -276,6 +277,7 @@ import {
     CrmCurrencyConfigPanel,
     LandingChannelConfig,
     WhatsappAutoReplyConfigComponent,
+    CrmLeadNotificationConfigComponent,
     WhatsappReengagementGuideComponent,
     WhatsappFailedSendsComponent,
     WhatsappTemplateEditorComponent,
@@ -4903,14 +4905,12 @@ export class CrmPage {
 
     if (client) {
       this.clientCompletionEditTarget.set('CLIENT');
-      const tipoPersona =
-        this.isCompanyDocumentType(client.tipoDocumento) ? 'JURIDICA' : 'NATURAL';
+      const tipoPersona = this.isCompanyDocumentType(client.tipoDocumento) ? 'JURIDICA' : 'NATURAL';
       const paisCodigo = this.clientCompletionCountryCode(prospect, client);
       this.clientCompletionForm = {
         paisCodigo,
         tipoPersona,
-        tipoDocumento:
-          client.tipoDocumento || this.defaultDocumentType(paisCodigo, tipoPersona),
+        tipoDocumento: client.tipoDocumento || this.defaultDocumentType(paisCodigo, tipoPersona),
         numeroDocumento: client.numeroDocumento || '',
         nombre: tipoPersona === 'JURIDICA' ? '' : client.nombre || '',
         razonSocial: tipoPersona === 'JURIDICA' ? client.nombre || '' : '',
@@ -8725,7 +8725,7 @@ export class CrmPage {
     const opportunity = this.opportunityForQuote(item) || this.selectedOpportunity();
     return Boolean(
       this.whatsappProspectIdForOpportunity(opportunity) &&
-        this.onlyDigits(this.opportunityContactPhone(opportunity!)),
+      this.onlyDigits(this.opportunityContactPhone(opportunity!)),
     );
   }
 
@@ -9559,7 +9559,7 @@ export class CrmPage {
   public opportunityWhatsappAvailable(item: CrmOportunidad): boolean {
     return Boolean(
       this.whatsappProspectIdForOpportunity(item) &&
-        this.onlyDigits(this.opportunityContactPhone(item)),
+      this.onlyDigits(this.opportunityContactPhone(item)),
     );
   }
 

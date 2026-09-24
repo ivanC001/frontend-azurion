@@ -1,0 +1,312 @@
+.lead-notif-card {
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border, #dbe4f0);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.lead-notif-head {
+  align-items: center;
+  border-bottom: 1px solid var(--az-border, #e4ebf4);
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  padding-bottom: 0.8rem;
+}
+
+.lead-notif-icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary, #1769e0) 12%, transparent);
+  border-radius: 0.6rem;
+  color: var(--az-primary, #1769e0);
+  display: inline-flex;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.lead-notif-head strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.lead-notif-head small {
+  color: var(--az-text-soft, #64748b);
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 0.12rem;
+}
+
+.lead-notif-state {
+  background: color-mix(in srgb, #94a3b8 15%, transparent);
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 0.66rem;
+  font-weight: 850;
+  padding: 0.3rem 0.65rem;
+}
+
+.lead-notif-state--on {
+  background: color-mix(in srgb, #10b981 15%, transparent);
+  color: #059669;
+}
+
+.lead-notif-hint,
+.lead-notif-warning,
+.lead-notif-error,
+.lead-notif-success,
+.lead-notif-loading {
+  align-items: flex-start;
+  display: flex;
+  font-size: 0.72rem;
+  gap: 0.45rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.lead-notif-hint,
+.lead-notif-loading {
+  color: var(--az-text-soft, #64748b);
+}
+
+.lead-notif-warning {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border-radius: 0.5rem;
+  color: #b45309;
+  padding: 0.6rem 0.7rem;
+}
+
+.lead-notif-error {
+  color: #dc2626;
+}
+
+.lead-notif-success {
+  color: #059669;
+}
+
+.lead-notif-toggles {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.lead-notif-switch {
+  align-items: center;
+  color: var(--az-text, #344054);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  gap: 0.45rem;
+}
+
+.lead-notif-switch input {
+  accent-color: var(--az-primary, #1769e0);
+  height: 1rem;
+  width: 1rem;
+}
+
+.lead-notif-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+}
+
+.lead-notif-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lead-notif-field > span {
+  color: var(--az-text, #344054);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.lead-notif-field small {
+  color: var(--az-text-soft, #64748b);
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.lead-notif-field input {
+  background: var(--az-surface, #fff);
+  border: 1px solid var(--az-border, #d2dce9);
+  border-radius: 0.5rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  min-height: 2.45rem;
+  padding: 0 0.65rem;
+  width: 100%;
+}
+
+.lead-notif-email-input {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.lead-notif-email-input button {
+  background: var(--az-primary, #1769e0);
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  min-height: 2.45rem;
+  padding: 0 0.8rem;
+}
+
+.lead-notif-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.lead-notif-chip {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-primary, #1769e0) 9%, transparent);
+  border-radius: 999px;
+  color: var(--az-primary, #1769e0);
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 750;
+  gap: 0.3rem;
+  padding: 0.28rem 0.6rem;
+}
+
+.lead-notif-chip button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.6rem;
+  padding: 0;
+}
+
+.lead-notif-empty {
+  color: var(--az-text-soft, #94a3b8);
+  font-size: 0.68rem;
+  margin: 0;
+}
+
+.lead-notif-actions {
+  border-top: 1px solid var(--az-border, #e4ebf4);
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+}
+
+.lead-notif-history-toggle,
+.lead-notif-save {
+  align-items: center;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+}
+
+.lead-notif-history-toggle {
+  background: transparent;
+  border: 1px solid var(--az-border, #d2dce9);
+  color: var(--az-text, #344054);
+}
+
+.lead-notif-save {
+  background: var(--az-primary, #1769e0);
+  border: 1px solid var(--az-primary, #1769e0);
+  color: #fff;
+}
+
+.lead-notif-save:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.lead-notif-history {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.lead-notif-history-row {
+  align-items: center;
+  background: color-mix(in srgb, var(--az-surface-hover, #f6f9fe) 65%, transparent);
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.55rem 0.7rem;
+}
+
+.lead-notif-history-row strong {
+  display: block;
+  font-size: 0.76rem;
+}
+
+.lead-notif-history-row small {
+  color: var(--az-text-soft, #64748b);
+  display: block;
+  font-size: 0.66rem;
+  overflow-wrap: anywhere;
+}
+
+.lead-notif-history-error {
+  color: #dc2626;
+}
+
+.lead-notif-history-row time {
+  color: var(--az-text-soft, #64748b);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.lead-notif-badge {
+  background: color-mix(in srgb, #94a3b8 16%, transparent);
+  border-radius: 999px;
+  color: #475569;
+  font-size: 0.62rem;
+  font-weight: 850;
+  padding: 0.25rem 0.55rem;
+}
+
+.lead-notif-badge--ok {
+  background: color-mix(in srgb, #10b981 16%, transparent);
+  color: #059669;
+}
+
+.lead-notif-badge--error {
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #dc2626;
+}
+
+@media (max-width: 720px) {
+  .lead-notif-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lead-notif-actions {
+    flex-direction: column;
+  }
+
+  .lead-notif-history-toggle,
+  .lead-notif-save {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .lead-notif-history-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lead-notif-history-row time {
+    grid-column: 2;
+  }
+}

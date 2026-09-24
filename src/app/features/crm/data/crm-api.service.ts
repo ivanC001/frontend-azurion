@@ -79,6 +79,9 @@ import type {
   UpdateCrmProspectoRequest,
   CreateWhatsappTemplateRequest,
   CrmWhatsappTemplateDraftResult,
+  CrmLeadNotificationConfig,
+  CrmLeadNotificationDispatch,
+  UpdateCrmLeadNotificationConfigRequest,
   UpdateWhatsappAutoReplyConfigRequest,
   WhatsappAutoReplyConfig,
   WhatsappConnectionStatus,
@@ -458,6 +461,34 @@ export class CrmApiService {
     return this.http
       .get<ApiResponse<WhatsappReengagementGuide>>(
         this.apiUrl.url('saasCore', '/v1/saas/crm/whatsapp/reenganches/guia'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmLeadNotificationConfig() {
+    return this.http
+      .get<ApiResponse<CrmLeadNotificationConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/notificaciones/leads'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  updateCrmLeadNotificationConfig(request: UpdateCrmLeadNotificationConfigRequest) {
+    return this.http
+      .put<ApiResponse<CrmLeadNotificationConfig>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/notificaciones/leads'),
+        request,
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getCrmLeadNotificationHistory() {
+    return this.http
+      .get<ApiResponse<CrmLeadNotificationDispatch[]>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/notificaciones/leads/historial'),
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
