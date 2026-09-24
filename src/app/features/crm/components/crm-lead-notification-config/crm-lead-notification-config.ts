@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -27,11 +35,15 @@ export class CrmLeadNotificationConfigComponent implements OnInit {
 
   readonly canManage = input(false);
 
+  /** Salida a la pantalla donde se configura y verifica el correo del tenant. */
+  readonly configureEmailRequested = output<void>();
+
   protected readonly config = signal<CrmLeadNotificationConfig | null>(null);
   protected readonly history = signal<readonly CrmLeadNotificationDispatch[]>([]);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly historyOpen = signal(false);
+  protected readonly testing = signal(false);
   protected readonly error = signal('');
   protected readonly success = signal('');
   protected nuevoCorreo = '';
@@ -132,6 +144,30 @@ export class CrmLeadNotificationConfigComponent implements OnInit {
       });
   }
 
+  protected sendTest(): void {
+    if (this.testing()) {
+      return;
+    }
+    this.testing.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.api.sendCrmLeadNotificationTest().subscribe({
+      next: (result) => {
+        this.testing.set(false);
+        if (result.enviado) {
+          this.success.set(`${result.detalle} (${result.destinatarios.join(', ')})`);
+          // Un envio exitoso deja el SMTP verificado: refrescamos el estado.
+          this.load();
+        } else {
+          this.error.set(result.detalle);
+        }
+      },
+      error: (error: unknown) => {
+        this.testing.set(false);
+        this.error.set(this.readError(error, 'No se pudo enviar el aviso de prueba.'));
+      },
+    });
+  }
   protected tipoLabel(tipo: string): string {
     return tipo === 'LEAD_NUEVO' ? 'Lead nuevo' : 'Mensaje nuevo';
   }

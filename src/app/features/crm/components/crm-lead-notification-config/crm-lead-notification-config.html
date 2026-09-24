@@ -18,10 +18,19 @@
     </p>
   } @else if (config(); as data) {
     @if (!data.correoTenantListo) {
-      <p class="lead-notif-warning">
+      <div class="lead-notif-warning">
         <i class="pi pi-exclamation-triangle"></i>
-        {{ data.correoTenantDetalle }}
-      </p>
+        <div>
+          <span>{{ data.correoTenantDetalle }}</span>
+          <small>
+            Configura el SMTP y envia el correo de prueba desde alli: ese envio deja la cuenta
+            verificada y habilita los avisos.
+          </small>
+        </div>
+        <button type="button" (click)="configureEmailRequested.emit()">
+          <i class="pi pi-cog"></i> Configurar correo
+        </button>
+      </div>
     } @else {
       <p class="lead-notif-hint"><i class="pi pi-envelope"></i> {{ data.correoTenantDetalle }}</p>
     }
@@ -127,10 +136,22 @@
         {{ historyOpen() ? 'Ocultar historial' : 'Ver ultimos avisos' }}
       </button>
       @if (canManage()) {
-        <button type="button" class="lead-notif-save" [disabled]="saving()" (click)="save()">
-          <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-          Guardar
-        </button>
+        <div class="lead-notif-buttons">
+          <button
+            type="button"
+            class="lead-notif-test"
+            [disabled]="testing()"
+            title="Envia un aviso de ejemplo a los destinatarios configurados"
+            (click)="sendTest()"
+          >
+            <i [class]="testing() ? 'pi pi-spin pi-spinner' : 'pi pi-send'"></i>
+            {{ testing() ? 'Enviando...' : 'Enviar prueba' }}
+          </button>
+          <button type="button" class="lead-notif-save" [disabled]="saving()" (click)="save()">
+            <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+            Guardar
+          </button>
+        </div>
       }
     </footer>
 

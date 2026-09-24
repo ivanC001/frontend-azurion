@@ -1155,7 +1155,10 @@
                         </div>
                       </section>
                       <app-whatsapp-auto-reply-config [canManage]="canManageCrmConfig()" />
-                      <app-crm-lead-notification-config [canManage]="canManageCrmConfig()" />
+                      <app-crm-lead-notification-config
+                        [canManage]="canManageCrmConfig()"
+                        (configureEmailRequested)="setTab('administracionCorreo')"
+                      />
                       <app-whatsapp-reengagement-guide />
                       <app-whatsapp-template-editor />
                       <app-whatsapp-failed-sends />

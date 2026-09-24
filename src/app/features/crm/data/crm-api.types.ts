@@ -858,3 +858,9 @@ export interface CrmLeadNotificationDispatch {
   readonly createdAt: string;
   readonly processedAt?: string | null;
 }
+
+export interface CrmLeadNotificationTestResult {
+  readonly enviado: boolean;
+  readonly destinatarios: readonly string[];
+  readonly detalle: string;
+}

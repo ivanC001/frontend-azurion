@@ -310,3 +310,83 @@
     grid-column: 2;
   }
 }
+
+/* El aviso de correo pendiente lleva su propia salida a la configuracion. */
+.lead-notif-warning {
+  align-items: center;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.lead-notif-warning small {
+  display: block;
+  font-size: 0.66rem;
+  line-height: 1.35;
+  margin-top: 0.15rem;
+  opacity: 0.85;
+}
+
+.lead-notif-warning button {
+  align-items: center;
+  background: #b45309;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  gap: 0.35rem;
+  min-height: 2.2rem;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+.lead-notif-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lead-notif-test {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--az-primary, #1769e0);
+  border-radius: 0.5rem;
+  color: var(--az-primary, #1769e0);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 800;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+}
+
+.lead-notif-test:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .lead-notif-warning {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lead-notif-warning button {
+    grid-column: 2;
+    justify-content: center;
+  }
+
+  .lead-notif-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .lead-notif-test {
+    justify-content: center;
+    width: 100%;
+  }
+}

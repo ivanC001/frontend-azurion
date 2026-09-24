@@ -81,6 +81,7 @@ import type {
   CrmWhatsappTemplateDraftResult,
   CrmLeadNotificationConfig,
   CrmLeadNotificationDispatch,
+  CrmLeadNotificationTestResult,
   UpdateCrmLeadNotificationConfigRequest,
   UpdateWhatsappAutoReplyConfigRequest,
   WhatsappAutoReplyConfig,
@@ -489,6 +490,16 @@ export class CrmApiService {
     return this.http
       .get<ApiResponse<CrmLeadNotificationDispatch[]>>(
         this.apiUrl.url('saasCore', '/v1/saas/crm/notificaciones/leads/historial'),
+        { headers: this.session.apiHeaders() },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  sendCrmLeadNotificationTest() {
+    return this.http
+      .post<ApiResponse<CrmLeadNotificationTestResult>>(
+        this.apiUrl.url('saasCore', '/v1/saas/crm/notificaciones/leads/prueba'),
+        {},
         { headers: this.session.apiHeaders() },
       )
       .pipe(map((response) => response.data));
