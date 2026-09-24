@@ -35,88 +35,106 @@
       <p class="lead-notif-hint"><i class="pi pi-envelope"></i> {{ data.correoTenantDetalle }}</p>
     }
 
-    <div class="lead-notif-toggles">
-      <label class="lead-notif-switch">
-        <input
-          type="checkbox"
-          [disabled]="!canManage()"
-          [ngModel]="data.activo"
-          (ngModelChange)="patch({ activo: $event })"
-        />
-        <span>Enviar avisos por correo</span>
-      </label>
-      <label class="lead-notif-switch">
-        <input
-          type="checkbox"
-          [disabled]="!canManage() || !data.activo"
-          [ngModel]="data.notificarLeadNuevo"
-          (ngModelChange)="patch({ notificarLeadNuevo: $event })"
-        />
-        <span>Cuando entra un lead nuevo</span>
-      </label>
-      <label class="lead-notif-switch">
-        <input
-          type="checkbox"
-          [disabled]="!canManage() || !data.activo"
-          [ngModel]="data.notificarMensajeNuevo"
-          (ngModelChange)="patch({ notificarMensajeNuevo: $event })"
-        />
-        <span>Cuando un prospecto responde</span>
-      </label>
-      <label class="lead-notif-switch">
-        <input
-          type="checkbox"
-          [disabled]="!canManage() || !data.activo"
-          [ngModel]="data.notificarResponsable"
-          (ngModelChange)="patch({ notificarResponsable: $event })"
-        />
-        <span>Avisar al asesor asignado</span>
-      </label>
-    </div>
+    <!-- Interruptor maestro: los bloques de abajo dependen de el. -->
+    <label class="lead-notif-master" [class.lead-notif-master--on]="data.activo">
+      <input
+        type="checkbox"
+        [disabled]="!canManage()"
+        [ngModel]="data.activo"
+        (ngModelChange)="patch({ activo: $event })"
+      />
+      <span class="lead-notif-master-copy">
+        <strong>Enviar avisos por correo</strong>
+        <small>Mientras este apagado no sale ningun aviso, aunque el resto este configurado.</small>
+      </span>
+    </label>
 
-    <div class="lead-notif-grid">
-      <label class="lead-notif-field">
-        <span>Correos de copia (supervision)</span>
-        <div class="lead-notif-email-input">
+    <div class="lead-notif-sections" [class.lead-notif-sections--off]="!data.activo">
+      <section class="lead-notif-block">
+        <h4><i class="pi pi-clock"></i> Cuando avisar</h4>
+        <label class="lead-notif-switch">
           <input
-            type="email"
-            placeholder="supervisor@empresa.com"
-            [disabled]="!canManage()"
-            [(ngModel)]="nuevoCorreo"
-            (keydown.enter)="$event.preventDefault(); addCorreo()"
+            type="checkbox"
+            [disabled]="!canManage() || !data.activo"
+            [ngModel]="data.notificarLeadNuevo"
+            (ngModelChange)="patch({ notificarLeadNuevo: $event })"
           />
-          <button type="button" [disabled]="!canManage()" (click)="addCorreo()">
-            <i class="pi pi-plus"></i>
-          </button>
-        </div>
-        <div class="lead-notif-chips">
-          @for (correo of data.correosCopia; track correo) {
-            <span class="lead-notif-chip">
-              {{ correo }}
-              @if (canManage()) {
-                <button type="button" aria-label="Quitar correo" (click)="removeCorreo(correo)">
-                  <i class="pi pi-times"></i>
-                </button>
-              }
-            </span>
-          } @empty {
-            <small class="lead-notif-empty">Sin correos de copia.</small>
-          }
-        </div>
-      </label>
+          <span>Entra un lead nuevo</span>
+        </label>
+        <label class="lead-notif-switch">
+          <input
+            type="checkbox"
+            [disabled]="!canManage() || !data.activo"
+            [ngModel]="data.notificarMensajeNuevo"
+            (ngModelChange)="patch({ notificarMensajeNuevo: $event })"
+          />
+          <span>Un prospecto responde</span>
+        </label>
 
-      <label class="lead-notif-field lead-notif-field--cooldown">
-        <span>Silencio entre avisos (minutos)</span>
-        <input
-          type="number"
-          min="0"
-          max="10080"
-          [disabled]="!canManage()"
-          [ngModel]="data.cooldownMinutos"
-          (ngModelChange)="patch({ cooldownMinutos: $event })"
-        />
-        <small>Evita repetir el aviso del mismo prospecto en una rafaga de mensajes.</small>
-      </label>
+        <label class="lead-notif-field lead-notif-field--cooldown">
+          <span>Silencio entre avisos</span>
+          <div class="lead-notif-cooldown-input">
+            <input
+              type="number"
+              min="0"
+              max="10080"
+              [disabled]="!canManage() || !data.activo"
+              [ngModel]="data.cooldownMinutos"
+              (ngModelChange)="patch({ cooldownMinutos: $event })"
+            />
+            <em>minutos</em>
+          </div>
+          <small>Evita repetir el aviso del mismo prospecto en una rafaga de mensajes.</small>
+        </label>
+      </section>
+
+      <section class="lead-notif-block">
+        <h4><i class="pi pi-users"></i> A quien avisar</h4>
+        <label class="lead-notif-switch">
+          <input
+            type="checkbox"
+            [disabled]="!canManage() || !data.activo"
+            [ngModel]="data.notificarResponsable"
+            (ngModelChange)="patch({ notificarResponsable: $event })"
+          />
+          <span>Al asesor asignado del prospecto</span>
+        </label>
+
+        <label class="lead-notif-field">
+          <span>Correos de copia (supervision)</span>
+          <div class="lead-notif-email-input">
+            <input
+              type="email"
+              placeholder="supervisor@empresa.com"
+              [disabled]="!canManage() || !data.activo"
+              [(ngModel)]="nuevoCorreo"
+              (keydown.enter)="$event.preventDefault(); addCorreo()"
+            />
+            <button
+              type="button"
+              [disabled]="!canManage() || !data.activo"
+              aria-label="Agregar correo"
+              (click)="addCorreo()"
+            >
+              <i class="pi pi-plus"></i>
+            </button>
+          </div>
+          <div class="lead-notif-chips">
+            @for (correo of data.correosCopia; track correo) {
+              <span class="lead-notif-chip">
+                {{ correo }}
+                @if (canManage()) {
+                  <button type="button" aria-label="Quitar correo" (click)="removeCorreo(correo)">
+                    <i class="pi pi-times"></i>
+                  </button>
+                }
+              </span>
+            } @empty {
+              <small class="lead-notif-empty">Sin correos de copia.</small>
+            }
+          </div>
+        </label>
+      </section>
     </div>
 
     @if (error()) {
