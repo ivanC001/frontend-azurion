@@ -44,7 +44,7 @@
     </article>
     <article>
       <span>Deuda pendiente</span
-      ><strong>S/ {{ customerStats().deudaTotal | number: '1.2-2' }}</strong>
+      ><strong>{{ currencyPrefix() }} {{ customerStats().deudaTotal | number: '1.2-2' }}</strong>
     </article>
   </section>
 
@@ -120,12 +120,12 @@
             <small>{{ item.telefono || 'Sin telefono' }}</small>
           </td>
           <td>
-            <strong>S/ {{ item.limiteCredito | number: '1.2-2' }}</strong>
-            <small>Disponible: S/ {{ item.creditoDisponible | number: '1.2-2' }}</small>
+            <strong>{{ currencyPrefix() }} {{ item.limiteCredito | number: '1.2-2' }}</strong>
+            <small>Disponible: {{ currencyPrefix() }} {{ item.creditoDisponible | number: '1.2-2' }}</small>
           </td>
           <td>
             <strong [class.debt-value]="item.deudor"
-              >S/ {{ item.saldoDeuda | number: '1.2-2' }}</strong
+              >{{ currencyPrefix() }} {{ item.saldoDeuda | number: '1.2-2' }}</strong
             >
           </td>
           <td>
@@ -196,7 +196,13 @@
     <div class="section-heading span-2">
       <div>
         <strong>Identificacion fiscal</strong>
-        <span>Información utilizada al emitir facturas y boletas.</span>
+        <span>
+          @if (isPeru()) {
+            Información utilizada al emitir facturas y boletas.
+          } @else {
+            Documento de identificación del cliente en {{ countryCode() }}.
+          }
+        </span>
       </div>
     </div>
 
@@ -204,10 +210,10 @@
       Tipo documento <span class="required">*</span>
       <p-select
         name="tipoDocumento"
-        [options]="[
-          { label: 'RUC', value: '6' },
-          { label: 'DNI', value: '1' },
-        ]"
+        [options]="documentOptions()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecciona"
         [(ngModel)]="form.tipoDocumento"
         (ngModelChange)="onTipoDocumentoChange()"
       />
@@ -219,9 +225,9 @@
         pInputText
         name="numeroDocumento"
         [(ngModel)]="form.numeroDocumento"
-        [placeholder]="form.tipoDocumento === '6' ? 'RUC 11 digitos' : 'DNI 8 digitos'"
-        [maxlength]="form.tipoDocumento === '6' ? 11 : 8"
-        inputmode="numeric"
+        [placeholder]="selectedDocumentOption()?.placeholder || 'Numero de documento'"
+        [maxlength]="selectedDocumentOption()?.maxLength || 30"
+        [attr.inputmode]="selectedDocumentOption()?.inputMode || 'text'"
         (input)="sanitizeNumeroDocumento($event)"
       />
     </label>
@@ -247,7 +253,7 @@
     </label>
     <label class="span-2">
       Direccion fiscal
-      @if (form.tipoDocumento === '6') {
+      @if (isPeru() && form.tipoDocumento === '6') {
         <span class="required">*</span>
       }
       <input
@@ -257,14 +263,16 @@
         placeholder="Direccion usada en facturas y comprobantes"
       />
     </label>
-    <div class="span-2">
-      <app-ubigeo-picker
-        name="clienteUbigeo"
-        [(value)]="form.ubigeo"
-        [required]="form.tipoDocumento === '6'"
-        label="Ubigeo fiscal"
-      />
-    </div>
+    @if (isPeru()) {
+      <div class="span-2">
+        <app-ubigeo-picker
+          name="clienteUbigeo"
+          [(value)]="form.ubigeo"
+          [required]="form.tipoDocumento === '6'"
+          label="Ubigeo fiscal"
+        />
+      </div>
+    }
 
     <div class="section-heading span-2">
       <div>
@@ -349,7 +357,7 @@
       </div>
       <div>
         <span>Deuda pendiente</span>
-        <strong class="debt-value">S/ {{ cliente.saldoDeuda | number: '1.2-2' }}</strong>
+        <strong class="debt-value">{{ currencyPrefix() }} {{ cliente.saldoDeuda | number: '1.2-2' }}</strong>
       </div>
     </section>
 
@@ -392,9 +400,9 @@
           <tr>
             <td>{{ abono.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td>
-              <strong>S/ {{ abono.monto | number: '1.2-2' }}</strong>
+              <strong>{{ currencyPrefix() }} {{ abono.monto | number: '1.2-2' }}</strong>
             </td>
-            <td>S/ {{ abono.saldoResultante | number: '1.2-2' }}</td>
+            <td>{{ currencyPrefix() }} {{ abono.saldoResultante | number: '1.2-2' }}</td>
             <td>{{ abono.observacion || 'Sin observacion' }}</td>
           </tr>
         </ng-template>

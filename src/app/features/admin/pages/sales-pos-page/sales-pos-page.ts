@@ -34,6 +34,7 @@ import {
   VentaStatusStreamEvent,
 } from '../../data/admin-saas-api.service';
 import { isIdentifiedCustomer } from '../../shared/customer-document-rules';
+import { customerDocumentLabel } from '@shared/utils/customer-document';
 
 type FormaPago = 'CONTADO' | 'CREDITO';
 type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA';
@@ -428,7 +429,7 @@ export class SalesPosPage implements OnDestroy {
       .filter((cliente) => cliente.activo)
       .filter((cliente) => this.tipoComprobante() !== 'FACTURA' || this.isClienteRucValido(cliente))
       .map((cliente) => ({
-        label: `${cliente.tipoDocumento === '6' ? 'RUC' : 'DNI'} ${cliente.numeroDocumento} - ${cliente.nombre}`,
+        label: `${customerDocumentLabel(cliente.tipoDocumento)} ${cliente.numeroDocumento} - ${cliente.nombre}`,
         value: cliente.id,
       }));
   }
@@ -436,7 +437,7 @@ export class SalesPosPage implements OnDestroy {
   protected clientePlaceholder(): string {
     return this.tipoComprobante() === 'FACTURA'
       ? 'Buscar empresa por RUC o razon social'
-      : 'Buscar DNI, RUC o nombre';
+      : 'Buscar por documento o nombre';
   }
 
   protected itemTotal(item: PosCartItem): number {

@@ -20,11 +20,18 @@ import {
   Empresa,
 } from '../../data/admin-saas-api.service';
 import { UbigeoPickerComponent } from '../../components/ubigeo-picker/ubigeo-picker';
+import { currencySymbol } from '@shared/utils/currency-symbol';
+import {
+  CustomerDocumentOption,
+  customerDocumentLabel,
+  customerDocumentOptions,
+  isPeruCountry,
+} from '@shared/utils/customer-document';
 
 interface ClienteForm {
   id: number | null;
   tenantId: string;
-  tipoDocumento: '1' | '6';
+  tipoDocumento: string;
   numeroDocumento: string;
   nombre: string;
   email: string;
@@ -82,7 +89,7 @@ export class CustomersAdminPage {
   protected form: ClienteForm = {
     id: null,
     tenantId: this.session.currentSession()?.tenantId || '',
-    tipoDocumento: '6',
+    tipoDocumento: '',
     numeroDocumento: '',
     nombre: '',
     email: '',
@@ -118,6 +125,36 @@ export class CustomersAdminPage {
     }
     return this.empresas().find((empresa) => empresa.tenantId === tenantId) ?? null;
   });
+
+  /** País de la empresa destino: define documentos y si aplica ubigeo SUNAT. */
+  protected countryCode(): string {
+    const empresa = this.isGeneralAdmin()
+      ? this.selectedEmpresa()
+      : this.session.currentSession()?.empresa;
+    return String(empresa?.paisCodigo || 'PE')
+      .trim()
+      .toUpperCase();
+  }
+
+  /** Símbolo de la moneda de la empresa destino para montos de crédito, deuda y abonos. */
+  protected currencyPrefix(): string {
+    const empresa = this.isGeneralAdmin()
+      ? this.selectedEmpresa()
+      : this.session.currentSession()?.empresa;
+    return empresa?.monedaSimbolo?.trim() || currencySymbol(empresa?.monedaCodigo);
+  }
+
+  protected isPeru(): boolean {
+    return isPeruCountry(this.countryCode());
+  }
+
+  protected documentOptions(): CustomerDocumentOption[] {
+    return [...customerDocumentOptions(this.countryCode())];
+  }
+
+  protected selectedDocumentOption(): CustomerDocumentOption | null {
+    return this.documentOptions().find((doc) => doc.value === this.form.tipoDocumento) ?? null;
+  }
 
   protected readonly filteredClientes = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -187,7 +224,7 @@ export class CustomersAdminPage {
     this.form = {
       id: null,
       tenantId: this.form.tenantId,
-      tipoDocumento: '6',
+      tipoDocumento: this.documentOptions()[0]?.value ?? '',
       numeroDocumento: '',
       nombre: '',
       email: '',
@@ -207,7 +244,7 @@ export class CustomersAdminPage {
     this.form = {
       id: cliente.id,
       tenantId: this.form.tenantId,
-      tipoDocumento: cliente.tipoDocumento === '1' ? '1' : '6',
+      tipoDocumento: cliente.tipoDocumento || (this.documentOptions()[0]?.value ?? ''),
       numeroDocumento: cliente.numeroDocumento,
       nombre: cliente.nombre,
       email: cliente.email || '',
@@ -255,18 +292,19 @@ export class CustomersAdminPage {
       ? this.clientes().find((cliente) => cliente.id === this.form.id)
       : null;
 
-    if (!/^\d+$/.test(numeroDocumento)) {
-      this.errorMessage.set('El numero de documento debe contener solo digitos.');
+    const documentOption = this.selectedDocumentOption();
+    if (!this.form.tipoDocumento) {
+      this.errorMessage.set('Selecciona el tipo de documento.');
       return;
     }
 
-    if (this.form.tipoDocumento === '1' && numeroDocumento.length !== 8) {
-      this.errorMessage.set('Para DNI, el numero de documento debe tener 8 digitos.');
+    if (documentOption && !documentOption.pattern.test(numeroDocumento)) {
+      this.errorMessage.set(documentOption.validationMessage);
       return;
     }
 
-    if (this.form.tipoDocumento === '6' && numeroDocumento.length !== 11) {
-      this.errorMessage.set('Para RUC, el numero de documento debe tener 11 digitos.');
+    if (!documentOption && !/^[A-Za-z0-9][A-Za-z0-9.\-/]{2,29}$/.test(numeroDocumento)) {
+      this.errorMessage.set('Ingresa un numero de documento valido (entre 3 y 30 caracteres).');
       return;
     }
 
@@ -280,7 +318,7 @@ export class CustomersAdminPage {
       return;
     }
 
-    if (this.form.tipoDocumento === '6' && !ubigeo) {
+    if (this.isPeru() && this.form.tipoDocumento === '6' && !ubigeo) {
       this.errorMessage.set('Para clientes con RUC selecciona el ubigeo fiscal.');
       return;
     }
@@ -307,7 +345,7 @@ export class CustomersAdminPage {
       nombre,
       email: email || null,
       direccion: direccion || null,
-      ubigeo: ubigeo || null,
+      ubigeo: this.isPeru() ? ubigeo || null : null,
       telefono: telefono || null,
       limiteCredito,
       diasCredito,
@@ -414,7 +452,7 @@ export class CustomersAdminPage {
           this.abonoDialogVisible.set(false);
           this.selectedDeudor.set(null);
           this.successMessage.set(
-            `Abono de S/ ${monto.toFixed(2)} registrado para ${cliente.nombre}.`,
+            `Abono de ${this.currencyPrefix()} ${monto.toFixed(2)} registrado para ${cliente.nombre}.`,
           );
           this.load();
         },
@@ -423,26 +461,34 @@ export class CustomersAdminPage {
   }
 
   protected onTipoDocumentoChange(): void {
-    const maxLength = this.form.tipoDocumento === '1' ? 8 : 11;
     this.form = {
       ...this.form,
-      numeroDocumento: this.form.numeroDocumento.replace(/\D+/g, '').slice(0, maxLength),
+      numeroDocumento: this.cleanNumeroDocumento(this.form.numeroDocumento),
     };
   }
 
   protected sanitizeNumeroDocumento(event: Event): void {
     const input = event.target as HTMLInputElement | null;
-    const maxLength = this.form.tipoDocumento === '1' ? 8 : 11;
     if (!input) {
       return;
     }
-    const cleaned = input.value.replace(/\D+/g, '').slice(0, maxLength);
+    const cleaned = this.cleanNumeroDocumento(input.value);
     input.value = cleaned;
     this.form = { ...this.form, numeroDocumento: cleaned };
   }
 
   protected formatTipoDocumento(tipo: string): string {
-    return tipo === '1' ? 'DNI' : 'RUC';
+    return customerDocumentLabel(tipo);
+  }
+
+  private cleanNumeroDocumento(value: string): string {
+    const option = this.selectedDocumentOption();
+    const maxLength = option?.maxLength ?? 30;
+    const cleaned =
+      option?.inputMode === 'numeric'
+        ? value.replace(/\D+/g, '')
+        : value.replace(/\s+/g, '').toUpperCase();
+    return cleaned.slice(0, maxLength);
   }
 
   protected customerStatusSeverity(cliente: Cliente): 'success' | 'warn' | 'danger' {
